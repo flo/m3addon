@@ -434,13 +434,6 @@ class Exporter:
         animRefHeader.animId = self.createUniqueAnimId()
         return animRefHeader
         
-    def createAnimHeader(self, flags, animFlags= 6):
-        animRefHeader = m3.AnimationReferenceHeader()
-        animRefHeader.flags = flags
-        animRefHeader.animFlags = animFlags
-        animRefHeader.animId = self.createUniqueAnimId()
-        return animRefHeader
-        
     def createUniqueAnimId(self):
         self.generatedAnimIdCounter += 1 # increase first since we don't want to use 0 as animation id
         return self.generatedAnimIdCounter
@@ -567,7 +560,7 @@ class BlenderToM3DataTransferer:
 
     def transferAnimatableFloat(self, fieldName):
         animRef = m3.FloatAnimationReference()
-        animRef.header = self.exporter.createAnimHeader(flags=1)
+        animRef.header = self.exporter.createNullAnimHeader()
         currentValue =  getattr(self.blenderObject, fieldName)
         animRef.initValue = currentValue
         animRef.nullValue = currentValue
@@ -589,6 +582,8 @@ class BlenderToM3DataTransferer:
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
                 animIdToAnimDataMap[animId] = m3AnimBlock
+                animRef.header.flags = 1
+                animRef.header.animFlags = shared.animFlagsForAnimatedProperty
                     
         setattr(self.m3Object, fieldName, animRef)
     

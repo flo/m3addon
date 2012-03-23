@@ -29,6 +29,8 @@ materialLayerNames = ["Diffuse", "Decal", "Specular", "Self Illumination",
     "Emissive", "Reflection", "Evio", "Evio Mask", "Alpha Mask", "Bump", "Height", "Layer 12", "Layer 13"]
 
 
+animFlagsForAnimatedProperty = 6
+
 def setAnimationWithIndexToCurrentData(scene, animationIndex):
     if (animationIndex < 0) or (animationIndex >= len(scene.m3_animations)):
         return
