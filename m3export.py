@@ -571,7 +571,7 @@ class BlenderToM3DataTransferer:
         for animation, action in self.animationActionTuples:
             frames = self.getAllFramesOf(animation)
             timeValuesInMS = self.allFramesToMSValues(frames)
-            values = self.getNoneOrValuesFor(action, animPath, frames)
+            values = self.getNoneOrValuesFor(action, animPath, 0, frames)
             
             if values != None:
                 m3AnimBlock = m3.SDR3V0()
@@ -613,6 +613,39 @@ class BlenderToM3DataTransferer:
         animRef.initValue = self.exporter.createVector3FromBlenderVector(currentBVector)
         animRef.nullValue = self.exporter.createVector3FromBlenderVector(currentBVector)
         setattr(self.m3Object, fieldName, animRef)
+        
+        
+        animId = animRef.header.animId
+        animPath = self.animPathPrefix + fieldName
+        
+        for animation, action in self.animationActionTuples:
+            frames = self.getAllFramesOf(animation)
+            timeValuesInMS = self.allFramesToMSValues(frames)
+            xValues = self.getNoneOrValuesFor(action, animPath, 0, frames)
+            yValues = self.getNoneOrValuesFor(action, animPath, 1, frames)
+            zValues = self.getNoneOrValuesFor(action, animPath, 2, frames)
+            if (xValues != None) or (yValues != None) or (zValues != None):
+                if xValues == None:
+                    xValues = len(timeValuesInMS) * [currentBVector.x]
+                if yValues == None:
+                    yValues = len(timeValuesInMS) * [currentBVector.y]
+                if zValues == None:
+                    zValues = len(timeValuesInMS) * [currentBVector.z]
+                vectors = []
+                for (x,y,z) in zip(xValues, yValues, zValues):
+                    vec = self.exporter.createVector3(x,y,z)
+                    vectors.append(vec)
+                
+                m3AnimBlock = m3.SD3VV0()
+                m3AnimBlock.frames = timeValuesInMS
+                m3AnimBlock.flags = 0
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.endFrame)
+                m3AnimBlock.keys = vectors
+                
+                animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
+                animIdToAnimDataMap[animId] = m3AnimBlock
+                animRef.header.flags = 1
+                animRef.header.animFlags = shared.animFlagsForAnimatedProperty
         #TODO export the animations
 
         
@@ -647,18 +680,18 @@ class BlenderToM3DataTransferer:
             timeValues.append(timeInMS)
         return timeValues
     
-    def getNoneOrValuesFor(self, action, animPath, frames):
+    def getNoneOrValuesFor(self, action, animPath, curveArrayIndex, frames):
         values = []
-        curve = self.findFCurveWithPath(action, animPath)
+        curve = self.findFCurveWithPathAndIndex(action, animPath, curveArrayIndex)
         if curve == None:
             return None
         for frame in frames:
             values.append(curve.evaluate(frame))
         return values
             
-    def findFCurveWithPath(self, action, animPath):
+    def findFCurveWithPathAndIndex(self, action, animPath, curveArrayIndex):
         for curve in action.fcurves:
-            if curve.data_path == animPath:
+            if (curve.data_path == animPath) and (curve.array_index == curveArrayIndex):
                 return curve
         return None
         
