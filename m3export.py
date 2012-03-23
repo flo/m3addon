@@ -143,7 +143,6 @@ class Exporter:
             m3SequenceTransformationCollection.sdev.append(animData)
             #sdev's have animation type index 0, so sdevIndex = animRef
             animRef = sdevIndex
-            m3SequenceTransformationCollection.animRefs.append(animRef)
         elif animDataType == m3.SD2VV0:
             sd2vIndex = len(m3SequenceTransformationCollection.sd2v)
             m3SequenceTransformationCollection.sd2v.append(animData)
@@ -166,7 +165,8 @@ class Exporter:
             animRef = 0x50000 + sds6Index
         else:
             raise Exception("Can't handle animation data of type %s yet" % animDataType)
-    
+        m3SequenceTransformationCollection.animRefs.append(animRef)
+
     def initParticles(self, model):
         scene = self.scene
         for particleSystemIndex, particleSystem in enumerate(scene.m3_particle_systems):
@@ -433,7 +433,14 @@ class Exporter:
         animRefHeader.animFlags = 0
         animRefHeader.animId = self.createUniqueAnimId()
         return animRefHeader
-    
+        
+    def createAnimHeader(self, flags, animFlags= 6):
+        animRefHeader = m3.AnimationReferenceHeader()
+        animRefHeader.flags = flags
+        animRefHeader.animFlags = animFlags
+        animRefHeader.animId = self.createUniqueAnimId()
+        return animRefHeader
+        
     def createUniqueAnimId(self):
         self.generatedAnimIdCounter += 1 # increase first since we don't want to use 0 as animation id
         return self.generatedAnimIdCounter
@@ -535,6 +542,20 @@ class BlenderToM3DataTransferer:
         self.actionOwnerName = actionOwnerName
         self.actionOwnerType = actionOwnerType
         
+        self.animationActionTuples = []
+        
+        scene = self.exporter.scene
+        for animation in scene.m3_animations:
+            for assignedAction in animation.assignedActions:
+                if actionOwnerName == assignedAction.targetName:
+                    actionName = assignedAction.actionName
+                    action = bpy.data.actions.get(actionName)
+                    if action == None:
+                        print("Warning: The action %s was referenced by name but does no longer exist" % assignedAction.actionName)
+                    else:
+                        if action.id_root == actionOwnerType:
+                            self.animationActionTuples.append((animation, action))
+        
     def transferAnimatableColor(self, fieldName):
         animRef = m3.ColorAnimationReference()
         animRef.header = self.exporter.createNullAnimHeader()
@@ -542,16 +563,33 @@ class BlenderToM3DataTransferer:
         animRef.initValue = m3CurrentColor
         animRef.nullValue = m3CurrentColor
         setattr(self.m3Object, fieldName, animRef)
-        #TODO export the animations:
-        # step 1: Find animations with actions that have fcurves for the given animation path
-        # step 2: create data structures in exporter which contains the animation data
-        
+        #TODO export the animations
+
     def transferAnimatableFloat(self, fieldName):
         animRef = m3.FloatAnimationReference()
-        animRef.header = self.exporter.createNullAnimHeader()
+        animRef.header = self.exporter.createAnimHeader(flags=1)
         currentValue =  getattr(self.blenderObject, fieldName)
         animRef.initValue = currentValue
         animRef.nullValue = currentValue
+        
+        animId = animRef.header.animId
+        animPath = self.animPathPrefix + fieldName
+        
+        for animation, action in self.animationActionTuples:
+            frames = self.getAllFramesOf(animation)
+            timeValuesInMS = self.allFramesToMSValues(frames)
+            values = self.getNoneOrValuesFor(action, animPath, frames)
+            
+            if values != None:
+                m3AnimBlock = m3.SDR3V0()
+                m3AnimBlock.frames = timeValuesInMS
+                m3AnimBlock.flags = 0
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.endFrame)
+                m3AnimBlock.keys = values
+                
+                animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
+                animIdToAnimDataMap[animId] = m3AnimBlock
+                    
         setattr(self.m3Object, fieldName, animRef)
     
     def transferAnimatableUInt16(self, fieldName):
@@ -561,6 +599,8 @@ class BlenderToM3DataTransferer:
         animRef.initValue = currentValue
         animRef.nullValue = currentValue
         setattr(self.m3Object, fieldName, animRef)
+        #TODO export the animations
+
     
     def transferAnimatableUInt32(self, fieldName):
         animRef = m3.UInt32AnimationReference()
@@ -569,7 +609,8 @@ class BlenderToM3DataTransferer:
         animRef.initValue = currentValue
         animRef.nullValue = currentValue
         setattr(self.m3Object, fieldName, animRef)
-    
+        #TODO export the animations
+
     def transferAnimatableVector3(self, fieldName):
         animRef = m3.Vector3AnimationReference()
         animRef.header = self.exporter.createNullAnimHeader()
@@ -577,8 +618,9 @@ class BlenderToM3DataTransferer:
         animRef.initValue = self.exporter.createVector3FromBlenderVector(currentBVector)
         animRef.nullValue = self.exporter.createVector3FromBlenderVector(currentBVector)
         setattr(self.m3Object, fieldName, animRef)
+        #TODO export the animations
+
         
-    
     def transferInt(self, fieldName):
         value = getattr(self.blenderObject, fieldName)
         setattr(self.m3Object, fieldName , value)
@@ -598,6 +640,32 @@ class BlenderToM3DataTransferer:
     def transferEnum(self, fieldName):
         value = getattr(self.blenderObject, fieldName)
         setattr(self.m3Object, fieldName , int(value))
+        
+    def getAllFramesOf(self, animation):
+        #TODO Does the end frame need to be included?
+        return range(animation.startFrame, animation.endFrame)
+        
+    def allFramesToMSValues(self, frames):
+        timeValues = []
+        for frame in frames:
+            timeInMS = self.exporter.frameToMS(frame)
+            timeValues.append(timeInMS)
+        return timeValues
+    
+    def getNoneOrValuesFor(self, action, animPath, frames):
+        values = []
+        curve = self.findFCurveWithPath(action, animPath)
+        if curve == None:
+            return None
+        for frame in frames:
+            values.append(curve.evaluate(frame))
+        return values
+            
+    def findFCurveWithPath(self, action, animPath):
+        for curve in action.fcurves:
+            if curve.data_path == animPath:
+                return curve
+        return None
         
 def exportParticleSystems(scene, filename):
     exporter = Exporter()
