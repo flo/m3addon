@@ -584,7 +584,7 @@ class BlenderToM3DataTransferer:
                 animIdToAnimDataMap[animId] = m3AnimBlock
                 animRef.header.flags = 1
                 animRef.header.animFlags = shared.animFlagsForAnimatedProperty
-                    
+        #TODO Optimization: Remove keyframes that can be calculated by interpolation
         setattr(self.m3Object, fieldName, animRef)
     
     def transferAnimatableUInt16(self, fieldName):
@@ -646,8 +646,7 @@ class BlenderToM3DataTransferer:
                 animIdToAnimDataMap[animId] = m3AnimBlock
                 animRef.header.flags = 1
                 animRef.header.animFlags = shared.animFlagsForAnimatedProperty
-        #TODO export the animations
-
+        #TODO Optimization: Remove keyframes that can be calculated by interpolation
         
     def transferInt(self, fieldName):
         value = getattr(self.blenderObject, fieldName)
