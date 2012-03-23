@@ -205,7 +205,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     type = bpy.props.EnumProperty(default="2", items=particleTypeList, update=handleTypeOrBoneSuffixChange, options=set())
     materialName = bpy.props.EnumProperty(items=availableMaterials, options=set())
     maxParticles = bpy.props.IntProperty(default=20, subtype="UNSIGNED",options=set())
-    initEmissSpeed = bpy.props.FloatProperty(name="init. emiss. speed",options={"ANIMATABLE"}, default=0.0)
+    initEmissSpeed = bpy.props.FloatProperty(name="init. emiss. speed",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission.")
     speedVar = bpy.props.FloatProperty(default=1.0, name="speed var",options={"ANIMATABLE"})
     speedVarEnabled = bpy.props.BoolProperty(options=set(),default=False)
     angleY = bpy.props.FloatProperty(default=0.0, name="angleY", options={"ANIMATABLE"})
