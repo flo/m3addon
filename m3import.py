@@ -23,8 +23,11 @@ if "bpy" in locals():
     import imp
     if "generateM3Library" in locals():
         imp.reload(generateM3Library)
-    from . import generateM3Library
-    generateM3Library.generateM3Library()
+from . import generateM3Library
+generateM3Library.generateM3Library()
+
+if "bpy" in locals():
+    import imp
     if "m3" in locals():
         imp.reload(m3)
     if "shared" in locals():
