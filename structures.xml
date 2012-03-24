@@ -729,14 +729,7 @@
             <field offset="64" name="unknown03" type="float" expected-value="0.0" />
             <field offset="68" name="sts" type="Reference" refTo="STS_V0"/>
             <field offset="80" name="bones"  type="Reference" refTo="BONEV1" />
-            <field offset="92" name="nSkinBones" type="uint32" /> 
-            
-            <!-- possible flag values: 25297021=0x182007d, 25559165=0x186007d
-            thus check for (vflags & 0x40000) != 0:
-            NiNtoxicated's 3d max exporter does something like x4 the vertices
-            no vertices may be 0x180007d: (vflags & 0x20000)== vertices exist
-                               0x186007d
-            -->
+            <field offset="92" name="nSkinBones" type="uint32" />
             <field offset="96" name="vFlags" type="uint32" default-value="0x180007d" >
                 <bits>
                     <bit mask="0x20000" name="hasVertices" />
