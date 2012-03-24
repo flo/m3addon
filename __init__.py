@@ -39,8 +39,6 @@ if "bpy" in locals():
     if "shared" in locals():
         imp.reload(shared)
 
-from . import m3import
-from . import m3export
 import bpy
 
 from bpy.props import StringProperty
@@ -808,6 +806,8 @@ class M3_OT_quickExport(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         fileName = scene.m3_export_options.path
+        if not "m3export" in locals():
+            from . import m3export
         m3export.exportParticleSystems(scene, fileName)
         return{'FINISHED'}
 
@@ -828,6 +828,9 @@ class M3_OT_export(bpy.types.Operator, ExportHelper):
     def execute(self, context):
         print("Export", self.properties.filepath)
         scene = context.scene
+        if not "m3export" in locals():
+            from . import m3export
+
         m3export.exportParticleSystems(scene, self.properties.filepath)
         return {'FINISHED'}
             
@@ -852,6 +855,8 @@ class M3_OT_import(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         print("Load", self.properties.filepath)
+        if not "m3import" in locals():
+            from . import m3import
         m3import.importFile(self.properties.filepath)
         return {'FINISHED'}
             
