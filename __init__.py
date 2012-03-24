@@ -39,6 +39,7 @@ if "bpy" in locals():
     if "shared" in locals():
         imp.reload(shared)
 
+from . import shared
 import bpy
 
 from bpy.props import StringProperty
