@@ -29,7 +29,6 @@ bl_info = {
 
 if "bpy" in locals():
     import imp
-    #TODO is it possible to load it on demand?
     if "m3import" in locals():
             imp.reload(m3import)
             
