@@ -165,7 +165,7 @@ class Exporter:
         elif animDataType == m3.SDS6V0:
             sds6Index = len(m3SequenceTransformationCollection.sds6)
             m3SequenceTransformationCollection.sds6.append(animData)
-            animRef = 0x50000 + sds6Index
+            animRef = 0x70000 + sds6Index
         else:
             raise Exception("Can't handle animation data of type %s yet" % animDataType)
         m3SequenceTransformationCollection.animRefs.append(animRef)
@@ -225,7 +225,7 @@ class Exporter:
             transferer.transferAnimatableColor("color2a")
             transferer.transferAnimatableColor("color2b")
             transferer.transferAnimatableColor("color2c")
-            transferer.transferAnimatableUInt16("partEmit")
+            transferer.transferAnimatableInt16("partEmit")
             m3ParticleSystem.speedUnk2 = self.createNullVector4As4uint8()
             transferer.transferFloat("lifespanRatio")
             transferer.transferInt("columns")
@@ -376,7 +376,7 @@ class Exporter:
         transferer.transferAnimatableFloat("brightMult2")
         m3Layer.unknown6 = self.createNullUInt32AnimationReference(0)
         m3Layer.unknown7 = self.createNullVector2AnimationReference(0.0, 0.0)
-        m3Layer.unknown8 = self.createNullUInt16AnimationReference(0)
+        m3Layer.unknown8 = self.createNullInt16AnimationReference(0)
         m3Layer.uvOffset = self.createNullVector2AnimationReference(0.0, 0.0)
         m3Layer.uvAngle = self.createNullVector3AnimationReference(0.0, 0.0, 0.0)
         m3Layer.uvTiling = self.createNullVector2AnimationReference(1.0, 1.0)
@@ -407,8 +407,8 @@ class Exporter:
         animRef.nullValue = self.createQuaternion(x=x, y=y, z=z, w=w)
         return animRef
         
-    def createNullUInt16AnimationReference(self, value):
-        animRef = m3.UInt16AnimationReference()
+    def createNullInt16AnimationReference(self, value):
+        animRef = m3.Int16AnimationReference()
         animRef.header = self.createNullAnimHeader()
         animRef.initValue = value
         animRef.nullValue = value
@@ -561,8 +561,8 @@ class BlenderToM3DataTransferer:
         setattr(self.m3Object, fieldName, animRef)
         #TODO export the animations
 
-    def transferAnimatableFloat(self, fieldName):
-        animRef = m3.FloatAnimationReference()
+    def transferAnimatableSingleFloatOrInt(self, fieldName, animRefClass, animRefFlags, animDataClass, convertMethod):
+        animRef = animRefClass()
         animRef.header = self.exporter.createNullAnimHeader()
         currentValue =  getattr(self.blenderObject, fieldName)
         animRef.initValue = currentValue
@@ -575,39 +575,40 @@ class BlenderToM3DataTransferer:
             frames = self.getAllFramesOf(animation)
             timeValuesInMS = self.allFramesToMSValues(frames)
             values = self.getNoneOrValuesFor(action, animPath, 0, frames)
-            
             if values != None:
-                m3AnimBlock = m3.SDR3V0()
+                convertedValues = []
+                for value in values:
+                    convertedValues.append(convertMethod(value))
+                m3AnimBlock = animDataClass()
                 m3AnimBlock.frames = timeValuesInMS
                 m3AnimBlock.flags = 0
                 m3AnimBlock.fend = self.exporter.frameToMS(animation.endFrame)
-                m3AnimBlock.keys = values
+                m3AnimBlock.keys = convertedValues
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
                 animIdToAnimDataMap[animId] = m3AnimBlock
-                animRef.header.flags = 1
+                animRef.header.flags = animRefFlags
                 animRef.header.animFlags = shared.animFlagsForAnimatedProperty
         #TODO Optimization: Remove keyframes that can be calculated by interpolation
         setattr(self.m3Object, fieldName, animRef)
-    
-    def transferAnimatableUInt16(self, fieldName):
-        animRef = m3.UInt16AnimationReference()
-        animRef.header = self.exporter.createNullAnimHeader()
-        currentValue =  getattr(self.blenderObject, fieldName)
-        animRef.initValue = currentValue
-        animRef.nullValue = currentValue
-        setattr(self.m3Object, fieldName, animRef)
-        #TODO export the animations
+   
+        
+    def transferAnimatableFloat(self, fieldName):
+        def identity(value):
+            return value
+        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass=m3.FloatAnimationReference, animRefFlags=1, animDataClass=m3.SDR3V0,convertMethod=identity)
+        
 
-    
+    def transferAnimatableInt16(self, fieldName):
+        def toInt16Value(value):
+            return min((1<<16)-1,  max(0, round(value)))
+        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass=m3.Int16AnimationReference, animRefFlags=0, animDataClass=m3.SDS6V0, convertMethod=toInt16Value)
+
     def transferAnimatableUInt32(self, fieldName):
-        animRef = m3.UInt32AnimationReference()
-        animRef.header = self.exporter.createNullAnimHeader()
-        currentValue =  getattr(self.blenderObject, fieldName)
-        animRef.initValue = currentValue
-        animRef.nullValue = currentValue
-        setattr(self.m3Object, fieldName, animRef)
-        #TODO export the animations
+        #TODO Test this method once the purpose of an animated int32 field is known
+        def toUInt32Value(value):
+            return min((1<<32)-1,  max(0, round(value)))
+        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass=m3.UInt32AnimationReference, animRefFlags=0, animDataClass=m3.FLAGV0, convertMethod=toUInt32Value)
 
     def transferAnimatableVector3(self, fieldName):
         animRef = m3.Vector3AnimationReference()

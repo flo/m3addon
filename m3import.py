@@ -303,7 +303,7 @@ def visitFieldPropertyPairs(blenderObject, m3Object, fieldVisitor):
                     if not (propertyType == bpy.props.FloatVectorProperty and (propertyArgs["size"] == 4) and ("ANIMATABLE" in propertyArgs["options"])):
                         raise Exception("The property %(fieldName)s of %(blenderClass)s should be an animated float vector of size 4" % {"fieldName":fieldName, "blenderClass":blenderClass })
                     fieldVisitor.visitAnimatableColor(blenderObject, m3Object, fieldName)
-                elif fieldTypeName == "UInt16AnimationReference":
+                elif fieldTypeName == "Int16AnimationReference":
                     if not (propertyType == bpy.props.IntProperty and "ANIMATABLE" in propertyArgs["options"]):
                         raise Exception("The property %(fieldName)s of %(blenderClass)s should be an animatable integer" % {"fieldName":fieldName, "blenderClass":blenderClass })
                     fieldVisitor.visitAnimatableInteger(blenderObject, m3Object, fieldName)
