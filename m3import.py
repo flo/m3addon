@@ -47,6 +47,9 @@ def toBlenderVector3(m3Vector3):
 def toBlenderColorVector(m3Color):
     return mathutils.Vector((m3Color.red /255.0, m3Color.green /255.0, m3Color.blue /255.0, m3Color.alpha /255.0))
 
+def toBlenderUVCoordinate(m3UVCoordinate):
+    return (m3UVCoordinate.x / 2048.0, 1 - m3UVCoordinate.y / 2048.0)
+
 def toBlenderMatrix(m3Matrix):
     return mathutils.Matrix((
         (m3Matrix.x.x, m3Matrix.y.x, m3Matrix.z.x, m3Matrix.w.x),
@@ -794,6 +797,13 @@ class Importer:
         mesh.from_pydata(vertexPositions, [], faces)
         mesh.update(calc_edges=True)
         
+        
+        uvLayer = mesh.uv_textures.new()
+        for faceIndex, face in enumerate(faces):
+            faceUV = uvLayer.data[faceIndex]
+            faceUV.uv1 = toBlenderUVCoordinate(m3Vertices[face[0]].uv0)
+            faceUV.uv2 = toBlenderUVCoordinate(m3Vertices[face[1]].uv0)
+            faceUV.uv3 = toBlenderUVCoordinate(m3Vertices[face[2]].uv0)
 
         for division in self.model.divisions:
             for region in division.regions:
