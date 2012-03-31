@@ -491,11 +491,35 @@ class Importer:
         checkOrder(model.bones)
         #TODO Make better use of bone rest positions
         #(currently only the location gets used but not the rotation)
-        heads = determineHeads(absoluteBoneRestPositions)
-        tails = determineTails(model.bones, heads)
+        heads = []
+        boneDirectionVectors = []
+        for absBoneRestMatrix in absoluteBoneRestPositions:
+            head = absBoneRestMatrix.translation
+            heads.append(head)
+            boneDirectionVector = absBoneRestMatrix.col[0].to_3d()
+            boneDirectionVector.normalize()
+            boneDirectionVectors.append(boneDirectionVector)
+            
+        childBoneIndexLists = []
+        for boneIndex, boneEntry in enumerate(model.bones):
+            childBoneIndexLists.append([])
+            if boneEntry.parent != -1:
+                childBoneIndexLists[boneEntry.parent].append(boneIndex)
         
+        tails = []
+        for head, childIndices, boneDirectionVector in zip(heads, childBoneIndexLists, boneDirectionVectors):
+            length = 0.1
+            for childIndex in childIndices:
+                headToChildHead = heads[childIndex] - head
+                if abs(headToChildHead.angle(boneDirectionVector)) < 0.1:
+                   length = headToChildHead.length 
+            
+            tail = head + length * boneDirectionVector
+            tails.append(tail)
+
+        #TODO calculate the correct tail rotations:
         tailRotations = determineRotationByTails(determineTailsOld(model.bones))
-        
+
         editBones = []
         absEditBoneMatrices = []
         relEditBoneMatrices = []
@@ -530,10 +554,10 @@ class Importer:
             location = toBlenderVector3(bone.location.initValue)
             
             if bone.parent != -1:
-                leftCorrectionMatrix = relEditBoneMatrices[index].inverted()   * tailRotations[bone.parent].inverted().to_matrix().to_4x4()
+                leftCorrectionMatrix = relEditBoneMatrices[index].inverted() * tailRotations[bone.parent].inverted().to_matrix().to_4x4()
                 rightCorrectionMatrix = tailRotations[index].to_matrix().to_4x4()
             else:
-                leftCorrectionMatrix = relEditBoneMatrices[index].inverted() #  * tailRotations[index].inverted().to_matrix().to_4x4()
+                leftCorrectionMatrix = relEditBoneMatrices[index].inverted()
                 rightCorrectionMatrix = tailRotations[index].to_matrix().to_4x4()
             
             leftScaleCorrection, leftRotCorrection = scaleAndRotationOf(leftCorrectionMatrix)
