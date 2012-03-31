@@ -434,12 +434,14 @@ class Importer:
         #(currently only the location gets used but not the rotation)
         heads = []
         boneDirectionVectors = []
+        rolls = []
         for absBoneRestMatrix in absoluteBoneRestPositions:
             head = absBoneRestMatrix.translation
             heads.append(head)
             boneDirectionVector = absBoneRestMatrix.col[0].to_3d()
             boneDirectionVector.normalize()
             boneDirectionVectors.append(boneDirectionVector)
+            rolls.append(mathutils.Vector((0,1,0)).angle(absBoneRestMatrix.col[2].to_3d()))
             
         childBoneIndexLists = []
         for boneIndex, boneEntry in enumerate(model.bones):
@@ -469,6 +471,7 @@ class Importer:
                 editBone.parent = parentEditBone
             editBone.head = heads[index]
             editBone.tail = tails[index]
+            editBone.roll = rolls[index]
             editBones.append(editBone)
             
             absEditBoneMatrix = editBone.matrix
