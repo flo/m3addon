@@ -165,24 +165,6 @@ def checkOrder(boneEntries):
                 raise Exception("Bones are not sorted as expected")
         index += 1
 
-
-def determineTailsOld(boneEntries):
-    possibleTailsLists = []
-    for boneEntry in boneEntries:
-        possibleTailsLists.append([])
-        if boneEntry.parent != -1:
-            possibleTailsOfParent = possibleTailsLists[boneEntry.parent]
-            possibleTailsOfParent.append(toBlenderVector3(boneEntry.location.initValue))
-    tails = []
-    for possibleTailList in possibleTailsLists:
-        if len(possibleTailList) >= 1 and possibleTailList[0].length > 0.05:
-            tail = possibleTailList[0]
-        else:
-            tail = mathutils.Vector((0,0.1,0))
-        tails.append(tail)
-    return tails
-
-
 def determineHeads(absolutBoneMatrices):
     heads = []
     for matrix in absolutBoneMatrices:
@@ -211,52 +193,11 @@ def determineTails(boneEntries, heads):
     return tails
 
 
-def determineRelativeTails(heads, tails):
-    relativeTails = []
-    index = 0
-    for head in heads:
-        tail = tails[index]
-        relativeTail = tail - head
-        relativeTails.append(relativeTail)
-        index += 1
-    return relativeTails
-
-
 def determineAbsoluteBoneRestPositions(model):
     matrices = []
     for inverseBoneRestPosition in model.absoluteInverseBoneRestPositions:
         matrices.append(toBlenderMatrix(inverseBoneRestPosition.matrix).inverted())
     return matrices
-
-def determineRotationByTails(tails):
-    rotations = []
-    oldTailNormalized = mathutils.Vector((0,1,0))
-    for targetTail in tails:        
-        epsilon = 0.001
-        if targetTail.angle(oldTailNormalized, 0.0) > epsilon:
-            rotVector = oldTailNormalized.cross(targetTail).normalized()
-            v1= oldTailNormalized
-            v2= rotVector
-            v3 = v1.cross(v2).normalized()
-            oldRot = mathutils.Matrix((
-                (v1.x, v2.x, v3.x),
-                (v1.y, v2.y, v3.y),
-                (v1.z, v2.z, v3.z)))
-            
-            v1= targetTail.normalized()
-            v2= rotVector
-            v3 = v1.cross(v2).normalized()
-            targetRot = mathutils.Matrix((
-                (v1.x, v2.x, v3.x),
-                (v1.y, v2.y, v3.y),
-                (v1.z, v2.z, v3.z)))
-            rotMatrix = targetRot*oldRot.inverted()
-            rot =  rotMatrix.to_quaternion()
-        else:
-            identity = mathutils.Quaternion((1.0, 0.0, 0.0, 0.0))
-            rot = identity
-        rotations.append(rot)
-    return rotations
 
 def toValidBoneName(name):
     maxLength = 31
@@ -459,7 +400,7 @@ class Importer:
         p_2 =  (e_2^-1 * r_1^-1 * m_2 * r_2)
         
         In the following code is
-        r_i = tailRotations[i]
+        r_i = rotFixMatrix
         e_i = relEditBoneMatrices[i]
         """
         
@@ -517,9 +458,6 @@ class Importer:
             tail = head + length * boneDirectionVector
             tails.append(tail)
 
-        #TODO calculate the correct tail rotations:
-        tailRotations = determineRotationByTails(determineTailsOld(model.bones))
-
         editBones = []
         absEditBoneMatrices = []
         relEditBoneMatrices = []
@@ -543,10 +481,15 @@ class Importer:
                 relEditBoneMatrix = absEditBoneMatrix
             relEditBoneMatrices.append(relEditBoneMatrix)
             index +=1
-            
+
         bpy.ops.object.mode_set(mode='POSE')
         print("Loading initial bone positions")
         index = 0
+        rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
+                                         (-1, 0, 0, 0),
+                                         ( 0, 0, 1, 0),
+                                         ( 0, 0, 0, 1)))
+        rotFixMatrixInverted = rotFixMatrix.transposed()
         for bone in model.bones:
             poseBone = self.armatureObject.pose.bones[toValidBoneName(bone.name)]
             scale = toBlenderVector3(bone.scale.initValue)
@@ -554,11 +497,11 @@ class Importer:
             location = toBlenderVector3(bone.location.initValue)
             
             if bone.parent != -1:
-                leftCorrectionMatrix = relEditBoneMatrices[index].inverted() * tailRotations[bone.parent].inverted().to_matrix().to_4x4()
-                rightCorrectionMatrix = tailRotations[index].to_matrix().to_4x4()
+                leftCorrectionMatrix = relEditBoneMatrices[index].inverted() * rotFixMatrixInverted
+                rightCorrectionMatrix = rotFixMatrix
             else:
                 leftCorrectionMatrix = relEditBoneMatrices[index].inverted()
-                rightCorrectionMatrix = tailRotations[index].to_matrix().to_4x4()
+                rightCorrectionMatrix = rotFixMatrix
             
             leftScaleCorrection, leftRotCorrection = scaleAndRotationOf(leftCorrectionMatrix)
             rightScaleCorrection, rightRotCorrection = scaleAndRotationOf(rightCorrectionMatrix)
