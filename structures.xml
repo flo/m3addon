@@ -308,7 +308,7 @@
         
         <structure name="BONE" version="1" size="160" >
             <description>A bone</description>
-            <field name="d1" type="int32" expected-value="-1" />
+            <field name="d1" type="int32" default-value="-1" />
             <field name="name" type="Reference" refTo="CHARV0" />
             <field name="flags" type="uint32" default-value="0" />
             <field name="parent" type="int16" default-value="-1" />
