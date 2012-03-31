@@ -540,6 +540,43 @@ class Importer:
             self.animateBone(bone, leftCorrectionMatrix, rightCorrectionMatrix)
             index+=1
     
+    def fix180DegreeRotationsInMapWithKeys(self, timeToRotationMap, timeEntries):
+        def sqr(x):
+            return x*x
+        lastRotation = None
+        for timeInMS in timeEntries:
+            rotation = timeToRotationMap.get(timeInMS)
+            if lastRotation != None:
+                sumOfSquares =  sqr(rotation.x - lastRotation.x) + sqr(rotation.y - lastRotation.y) + sqr(rotation.z - lastRotation.z) + sqr(rotation.w - lastRotation.w)
+                sumOfSquaresMinus =  sqr(-rotation.x - lastRotation.x) + sqr(-rotation.y - lastRotation.y) + sqr(-rotation.z - lastRotation.z) + sqr(-rotation.w - lastRotation.w)
+                if sumOfSquaresMinus < sumOfSquares:
+                    rotation = mathutils.Quaternion((-rotation.w, -rotation.x, -rotation.y, -rotation.z))
+                    timeToRotationMap[timeInMS] = rotation
+            
+            lastRotation = rotation
+            
+    def applyCorrectionToLocRotScaleMaps(self, leftCorrectionMatrix, rightCorrectionMatrix, timeToLocationMap, timeToRotationMap, timeToScaleMap, timeEntries):
+        for timeInMS in timeEntries:
+            location = timeToLocationMap.get(timeInMS)
+            rotation = timeToRotationMap.get(timeInMS)
+            scale = timeToScaleMap.get(timeInMS)
+
+            location = toBlenderVector3(location)
+            rotation = toBlenderQuaternion(rotation)
+            scale = toBlenderVector3(scale)
+            relSpecifiedMatrix = rotation.to_matrix().to_4x4()
+            relSpecifiedMatrix.col[0] *= scale.x
+            relSpecifiedMatrix.col[1] *= scale.y
+            relSpecifiedMatrix.col[2] *= scale.z
+            relSpecifiedMatrix.translation = location
+                                
+            newMatrix = leftCorrectionMatrix * relSpecifiedMatrix * rightCorrectionMatrix
+            scale, rotation = scaleAndRotationOf(newMatrix)
+            location = newMatrix.translation 
+            timeToLocationMap[timeInMS] = location
+            timeToRotationMap[timeInMS] = rotation
+            timeToScaleMap[timeInMS] = scale
+        
     def animateBone(self, m3Bone, leftCorrectionMatrix, rightCorrectionMatrix):
         for animationData in self.animations:
             scene = bpy.context.scene
@@ -559,6 +596,10 @@ class Importer:
             timeToScaleMap = animIdToTimeValueMap.get(m3Bone.scale.header.animId,{0:m3Bone.scale.initValue})
             timeToScaleMap = convertToBlenderVector3Map(timeToScaleMap)
 
+            rotKeys = list(timeToRotationMap.keys())
+            rotKeys.sort()
+            self.fix180DegreeRotationsInMapWithKeys(timeToRotationMap, rotKeys)
+
             timeEntries = []
             timeEntries.extend(timeToLocationMap.keys())
             timeEntries.extend(timeToRotationMap.keys())
@@ -569,6 +610,11 @@ class Importer:
             extendTimeToVectorMapByInterpolation(timeToLocationMap, timeEntries)
             extendTimeToQuaternionMapByInterpolation(timeToRotationMap, timeEntries)
             extendTimeToVectorMapByInterpolation(timeToScaleMap, timeEntries)
+            
+            self.applyCorrectionToLocRotScaleMaps(leftCorrectionMatrix, rightCorrectionMatrix, timeToLocationMap, timeToRotationMap, timeToScaleMap, timeEntries)
+
+            self.fix180DegreeRotationsInMapWithKeys(timeToRotationMap, timeEntries)
+
 
             group = boneName
             locXCurve = action.fcurves.new(locationAnimPath, 0, group)
@@ -581,25 +627,12 @@ class Importer:
             scaXCurve = action.fcurves.new(scaleAnimPath, 0, group)
             scaYCurve = action.fcurves.new(scaleAnimPath, 1, group)
             scaZCurve = action.fcurves.new(scaleAnimPath, 2, group)
+            
+            
             for timeInMS in timeEntries:
                 location = timeToLocationMap.get(timeInMS)
                 rotation = timeToRotationMap.get(timeInMS)
                 scale = timeToScaleMap.get(timeInMS)
-
-                location = toBlenderVector3(location)
-                rotation = toBlenderQuaternion(rotation)
-                scale = toBlenderVector3(scale)
-                relSpecifiedMatrix = rotation.to_matrix().to_4x4()
-                relSpecifiedMatrix.col[0] *= scale.x
-                relSpecifiedMatrix.col[1] *= scale.y
-                relSpecifiedMatrix.col[2] *= scale.z
-                relSpecifiedMatrix.translation = location
-                
-
-                newMatrix = leftCorrectionMatrix * relSpecifiedMatrix * rightCorrectionMatrix
-                scale, rotation = scaleAndRotationOf(newMatrix)
-                location = newMatrix.translation
-                    
                 frame = msToFrame(timeInMS)
                 insertLinearKeyFrame(locXCurve, frame, location.x)
                 insertLinearKeyFrame(locYCurve, frame, location.y)
