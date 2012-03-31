@@ -103,8 +103,8 @@ def extendTimeToValueMapByInterpolation(timeToVectorMap, wantedTimes, interpolat
             else:
                 timeSinceLeftTime =  wantedTime - leftInterpolationTime
                 intervalLength = rightInterpolationTime - leftInterpolationTime
-                leftFactor = timeSinceLeftTime / intervalLength
-                rightFactor = 1 - leftFactor
+                rightFactor = timeSinceLeftTime / intervalLength
+                leftFactor = 1 - rightFactor
                 timeToVectorMap[wantedTime] = interpolationFunc(leftFactor, leftInterpolationValue, rightFactor, rightInterpolationValue)
             wantedTimesIndex += 1
             if wantedTimesIndex == len(wantedTimes):
