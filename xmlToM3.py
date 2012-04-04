@@ -48,9 +48,9 @@ def createFieldContent(xmlNode, fieldName, fieldTypeInfo):
     if typeName == "CHARV0":
         return stringContentOf(xmlNode)
     elif (typeName == None and not fieldIsList):
-        return hexToByteArray(stringContentOf(xmlNode),xmlNode)
+        return hexToBytes(stringContentOf(xmlNode),xmlNode)
     elif typeName == "U8__V0":
-        return hexToByteArray(stringContentOf(xmlNode),xmlNode)
+        return bytearray(hexToBytes(stringContentOf(xmlNode),xmlNode))
     elif fieldIsList:
         return createElementList(xmlNode, fieldName, fieldTypeInfo.typeName, fieldTypeInfo.typeClass)
     else:
@@ -60,14 +60,14 @@ def createFieldContent(xmlNode, fieldName, fieldTypeInfo):
 def removeWhitespace(s):
     return s.translate({ord(" "):None,ord("\t"):None,ord("\r"):None,ord("\n"):None})
 
-def hexToByteArray(hexString, xmlNode):
+def hexToBytes(hexString, xmlNode):
     hexString = removeWhitespace(hexString)
     if hexString == "":
         return bytearray(0)
     if not hexString.startswith("0x"):
         raise Exception('hex string "%s" of node %s does not start with 0x' % (hexString,xmlNode.nodeName) )
     hexString = hexString[2:]
-    return bytearray([int(hexString[x:x+2], 16) for x in range(0, len(hexString),2)])
+    return bytes([int(hexString[x:x+2], 16) for x in range(0, len(hexString),2)])
 
 def stringContentOf(xmlNode):
     content = ""
