@@ -119,6 +119,10 @@ particleTypeList =  [("0", "Point", "Particles spawn at a certain point"),
                         ("3", 'Unknown', 'It\'s unknown what kind of particle system this is'),
                         ("4", 'Cylinder', 'Particles spawn in a cylinder like area')
                         ]
+matDefaultSettingsList = [("MESH", "Mesh Material", "A material for meshes"), 
+                        ("PARTICLE", 'Particle Material', "Material for particle systems")
+                        ]
+                        
 matBlendModeList = [("0", "Opaque", "no description yet"), 
                         ("1", 'Alpha Blend', "no description yet"), 
                         ("2", 'Add', 'no description yet'),
@@ -169,33 +173,32 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     alphaAsTeamColor = bpy.props.BoolProperty(options=set())
     alphaOnly = bpy.props.BoolProperty(options=set())
     alphaBasedShading = bpy.props.BoolProperty(options=set())
-    
 
 class M3Material(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Material", options=set())
     layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
-    blendMode = bpy.props.EnumProperty(items=matBlendModeList, options=set(), default="2")
+    blendMode = bpy.props.EnumProperty(items=matBlendModeList, options=set(), default="0")
     priority = bpy.props.IntProperty(options=set())
     specularity = bpy.props.FloatProperty(name="specularity", options=set())
     specMult = bpy.props.FloatProperty(name="spec. mult.", options=set(), default=1.0)
     emisMult = bpy.props.FloatProperty(name="emis. mult.", options=set(), default=1.0)
     layerBlendType = bpy.props.EnumProperty(items=matLayerAndEmisBlendModeList, options=set(), default="2")
-    emisBlendType = bpy.props.EnumProperty(items=matLayerAndEmisBlendModeList, options=set(), default="2")
+    emisBlendType = bpy.props.EnumProperty(items=matLayerAndEmisBlendModeList, options=set(), default="3")
     specType = bpy.props.EnumProperty(items=matSpecularTypeList, options=set(), default="0")
     unfogged = bpy.props.BoolProperty(options=set(), default=True)
-    twoSided = bpy.props.BoolProperty(options=set())
-    unshaded = bpy.props.BoolProperty(options=set(), default=True)
-    noShadowsCast = bpy.props.BoolProperty(options=set(), default=True)
-    noHitTest = bpy.props.BoolProperty(options=set(), default=True)
-    noShadowsReceived = bpy.props.BoolProperty(options=set(), default=True)
-    depthPrepass = bpy.props.BoolProperty(options=set())
-    useTerrainHDR = bpy.props.BoolProperty(options=set())
-    splatUVfix = bpy.props.BoolProperty(options=set())
-    softBlending = bpy.props.BoolProperty(options=set())
-    forParticles = bpy.props.BoolProperty(options=set(), default=True)
-    unknownFlag0x1 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=True)
-    unknownFlag0x4 = bpy.props.BoolProperty(options=set(), description="Makes mesh materials turn black but should be set for particle systems", default=True)
-    unknownFlag0x8 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=True)
+    twoSided = bpy.props.BoolProperty(options=set(), default=False)
+    unshaded = bpy.props.BoolProperty(options=set(), default=False)
+    noShadowsCast = bpy.props.BoolProperty(options=set(), default=False)
+    noHitTest = bpy.props.BoolProperty(options=set(), default=False)
+    noShadowsReceived = bpy.props.BoolProperty(options=set(), default=False)
+    depthPrepass = bpy.props.BoolProperty(options=set(), default=False)
+    useTerrainHDR = bpy.props.BoolProperty(options=set(), default=False)
+    splatUVfix = bpy.props.BoolProperty(options=set(), default=False)
+    softBlending = bpy.props.BoolProperty(options=set(), default=False)
+    forParticles = bpy.props.BoolProperty(options=set(), default=False)
+    unknownFlag0x1 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=False)
+    unknownFlag0x4 = bpy.props.BoolProperty(options=set(), description="Makes mesh materials turn black but should be set for particle systems", default=False)
+    unknownFlag0x8 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=False)
     unknownFlag0x200 = bpy.props.BoolProperty(options=set())
 
 class M3ParticleSystem(bpy.types.PropertyGroup):
@@ -618,15 +621,32 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.materials_add'
     bl_label       = "Add M3 Material"
     bl_description = "Adds an material for the export to Starcraft 2"
-
+    
+    defaultSetting = bpy.props.EnumProperty(items=matDefaultSettingsList, options=set(), default="MESH")
+    name = bpy.props.StringProperty(name="name", default="Stand", options=set())
+    
     def invoke(self, context, event):
         scene = context.scene
+        self.name = self.findUnusedName(scene)
+        context.window_manager.invoke_props_dialog(self, width=250)
+        return {'RUNNING_MODAL'}  
+        
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "defaultSetting", text="Default Settings") 
+        layout.prop(self, "name", text="Name") 
+  
+    def execute(self, context):
+        scene = context.scene
+        defaultSettingParticle = "PARTICLE"
         material = scene.m3_materials.add()
-        name = self.findUnusedName(scene)
-        material.name = name
+        material.name = self.name
         for (layerName, layerFieldName) in zip(shared.materialLayerNames, shared.materialLayerFieldNames):
             layer = material.layers.add()
             layer.name = layerName
+            if layerFieldName == "diffuseLayer":
+                if self.defaultSetting != defaultSettingParticle:
+                    layer.alphaAsTeamColor = True
             if layerFieldName == "evioMaskLayer":
                 layer.alphaOnly = True
             elif layerFieldName in ["alphaMaskLayer", "layer12", "layer13"]:
@@ -638,9 +658,21 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
                 layer.textureWrapY = False
                 layer.alphaOnly = True
         
+        if self.defaultSetting == defaultSettingParticle:
+            material.unfogged = True
+            material.blendMode = "2"
+            material.layerBlendType = "2"
+            material.emisBlendType = "2"
+            material.noShadowsCast = True
+            material.noHitTest = True
+            material.noShadowsReceived = True
+            material.forParticles = True
+            material.unknownFlag0x1 = True
+            material.unknownFlag0x2 = True
+            material.unknownFlag0x8 = True
+         
         scene.m3_material_index = len(scene.m3_materials)-1
-        return{'FINISHED'}
-        
+        return {'FINISHED'}
     def findUnusedName(self, scene):
         usedNames = set()
         for material in scene.m3_materials:
