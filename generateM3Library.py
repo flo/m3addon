@@ -1004,8 +1004,7 @@ class ValidateMethodAdder(Visitor):
             raise Exception("%%s is not an empty list" %% (fieldId))
 """
     validateKnownStruct = """
-        if type(instance.%(fieldName)s) != %(fieldType)s:
-            raise Exception("%%s is not of type %%s but %%s" %% (fieldId, "%(fieldType)s", type(instance.%(fieldName)s)))
+        %(fieldType)s.validateInstance(instance.%(fieldName)s, fieldId)
 """
     validateUnknownBytes = """
         if (type(instance.%(fieldName)s) != bytes) or (len(instance.%(fieldName)s) != %(fieldSize)s):
@@ -1020,14 +1019,14 @@ class ValidateMethodAdder(Visitor):
             raise Exception("%%s is not a bytearray but a %%s" %% (fieldId, type(instance.%(fieldName)s)))
 """
     validateREALV0Reference = """
-        if (type(instance.%(fieldName)s) != list):
+        if (type(instance.%(fieldName)s) != list):\
             raise Exception("%%s is not a list of float" %% (fieldId))
         for itemIndex, item in enumerate(instance.%(fieldName)s):
             if type(item) != float: 
                 itemId = "%%s[%%d]" %% (fieldId, itemIndex)
                 raise Exception("%%s is not an float" %% (itemId))
 """
-    validateIntReference = """
+    validateIntReference = """\
         if (type(instance.%(fieldName)s) != list):
             raise Exception("%%s is not a list of integers" %% (fieldId))
         for itemIndex, item in enumerate(instance.%(fieldName)s):

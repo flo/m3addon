@@ -687,6 +687,10 @@ class Importer:
             material.splatUVfix = materialsEntry.getNamedBit("flags", "splatUVfix")
             material.softBlending = materialsEntry.getNamedBit("flags", "softBlending")
             material.forParticles = materialsEntry.getNamedBit("flags", "forParticles")
+            material.unknownFlag0x1 = materialsEntry.getNamedBit("unknownFlags", "unknownFlag0x1")
+            material.unknownFlag0x4 = materialsEntry.getNamedBit("unknownFlags", "unknownFlag0x4")
+            material.unknownFlag0x8 = materialsEntry.getNamedBit("unknownFlags", "unknownFlag0x8")
+            material.unknownFlag0x200 = materialsEntry.getNamedBit("unknownFlags", "unknownFlag0x200")
 
 
     def createParticleSystems(self):

@@ -193,6 +193,10 @@ class M3Material(bpy.types.PropertyGroup):
     splatUVfix = bpy.props.BoolProperty(options=set())
     softBlending = bpy.props.BoolProperty(options=set())
     forParticles = bpy.props.BoolProperty(options=set(), default=True)
+    unknownFlag0x1 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=True)
+    unknownFlag0x4 = bpy.props.BoolProperty(options=set(), description="Makes mesh materials turn black but should be set for particle systems", default=True)
+    unknownFlag0x8 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=True)
+    unknownFlag0x200 = bpy.props.BoolProperty(options=set())
 
 class M3ParticleSystem(bpy.types.PropertyGroup):
 
@@ -357,6 +361,10 @@ class MaterialsPanel(bpy.types.Panel):
             layout.prop(material, 'layerBlendType', text="Layer Blend Type")
             layout.prop(material, 'emisBlendType', text="Emis. Blend Type")
             layout.prop(material, 'specType', text="Spec. Type")
+            layout.prop(material, 'unknownFlag0x1', text="unknownFlag0x1")
+            layout.prop(material, 'unknownFlag0x4', text="unknownFlag0x4")
+            layout.prop(material, 'unknownFlag0x8', text="unknownFlag0x8")
+            layout.prop(material, 'unknownFlag0x200', text="unknownFlag0x200")
             layout.prop(material, 'unfogged', text="Unfogged")
             layout.prop(material, 'twoSided', text="Two Sided")
             layout.prop(material, 'unshaded', text="Unshaded")

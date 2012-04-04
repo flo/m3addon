@@ -57,13 +57,8 @@ class Exporter:
     def createModel(self, m3FileName):
         model = m3.MODLV23()
         model.modelName = os.path.basename(m3FileName)
-        model.flags = 0x80d53
         
-        model.nSkinBones = 0
-        model.vFlags = 0x180007d # no vertices
-        model.divisions = [self.createEmptyDivision()]
-        model.boundings = self.createAlmostEmptyBoundingsWithRadius(2.0)
-        
+        self.initMesh(model)
         self.initMaterials(model)
         self.initParticles(model)
         self.prepareAnimationEndEvents()
@@ -72,6 +67,134 @@ class Exporter:
         model.matrix = self.createIdentityMatrix()
         model.uniqueUnknownNumber = 0
         return model
+    
+    def initMesh(self, model):
+        mesh = self.findMesh()
+        hasMesh = mesh != None
+        model.setNamedBit("flags", "hasMesh", hasMesh)
+        model.boundings = self.createAlmostEmptyBoundingsWithRadius(2.0)
+
+        if not hasMesh:
+            model.nSkinBones = 0
+            model.divisions = [self.createEmptyDivision()]
+            return
+        division = m3.DIV_V2()
+        model.divisions.append(division)
+        
+        boneIndex = self.addBoneWithRestPosAndReturnIndex(model, "StaticMesh", skinBone=True, realBone=True)
+        
+        boneLookupIndex = len(model.boneLookup)
+        model.boneLookup.append(boneIndex)
+        
+        firstFaceVertexIndexIndex = len(division.faces)
+        m3Vertices = []
+        for blenderFace in mesh.faces:
+            if len(blenderFace.vertices) != 3:
+                raise Exception("Only the export of meshes with triangles has been implemented")
+            for faceRelativeVertexIndex, blenderVertexIndex in enumerate(blenderFace.vertices):
+                blenderVertex =  mesh.vertices[blenderVertexIndex]
+                m3Vertex = m3.VertexFormat0x182007d()
+                m3Vertex.position = self.blenderToM3Vector(blenderVertex.co)
+                m3Vertex.boneWeight0 = 255
+                m3Vertex.boneLookupIndex0 = boneLookupIndex
+                if len(mesh.uv_textures) >= 1:
+                    uvData = mesh.uv_textures[0].data[blenderFace.index]
+                    m3Vertex.uv0 = self.convertBlenderToM3UVCoordinates(getattr(uvData, "uv%d" % (faceRelativeVertexIndex + 1)))
+                else:
+                    raise Exception("Exporting meshes without texture coordinates isn't supported yet")
+                m3Vertex.normal = self.blenderVector3AndScaleToM3Vector4As4uint8(blenderVertex.normal, 0.0)
+                m3Vertex.tangent = self.createVector4As4uint8FromFloats(0.0, 0.0, 0.0, 0.0)
+                m3.VertexFormat0x182007d.validateInstance(m3Vertex, "vertex")
+                m3Vertices.append(m3Vertex)
+        
+        model.vertices = m3.VertexFormat0x182007d.rawBytesForOneOrMore(m3Vertices)
+        model.vFlags = 0x182007d   
+        vertexIndicesOfFaces = list(range(firstFaceVertexIndexIndex,firstFaceVertexIndexIndex + len(m3Vertices)))
+        division.faces.extend(vertexIndicesOfFaces)
+        
+        bat = m3.BAT_V1()
+        bat.subId = 0
+        if len(self.scene.m3_materials) == 0:
+            raise Exception("Require a m3 material to export a mesh")
+        bat.matId = 0
+        division.bat.append(bat)
+        
+        minV = mathutils.Vector((float("inf"), float("inf") ,float("inf")))
+        maxV = mathutils.Vector((-float("inf"), -float("inf"), -float("inf")))
+        #TODO case 0 vertices
+        for blenderVertex in mesh.vertices:
+            for i in range(3):  
+                minV[i] = min(minV[i], blenderVertex.co[i])
+                maxV[i] = max(maxV[i], blenderVertex.co[i])
+        
+        diffV = minV - maxV
+        radius = diffV.length / 2
+        division.msec.append(self.createEmptyMSec(minX=minV[0], minY=minV[1], minZ=minV[2], maxX=maxV[0], maxY=maxV[1], maxZ=maxV[2], radius=radius))
+        region = m3.REGNV3()
+        region.firstVertexIndex = 0
+        region.numberOfVertices = len(m3Vertices)
+        region.firstFaceVertexIndexIndex = firstFaceVertexIndexIndex
+        region.numberOfFaceVertexIndices = len(vertexIndicesOfFaces)
+        region.numberOfBones = 1
+        region.firstBoneLookupIndex = boneLookupIndex
+        region.numberOfBoneLookupIndices = 1
+        region.rootBoneIndex = boneIndex
+        division.regions.append(region)
+        
+        model.nSkinBones = 1
+    
+    def blenderVector3AndScaleToM3Vector4As4uint8(self, blenderVector3, scale):
+        x = blenderVector3.x
+        y = blenderVector3.y
+        z = blenderVector3.z
+        w = scale
+        return self.createVector4As4uint8FromFloats(x, y, z, w)
+
+    def createVector4As4uint8FromFloats(self, x, y, z, w):
+        m3Vector = m3.Vector4As4uint8()
+        def convert(f):
+            return round((-f+1) / 2.0 * 255.0)
+        m3Vector.x = convert(x)
+        m3Vector.y = convert(y)
+        m3Vector.z = convert(z)
+        m3Vector.w = convert(w)
+        return m3Vector
+        
+    def convertBlenderToM3UVCoordinates(self, blenderUV):
+        m3UV = m3.Vector2As2int16()
+        m3UV.x = round(blenderUV.x * 2048) 
+        m3UV.y = round((1 - blenderUV.y) * 2048) 
+        return m3UV
+    
+    def blenderToM3Vector(self, blenderVector3):
+        return self.createVector3(blenderVector3.x, blenderVector3.y, blenderVector3.z)
+    
+    def addBoneWithRestPosAndReturnIndex(self, model, boneName, skinBone, realBone):
+        boneIndex = len(model.bones)
+        bone = self.createStaticBoneAtOrigin(boneName,skinBone=skinBone, realBone=realBone)
+        model.bones.append(bone)
+        
+        boneRestPos = self.createIdentityRestPosition()
+        model.absoluteInverseBoneRestPositions.append(boneRestPos)
+        return boneIndex
+        
+    def findMesh(self):
+        meshObject = None
+        for currentObject in bpy.data.objects:
+            if currentObject.type == 'MESH':
+                if meshObject == None:
+                    meshObject = currentObject
+                else:
+                    raise Exception("Multiple mesh objects can't be exported yet")
+        if (meshObject == None):
+            return None
+    
+        mesh = meshObject.data
+        if len(mesh.vertices) > 0:
+            return mesh
+        else:
+            return None
+        
     
     def frameToMS(self, frame):
         frameRate = self.scene.render.fps
@@ -174,11 +297,7 @@ class Exporter:
         scene = self.scene
         for particleSystemIndex, particleSystem in enumerate(scene.m3_particle_systems):
             boneName = "Star2Part" + particleSystem.boneSuffix
-            boneIndex = len(model.bones)
-            bone = self.createStaticBoneAtOrigin(boneName)
-            model.bones.append(bone)
-            boneRestPos = self.createIdentityRestPosition()
-            model.absoluteInverseBoneRestPositions.append(boneRestPos)
+            boneIndex = self.addBoneWithRestPosAndReturnIndex(boneName, skinBone=False, realBone=False)
             m3ParticleSystem = m3.PAR_V12()
             m3ParticleSystem.bone = boneIndex
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
@@ -302,10 +421,12 @@ class Exporter:
         iref.matrix = self.createIdentityMatrix()
         return iref
 
-    def createStaticBoneAtOrigin(self, name):
+    def createStaticBoneAtOrigin(self, name, skinBone, realBone):
         m3Bone = m3.BONEV1()
         m3Bone.name = name
         m3Bone.flags = 0
+        m3Bone.setNamedBit("flags", "skinned", skinBone)
+        m3Bone.setNamedBit("flags", "real", realBone)
         m3Bone.parent = -1
         m3Bone.location = self.createNullVector3AnimationReference(0.0, 0.0, 0.0)
         m3Bone.rotation = self.createNullQuaternionAnimationReference(x=0.0, y=0.0, z=0.0, w=1.0)
@@ -328,7 +449,6 @@ class Exporter:
     def createMaterial(self, materialIndex, material):
         m3Material = m3.MAT_V15()
         m3Material.name = material.name
-        m3Material.unknown0 = 13 # seems to stand for particle materials
         m3Material.setNamedBit("flags", "unfogged", material.unfogged)
         m3Material.setNamedBit("flags", "twoSided", material.twoSided)
         m3Material.setNamedBit("flags", "unshaded", material.unshaded)
@@ -340,6 +460,10 @@ class Exporter:
         m3Material.setNamedBit("flags", "splatUVfix", material.splatUVfix)
         m3Material.setNamedBit("flags", "softBlending", material.softBlending)
         m3Material.setNamedBit("flags", "forParticles", material.forParticles)
+        m3Material.setNamedBit("unknownFlags", "unknownFlag0x1", material.unknownFlag0x1)
+        m3Material.setNamedBit("unknownFlags", "unknownFlag0x4", material.unknownFlag0x4)
+        m3Material.setNamedBit("unknownFlags", "unknownFlag0x8", material.unknownFlag0x8)
+        m3Material.setNamedBit("unknownFlags", "unknownFlag0x200", material.unknownFlag0x200)
         m3Material.blendMode = int(material.blendMode)
         m3Material.priority = material.priority
         m3Material.specularity = material.specularity
@@ -455,12 +579,12 @@ class Exporter:
         division.msec = [self.createEmptyMSec()]
         return division
     
-    def createEmptyMSec(self):
+    def createEmptyMSec(self, minX=0.0, minY=0.0, minZ=0.0, maxX=0.0, maxY=0.0, maxZ=0.0, radius=0.0):
         msec = m3.MSECV1()
-        msec.boundingsAnimation = self.createDummyBoundingsAnimation()
+        msec.boundingsAnimation = self.createDummyBoundingsAnimation(minX, minY, minZ, maxX, maxY, maxZ, radius)
         return msec
     
-    def createDummyBoundingsAnimation(self):
+    def createDummyBoundingsAnimation(self, minX=0.0, minY=0.0, minZ=0.0, maxX=0.0, maxY=0.0, maxZ=0.0, radius=0.0):
         boundingsAnimRef = m3.BNDSV0AnimationReference()
         animHeader = m3.AnimationReferenceHeader()
         animHeader.flags = 0x0
@@ -468,15 +592,15 @@ class Exporter:
         animHeader.animId = 0x1f9bd2 # boudings seem to have always this id
         #TODO make sure the animID is unique
         boundingsAnimRef.header = animHeader
-        boundingsAnimRef.initValue = self.createEmptyBoundings()
-        boundingsAnimRef.nullValue = self.createEmptyBoundings()
+        boundingsAnimRef.initValue = self.createBoundings(minX, minY, minZ, maxX, maxY, maxZ, radius)
+        boundingsAnimRef.nullValue = self.createBoundings(minX, minY, minZ, maxX, maxY, maxZ, radius)
         return boundingsAnimRef
     
-    def createEmptyBoundings(self):
+    def createBoundings(self, minX=0.0, minY=0.0, minZ=0.0, maxX=0.0, maxY=0.0, maxZ=0.0, radius=0.0):
         boundings = m3.BNDSV0()
-        boundings.min = self.createVector3(0.0,0.0,0.0)
-        boundings.max = self.createVector3(0.0,0.0,0.0)
-        boundings.radius = 0.0
+        boundings.min = self.createVector3(minX, minY, minZ)
+        boundings.max = self.createVector3(maxX, maxY, maxZ)
+        boundings.radius = radius
         return boundings
         
     def createAlmostEmptyBoundingsWithRadius(self, r):
@@ -484,7 +608,7 @@ class Exporter:
         boundings.min = self.createVector3(0.0,0.0,0.0)
         epsilon = 9.5367431640625e-07
         boundings.max = self.createVector3(epsilon, epsilon, epsilon)
-        boundings.radius = r
+        boundings.radius = float(r)
         return boundings
 
     def createVector4(self, x, y, z, w):

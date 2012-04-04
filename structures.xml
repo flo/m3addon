@@ -199,14 +199,14 @@
         <structure name="VertexFormat0x182007d" size="32" >
             <description>Vertex with one UV coordinate</description>
             <field name="position" type="VEC3V0" />
-            <field name="boneWeight0" type="uint8" />
-            <field name="boneWeight1" type="uint8" />
-            <field name="boneWeight2" type="uint8" />
-            <field name="boneWeight3" type="uint8" />
-            <field name="boneLookupIndex0" type="uint8" />
-            <field name="boneLookupIndex1" type="uint8" />
-            <field name="boneLookupIndex2" type="uint8" />
-            <field name="boneLookupIndex3" type="uint8" />
+            <field name="boneWeight0" type="uint8" default-value="0" />
+            <field name="boneWeight1" type="uint8" default-value="0" />
+            <field name="boneWeight2" type="uint8" default-value="0" />
+            <field name="boneWeight3" type="uint8" default-value="0"/>
+            <field name="boneLookupIndex0" type="uint8" default-value="0" />
+            <field name="boneLookupIndex1" type="uint8" default-value="0" />
+            <field name="boneLookupIndex2" type="uint8" default-value="0" />
+            <field name="boneLookupIndex3" type="uint8" default-value="0" />
             <field name="normal" type="Vector4As4uint8" />
             <field name="uv0" type="Vector2As2int16" />
             <field name="tangent" type="Vector4As4uint8" />
@@ -214,14 +214,14 @@
         <structure name="VertexFormat0x186007d" size="36" >
             <description>Vertex with two UV coordinates</description>
             <field name="position" type="VEC3V0" />
-            <field name="boneWeight0" type="uint8" />
-            <field name="boneWeight1" type="uint8" />
-            <field name="boneWeight2" type="uint8" />
-            <field name="boneWeight3" type="uint8" />
-            <field name="boneLookupIndex0" type="uint8" />
-            <field name="boneLookupIndex1" type="uint8" />
-            <field name="boneLookupIndex2" type="uint8" />
-            <field name="boneLookupIndex3" type="uint8" />
+            <field name="boneWeight0" type="uint8" default-value="0" />
+            <field name="boneWeight1" type="uint8" default-value="0" />
+            <field name="boneWeight2" type="uint8" default-value="0" />
+            <field name="boneWeight3" type="uint8" default-value="0" />
+            <field name="boneLookupIndex0" type="uint8" default-value="0" />
+            <field name="boneLookupIndex1" type="uint8" default-value="0" />
+            <field name="boneLookupIndex2" type="uint8" default-value="0" />
+            <field name="boneLookupIndex3" type="uint8" default-value="0" />
             <field name="normal" type="Vector4As4uint8" />
             <field name="uv0" type="Vector2As2int16" />
             <field name="uv1" type="Vector2As2int16" />
@@ -310,7 +310,20 @@
             <description>A bone</description>
             <field name="d1" type="int32" default-value="-1" />
             <field name="name" type="Reference" refTo="CHARV0" />
-            <field name="flags" type="uint32" default-value="0" />
+            <field name="flags" type="uint32" default-value="0" >
+                <bits>
+                    <bit mask="0x1" name="inhertTranslation" />
+                    <bit mask="0x2" name="inheritScale" />
+                    <bit mask="0x4" name="inheritRotation" />
+                    <bit mask="0x10" name="billboard1" />
+                    <bit mask="0x40" name="billboard2" />
+                    <bit mask="0x100" name="twoDProjection" />
+                    <bit mask="0x200" name="animated " />
+                    <bit mask="0x400" name="inverseKinematics " />
+                    <bit mask="0x800 " name="skinned" />
+                    <bit mask="0x2000" name="real" />
+                </bits>
+            </field>
             <field name="parent" type="int16" default-value="-1" />
             <field name="s1" type="uint16" expected-value="0" />
             <field name="location" type="Vector3AnimationReference"/>
@@ -412,22 +425,22 @@
             <field name="numberOfVertices" type="uint32" />
             <field name="firstFaceVertexIndexIndex" type="uint32" />
             <field name="numberOfFaceVertexIndices" type="uint32" />
-            <field name="bcount" type="uint16" />
+            <field name="numberOfBones" type="uint16" />
             <field name="firstBoneLookupIndex" type="uint16" />
             <field name="numberOfBoneLookupIndices" type="uint16" />
             <field name="unknown2" type="uint16" expected-value="0" />
             <field name="unknown3" type="uint8" default-value="1" />
             <field name="unknown4" type="uint8" default-value="1" />
-            <field name="rootBone" type="uint16" />
+            <field name="rootBoneIndex" type="uint16" />
         </structure>
         
         
         <structure name="BAT_" version="1" size="14" >
             <description></description>
             <field name="unknown0" type="uint32" expected-value="0" />
-            <field name="subid" type="uint16" />
+            <field name="subId" type="uint16" />
             <field name="unknown1" type="uint32" expected-value="0" />
-            <field name="matid" type="uint16" />
+            <field name="matId" type="uint16" />
             <field name="unknown2" type="int16" default-value="-1" />
         </structure>
         
@@ -512,11 +525,14 @@
         <structure name="MAT_" version="15" size="268">
             <description>Material</description>
             <field name="name" type="Reference" refTo="CHARV0" />
-            
-            <!-- unknown0 seems to be 13 for at least particle materials but
-            it is 512 else
-            -->
-            <field name="unknown0" type="uint32" default-value="13" />
+            <field name="unknownFlags" type="uint32" default-value="0">
+                <bits>
+                    <bit mask="0x1" name="unknownFlag0x1" />
+                    <bit mask="0x4" name="unknownFlag0x4" />
+                    <bit mask="0x8" name="unknownFlag0x8" />
+                    <bit mask="0x200" name="unknownFlag0x200" />
+                </bits>
+            </field>     
             <field name="flags" type="uint32" default-value="0" >
                 <bits>
                     <bit mask="0x4" name="unfogged" />
@@ -713,11 +729,9 @@
                 bone must have same size like IREF
             </description>
             <field offset="0" name="modelName" type="Reference" refTo="CHARV0"/>
-            <!-- must be one of 527835, 1576275, 527699, 527827;
-            NiNtoxicated's m3 exporter use 1576275 -->
-            <field offset="12" name="flags" type="uint32">
+            <field offset="12" name="flags" type="uint32" default-value="0x80d53">
                 <bits>
-                    <!-- TODO -->
+                    <bit mask="0x100000" name="hasMesh" />
                 </bits>
             </field>
             <field offset="16" name="sequences" type="Reference" refTo="SEQSV1"  />
