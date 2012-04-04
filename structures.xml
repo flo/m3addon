@@ -723,6 +723,27 @@
             <field name="unknown" size="48" />
         </structure>
 
+        <structure name="RIB_" version="6" size="748" >
+            <description>
+                Unknown
+            </description>
+            <field name="unknown" size="748" />
+        </structure>
+        
+        <structure name="SRIB" version="0" size="272" >
+            <description>
+                Unknown
+            </description>
+            <field name="unknown" size="272" />
+        </structure>
+        
+        <structure name="IKJT" version="0" size="32" >
+            <description>
+                Unknown
+            </description>
+            <field name="unknown" size="32" />
+        </structure>
+        
         <structure name="MODL" version="23" size="784" >
             <description>
                 Describes the content of the file.
@@ -789,7 +810,7 @@
             <field name="crepData" type="Reference" />
             <field offset="396" name="particles" type="Reference" refTo="PAR_V12" />
             <field offset="408" name="particleCopies" type="Reference" />
-            <field offset="420" name="ribData" type="Reference" />
+            <field offset="420" name="ribData" type="Reference" refTo="RIB_V6" />
             <field offset="432" name="projData" type="Reference" />
             <field offset="444" name="forData" type="Reference" refTo="FOR_V1" />
             <field offset="456" name="wrpData" type="Reference" />
@@ -800,7 +821,7 @@
             <field name="unknownMaybeRef2" type="Reference" />
             <field name="unknownMaybeRef3" type="Reference" />
             <field name="unknownMaybeRef4" type="Reference" />
-            <field offset="528" name="ikjtData" type="Reference" />
+            <field offset="528" name="ikjtData" type="Reference" refTo="IKJTV0"/>
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
             <field name="unknownMaybeRef5" type="Reference" />
             <field offset="552" name="PATU" type="Reference" />
