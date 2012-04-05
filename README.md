@@ -13,7 +13,7 @@ The following content can be imported:
 
   * Mesh
   * Vertex Groups (bone weights)
-  * Animated Bones (They don't get imported always correctly)
+  * Animated Bones
   * Animations
   * Animated Materials
   * Animated Particle Systems

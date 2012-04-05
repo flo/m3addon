@@ -406,9 +406,12 @@ class Importer:
         r_i = rotFixMatrix
         e_i = relEditBoneMatrices[i]
         """
-        
-        
         model = self.model
+        rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
+                                         (-1, 0, 0, 0),
+                                         ( 0, 0, 1, 0),
+                                         ( 0, 0, 0, 1)))
+
         absoluteBoneRestPositions = determineAbsoluteBoneRestPositions(model)
         absSpecifiedMatrices = []
         relSpecifiedMatrices = []
@@ -441,11 +444,33 @@ class Importer:
         for absBoneRestMatrix in absoluteBoneRestPositions:
             head = absBoneRestMatrix.translation
             heads.append(head)
-            boneDirectionVector = absBoneRestMatrix.col[0].to_3d()
+            wantedAbsBoneRestMatrix = absBoneRestMatrix * rotFixMatrix
+            # In blender the edit bone with the vector (0,1,0) stands for a idenity matrix
+            # So the second column of a edit bone matrix represents the bone vector
+            boneDirectionVector = wantedAbsBoneRestMatrix.col[1].to_3d()
             boneDirectionVector.normalize()
             boneDirectionVectors.append(boneDirectionVector)
-            rolls.append(mathutils.Vector((0,1,0)).angle(absBoneRestMatrix.col[2].to_3d()))
+
+            simpleTail = head + boneDirectionVector
+            editBoneMatrix = boneMatrix(head=head, tail=simpleTail, roll=0)
+            boneMatrix3x3 = editBoneMatrix.to_3x3()
             
+            angleZToZ = boneMatrix3x3.col[2].angle(wantedAbsBoneRestMatrix.col[2].to_3d())
+            angleZToX = boneMatrix3x3.col[0].angle(wantedAbsBoneRestMatrix.col[0].to_3d())
+
+            if angleZToZ < 90:
+                if angleZToX < 90:
+                    rollAngle = angleZToZ
+                else:
+                    rollAngle = -angleZToZ
+            else:
+                if angleZToX > 90:
+                    rollAngle = angleZToZ
+                else:
+                    rollAngle = -angleZToZ
+
+            rolls.append(rollAngle)
+        
         childBoneIndexLists = []
         for boneIndex, boneEntry in enumerate(model.bones):
             childBoneIndexLists.append([])
@@ -491,10 +516,6 @@ class Importer:
         bpy.ops.object.mode_set(mode='POSE')
         print("Loading initial bone positions")
         index = 0
-        rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
-                                         (-1, 0, 0, 0),
-                                         ( 0, 0, 1, 0),
-                                         ( 0, 0, 0, 1)))
         rotFixMatrixInverted = rotFixMatrix.transposed()
         for bone in model.bones:
             poseBone = self.armatureObject.pose.bones[toValidBoneName(bone.name)]
@@ -512,30 +533,10 @@ class Importer:
             leftScaleCorrection, leftRotCorrection = scaleAndRotationOf(leftCorrectionMatrix)
             rightScaleCorrection, rightRotCorrection = scaleAndRotationOf(rightCorrectionMatrix)
             
-            #TODO handle negative scales
             location = leftCorrectionMatrix * location
             rotation = leftRotCorrection * rotation * rightRotCorrection
             #TODO scale (negative scale?)
-            
-            
-            
-            
-            
-            # Only bones with the size (0,X,0) have the correct rotation later.
-            # It makes however sence to have different bones so that they have visually the correct rotation
-            # When choosing a non (0,X,0) tail it's necessary
-            # to compensate the rotation of the armature bone tail,
-            # by rotating and moving the corresponding pose bone.
-            # The rotation of the tail also affects the position
-            # of the pose bone which got rotated.
-            # After this correction children do not need to be adjusted
-            #old calc:
-            #tailRotation = tailRotations[index]
-            #inverseTailRotation = tailRotation.inverted()
-            #location = inverseTailRotation * location 
-            #rotation = inverseTailRotation * rotation * tailRotation
-            
-            # TODO if calculations are correct, the following values will be on zero/identity
+
             poseBone.scale = scale
             poseBone.rotation_quaternion = rotation
             poseBone.location = location
