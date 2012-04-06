@@ -77,11 +77,11 @@
             <field name="x" type="int16"/>
             <field name="y" type="int16" />
         </structure>
-        <structure name="Color" size="4">
-            <description>A unsigned byte Vector with 4 components</description>
-            <field name="red" type="uint8"/>
-            <field name="green" type="uint8" />
+        <structure name="COL" version="0" size="4">
+            <description>Defines a color with alpha using 1 byte for each color component</description>
             <field name="blue" type="uint8"/>
+            <field name="green" type="uint8" />
+            <field name="red" type="uint8"/>
             <field name="alpha" type="uint8"/>
         </structure>
         <structure name="BNDS" version="0" size="28">
@@ -150,8 +150,8 @@
         <structure name="ColorAnimationReference" size="20">
             <description>Animatable color</description>
             <field name="header" type="AnimationReferenceHeader" />
-            <field name="initValue" type="Color" />
-            <field name="nullValue" type="Color" />
+            <field name="initValue" type="COLV0" />
+            <field name="nullValue" type="COLV0" />
             <field name="unknown" type="uint32" expected-value="0" />
         </structure>
         <structure name="BNDSV0AnimationReference" size="68">
@@ -273,7 +273,13 @@
             <field name="fend" type="uint32" />
             <field name="keys" type="Reference" refTo="REALV0" />
         </structure>
-
+        <structure name="SDCC" version="0" size="32" >
+            <description>Animation block with reference to COL (Color)</description>
+            <field name="frames" type="Reference" refTo="I32_V0" />
+            <field name="flags" type="uint32" />
+            <field name="fend" type="uint32" />
+            <field name="keys" type="Reference" refTo="COLV0" />
+        </structure>
         <structure name="SDS6" version="0" size="32" >
             <description>Animation block with reference to I16_</description>
             <field name="frames" type="Reference" refTo="I32_V0" />
@@ -352,14 +358,14 @@
             <field name="animIds" type="Reference" refTo="U32_V0" />
             <field name="animRefs" type="Reference" refTo="U32_V0"/>
             <field name="d2" type="uint32" expected-value="0" />
-            <field name="sdev" type="Reference" refTo="SDEVV0"/>
+            <field name="sdev" type="Reference" refTo="SDEVV0" />
             <field name="sd2v" type="Reference" refTo="SD2VV0" />
-            <field name="sd3v" type="Reference" refTo="SD3VV0"/>
-            <field name="sd4q" type="Reference" refTo="SD4QV0"/>
-            <field name="sdcc" type="Reference" />
-            <field name="sdr3" type="Reference" refTo="SDR3V0"/>
+            <field name="sd3v" type="Reference" refTo="SD3VV0" />
+            <field name="sd4q" type="Reference" refTo="SD4QV0" />
+            <field name="sdcc" type="Reference" refTo="SDCCV0" />
+            <field name="sdr3" type="Reference" refTo="SDR3V0" />
             <field name="unknownRef8" type="Reference" />
-            <field name="sds6" type="Reference" refTo="SDS6V0"/>
+            <field name="sds6" type="Reference" refTo="SDS6V0" />
             <field name="unknownRef10" type="Reference" />
             <field name="unknownRef11" type="Reference" />
             <field name="unknownRef12" type="Reference" />

@@ -281,6 +281,10 @@ class Exporter:
             sd4qIndex = len(m3SequenceTransformationCollection.sd4q)
             m3SequenceTransformationCollection.sd4q.append(animData)
             animRef = 0x30000 + sd4qIndex
+        elif animDataType == m3.SDCCV0:
+            sdccIndex = len(m3SequenceTransformationCollection.sdcc)
+            m3SequenceTransformationCollection.sdcc.append(animData)
+            animRef = 0x40000 + sdccIndex
         elif animDataType == m3.SDR3V0:
             sdr3Index = len(m3SequenceTransformationCollection.sdr3)
             m3SequenceTransformationCollection.sdr3.append(animData)
@@ -400,7 +404,7 @@ class Exporter:
         return v
     
     def toM3Color(self, blenderColor):
-        color = m3.Color()
+        color = m3.COLV0()
         color.red = self.toM3ColorComponent(blenderColor[0])
         color.green = self.toM3ColorComponent(blenderColor[1])
         color.blue = self.toM3ColorComponent(blenderColor[2])
@@ -626,7 +630,15 @@ class Exporter:
         q.z = z
         q.w = w
         return q
-        
+    
+    def createColor(self, r, g, b, a):
+        color = m3.COLV0()
+        color.red = self.toM3ColorComponent(r)
+        color.green = self.toM3ColorComponent(g)
+        color.blue = self.toM3ColorComponent(b)
+        color.alpha = self.toM3ColorComponent(a)
+        return color
+
     def createVector3(self, x, y, z):
         v = m3.VEC3V0()
         v.x = x
@@ -683,7 +695,42 @@ class BlenderToM3DataTransferer:
         animRef.initValue = m3CurrentColor
         animRef.nullValue = m3CurrentColor
         setattr(self.m3Object, fieldName, animRef)
-        #TODO export the animations
+        
+        animId = animRef.header.animId
+        animPath = self.animPathPrefix + fieldName
+        
+        for animation, action in self.animationActionTuples:
+            frames = self.getAllFramesOf(animation)
+            timeValuesInMS = self.allFramesToMSValues(frames)
+            redValues = self.getNoneOrValuesFor(action, animPath, 0, frames)
+            greenValues = self.getNoneOrValuesFor(action, animPath, 1, frames)
+            blueValues = self.getNoneOrValuesFor(action, animPath, 2, frames)
+            alphaValues = self.getNoneOrValuesFor(action, animPath, 2, frames)
+            if (redValues != None) or (greenValues != None) or (blueValues != None) or (alphaValues != None):
+                if redValues == None:
+                    redValues = len(timeValuesInMS) * [m3CurrentColor.red]
+                if greenValues == None:
+                    greenValues = len(timeValuesInMS) * [m3CurrentColor.green]
+                if blueValues == None:
+                    blueValues = len(timeValuesInMS) * [m3CurrentColor.blue]
+                if alphaValues == None:
+                    alphaValues = len(timeValuesInMS) * [m3CurrentColor.alpha]
+                colors = []
+                for (r,g,b,a) in zip(redValues, greenValues, blueValues, alphaValues):
+                    color = self.exporter.createColor(r=r, g=g, b=b, a=a)
+                    colors.append(color)
+                
+                m3AnimBlock = m3.SDCCV0()
+                m3AnimBlock.frames = timeValuesInMS
+                m3AnimBlock.flags = 0
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.endFrame)
+                m3AnimBlock.keys = colors
+                
+                animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
+                animIdToAnimDataMap[animId] = m3AnimBlock
+                animRef.header.flags = 1
+                animRef.header.animFlags = shared.animFlagsForAnimatedProperty
+        #TODO Optimization: Remove keyframes that can be calculated by interpolation   
 
     def transferAnimatableSingleFloatOrInt(self, fieldName, animRefClass, animRefFlags, animDataClass, convertMethod):
         animRef = animRefClass()
