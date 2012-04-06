@@ -413,26 +413,6 @@ class Importer:
                                          ( 0, 0, 0, 1)))
 
         absoluteBoneRestPositions = determineAbsoluteBoneRestPositions(model)
-        absSpecifiedMatrices = []
-        relSpecifiedMatrices = []
-        index = 0
-        for boneEntry in model.bones:
-            scale = toBlenderVector3(boneEntry.scale.initValue)
-            rotation = toBlenderQuaternion(boneEntry.rotation.initValue)
-            location = toBlenderVector3(boneEntry.location.initValue)
-            
-            relSpecifiedMatrix = rotation.to_matrix().to_4x4()
-            relSpecifiedMatrix.col[0] *= scale.x
-            relSpecifiedMatrix.col[1] *= scale.y
-            relSpecifiedMatrix.col[2] *= scale.z
-            relSpecifiedMatrix.translation = location
-            relSpecifiedMatrices.append(relSpecifiedMatrix)
-            if boneEntry.parent != -1:
-                absSpecifiedMatrix = absSpecifiedMatrices[boneEntry.parent] * relSpecifiedMatrix 
-            else:
-                absSpecifiedMatrix = relSpecifiedMatrix
-            absSpecifiedMatrices.append(absSpecifiedMatrix)
-            index += 1
         
         bpy.ops.object.mode_set(mode='EDIT')
         checkOrder(model.bones)
