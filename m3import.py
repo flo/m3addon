@@ -37,6 +37,7 @@ from . import m3
 from . import shared
 import bpy
 import mathutils
+import math
 
 def toBlenderQuaternion(m3Quaternion):
     return mathutils.Quaternion((m3Quaternion.w, m3Quaternion.x, m3Quaternion.y, m3Quaternion.z))
@@ -203,20 +204,14 @@ def determineRolls(absoluteBoneRestPositions, heads, tails):
     for absBoneRestMatrix, head, tail in zip(absoluteBoneRestPositions, heads, tails):
         editBoneMatrix = boneMatrix(head=head, tail=tail, roll=0)
         boneMatrix3x3 = editBoneMatrix.to_3x3()
-        
-        angleZToZ = boneMatrix3x3.col[2].angle(absBoneRestMatrix.col[2].to_3d())
-        angleZToX = boneMatrix3x3.col[0].angle(absBoneRestMatrix.col[0].to_3d())
 
-        if angleZToZ < 90:
-            if angleZToX < 90:
-                rollAngle = angleZToZ
-            else:
-                rollAngle = -angleZToZ
+        angleZToZ = boneMatrix3x3.col[2].angle(absBoneRestMatrix.col[2].to_3d())
+        angleZToX = boneMatrix3x3.col[2].angle(absBoneRestMatrix.col[0].to_3d())
+        
+        if angleZToX > math.pi / 2.0:
+            rollAngle = angleZToZ
         else:
-            if angleZToX > 90:
-                rollAngle = angleZToZ
-            else:
-                rollAngle = -angleZToZ
+            rollAngle = -angleZToZ
 
         rolls.append(rollAngle)
     return rolls
