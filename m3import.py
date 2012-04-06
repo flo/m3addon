@@ -64,6 +64,8 @@ rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
                                     (-1, 0, 0, 0),
                                     ( 0, 0, 1, 0),
                                     ( 0, 0, 0, 1)))
+rotFixMatrixInverted = rotFixMatrix.transposed()
+
 
 def msToFrame(timeInMS):
     return round(timeInMS / 1000.0 * FRAME_RATE)
@@ -431,6 +433,7 @@ class Importer:
         e_i = relEditBoneMatrices[i]
         """
         model = self.model
+        print("Creating bone structure in rest position")
 
         absoluteBoneRestPositions = determineAbsoluteBoneRestPositions(model)
                     
@@ -446,36 +449,18 @@ class Importer:
         tails = determineTails(model.bones, heads, boneDirectionVectors)
         rolls = determineRolls(absoluteBoneRestPositions, heads , tails)
 
-        editBones = []
-        absEditBoneMatrices = []
-        relEditBoneMatrices = []
-        index = 0
-        for boneEntry in model.bones:
-            editBone = self.armature.edit_bones.new(toValidBoneName(boneEntry.name))
-            if boneEntry.parent != -1:
-                parentEditBone = editBones[boneEntry.parent]
-                editBone.parent = parentEditBone
-            editBone.head = heads[index]
-            editBone.tail = tails[index]
-            editBone.roll = rolls[index]
-            editBones.append(editBone)
-            
-            absEditBoneMatrix = editBone.matrix
-            absEditBoneMatrices.append(absEditBoneMatrix)
-            if boneEntry.parent != -1:
-                parentEditBone = editBones[boneEntry.parent]
-                absParentEditBoneMatrix = parentEditBone.matrix
-                relEditBoneMatrix = absParentEditBoneMatrix.inverted() * absEditBoneMatrix 
-            else:
-                relEditBoneMatrix = absEditBoneMatrix
-            relEditBoneMatrices.append(relEditBoneMatrix)
-            index +=1
+        editBones = self.createEditBones(model.bones, heads, tails, rolls)
+        
+        relEditBoneMatrices = self.determineRelEditBoneMatrices(model.bones, editBones)
 
+        print("Adjusting pose bones")
         bpy.ops.object.mode_set(mode='POSE')
-        print("Loading initial bone positions")
+        self.adjustPoseBones(model.bones, relEditBoneMatrices)
+    
+    def adjustPoseBones(self, m3Bones, relEditBoneMatrices):
         index = 0
         rotFixMatrixInverted = rotFixMatrix.transposed()
-        for bone in model.bones:
+        for bone in m3Bones:
             poseBone = self.armatureObject.pose.bones[toValidBoneName(bone.name)]
             scale = toBlenderVector3(bone.scale.initValue)
             rotation = toBlenderQuaternion(bone.rotation.initValue)
@@ -794,7 +779,37 @@ class Importer:
         modifier = meshObject.modifiers.new('UseArmature', 'ARMATURE')
         modifier.object = self.armatureObject
         modifier.use_bone_envelopes = False
-        modifier.use_vertex_groups = True            
+        modifier.use_vertex_groups = True
+        
+    def determineRelEditBoneMatrices(self, m3Bones, editBones):
+        absEditBoneMatrices = []
+        relEditBoneMatrices = []
+        for boneEntry, editBone in zip(m3Bones, editBones):
+            absEditBoneMatrix = editBone.matrix
+            absEditBoneMatrices.append(absEditBoneMatrix)
+            if boneEntry.parent != -1:
+                parentEditBone = editBones[boneEntry.parent]
+                absParentEditBoneMatrix = parentEditBone.matrix
+                relEditBoneMatrix = absParentEditBoneMatrix.inverted() * absEditBoneMatrix 
+            else:
+                relEditBoneMatrix = absEditBoneMatrix
+            relEditBoneMatrices.append(relEditBoneMatrix)
+        return relEditBoneMatrices
+
+    def createEditBones(self, m3Bones, heads, tails, rolls):
+        editBones = []
+        index = 0
+        for boneEntry in m3Bones:
+            editBone = self.armature.edit_bones.new(toValidBoneName(boneEntry.name))
+            if boneEntry.parent != -1:
+                parentEditBone = editBones[boneEntry.parent]
+                editBone.parent = parentEditBone
+            editBone.head = heads[index]
+            editBone.tail = tails[index]
+            editBone.roll = rolls[index]
+            editBones.append(editBone)
+            index +=1
+        return editBones
 
     def createAnimIdToKeyFramesMapFor(self, stc):
         keyFramesLists = [stc.sdev, stc.sd2v, stc.sd3v, stc.sd4q, stc.sdcc, stc.sdr3, stc.unknownRef8, stc.sds6, stc.unknownRef10, stc.unknownRef11, stc.unknownRef12, stc.sdfg, stc.sdmb]
