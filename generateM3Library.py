@@ -59,10 +59,16 @@ class UnexpectedTagException(Exception):
         pass
 
 def unpackTag(s):
-    return chr(s[3]) + chr(s[2]) + chr(s[1]) + chr(s[0])
+    if s[3] == 0:
+        return chr(s[2]) + chr(s[1]) + chr(s[0])
+    else:
+        return chr(s[3]) + chr(s[2]) + chr(s[1]) + chr(s[0])
 
 def packTag(s):
-    return (s[3] + s[2] + s[1] + s[0]).encode("ascii")
+    if len(s) == 4:
+        return (s[3] + s[2] + s[1] + s[0]).encode("ascii")
+    else:
+        return (s[2] + s[1] + s[0]).encode("ascii") + b"\\x00"
 
 def increaseToValidSectionSize(size):
     blockSize = 16
