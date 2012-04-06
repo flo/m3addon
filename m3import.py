@@ -60,6 +60,11 @@ def toBlenderMatrix(m3Matrix):
 
 FRAME_RATE = 30.0
 
+rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
+                                    (-1, 0, 0, 0),
+                                    ( 0, 0, 1, 0),
+                                    ( 0, 0, 0, 1)))
+
 def msToFrame(timeInMS):
     return round(timeInMS / 1000.0 * FRAME_RATE)
 
@@ -168,38 +173,57 @@ def checkOrder(boneEntries):
                 raise Exception("Bones are not sorted as expected")
         index += 1
 
-def determineHeads(absolutBoneMatrices):
-    heads = []
-    for matrix in absolutBoneMatrices:
-        head = matrix.translation
-        heads.append(head)
-    return heads
 
-def determineTails(boneEntries, heads):
-    possibleTailsLists = []
-    index = 0
-    for boneEntry in boneEntries:
-        possibleTailsLists.append([])
+
+def determineTails(m3Bones, heads, boneDirectionVectors):
+    childBoneIndexLists = []
+    for boneIndex, boneEntry in enumerate(m3Bones):
+        childBoneIndexLists.append([])
         if boneEntry.parent != -1:
-            possibleTailsOfParent = possibleTailsLists[boneEntry.parent]
-            possibleTailsOfParent.append(heads[index])
-        index += 1
+            childBoneIndexLists[boneEntry.parent].append(boneIndex)
+    
     tails = []
-    index = 0
-    for possibleTailList in possibleTailsLists:
-        if len(possibleTailList) >= 1 and possibleTailList[0].length > 0.05:
-            tail = possibleTailList[0]
-        else:
-            tail = heads[index] + mathutils.Vector((0,0.1,0))
+    for head, childIndices, boneDirectionVector in zip(heads, childBoneIndexLists, boneDirectionVectors):
+        length = 0.1
+        for childIndex in childIndices:
+            headToChildHead = heads[childIndex] - head
+            if abs(headToChildHead.angle(boneDirectionVector)) < 0.1:
+                length = headToChildHead.length 
+        
+        tail = head + length * boneDirectionVector
         tails.append(tail)
-        index += 1
     return tails
 
+def determineRolls(absoluteBoneRestPositions, heads, tails):
+    rolls = []
+    for absBoneRestMatrix, head, tail in zip(absoluteBoneRestPositions, heads, tails):
+        editBoneMatrix = boneMatrix(head=head, tail=tail, roll=0)
+        boneMatrix3x3 = editBoneMatrix.to_3x3()
+        
+        angleZToZ = boneMatrix3x3.col[2].angle(absBoneRestMatrix.col[2].to_3d())
+        angleZToX = boneMatrix3x3.col[0].angle(absBoneRestMatrix.col[0].to_3d())
+
+        if angleZToZ < 90:
+            if angleZToX < 90:
+                rollAngle = angleZToZ
+            else:
+                rollAngle = -angleZToZ
+        else:
+            if angleZToX > 90:
+                rollAngle = angleZToZ
+            else:
+                rollAngle = -angleZToZ
+
+        rolls.append(rollAngle)
+    return rolls
 
 def determineAbsoluteBoneRestPositions(model):
     matrices = []
     for inverseBoneRestPosition in model.absoluteInverseBoneRestPositions:
-        matrices.append(toBlenderMatrix(inverseBoneRestPosition.matrix).inverted())
+        matrix = toBlenderMatrix(inverseBoneRestPosition.matrix)
+        matrix = matrix.inverted()
+        matrix = matrix * rotFixMatrix        
+        matrices.append(matrix)
     return matrices
 
 def toValidBoneName(name):
@@ -407,66 +431,20 @@ class Importer:
         e_i = relEditBoneMatrices[i]
         """
         model = self.model
-        rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
-                                         (-1, 0, 0, 0),
-                                         ( 0, 0, 1, 0),
-                                         ( 0, 0, 0, 1)))
 
         absoluteBoneRestPositions = determineAbsoluteBoneRestPositions(model)
-        
+                    
         bpy.ops.object.mode_set(mode='EDIT')
         checkOrder(model.bones)
         #TODO Make better use of bone rest positions
         #(currently only the location gets used but not the rotation)
-        heads = []
-        boneDirectionVectors = []
-        rolls = []
-        for absBoneRestMatrix in absoluteBoneRestPositions:
-            head = absBoneRestMatrix.translation
-            heads.append(head)
-            wantedAbsBoneRestMatrix = absBoneRestMatrix * rotFixMatrix
-            # In blender the edit bone with the vector (0,1,0) stands for a idenity matrix
-            # So the second column of a edit bone matrix represents the bone vector
-            boneDirectionVector = wantedAbsBoneRestMatrix.col[1].to_3d()
-            boneDirectionVector.normalize()
-            boneDirectionVectors.append(boneDirectionVector)
-
-            simpleTail = head + boneDirectionVector
-            editBoneMatrix = boneMatrix(head=head, tail=simpleTail, roll=0)
-            boneMatrix3x3 = editBoneMatrix.to_3x3()
-            
-            angleZToZ = boneMatrix3x3.col[2].angle(wantedAbsBoneRestMatrix.col[2].to_3d())
-            angleZToX = boneMatrix3x3.col[0].angle(wantedAbsBoneRestMatrix.col[0].to_3d())
-
-            if angleZToZ < 90:
-                if angleZToX < 90:
-                    rollAngle = angleZToZ
-                else:
-                    rollAngle = -angleZToZ
-            else:
-                if angleZToX > 90:
-                    rollAngle = angleZToZ
-                else:
-                    rollAngle = -angleZToZ
-
-            rolls.append(rollAngle)
         
-        childBoneIndexLists = []
-        for boneIndex, boneEntry in enumerate(model.bones):
-            childBoneIndexLists.append([])
-            if boneEntry.parent != -1:
-                childBoneIndexLists[boneEntry.parent].append(boneIndex)
-        
-        tails = []
-        for head, childIndices, boneDirectionVector in zip(heads, childBoneIndexLists, boneDirectionVectors):
-            length = 0.1
-            for childIndex in childIndices:
-                headToChildHead = heads[childIndex] - head
-                if abs(headToChildHead.angle(boneDirectionVector)) < 0.1:
-                   length = headToChildHead.length 
-            
-            tail = head + length * boneDirectionVector
-            tails.append(tail)
+        heads = list(m.translation for m in absoluteBoneRestPositions)  
+        # In blender the edit bone with the vector (0,1,0) stands for a idenity matrix
+        # So the second column of a edit bone matrix represents the bone vector
+        boneDirectionVectors = list(m.col[1].to_3d().normalized() for m in absoluteBoneRestPositions)
+        tails = determineTails(model.bones, heads, boneDirectionVectors)
+        rolls = determineRolls(absoluteBoneRestPositions, heads , tails)
 
         editBones = []
         absEditBoneMatrices = []
