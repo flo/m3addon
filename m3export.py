@@ -154,8 +154,22 @@ class Exporter:
                 blenderVertex =  mesh.vertices[blenderVertexIndex]
                 m3Vertex = m3.VertexFormat0x182007d()
                 m3Vertex.position = self.blenderToM3Vector(blenderVertex.co)
-                m3Vertex.boneWeight0 = 255
-                m3Vertex.boneLookupIndex0 = boneLookupIndex
+                
+                boneWeightSlot = 0
+                for gIndex, g in enumerate(blenderVertex.groups):
+                    vertexGroupIndex = g.group
+                    vertexGroup = meshObject.vertex_groups[vertexGroupIndex]
+                    boneLookupIndex = boneNameToBoneLookupIndexMap[vertexGroup.name]
+                    boneWeight = round(g.weight * 255)
+                    if boneWeight != 0:
+                        if boneWeightSlot == 4:
+                            raise Exception("The m3 format supports at maximum 4 bone weights per vertex")
+                        setattr(m3Vertex, "boneWeight%d" % boneWeightSlot, boneWeight)
+                        setattr(m3Vertex, "boneLookupIndex%d" % boneWeightSlot, boneLookupIndex)
+                        boneWeightSlot += 1
+                if boneWeightSlot == 0:
+                    m3Vertex.boneWeight0 = 255
+                    m3Vertex.boneLookupIndex0 = boneLookupIndex
                 if len(mesh.uv_textures) >= 1:
                     uvData = mesh.uv_textures[0].data[blenderFace.index]
                     m3Vertex.uv0 = self.convertBlenderToM3UVCoordinates(getattr(uvData, "uv%d" % (faceRelativeVertexIndex + 1)))
