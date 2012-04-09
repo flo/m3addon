@@ -97,30 +97,41 @@ class Exporter:
             armatureObject = modifier.object
             armature = armatureObject.data #todo is that so?
             
-            boneNameToBoneIndexMap = {}
+            boneNameToBoneIndexMap = {}# map: bone name to index in model bone list
             boneNameToBoneLookupIndexMap = {}
+            boneNameToAbsInvRestPoseMatrix = {}
             for blenderBone in armature.bones:
                 boneIndex = len(model.bones)
                 bone = self.createStaticBoneAtOrigin(blenderBone.name, skinBone=True, realBone=True)
                 model.bones.append(bone)
         
-                restPosMatrix = blenderBone.matrix_local * shared.rotFixMatrixInverted       
-                
-                scale, rotation = shared.scaleAndRotationOf(restPosMatrix)
-                location = restPosMatrix.translation
+                absRestPosMatrix = blenderBone.matrix_local * shared.rotFixMatrixInverted       
+                if blenderBone.parent != None:
+                    bone.parent = boneNameToBoneIndexMap[blenderBone.parent.name]
+                    absInvRestPoseMatrixParent = boneNameToAbsInvRestPoseMatrix[blenderBone.parent.name]
+                    relRestPosMatrix = absInvRestPoseMatrixParent * absRestPosMatrix
+                else:
+                    bone.parent = rootBoneIndex
+                    relRestPosMatrix = absRestPosMatrix
+                scale, rotation = shared.scaleAndRotationOf(relRestPosMatrix)
+                location = relRestPosMatrix.translation
                 bone.scale.initValue = self.createVector3FromBlenderVector(scale)
                 bone.scale.nullValue = self.createVector3FromBlenderVector(scale)
                 bone.rotation.initValue = self.createQuaternionFromBlenderQuaternion(rotation)
                 bone.rotation.nullValue = self.createQuaternionFromBlenderQuaternion(rotation)
                 bone.location.initValue = self.createVector3FromBlenderVector(location)
                 bone.location.nullValue = self.createVector3FromBlenderVector(location)
-                
-                inverseRestBoseMatrix = restPosMatrix.inverted()
 
-                inverseBoneRestPos = self.createRestPositionFromBlender4x4Matrix(inverseRestBoseMatrix)
-                model.absoluteInverseBoneRestPositions.append(inverseBoneRestPos)
+                
+                absoluteInverseRestPoseMatrix = absRestPosMatrix.inverted()
+
+                absoluteInverseBoneRestPos = self.createRestPositionFromBlender4x4Matrix(absoluteInverseRestPoseMatrix)
+                model.absoluteInverseBoneRestPositions.append(absoluteInverseBoneRestPos)
                 boneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
                 model.boneLookup.append(boneIndex)
+                boneNameToBoneIndexMap[blenderBone.name] = boneIndex
+                boneNameToBoneLookupIndexMap[blenderBone.name] = boneLookupIndex
+                boneNameToAbsInvRestPoseMatrix[blenderBone.name] = absoluteInverseRestPoseMatrix
                 numberOfBones += 1
         else:
             raise Exception("Mesh must have no modifiers except single one for the armature")
