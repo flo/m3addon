@@ -69,8 +69,8 @@ class Exporter:
         return model
     
     def initMesh(self, model):
-        mesh = self.findMesh()
-        hasMesh = mesh != None
+        meshObject = self.findMeshObject()
+        hasMesh = meshObject != None
         model.setNamedBit("flags", "hasMesh", hasMesh)
         model.boundings = self.createAlmostEmptyBoundingsWithRadius(2.0)
 
@@ -78,14 +78,54 @@ class Exporter:
             model.nSkinBones = 0
             model.divisions = [self.createEmptyDivision()]
             return
+            
+        mesh = meshObject.data
+        
         division = m3.DIV_V2()
         model.divisions.append(division)
         
-        boneIndex = self.addBoneWithRestPosAndReturnIndex(model, "StaticMesh", skinBone=True, realBone=True)
+        rootBoneIndex = self.addBoneWithRestPosAndReturnIndex(model, "StaticMesh", skinBone=True, realBone=True)
         
-        boneLookupIndex = len(model.boneLookup)
-        model.boneLookup.append(boneIndex)
+        firstBoneLookupIndex = len(model.boneLookup)
+        boneLookupIndex = 0
+        model.boneLookup.append(rootBoneIndex)
+        numberOfBones = 1
+        if len(meshObject.modifiers) == 0:
+            pass
+        elif len(meshObject.modifiers) == 1 and (meshObject.modifiers[0].type == "ARMATURE"):
+            modifier = meshObject.modifiers[0]
+            armatureObject = modifier.object
+            armature = armatureObject.data #todo is that so?
+            
+            boneNameToBoneIndexMap = {}
+            boneNameToBoneLookupIndexMap = {}
+            for blenderBone in armature.bones:
+                boneIndex = len(model.bones)
+                bone = self.createStaticBoneAtOrigin(blenderBone.name, skinBone=True, realBone=True)
+                model.bones.append(bone)
         
+                restPosMatrix = blenderBone.matrix_local * shared.rotFixMatrixInverted       
+                
+                scale, rotation = shared.scaleAndRotationOf(restPosMatrix)
+                location = restPosMatrix.translation
+                bone.scale.initValue = self.createVector3FromBlenderVector(scale)
+                bone.scale.nullValue = self.createVector3FromBlenderVector(scale)
+                bone.rotation.initValue = self.createQuaternionFromBlenderQuaternion(rotation)
+                bone.rotation.nullValue = self.createQuaternionFromBlenderQuaternion(rotation)
+                bone.location.initValue = self.createVector3FromBlenderVector(location)
+                bone.location.nullValue = self.createVector3FromBlenderVector(location)
+                
+                inverseRestBoseMatrix = restPosMatrix.inverted()
+
+                inverseBoneRestPos = self.createRestPositionFromBlender4x4Matrix(inverseRestBoseMatrix)
+                model.absoluteInverseBoneRestPositions.append(inverseBoneRestPos)
+                boneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
+                model.boneLookup.append(boneIndex)
+                numberOfBones += 1
+        else:
+            raise Exception("Mesh must have no modifiers except single one for the armature")
+            
+
         firstFaceVertexIndexIndex = len(division.faces)
         m3Vertices = []
         for blenderFace in mesh.faces:
@@ -135,10 +175,10 @@ class Exporter:
         region.numberOfVertices = len(m3Vertices)
         region.firstFaceVertexIndexIndex = firstFaceVertexIndexIndex
         region.numberOfFaceVertexIndices = len(vertexIndicesOfFaces)
-        region.numberOfBones = 1
-        region.firstBoneLookupIndex = boneLookupIndex
-        region.numberOfBoneLookupIndices = 1
-        region.rootBoneIndex = boneIndex
+        region.numberOfBones = numberOfBones
+        region.firstBoneLookupIndex = firstBoneLookupIndex
+        region.numberOfBoneLookupIndices = numberOfBones
+        region.rootBoneIndex = rootBoneIndex
         division.regions.append(region)
         
         model.nSkinBones = 1
@@ -178,7 +218,7 @@ class Exporter:
         model.absoluteInverseBoneRestPositions.append(boneRestPos)
         return boneIndex
         
-    def findMesh(self):
+    def findMeshObject(self):
         meshObject = None
         for currentObject in bpy.data.objects:
             if currentObject.type == 'MESH':
@@ -191,7 +231,7 @@ class Exporter:
     
         mesh = meshObject.data
         if len(mesh.vertices) > 0:
-            return mesh
+            return meshObject
         else:
             return None
         
@@ -419,6 +459,16 @@ class Exporter:
         vec.z = 0
         vec.w = 0
         return vec
+
+    def createRestPositionFromBlender4x4Matrix(self, blenderMatrix):
+        iref = m3.IREFV0()
+        matrix = m3.Matrix44()
+        matrix.x = self.createVector4FromBlenderVector(blenderMatrix.col[0])
+        matrix.y = self.createVector4FromBlenderVector(blenderMatrix.col[1])
+        matrix.z = self.createVector4FromBlenderVector(blenderMatrix.col[2])
+        matrix.w = self.createVector4FromBlenderVector(blenderMatrix.col[3])
+        iref.matrix = matrix
+        return iref
 
     def createIdentityRestPosition(self):
         iref = m3.IREFV0()
@@ -654,6 +704,12 @@ class Exporter:
         
     def createVector3FromBlenderVector(self, blenderVector):
         return self.createVector3(blenderVector.x, blenderVector.y, blenderVector.z)
+    
+    def createVector4FromBlenderVector(self, blenderVector):
+        return self.createVector4(blenderVector[0], blenderVector[1], blenderVector[2], blenderVector[3])
+
+    def createQuaternionFromBlenderQuaternion(self, q):
+        return self.createQuaternion(x=q.x, y=q.y, z=q.z, w=q.w)
     
     def createIdentityMatrix(self):
         matrix = m3.Matrix44()

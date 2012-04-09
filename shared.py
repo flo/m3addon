@@ -20,6 +20,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+import mathutils
 
 materialLayerFieldNames = ["diffuseLayer", "decalLayer", "specularLayer", "selfIllumLayer",
     "emissiveLayer", "reflectionLayer", "evioLayer", "evioMaskLayer", "alphaMaskLayer", 
@@ -29,7 +30,27 @@ materialLayerNames = ["Diffuse", "Decal", "Specular", "Self Illumination",
     "Emissive", "Reflection", "Evio", "Evio Mask", "Alpha Mask", "Bump", "Height", "Layer 12", "Layer 13"]
 
 
+rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
+                                 (-1, 0, 0, 0),
+                                 ( 0, 0, 1, 0),
+                                 ( 0, 0, 0, 1)))
+rotFixMatrixInverted = rotFixMatrix.transposed()
+
 animFlagsForAnimatedProperty = 6
+
+
+def scaleAndRotationOf(matrix4x4):
+    scale = mathutils.Vector((1,1,1))
+    matrix3x3 = matrix4x4.to_3x3()
+    scale.x = matrix3x3.col[0].length
+    scale.y = matrix3x3.col[1].length
+    scale.z = matrix3x3.col[2].length
+    matrix3x3.col[0] = matrix3x3.col[0] / scale.x
+    matrix3x3.col[1] = matrix3x3.col[1] / scale.y
+    matrix3x3.col[2] = matrix3x3.col[2] / scale.z
+    #TODO handle negative scales
+    rotation = matrix3x3.to_quaternion()
+    return (scale, rotation)
 
 def setAnimationWithIndexToCurrentData(scene, animationIndex):
     if (animationIndex < 0) or (animationIndex >= len(scene.m3_animations)):

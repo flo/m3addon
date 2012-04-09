@@ -61,11 +61,6 @@ def toBlenderMatrix(m3Matrix):
 
 FRAME_RATE = 30.0
 
-rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
-                                    (-1, 0, 0, 0),
-                                    ( 0, 0, 1, 0),
-                                    ( 0, 0, 0, 1)))
-rotFixMatrixInverted = rotFixMatrix.transposed()
 
 
 def msToFrame(timeInMS):
@@ -221,7 +216,7 @@ def determineAbsoluteBoneRestPositions(model):
     for inverseBoneRestPosition in model.absoluteInverseBoneRestPositions:
         matrix = toBlenderMatrix(inverseBoneRestPosition.matrix)
         matrix = matrix.inverted()
-        matrix = matrix * rotFixMatrix        
+        matrix = matrix * shared.rotFixMatrix        
         matrices.append(matrix)
     return matrices
 
@@ -280,20 +275,6 @@ def visitFieldPropertyPairs(blenderObject, m3Object, fieldVisitor):
                     fieldVisitor.visitString(blenderObject, m3Object, fieldName)
                 
                 
-
-def scaleAndRotationOf(matrix4x4):
-    scale = mathutils.Vector((1,1,1))
-    matrix3x3 = matrix4x4.to_3x3()
-    scale.x = matrix3x3.col[0].length
-    scale.y = matrix3x3.col[1].length
-    scale.z = matrix3x3.col[2].length
-    matrix3x3.col[0] = matrix3x3.col[0] / scale.x
-    matrix3x3.col[1] = matrix3x3.col[1] / scale.y
-    matrix3x3.col[2] = matrix3x3.col[2] / scale.z
-    #TODO handle negative scales
-    rotation = matrix3x3.to_quaternion()
-    return (scale, rotation)
-
 class BlenderPropertiesSettingFieldVisitor:
     def __init__(self, importer, animPathPrefix):
         self.importer = importer
@@ -458,7 +439,6 @@ class Importer:
     
     def adjustPoseBones(self, m3Bones, relEditBoneMatrices, relativeScales):
         index = 0
-        rotFixMatrixInverted = rotFixMatrix.transposed()
         for bone, relEditBoneMatrix, relativeScale in zip(m3Bones, relEditBoneMatrices, relativeScales):
             poseBone = self.armatureObject.pose.bones[toValidBoneName(bone.name)]
             scale = toBlenderVector3(bone.scale.initValue)
@@ -471,14 +451,14 @@ class Importer:
                                                 (0, 0, 0, 1)))
             
             if bone.parent != -1:
-                leftCorrectionMatrix = relEditBoneMatrix.inverted() * rotFixMatrixInverted * scaleCorrection
-                rightCorrectionMatrix = rotFixMatrix
+                leftCorrectionMatrix = relEditBoneMatrix.inverted() * shared.rotFixMatrixInverted * scaleCorrection
+                rightCorrectionMatrix = shared.rotFixMatrix
             else:
                 leftCorrectionMatrix = relEditBoneMatrix.inverted() * scaleCorrection
-                rightCorrectionMatrix = rotFixMatrix
+                rightCorrectionMatrix = shared.rotFixMatrix
             
-            leftScaleCorrection, leftRotCorrection = scaleAndRotationOf(leftCorrectionMatrix)
-            rightScaleCorrection, rightRotCorrection = scaleAndRotationOf(rightCorrectionMatrix)
+            leftScaleCorrection, leftRotCorrection = shared.scaleAndRotationOf(leftCorrectionMatrix)
+            rightScaleCorrection, rightRotCorrection = shared.scaleAndRotationOf(rightCorrectionMatrix)
             
             location = leftCorrectionMatrix * location
             rotation = leftRotCorrection * rotation * rightRotCorrection
@@ -545,7 +525,7 @@ class Importer:
             relSpecifiedMatrix.translation = location
                                 
             newMatrix = leftCorrectionMatrix * relSpecifiedMatrix * rightCorrectionMatrix
-            scale, rotation = scaleAndRotationOf(newMatrix)
+            scale, rotation = shared.scaleAndRotationOf(newMatrix)
             location = newMatrix.translation 
             timeToLocationMap[timeInMS] = location
             timeToRotationMap[timeInMS] = rotation
