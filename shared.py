@@ -52,6 +52,14 @@ def scaleAndRotationOf(matrix4x4):
     rotation = matrix3x3.to_quaternion()
     return (scale, rotation)
 
+def locRotScaleMatrix(location, rotation, scale):
+    result = rotation.to_matrix().to_4x4()
+    result.col[0] *= scale.x
+    result.col[1] *= scale.y
+    result.col[2] *= scale.z
+    result.translation = location
+    return result
+
 def setAnimationWithIndexToCurrentData(scene, animationIndex):
     if (animationIndex < 0) or (animationIndex >= len(scene.m3_animations)):
         return

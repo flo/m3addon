@@ -519,12 +519,8 @@ class Importer:
             location = toBlenderVector3(location)
             rotation = toBlenderQuaternion(rotation)
             scale = toBlenderVector3(scale)
-            relSpecifiedMatrix = rotation.to_matrix().to_4x4()
-            relSpecifiedMatrix.col[0] *= scale.x
-            relSpecifiedMatrix.col[1] *= scale.y
-            relSpecifiedMatrix.col[2] *= scale.z
-            relSpecifiedMatrix.translation = location
-                                
+            relSpecifiedMatrix = shared.locRotScaleMatrix(location, rotation, scale)
+
             newMatrix = leftCorrectionMatrix * relSpecifiedMatrix * rightCorrectionMatrix
             scale, rotation = shared.scaleAndRotationOf(newMatrix)
             location = newMatrix.translation 
