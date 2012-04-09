@@ -185,8 +185,9 @@ def determineTails(m3Bones, heads, boneDirectionVectors, absoluteScales):
         length = 0.1
         for childIndex in childIndices:
             headToChildHead = heads[childIndex] - head
-            if abs(headToChildHead.angle(boneDirectionVector)) < 0.1:
-                length = headToChildHead.length 
+            if headToChildHead.length >= 0.0001:
+                if abs(headToChildHead.angle(boneDirectionVector)) < 0.1:
+                    length = headToChildHead.length 
         tailOffset = length * boneDirectionVector
         for i in range(3):
             tailOffset[i] /= absoluteScale[i]
