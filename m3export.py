@@ -214,7 +214,7 @@ class Exporter:
         region.rootBoneIndex = rootBoneIndex
         division.regions.append(region)
         
-        model.nSkinBones = 1
+        model.nSkinBones = numberOfBones
     
     def blenderVector3AndScaleToM3Vector4As4uint8(self, blenderVector3, scale):
         x = blenderVector3.x
