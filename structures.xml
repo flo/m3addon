@@ -324,7 +324,7 @@
                     <bit mask="0x10" name="billboard1" />
                     <bit mask="0x40" name="billboard2" />
                     <bit mask="0x100" name="twoDProjection" />
-                    <bit mask="0x200" name="animated " />
+                    <bit mask="0x200" name="animated" />
                     <bit mask="0x400" name="inverseKinematics " />
                     <bit mask="0x800 " name="skinned" />
                     <bit mask="0x2000" name="real" />

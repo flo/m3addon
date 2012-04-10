@@ -40,6 +40,7 @@ import mathutils
 import os.path
 
 actionTypeScene = "SCENE"
+actionTypeArmature = "OBJECT"
 
 class Exporter:
     def exportParticleSystems(self, scene, m3FileName):
@@ -130,6 +131,104 @@ class Exporter:
                 bone.location.initValue = self.createVector3FromBlenderVector(location)
                 bone.location.nullValue = self.createVector3FromBlenderVector(location)
 
+                boneName = blenderBone.name
+                
+                locationAnimId = bone.location.header.animId
+                rotationAnimId = bone.rotation.header.animId
+                scaleAnimId = bone.scale.header.animId
+                
+                locationAnimPath = 'pose.bones["%s"].location' % boneName
+                rotationAnimPath = 'pose.bones["%s"].rotation_quaternion' % boneName
+                scaleAnimPath = 'pose.bones["%s"].scale' % boneName
+        
+                animationActionTuples = self.determineAnimationActionTuplesFor(armatureObject.name, actionTypeArmature)
+                for animation, action in animationActionTuples:
+                    frames = self.getAllFramesOf(animation)
+                    timeValuesInMS = self.allFramesToMSValues(frames)
+                    xLocValues = self.getNoneOrValuesFor(action, locationAnimPath, 0, frames)
+                    yLocValues = self.getNoneOrValuesFor(action, locationAnimPath, 1, frames)
+                    zLocValues = self.getNoneOrValuesFor(action, locationAnimPath, 2, frames)
+                    wRotValues = self.getNoneOrValuesFor(action, rotationAnimPath, 0, frames)
+                    xRotValues = self.getNoneOrValuesFor(action, rotationAnimPath, 1, frames)
+                    yRotValues = self.getNoneOrValuesFor(action, rotationAnimPath, 2, frames)
+                    zRotValues = self.getNoneOrValuesFor(action, rotationAnimPath, 3, frames)
+                    xScaValues = self.getNoneOrValuesFor(action, scaleAnimPath, 0, frames)
+                    yScaValues = self.getNoneOrValuesFor(action, scaleAnimPath, 1, frames)
+                    zScaValues = self.getNoneOrValuesFor(action, scaleAnimPath, 2, frames)
+
+                    locAnimated = (xLocValues != None) or (yLocValues != None) or (zLocValues != None)
+                    rotAnimated = (wRotValues != None) or (xRotValues != None) or (yRotValues != None) or (zRotValues != None)
+                    scaAnimated = (xScaValues != None) or (yScaValues != None) or (zScaValues != None)
+                    if locAnimated or rotAnimated or scaAnimated:
+                        if xLocValues == None:
+                            xLocValues = len(timeValuesInMS) * [location.x]
+                        if yLocValues == None:
+                            yLocValues = len(timeValuesInMS) * [location.y]
+                        if zLocValues == None:
+                            zLocValues = len(timeValuesInMS) * [location.z]
+                                                    
+                        if wRotValues == None:
+                            wRotValues = len(timeValuesInMS) * [rotation.w]
+                        if xRotValues == None:
+                            xRotValues = len(timeValuesInMS) * [rotation.x]
+                        if yRotValues == None:
+                            yRotValues = len(timeValuesInMS) * [rotation.y]
+                        if zRotValues == None:
+                            zRotValues = len(timeValuesInMS) * [rotation.z]
+                            
+                        if xScaValues == None:
+                            xScaValues = len(timeValuesInMS) * [scale.x]
+                        if yScaValues == None:
+                            yScaValues = len(timeValuesInMS) * [scale.y]
+                        if zScaValues == None:
+                            zScaValues = len(timeValuesInMS) * [scale.z]
+                        m3Locs = []
+                        m3Rots = []
+                        m3Scas = []
+                        for xLoc, yLoc, zLoc, wRot, xRot, yRot, zRot, xSca, ySca, zSca in zip(xLocValues, yLocValues, zLocValues, wRotValues, xRotValues, yRotValues, zRotValues, xScaValues, yScaValues, zScaValues):
+                            loc = mathutils.Vector((xLoc, yLoc, zLoc))
+                            rot = mathutils.Quaternion((wRot, xRot, yRot, zRot))
+                            sca = mathutils.Vector((xSca, ySca, zSca))
+                            poseMatrix = shared.locRotScaleMatrix(loc, rot, sca)
+                            m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix
+                            sca, rot = shared.scaleAndRotationOf(m3PoseMatrix)
+                            loc = m3PoseMatrix.translation
+                            m3Locs.append(self.createVector3FromBlenderVector(loc))
+                            m3Rots.append(self.createQuaternionFromBlenderQuaternion(rot))
+                            m3Scas.append(self.createVector3FromBlenderVector(sca))
+                        
+                        animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
+
+                        m3AnimBlock = m3.SD3VV0()
+                        m3AnimBlock.frames = timeValuesInMS
+                        m3AnimBlock.flags = 0
+                        m3AnimBlock.fend = self.frameToMS(animation.endFrame)
+                        m3AnimBlock.keys = m3Locs
+                        animIdToAnimDataMap[locationAnimId] = m3AnimBlock
+                        
+                        m3AnimBlock = m3.SD4QV0()
+                        m3AnimBlock.frames = timeValuesInMS
+                        m3AnimBlock.flags = 0
+                        m3AnimBlock.fend = self.frameToMS(animation.endFrame)
+                        m3AnimBlock.keys = m3Rots
+                        animIdToAnimDataMap[rotationAnimId] = m3AnimBlock
+                    
+                        m3AnimBlock = m3.SD3VV0()
+                        m3AnimBlock.frames = timeValuesInMS
+                        m3AnimBlock.flags = 0
+                        m3AnimBlock.fend = self.frameToMS(animation.endFrame)
+                        m3AnimBlock.keys = m3Scas
+                        animIdToAnimDataMap[scaleAnimId] = m3AnimBlock
+                        
+                        bone.location.header.flags = 1
+                        bone.location.header.animFlags = shared.animFlagsForAnimatedProperty
+                        bone.rotation.header.flags = 1
+                        bone.rotation.header.animFlags = shared.animFlagsForAnimatedProperty
+                        bone.scale.header.flags = 1
+                        bone.scale.header.animFlags = shared.animFlagsForAnimatedProperty
+                        bone.setNamedBit("flags", "animated", True)
+                   
+                        
                 absRestPosMatrixFixed = absRestPosMatrix * shared.rotFixMatrixInverted
                 absoluteInverseRestPoseMatrixFixed = absRestPosMatrixFixed.inverted()
 
@@ -752,6 +851,47 @@ class Exporter:
         matrix.w = self.createVector4(0.0, 0.0, 0.0, 1.0)
         return matrix
         
+    def determineAnimationActionTuplesFor(self, actionOwnerName, actionOwnerType):
+        animationActionTuples = []
+        scene = self.scene
+        for animation in scene.m3_animations:
+            for assignedAction in animation.assignedActions:
+                if actionOwnerName == assignedAction.targetName:
+                    actionName = assignedAction.actionName
+                    action = bpy.data.actions.get(actionName)
+                    if action == None:
+                        print("Warning: The action %s was referenced by name but does no longer exist" % assignedAction.actionName)
+                    else:
+                        if action.id_root == actionOwnerType:
+                            animationActionTuples.append((animation, action))
+        return animationActionTuples
+
+        
+    def getAllFramesOf(self, animation):
+        #TODO Does the end frame need to be included?
+        return range(animation.startFrame, animation.endFrame)
+        
+    def allFramesToMSValues(self, frames):
+        timeValues = []
+        for frame in frames:
+            timeInMS = self.frameToMS(frame)
+            timeValues.append(timeInMS)
+        return timeValues
+    
+    def getNoneOrValuesFor(self, action, animPath, curveArrayIndex, frames):
+        values = []
+        curve = self.findFCurveWithPathAndIndex(action, animPath, curveArrayIndex)
+        if curve == None:
+            return None
+        for frame in frames:
+            values.append(curve.evaluate(frame))
+        return values
+            
+    def findFCurveWithPathAndIndex(self, action, animPath, curveArrayIndex):
+        for curve in action.fcurves:
+            if (curve.data_path == animPath) and (curve.array_index == curveArrayIndex):
+                return curve
+        return None
 
 class BlenderToM3DataTransferer:
     
@@ -763,19 +903,7 @@ class BlenderToM3DataTransferer:
         self.actionOwnerName = actionOwnerName
         self.actionOwnerType = actionOwnerType
         
-        self.animationActionTuples = []
-        
-        scene = self.exporter.scene
-        for animation in scene.m3_animations:
-            for assignedAction in animation.assignedActions:
-                if actionOwnerName == assignedAction.targetName:
-                    actionName = assignedAction.actionName
-                    action = bpy.data.actions.get(actionName)
-                    if action == None:
-                        print("Warning: The action %s was referenced by name but does no longer exist" % assignedAction.actionName)
-                    else:
-                        if action.id_root == actionOwnerType:
-                            self.animationActionTuples.append((animation, action))
+        self.animationActionTuples = self.exporter.determineAnimationActionTuplesFor(actionOwnerName, actionOwnerType)
         
     def transferAnimatableColor(self, fieldName):
         animRef = m3.ColorAnimationReference()
@@ -789,12 +917,12 @@ class BlenderToM3DataTransferer:
         animPath = self.animPathPrefix + fieldName
         
         for animation, action in self.animationActionTuples:
-            frames = self.getAllFramesOf(animation)
-            timeValuesInMS = self.allFramesToMSValues(frames)
-            redValues = self.getNoneOrValuesFor(action, animPath, 0, frames)
-            greenValues = self.getNoneOrValuesFor(action, animPath, 1, frames)
-            blueValues = self.getNoneOrValuesFor(action, animPath, 2, frames)
-            alphaValues = self.getNoneOrValuesFor(action, animPath, 2, frames)
+            frames = self.exporter.getAllFramesOf(animation)
+            timeValuesInMS = self.exporter.allFramesToMSValues(frames)
+            redValues = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
+            greenValues = self.exporter.getNoneOrValuesFor(action, animPath, 1, frames)
+            blueValues = self.exporter.getNoneOrValuesFor(action, animPath, 2, frames)
+            alphaValues = self.exporter.getNoneOrValuesFor(action, animPath, 2, frames)
             if (redValues != None) or (greenValues != None) or (blueValues != None) or (alphaValues != None):
                 if redValues == None:
                     redValues = len(timeValuesInMS) * [m3CurrentColor.red]
@@ -832,9 +960,9 @@ class BlenderToM3DataTransferer:
         animPath = self.animPathPrefix + fieldName
         
         for animation, action in self.animationActionTuples:
-            frames = self.getAllFramesOf(animation)
-            timeValuesInMS = self.allFramesToMSValues(frames)
-            values = self.getNoneOrValuesFor(action, animPath, 0, frames)
+            frames = self.exporter.getAllFramesOf(animation)
+            timeValuesInMS = self.exporter.allFramesToMSValues(frames)
+            values = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
             if values != None:
                 convertedValues = []
                 for value in values:
@@ -883,11 +1011,11 @@ class BlenderToM3DataTransferer:
         animPath = self.animPathPrefix + fieldName
         
         for animation, action in self.animationActionTuples:
-            frames = self.getAllFramesOf(animation)
-            timeValuesInMS = self.allFramesToMSValues(frames)
-            xValues = self.getNoneOrValuesFor(action, animPath, 0, frames)
-            yValues = self.getNoneOrValuesFor(action, animPath, 1, frames)
-            zValues = self.getNoneOrValuesFor(action, animPath, 2, frames)
+            frames = self.exporter.getAllFramesOf(animation)
+            timeValuesInMS = self.exporter.allFramesToMSValues(frames)
+            xValues = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
+            yValues = self.exporter.getNoneOrValuesFor(action, animPath, 1, frames)
+            zValues = self.exporter.getNoneOrValuesFor(action, animPath, 2, frames)
             if (xValues != None) or (yValues != None) or (zValues != None):
                 if xValues == None:
                     xValues = len(timeValuesInMS) * [currentBVector.x]
@@ -931,32 +1059,7 @@ class BlenderToM3DataTransferer:
     def transferEnum(self, fieldName):
         value = getattr(self.blenderObject, fieldName)
         setattr(self.m3Object, fieldName , int(value))
-        
-    def getAllFramesOf(self, animation):
-        #TODO Does the end frame need to be included?
-        return range(animation.startFrame, animation.endFrame)
-        
-    def allFramesToMSValues(self, frames):
-        timeValues = []
-        for frame in frames:
-            timeInMS = self.exporter.frameToMS(frame)
-            timeValues.append(timeInMS)
-        return timeValues
-    
-    def getNoneOrValuesFor(self, action, animPath, curveArrayIndex, frames):
-        values = []
-        curve = self.findFCurveWithPathAndIndex(action, animPath, curveArrayIndex)
-        if curve == None:
-            return None
-        for frame in frames:
-            values.append(curve.evaluate(frame))
-        return values
-            
-    def findFCurveWithPathAndIndex(self, action, animPath, curveArrayIndex):
-        for curve in action.fcurves:
-            if (curve.data_path == animPath) and (curve.array_index == curveArrayIndex):
-                return curve
-        return None
+
         
 def exportParticleSystems(scene, filename):
     exporter = Exporter()
