@@ -301,8 +301,8 @@ class ExportPanel(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
 
-        layout.prop(scene.m3_export_options,"path", text="Export As")
-        layout.operator("m3.quick_export", text="Export Particle Systems")
+        layout.prop(scene.m3_export_options,"path", text="")
+        layout.operator("m3.quick_export", text="Export As M3")
 
 class AnimationSequencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_animations"
