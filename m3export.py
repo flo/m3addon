@@ -118,7 +118,10 @@ class Exporter:
                 poseBone = armatureObject.pose.bones[blenderBoneIndex]
                 poseMatrix = shared.locRotScaleMatrix(poseBone.location, poseBone.rotation_quaternion, poseBone.scale)
                 
-                leftCorrectionMatrix = shared.rotFixMatrix * relRestPosMatrix
+                if blenderBone.parent != None:
+                    leftCorrectionMatrix = shared.rotFixMatrix * relRestPosMatrix
+                else:
+                    leftCorrectionMatrix = relRestPosMatrix
                 rightCorrectionMatrix = shared.rotFixMatrixInverted
                 m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix
                 
