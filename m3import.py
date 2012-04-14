@@ -358,7 +358,7 @@ class Importer:
         self.createBones()
         self.createMaterials()
         self.createParticleSystems()
-        #self.createAttachmentPoints()
+        self.createAttachmentPoints()
         self.createMesh()
 
         if len(scene.m3_animations) >= 1:
@@ -413,6 +413,7 @@ class Importer:
         """
         model = self.model
         print("Creating bone structure in rest position")
+
 
         absoluteBoneRestPositions = determineAbsoluteBoneRestPositions(model)
                     
@@ -678,7 +679,7 @@ class Importer:
     def createAttachmentPoints(self):
         print("Loading attachment points")
         currentScene = bpy.context.scene
-        for attachmentPointEntry in self.model.attachments:
+        for attachmentPointEntry in self.model.attachmentPoints:
             attachment_point = currentScene.m3_attachment_points.add()
             attachment_point.name = attachmentPointEntry.name
             boneEntry = self.model.bones[attachmentPointEntry.bone]

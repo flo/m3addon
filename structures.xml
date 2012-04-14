@@ -467,7 +467,7 @@
     
         <structure name="ATT_" version="1" size="20">
             <description>Attachment Point</description>
-            <field name="flags" type="uint32" />
+            <field name="unknown" type="int32" expected-value="-1" />
             <field name="name" type="Reference" refTo="CHARV0" />
             <field name="bone" type="uint32" />
         </structure>
@@ -799,8 +799,8 @@
             <field name="unknown17" type="uint32" expected-value="0" />
             <field name="unknown18" type="uint32" expected-value="0" />
             <field name="unknown19" type="uint32" expected-value="0" />
-            <field offset="228" name="attachments" type="Reference" refTo="ATT_V1" />
-            <field offset="240" name="attachmentLookup" type="Reference" refTo="U16_V0"/>
+            <field offset="228" name="attachmentPoints" type="Reference" refTo="ATT_V1" />
+            <field offset="240" name="attachmentPointAddons" type="Reference" refTo="U16_V0"/>
             <field offset="252" name="lights" type="Reference" refTo="LITEV7" />
             <field offset="264" name="shbxData" type="Reference" />
             <field offset="276" name="cameras" type="Reference" />

@@ -63,6 +63,7 @@ class Exporter:
         self.initMesh(model)
         self.initMaterials(model)
         self.initParticles(model)
+        self.initAttachmentPoints(model)
         self.prepareAnimationEndEvents()
         self.initWithPreparedAnimationData(model)
         
@@ -636,6 +637,19 @@ class Exporter:
             m3ParticleSystem.matmIndex = materialIndices[0]
 
             model.particles.append(m3ParticleSystem)
+
+    def initAttachmentPoints(self, model):
+        scene = self.scene
+        for attachmentPointIndex, attachmentPoint in enumerate(scene.m3_attachment_points):
+            boneName = attachmentPoint.name
+            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+            if boneIndex == None:
+                boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=True)
+            m3AttachmentPoint = m3.ATT_V1()
+            m3AttachmentPoint.name = attachmentPoint.name
+            m3AttachmentPoint.bone = boneIndex
+            model.attachmentPoints.append(m3AttachmentPoint)
+            model.attachmentPointAddons.append(0xffff)
 
     def toM3ColorComponent(self, blenderColorComponent):
         v = round(blenderColorComponent * 255)
