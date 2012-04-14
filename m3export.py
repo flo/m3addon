@@ -362,14 +362,11 @@ class Exporter:
             parentIndex = bone.parent
             isRoot = True
             while parentIndex != -1:
-                print("looking for root of %d: %d" % (boneIndex, parentIndex))
                 if parentIndex in boneIndexSet:
                     isRoot = False
-                    print("is no root")
                 parentBone = model.bones[parentIndex]
                 parentIndex = parentBone.parent
             if isRoot:
-                print("%d is root" % boneIndex)
                 return boneIndex
     
     def makeQuaternionsInterpolatable(self, quaternions):
