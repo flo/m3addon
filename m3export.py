@@ -116,7 +116,8 @@ class Exporter:
                     relRestPosMatrix = absRestPosMatrix
                 
                 poseBone = armatureObject.pose.bones[blenderBoneIndex]
-                poseMatrix = shared.locRotScaleMatrix(poseBone.location, poseBone.rotation_quaternion, poseBone.scale)
+                poseRotationNormalized = poseBone.rotation_quaternion.normalized()
+                poseMatrix = shared.locRotScaleMatrix(poseBone.location, poseRotationNormalized, poseBone.scale)
                 
                 if blenderBone.parent != None:
                     leftCorrectionMatrix = shared.rotFixMatrix * relRestPosMatrix
@@ -190,7 +191,7 @@ class Exporter:
                         m3Scas = []
                         for xLoc, yLoc, zLoc, wRot, xRot, yRot, zRot, xSca, ySca, zSca in zip(xLocValues, yLocValues, zLocValues, wRotValues, xRotValues, yRotValues, zRotValues, xScaValues, yScaValues, zScaValues):
                             loc = mathutils.Vector((xLoc, yLoc, zLoc))
-                            rot = mathutils.Quaternion((wRot, xRot, yRot, zRot))
+                            rot = mathutils.Quaternion((wRot, xRot, yRot, zRot)).normalized()
                             sca = mathutils.Vector((xSca, ySca, zSca))
                             poseMatrix = shared.locRotScaleMatrix(loc, rot, sca)
                             m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix

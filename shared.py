@@ -53,6 +53,8 @@ def scaleAndRotationOf(matrix4x4):
     return (scale, rotation)
 
 def locRotScaleMatrix(location, rotation, scale):
+    """ Important: rotation must be a normalized quaternion """
+    # to_matrix() only works properly with normalized quaternions.
     result = rotation.to_matrix().to_4x4()
     result.col[0] *= scale.x
     result.col[1] *= scale.y
