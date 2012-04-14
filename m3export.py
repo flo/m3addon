@@ -85,7 +85,7 @@ class Exporter:
         division = m3.DIV_V2()
         model.divisions.append(division)
         
-        rootBoneIndex = self.addBoneWithRestPosAndReturnIndex(model, "StaticMesh", skinBone=True, realBone=True)
+        rootBoneIndex = self.addBoneWithRestPosAndReturnIndex(model, "StaticMesh",  realBone=True)
         
         firstBoneLookupIndex = len(model.boneLookup)
         boneLookupIndex = 0
@@ -103,7 +103,7 @@ class Exporter:
             boneNameToAbsInvRestPoseMatrix = {}
             for blenderBoneIndex, blenderBone in enumerate(armature.bones):
                 boneIndex = len(model.bones)
-                bone = self.createStaticBoneAtOrigin(blenderBone.name, skinBone=True, realBone=True)
+                bone = self.createStaticBoneAtOrigin(blenderBone.name, realBone=True)
                 model.bones.append(bone)
                                 
                 absRestPosMatrix = blenderBone.matrix_local    
@@ -268,6 +268,9 @@ class Exporter:
                     vertexGroupIndex = g.group
                     vertexGroup = meshObject.vertex_groups[vertexGroupIndex]
                     boneLookupIndex = boneNameToBoneLookupIndexMap[vertexGroup.name]
+                    boneIndex = boneNameToBoneIndexMap[vertexGroup.name]
+                    bone = model.bones[boneIndex]
+                    bone.setNamedBit("flags", "skinned", True)
                     boneWeight = round(g.weight * 255)
                     if boneWeight != 0:
                         if boneWeightSlot == 4:
@@ -359,9 +362,9 @@ class Exporter:
     def blenderToM3Vector(self, blenderVector3):
         return self.createVector3(blenderVector3.x, blenderVector3.y, blenderVector3.z)
     
-    def addBoneWithRestPosAndReturnIndex(self, model, boneName, skinBone, realBone):
+    def addBoneWithRestPosAndReturnIndex(self, model, boneName, realBone):
         boneIndex = len(model.bones)
-        bone = self.createStaticBoneAtOrigin(boneName,skinBone=skinBone, realBone=realBone)
+        bone = self.createStaticBoneAtOrigin(boneName, realBone=realBone)
         model.bones.append(bone)
         
         boneRestPos = self.createIdentityRestPosition()
@@ -491,7 +494,7 @@ class Exporter:
         scene = self.scene
         for particleSystemIndex, particleSystem in enumerate(scene.m3_particle_systems):
             boneName = "Star2Part" + particleSystem.boneSuffix
-            boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, skinBone=False, realBone=False)
+            boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
             m3ParticleSystem = m3.PAR_V12()
             m3ParticleSystem.bone = boneIndex
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
@@ -625,11 +628,10 @@ class Exporter:
         iref.matrix = self.createIdentityMatrix()
         return iref
 
-    def createStaticBoneAtOrigin(self, name, skinBone, realBone):
+    def createStaticBoneAtOrigin(self, name, realBone):
         m3Bone = m3.BONEV1()
         m3Bone.name = name
         m3Bone.flags = 0
-        m3Bone.setNamedBit("flags", "skinned", skinBone)
         m3Bone.setNamedBit("flags", "real", realBone)
         m3Bone.parent = -1
         m3Bone.location = self.createNullVector3AnimationReference(0.0, 0.0, 0.0)
