@@ -770,7 +770,7 @@
             <field offset="64" name="unknown03" type="float" expected-value="0.0" />
             <field offset="68" name="sts" type="Reference" refTo="STS_V0"/>
             <field offset="80" name="bones"  type="Reference" refTo="BONEV1" />
-            <field offset="92" name="nSkinBones" type="uint32" />
+            <field offset="92" name="numberOfBonesToCheckForSkin" type="uint32" />
             <field offset="96" name="vFlags" type="uint32" default-value="0x180007d" >
                 <bits>
                     <bit mask="0x20000" name="hasVertices" />

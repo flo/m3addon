@@ -59,6 +59,7 @@ class Exporter:
         model = m3.MODLV23()
         model.modelName = os.path.basename(m3FileName)
         
+        self.initBones(model)
         self.initMesh(model)
         self.initMaterials(model)
         self.initParticles(model)
@@ -69,50 +70,28 @@ class Exporter:
         model.uniqueUnknownNumber = 0
         return model
     
-    def initMesh(self, model):
-        meshObject = self.findMeshObject()
-        hasMesh = meshObject != None
-        model.setNamedBit("flags", "hasMesh", hasMesh)
-        model.boundings = self.createAlmostEmptyBoundingsWithRadius(2.0)
+    def initBones(self, model):
+        self.boneNameToBoneIndexMap = {} # map: bone name to index in model bone list
+        boneNameToAbsInvRestPoseMatrix = {}
 
-        if not hasMesh:
-            model.nSkinBones = 0
-            model.divisions = [self.createEmptyDivision()]
-            return
-            
-        mesh = meshObject.data
-        
-        division = m3.DIV_V2()
-        model.divisions.append(division)
-        
-        rootBoneIndex = self.addBoneWithRestPosAndReturnIndex(model, "StaticMesh",  realBone=True)
-        
-        firstBoneLookupIndex = len(model.boneLookup)
-        boneLookupIndex = 0
-        model.boneLookup.append(rootBoneIndex)
-        numberOfBones = 1
-        if len(meshObject.modifiers) == 0:
-            pass
-        elif len(meshObject.modifiers) == 1 and (meshObject.modifiers[0].type == "ARMATURE"):
-            modifier = meshObject.modifiers[0]
-            armatureObject = modifier.object
-            armature = armatureObject.data #todo is that so?
-            
-            boneNameToBoneIndexMap = {}# map: bone name to index in model bone list
-            boneNameToBoneLookupIndexMap = {}
-            boneNameToAbsInvRestPoseMatrix = {}
+        for armatureObject in self.findArmatureObjects():
+            armature = armatureObject.data 
             for blenderBoneIndex, blenderBone in enumerate(armature.bones):
                 boneIndex = len(model.bones)
+                if blenderBone.name in self.boneNameToBoneIndexMap:
+                    raise Exception("There are multiple bones with the name %s" % lenderBone.name)
+                self.boneNameToBoneIndexMap[blenderBone.name] = boneIndex
+
                 bone = self.createStaticBoneAtOrigin(blenderBone.name, realBone=True)
                 model.bones.append(bone)
-                                
+                
                 absRestPosMatrix = blenderBone.matrix_local    
                 if blenderBone.parent != None:
-                    bone.parent = boneNameToBoneIndexMap[blenderBone.parent.name]
+                    bone.parent = self.boneNameToBoneIndexMap[blenderBone.parent.name]
                     absInvRestPoseMatrixParent = boneNameToAbsInvRestPoseMatrix[blenderBone.parent.name]
                     relRestPosMatrix = absInvRestPoseMatrixParent * absRestPosMatrix
                 else:
-                    bone.parent = rootBoneIndex
+                    bone.parent = -1
                     relRestPosMatrix = absRestPosMatrix
                 
                 poseBone = armatureObject.pose.bones[blenderBoneIndex]
@@ -243,12 +222,36 @@ class Exporter:
 
                 absoluteInverseBoneRestPos = self.createRestPositionFromBlender4x4Matrix(absoluteInverseRestPoseMatrixFixed)
                 model.absoluteInverseBoneRestPositions.append(absoluteInverseBoneRestPos)
-                boneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
-                model.boneLookup.append(boneIndex)
-                boneNameToBoneIndexMap[blenderBone.name] = boneIndex
-                boneNameToBoneLookupIndexMap[blenderBone.name] = boneLookupIndex
                 boneNameToAbsInvRestPoseMatrix[blenderBone.name] = absRestPosMatrix.inverted()
-                numberOfBones += 1
+    
+    def initMesh(self, model):
+        meshObject = self.findMeshObject()
+        hasMesh = meshObject != None
+        model.setNamedBit("flags", "hasMesh", hasMesh)
+        model.boundings = self.createAlmostEmptyBoundingsWithRadius(2.0)
+
+        if not hasMesh:
+            model.numberOfBonesToCheckForSkin = 0
+            model.divisions = [self.createEmptyDivision()]
+            return
+            
+        mesh = meshObject.data
+        
+        division = m3.DIV_V2()
+        model.divisions.append(division)
+        
+        firstBoneLookupIndex = len(model.boneLookup)
+        staticMeshBoneName = "StaticMesh"
+        boneNameToBoneLookupIndexMap = {}
+        boneNamesOfArmature = set()
+        if len(meshObject.modifiers) == 0:
+            pass
+        elif len(meshObject.modifiers) == 1 and (meshObject.modifiers[0].type == "ARMATURE"):
+            modifier = meshObject.modifiers[0]
+            armatureObject = modifier.object
+            armature = armatureObject.data
+            for blenderBoneIndex, blenderBone in enumerate(armature.bones):
+                boneNamesOfArmature.add(blenderBone.name)
         else:
             raise Exception("Mesh must have no modifiers except single one for the armature")
             
@@ -267,9 +270,13 @@ class Exporter:
                 for gIndex, g in enumerate(blenderVertex.groups):
                     vertexGroupIndex = g.group
                     vertexGroup = meshObject.vertex_groups[vertexGroupIndex]
-                    boneLookupIndex = boneNameToBoneLookupIndexMap.get(vertexGroup.name)
-                    if boneLookupIndex != None:
-                        boneIndex = boneNameToBoneIndexMap[vertexGroup.name]
+                    boneIndex = self.boneNameToBoneIndexMap.get(vertexGroup.name)
+                    if boneIndex != None and vertexGroup.name in boneNamesOfArmature:
+                        boneLookupIndex = boneNameToBoneLookupIndexMap.get(vertexGroup.name)
+                        if boneLookupIndex == None:
+                            boneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
+                            model.boneLookup.append(boneIndex)
+                            boneNameToBoneLookupIndexMap[vertexGroup.name] = boneLookupIndex
                         bone = model.bones[boneIndex]
                         bone.setNamedBit("flags", "skinned", True)
                         boneWeight = round(g.weight * 255)
@@ -279,9 +286,17 @@ class Exporter:
                             setattr(m3Vertex, "boneWeight%d" % boneWeightSlot, boneWeight)
                             setattr(m3Vertex, "boneLookupIndex%d" % boneWeightSlot, boneLookupIndex)
                             boneWeightSlot += 1
-                if boneWeightSlot == 0:
+                isStaticVertex = (boneWeightSlot == 0)
+                if isStaticVertex:                    
+                    staticMeshBoneIndex = self.boneNameToBoneIndexMap.get(staticMeshBoneName)
+                    if staticMeshBoneIndex == None:
+                        staticMeshBoneIndex = self.addBoneWithRestPosAndReturnIndex(model, staticMeshBoneName,  realBone=True)
+                        self.boneNameToBoneIndexMap[staticMeshBoneName] = staticMeshBoneIndex
+                    staticMeshLookupIndex = len(model.boneLookup)
+                    model.boneLookup.append(staticMeshBoneIndex)
+                    boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshLookupIndex
                     m3Vertex.boneWeight0 = 255
-                    m3Vertex.boneLookupIndex0 = boneLookupIndex
+                    m3Vertex.boneLookupIndex0 = staticMeshBoneIndex
                 if len(mesh.uv_textures) >= 1:
                     uvData = mesh.uv_textures[0].data[blenderFace.index]
                     m3Vertex.uv0 = self.convertBlenderToM3UVCoordinates(getattr(uvData, "uv%d" % (faceRelativeVertexIndex + 1)))
@@ -311,6 +326,14 @@ class Exporter:
             for i in range(3):  
                 minV[i] = min(minV[i], blenderVertex.co[i])
                 maxV[i] = max(maxV[i], blenderVertex.co[i])
+                
+                
+        # find a bone which hasn't a parent in the list
+        rootBoneIndex = None
+        exlusiveBoneLookupEnd = firstBoneLookupIndex + len(boneNameToBoneLookupIndexMap)
+        indicesOfUsedBones = model.boneLookup[firstBoneLookupIndex:exlusiveBoneLookupEnd]
+        rootBoneIndex = self.findRootBoneIndex(model, indicesOfUsedBones)
+        rootBone = model.bones[rootBoneIndex]
         
         diffV = minV - maxV
         radius = diffV.length / 2
@@ -320,13 +343,34 @@ class Exporter:
         region.numberOfVertices = len(m3Vertices)
         region.firstFaceVertexIndexIndex = firstFaceVertexIndexIndex
         region.numberOfFaceVertexIndices = len(vertexIndicesOfFaces)
-        region.numberOfBones = numberOfBones
+        region.numberOfBones = len(boneNameToBoneLookupIndexMap)
         region.firstBoneLookupIndex = firstBoneLookupIndex
-        region.numberOfBoneLookupIndices = numberOfBones
-        region.rootBoneIndex = rootBoneIndex
+        region.numberOfBoneLookupIndices = len(boneNameToBoneLookupIndexMap)
+        region.rootBoneIndex = model.boneLookup[firstBoneLookupIndex]
         division.regions.append(region)
         
-        model.nSkinBones = numberOfBones
+        numberOfBonesToCheckForSkin = 0
+        for boneIndex, bone in enumerate(model.bones):
+            if bone.getNamedBit("flags","skinned"):
+                numberOfBonesToCheckForSkin = boneIndex + 1
+        model.numberOfBonesToCheckForSkin = numberOfBonesToCheckForSkin
+    
+    def findRootBoneIndex(self, model, boneIndices):
+        boneIndexSet = set(boneIndices)
+        for boneIndex in boneIndices:
+            bone = model.bones[boneIndex]
+            parentIndex = bone.parent
+            isRoot = True
+            while parentIndex != -1:
+                print("looking for root of %d: %d" % (boneIndex, parentIndex))
+                if parentIndex in boneIndexSet:
+                    isRoot = False
+                    print("is no root")
+                parentBone = model.bones[parentIndex]
+                parentIndex = parentBone.parent
+            if isRoot:
+                print("%d is root" % boneIndex)
+                return boneIndex
     
     def makeQuaternionsInterpolatable(self, quaternions):
         if len(quaternions) < 2:
@@ -388,7 +432,11 @@ class Exporter:
             return meshObject
         else:
             return None
-        
+    
+    def findArmatureObjects(self):
+        for currentObject in bpy.data.objects:
+            if currentObject.type == 'ARMATURE':
+                yield currentObject
     
     def frameToMS(self, frame):
         frameRate = self.scene.render.fps
