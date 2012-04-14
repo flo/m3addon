@@ -485,20 +485,14 @@ class Importer:
                     relativeScale[i] = absoluteScale[i] / parentAbsScale[i]
             relativeScales.append(relativeScale)
         return relativeScales
+
     def fix180DegreeRotationsInMapWithKeys(self, timeToRotationMap, timeEntries):
-        def sqr(x):
-            return x*x
-        lastRotation = None
+        previousRotation = None
         for timeInMS in timeEntries:
             rotation = timeToRotationMap.get(timeInMS)
-            if lastRotation != None:
-                sumOfSquares =  sqr(rotation.x - lastRotation.x) + sqr(rotation.y - lastRotation.y) + sqr(rotation.z - lastRotation.z) + sqr(rotation.w - lastRotation.w)
-                sumOfSquaresMinus =  sqr(-rotation.x - lastRotation.x) + sqr(-rotation.y - lastRotation.y) + sqr(-rotation.z - lastRotation.z) + sqr(-rotation.w - lastRotation.w)
-                if sumOfSquaresMinus < sumOfSquares:
-                    rotation = mathutils.Quaternion((-rotation.w, -rotation.x, -rotation.y, -rotation.z))
-                    timeToRotationMap[timeInMS] = rotation
-            
-            lastRotation = rotation
+            if previousRotation != None:
+                shared.smoothQuaternionTransition(previousQuaternion=previousRotation, quaternionToFix=rotation)
+            previousRotation = rotation        
             
     def applyCorrectionToLocRotScaleMaps(self, leftCorrectionMatrix, rightCorrectionMatrix, timeToLocationMap, timeToRotationMap, timeToScaleMap, timeEntries):
         for timeInMS in timeEntries:

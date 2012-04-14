@@ -67,3 +67,12 @@ def setAnimationWithIndexToCurrentData(scene, animationIndex):
         assignedAction = animation.assignedActions.add()
         assignedAction.targetName = scene.name
         assignedAction.actionName = scene.animation_data.action.name
+
+def sqr(x):
+    return x*x
+
+def smoothQuaternionTransition(previousQuaternion, quaternionToFix):
+    sumOfSquares =  sqr(quaternionToFix.x - previousQuaternion.x) + sqr(quaternionToFix.y - previousQuaternion.y) + sqr(quaternionToFix.z - previousQuaternion.z) + sqr(quaternionToFix.w - previousQuaternion.w)
+    sumOfSquaresMinus =  sqr(-quaternionToFix.x - previousQuaternion.x) + sqr(-quaternionToFix.y - previousQuaternion.y) + sqr(-quaternionToFix.z - previousQuaternion.z) + sqr(-quaternionToFix.w - previousQuaternion.w)
+    if sumOfSquaresMinus < sumOfSquares:
+        quaternionToFix.negate()

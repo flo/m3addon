@@ -185,9 +185,10 @@ class Exporter:
                             yScaValues = len(timeValuesInMS) * [scale.y]
                         if zScaValues == None:
                             zScaValues = len(timeValuesInMS) * [scale.z]
-                        m3Locs = []
-                        m3Rots = []
-                        m3Scas = []
+                            
+                        locations = []
+                        rotations = []
+                        scales = []
                         for xLoc, yLoc, zLoc, wRot, xRot, yRot, zRot, xSca, ySca, zSca in zip(xLocValues, yLocValues, zLocValues, wRotValues, xRotValues, yRotValues, zRotValues, xScaValues, yScaValues, zScaValues):
                             loc = mathutils.Vector((xLoc, yLoc, zLoc))
                             rot = mathutils.Quaternion((wRot, xRot, yRot, zRot)).normalized()
@@ -195,9 +196,15 @@ class Exporter:
                             poseMatrix = shared.locRotScaleMatrix(loc, rot, sca)
                             m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix
                             loc, rot, sca = m3PoseMatrix.decompose()
-                            m3Locs.append(self.createVector3FromBlenderVector(loc))
-                            m3Rots.append(self.createQuaternionFromBlenderQuaternion(rot))
-                            m3Scas.append(self.createVector3FromBlenderVector(sca))
+                            locations.append(loc)
+                            rotations.append(rot)
+                            scales.append(sca)
+                            
+                        self.makeQuaternionsInterpolatable(rotations)
+                        
+                        m3Locs = self.createVector3sFromBlenderVectors(locations)
+                        m3Rots = self.createQuaternionsFromBlenderQuaternions(rotations)
+                        m3Scas = self.createVector3sFromBlenderVectors(scales)
                         
                         animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
 
@@ -316,6 +323,15 @@ class Exporter:
         division.regions.append(region)
         
         model.nSkinBones = numberOfBones
+    
+    def makeQuaternionsInterpolatable(self, quaternions):
+        if len(quaternions) < 2:
+            return
+            
+        previousQuaternion = quaternions[0]
+        for quaternion in quaternions[1:]:
+            shared.smoothQuaternionTransition(previousQuaternion=previousQuaternion, quaternionToFix=quaternion)
+            previousQuaternion = quaternion
     
     def blenderVector3AndScaleToM3Vector4As4uint8(self, blenderVector3, scale):
         x = blenderVector3.x
@@ -838,12 +854,24 @@ class Exporter:
         
     def createVector3FromBlenderVector(self, blenderVector):
         return self.createVector3(blenderVector.x, blenderVector.y, blenderVector.z)
-    
+        
+    def createVector3sFromBlenderVectors(self, blenderVectors):
+        m3Vectors = []
+        for blenderVector in blenderVectors:
+            m3Vectors.append(self.createVector3FromBlenderVector(blenderVector))
+        return m3Vectors
+
     def createVector4FromBlenderVector(self, blenderVector):
         return self.createVector4(blenderVector[0], blenderVector[1], blenderVector[2], blenderVector[3])
 
     def createQuaternionFromBlenderQuaternion(self, q):
         return self.createQuaternion(x=q.x, y=q.y, z=q.z, w=q.w)
+    
+    def createQuaternionsFromBlenderQuaternions(self, blenderQuaternions):
+        m3Quaternions = []
+        for blenderQuaternion in blenderQuaternions:
+            m3Quaternions.append(self.createQuaternionFromBlenderQuaternion(blenderQuaternion))
+        return m3Quaternions
     
     def createIdentityMatrix(self):
         matrix = m3.Matrix44()
