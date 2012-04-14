@@ -53,7 +53,7 @@ def setAnimationWithIndexToCurrentData(scene, animationIndex):
         return
     animation = scene.m3_animations[animationIndex]
     animation.startFrame = scene.frame_start
-    animation.endFrame = scene.frame_end
+    animation.exlusiveEndFrame = scene.frame_end+1
     while len(animation.assignedActions) > 0:
         animation.assignedActions.remove(0)
 

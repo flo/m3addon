@@ -211,21 +211,21 @@ class Exporter:
                         m3AnimBlock = m3.SD3VV0()
                         m3AnimBlock.frames = timeValuesInMS
                         m3AnimBlock.flags = 0
-                        m3AnimBlock.fend = self.frameToMS(animation.endFrame)
+                        m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
                         m3AnimBlock.keys = m3Locs
                         animIdToAnimDataMap[locationAnimId] = m3AnimBlock
                         
                         m3AnimBlock = m3.SD4QV0()
                         m3AnimBlock.frames = timeValuesInMS
                         m3AnimBlock.flags = 0
-                        m3AnimBlock.fend = self.frameToMS(animation.endFrame)
+                        m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
                         m3AnimBlock.keys = m3Rots
                         animIdToAnimDataMap[rotationAnimId] = m3AnimBlock
                     
                         m3AnimBlock = m3.SD3VV0()
                         m3AnimBlock.frames = timeValuesInMS
                         m3AnimBlock.flags = 0
-                        m3AnimBlock.fend = self.frameToMS(animation.endFrame)
+                        m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
                         m3AnimBlock.keys = m3Scas
                         animIdToAnimDataMap[scaleAnimId] = m3AnimBlock
                         
@@ -399,9 +399,9 @@ class Exporter:
     
     def createAnimationEndEvent(self, animation):
         event = m3.SDEVV0()
-        event.frames = [self.frameToMS(animation.endFrame)]
+        event.frames = [self.frameToMS(animation.exlusiveEndFrame)]
         event.flags = 1
-        event.fend = self.frameToMS(animation.endFrame)
+        event.fend = self.frameToMS(animation.exlusiveEndFrame)
         event.keys = [self.createAnimationEndEventKey(animation)]
         return event
         
@@ -421,7 +421,7 @@ class Exporter:
             m3Sequence = m3.SEQSV1()
             m3Sequence.name = animation.name
             m3Sequence.animStartInMS = self.frameToMS(animation.startFrame)
-            m3Sequence.animEndInMS = self.frameToMS(animation.endFrame)
+            m3Sequence.animEndInMS = self.frameToMS(animation.exlusiveEndFrame)
             m3Sequence.movementSpeed = animation.movementSpeed
             m3Sequence.setNamedBit("flags", "notLooping", animation.notLooping)
             m3Sequence.setNamedBit("flags", "alwaysGlobal", animation.alwaysGlobal)
@@ -896,10 +896,11 @@ class Exporter:
                             animationActionTuples.append((animation, action))
         return animationActionTuples
 
-        
+    
+    
     def getAllFramesOf(self, animation):
-        #TODO Does the end frame need to be included?
-        return range(animation.startFrame, animation.endFrame)
+        # end frame is inclusve in blender
+        return range(animation.startFrame, animation.exlusiveEndFrame)
         
     def allFramesToMSValues(self, frames):
         timeValues = []
@@ -970,7 +971,7 @@ class BlenderToM3DataTransferer:
                 m3AnimBlock = m3.SDCCV0()
                 m3AnimBlock.frames = timeValuesInMS
                 m3AnimBlock.flags = 0
-                m3AnimBlock.fend = self.exporter.frameToMS(animation.endFrame)
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.exlusiveEndFrame)
                 m3AnimBlock.keys = colors
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
@@ -1000,7 +1001,7 @@ class BlenderToM3DataTransferer:
                 m3AnimBlock = animDataClass()
                 m3AnimBlock.frames = timeValuesInMS
                 m3AnimBlock.flags = 0
-                m3AnimBlock.fend = self.exporter.frameToMS(animation.endFrame)
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.exlusiveEndFrame)
                 m3AnimBlock.keys = convertedValues
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
@@ -1061,7 +1062,7 @@ class BlenderToM3DataTransferer:
                 m3AnimBlock = m3.SD3VV0()
                 m3AnimBlock.frames = timeValuesInMS
                 m3AnimBlock.flags = 0
-                m3AnimBlock.fend = self.exporter.frameToMS(animation.endFrame)
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.exlusiveEndFrame)
                 m3AnimBlock.keys = vectors
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]

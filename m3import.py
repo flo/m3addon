@@ -857,7 +857,7 @@ class Importer:
             animation = scene.m3_animations.add()
             animation.name = sequence.name
             animation.startFrame = msToFrame(sequence.animStartInMS)
-            animation.endFrame = msToFrame(sequence.animEndInMS)
+            animation.exlusiveEndFrame = msToFrame(sequence.animEndInMS)
             animation.notLooping =  sequence.getNamedBit("flags", "notLooping")
             animation.alwaysGlobal =  sequence.getNamedBit("flags", "alwaysGlobal")
             animation.globalInPreviewer =  sequence.getNamedBit("flags", "globalInPreviewer")

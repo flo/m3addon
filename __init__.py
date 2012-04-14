@@ -88,7 +88,7 @@ def handleAnimationSequenceIndexChange(self, context):
     if (newIndex >= 0) and (newIndex < len(scene.m3_animations)):
         animation = scene.m3_animations[newIndex]
         scene.frame_start = animation.startFrame
-        scene.frame_end = animation.endFrame
+        scene.frame_end = animation.exlusiveEndFrame - 1
         newObjectNameToActionMap = {}
         newSceneAction = None
         for assignedAction in animation.assignedActions:
@@ -151,7 +151,7 @@ class AssignedActionOfM3Animation(bpy.types.PropertyGroup):
 class M3Animation(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Stand", options=set())
     startFrame = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
-    endFrame = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
+    exlusiveEndFrame = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
     assignedActions = bpy.props.CollectionProperty(type=AssignedActionOfM3Animation, options=set())
     movementSpeed = bpy.props.FloatProperty(name="mov. speed", options=set())
     frequency = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
@@ -709,7 +709,7 @@ class M3_ANIMATIONS_OT_add(bpy.types.Operator):
         name = self.findUnusedName(scene)
         animation.name = name
         animation.startFrame = 0
-        animation.endFrame = 100
+        animation.exlusiveEndFrame = 60
         animation.frequency = 1
         animation.movementSpeed = 0.0
         scene.m3_animation_index = len(scene.m3_animations)-1
