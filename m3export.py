@@ -267,17 +267,18 @@ class Exporter:
                 for gIndex, g in enumerate(blenderVertex.groups):
                     vertexGroupIndex = g.group
                     vertexGroup = meshObject.vertex_groups[vertexGroupIndex]
-                    boneLookupIndex = boneNameToBoneLookupIndexMap[vertexGroup.name]
-                    boneIndex = boneNameToBoneIndexMap[vertexGroup.name]
-                    bone = model.bones[boneIndex]
-                    bone.setNamedBit("flags", "skinned", True)
-                    boneWeight = round(g.weight * 255)
-                    if boneWeight != 0:
-                        if boneWeightSlot == 4:
-                            raise Exception("The m3 format supports at maximum 4 bone weights per vertex")
-                        setattr(m3Vertex, "boneWeight%d" % boneWeightSlot, boneWeight)
-                        setattr(m3Vertex, "boneLookupIndex%d" % boneWeightSlot, boneLookupIndex)
-                        boneWeightSlot += 1
+                    boneLookupIndex = boneNameToBoneLookupIndexMap.get(vertexGroup.name)
+                    if boneLookupIndex != None:
+                        boneIndex = boneNameToBoneIndexMap[vertexGroup.name]
+                        bone = model.bones[boneIndex]
+                        bone.setNamedBit("flags", "skinned", True)
+                        boneWeight = round(g.weight * 255)
+                        if boneWeight != 0:
+                            if boneWeightSlot == 4:
+                                raise Exception("The m3 format supports at maximum 4 bone weights per vertex")
+                            setattr(m3Vertex, "boneWeight%d" % boneWeightSlot, boneWeight)
+                            setattr(m3Vertex, "boneLookupIndex%d" % boneWeightSlot, boneLookupIndex)
+                            boneWeightSlot += 1
                 if boneWeightSlot == 0:
                     m3Vertex.boneWeight0 = 255
                     m3Vertex.boneLookupIndex0 = boneLookupIndex
