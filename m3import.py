@@ -436,26 +436,21 @@ class Importer:
 
         print("Adjusting pose bones")
         bpy.ops.object.mode_set(mode='POSE')
-        self.adjustPoseBones(model.bones, relEditBoneMatrices, relativeScales)
+        self.adjustPoseBones(model.bones, relEditBoneMatrices)
     
-    def adjustPoseBones(self, m3Bones, relEditBoneMatrices, relativeScales):
+    def adjustPoseBones(self, m3Bones, relEditBoneMatrices):
         index = 0
-        for bone, relEditBoneMatrix, relativeScale in zip(m3Bones, relEditBoneMatrices, relativeScales):
+        for bone, relEditBoneMatrix in zip(m3Bones, relEditBoneMatrices):
             poseBone = self.armatureObject.pose.bones[toValidBoneName(bone.name)]
             scale = toBlenderVector3(bone.scale.initValue)
             rotation = toBlenderQuaternion(bone.rotation.initValue)
             location = toBlenderVector3(bone.location.initValue)
             
-            scaleCorrection = mathutils.Matrix(((relativeScale.x, 0, 0, 0,),
-                                                (0, relativeScale.y, 0, 0),
-                                                (0, 0, relativeScale.z, 0),
-                                                (0, 0, 0, 1)))
-            
             if bone.parent != -1:
-                leftCorrectionMatrix = relEditBoneMatrix.inverted() * shared.rotFixMatrixInverted * scaleCorrection
+                leftCorrectionMatrix = relEditBoneMatrix.inverted() * shared.rotFixMatrixInverted
                 rightCorrectionMatrix = shared.rotFixMatrix
             else:
-                leftCorrectionMatrix = relEditBoneMatrix.inverted() * scaleCorrection
+                leftCorrectionMatrix = relEditBoneMatrix.inverted()
                 rightCorrectionMatrix = shared.rotFixMatrix
             
             _, leftRotCorrection, leftScaleCorrection = leftCorrectionMatrix.decompose()
@@ -463,8 +458,6 @@ class Importer:
             
             location = leftCorrectionMatrix * location
             rotation = leftRotCorrection * rotation * rightRotCorrection
-            for i in range(3):
-                scale[i] = scale[i] * (relativeScales[index])[i]
 
             poseBone.scale = scale
             poseBone.rotation_quaternion = rotation
