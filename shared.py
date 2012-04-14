@@ -38,20 +38,6 @@ rotFixMatrixInverted = rotFixMatrix.transposed()
 
 animFlagsForAnimatedProperty = 6
 
-
-def scaleAndRotationOf(matrix4x4):
-    scale = mathutils.Vector((1,1,1))
-    matrix3x3 = matrix4x4.to_3x3()
-    scale.x = matrix3x3.col[0].length
-    scale.y = matrix3x3.col[1].length
-    scale.z = matrix3x3.col[2].length
-    matrix3x3.col[0] = matrix3x3.col[0] / scale.x
-    matrix3x3.col[1] = matrix3x3.col[1] / scale.y
-    matrix3x3.col[2] = matrix3x3.col[2] / scale.z
-    #TODO handle negative scales
-    rotation = matrix3x3.to_quaternion()
-    return (scale, rotation)
-
 def locRotScaleMatrix(location, rotation, scale):
     """ Important: rotation must be a normalized quaternion """
     # to_matrix() only works properly with normalized quaternions.

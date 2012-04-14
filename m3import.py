@@ -458,16 +458,13 @@ class Importer:
                 leftCorrectionMatrix = relEditBoneMatrix.inverted() * scaleCorrection
                 rightCorrectionMatrix = shared.rotFixMatrix
             
-            leftScaleCorrection, leftRotCorrection = shared.scaleAndRotationOf(leftCorrectionMatrix)
-            rightScaleCorrection, rightRotCorrection = shared.scaleAndRotationOf(rightCorrectionMatrix)
+            _, leftRotCorrection, leftScaleCorrection = leftCorrectionMatrix.decompose()
+            _, rightRotCorrection, rightScaleCorrection = rightCorrectionMatrix.decompose()
             
             location = leftCorrectionMatrix * location
             rotation = leftRotCorrection * rotation * rightRotCorrection
             for i in range(3):
                 scale[i] = scale[i] * (relativeScales[index])[i]
-                
-            
-            #TODO scale (negative scale?)
 
             poseBone.scale = scale
             poseBone.rotation_quaternion = rotation
@@ -522,8 +519,7 @@ class Importer:
             relSpecifiedMatrix = shared.locRotScaleMatrix(location, rotation, scale)
 
             newMatrix = leftCorrectionMatrix * relSpecifiedMatrix * rightCorrectionMatrix
-            scale, rotation = shared.scaleAndRotationOf(newMatrix)
-            location = newMatrix.translation 
+            location, rotation, scale = newMatrix.decompose()
             timeToLocationMap[timeInMS] = location
             timeToRotationMap[timeInMS] = rotation
             timeToScaleMap[timeInMS] = scale

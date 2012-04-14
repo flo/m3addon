@@ -126,8 +126,7 @@ class Exporter:
                 rightCorrectionMatrix = shared.rotFixMatrixInverted
                 m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix
                 
-                scale, rotation = shared.scaleAndRotationOf(m3PoseMatrix)
-                location = m3PoseMatrix.translation
+                location, rotation, scale = m3PoseMatrix.decompose()
                 bone.scale.initValue = self.createVector3FromBlenderVector(scale)
                 bone.scale.nullValue = self.createVector3FromBlenderVector(scale)
                 bone.rotation.initValue = self.createQuaternionFromBlenderQuaternion(rotation)
@@ -195,8 +194,7 @@ class Exporter:
                             sca = mathutils.Vector((xSca, ySca, zSca))
                             poseMatrix = shared.locRotScaleMatrix(loc, rot, sca)
                             m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix
-                            sca, rot = shared.scaleAndRotationOf(m3PoseMatrix)
-                            loc = m3PoseMatrix.translation
+                            loc, rot, sca = m3PoseMatrix.decompose()
                             m3Locs.append(self.createVector3FromBlenderVector(loc))
                             m3Rots.append(self.createQuaternionFromBlenderQuaternion(rot))
                             m3Scas.append(self.createVector3FromBlenderVector(sca))
