@@ -305,7 +305,7 @@ class Exporter:
                     m3Vertex.uv0 = self.convertBlenderToM3UVCoordinates(getattr(uvData, "uv%d" % (faceRelativeVertexIndex + 1)))
                 else:
                     raise Exception("Exporting meshes without texture coordinates isn't supported yet")
-                m3Vertex.normal = self.blenderVector3AndScaleToM3Vector4As4uint8(blenderVertex.normal, 0.0)
+                m3Vertex.normal = self.blenderVector3AndScaleToM3Vector4As4uint8(-blenderVertex.normal, 1.0)
                 m3Vertex.tangent = self.createVector4As4uint8FromFloats(0.0, 0.0, 0.0, 0.0)
                 m3.VertexFormat0x182007d.validateInstance(m3Vertex, "vertex")
                 m3Vertices.append(m3Vertex)
