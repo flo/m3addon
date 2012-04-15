@@ -250,9 +250,10 @@ class Exporter:
         elif len(meshObject.modifiers) == 1 and (meshObject.modifiers[0].type == "ARMATURE"):
             modifier = meshObject.modifiers[0]
             armatureObject = modifier.object
-            armature = armatureObject.data
-            for blenderBoneIndex, blenderBone in enumerate(armature.bones):
-                boneNamesOfArmature.add(blenderBone.name)
+            if armatureObject != None:
+                armature = armatureObject.data
+                for blenderBoneIndex, blenderBone in enumerate(armature.bones):
+                    boneNamesOfArmature.add(blenderBone.name)
         else:
             raise Exception("Mesh must have no modifiers except single one for the armature")
             
