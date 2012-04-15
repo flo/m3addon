@@ -770,27 +770,26 @@ class Exporter:
         transferer.transferAnimatableFloat("brightMult")
         transferer.transferAnimatableFloat("brightMult2")
         m3Layer.unknown6 = self.createNullUInt32AnimationReference(0)
-        m3Layer.unknown7 = self.createNullVector2AnimationReference(0.0, 0.0)
+        m3Layer.unknown7 = self.createNullVector2AnimationReference(0.0, 0.0, flags=0)
         m3Layer.unknown8 = self.createNullInt16AnimationReference(0)
-        m3Layer.uvOffset = self.createNullVector2AnimationReference(0.0, 0.0)
-        m3Layer.uvAngle = self.createNullVector3AnimationReference(0.0, 0.0, 0.0)
-        m3Layer.uvTiling = self.createNullVector2AnimationReference(1.0, 1.0)
-        m3Layer.uvTiling = self.createNullVector2AnimationReference(1.0, 1.0)
-        m3Layer.unknown9 = self.createNullUInt32AnimationReference(0)
-        m3Layer.unknown10 = self.createNullFloatAnimationReference(1.0)
+        m3Layer.uvOffset = self.createNullVector2AnimationReference(0.0, 0.0, flags=1)
+        m3Layer.uvAngle = self.createNullVector3AnimationReference(0.0, 0.0, 0.0, flags=1)
+        m3Layer.uvTiling = self.createNullVector2AnimationReference(1.0, 1.0, flags=1)
+        m3Layer.unknown9 = self.createNullUInt32AnimationReference(0, flags=1)
+        m3Layer.unknown10 = self.createNullFloatAnimationReference(1.0, flags=1)
         transferer.transferAnimatableFloat("brightness")
         return m3Layer
 
-    def createNullVector2AnimationReference(self, x, y):
+    def createNullVector2AnimationReference(self, x, y, flags=1):
         animRef = m3.Vector2AnimationReference()
-        animRef.header = self.createNullAnimHeader()
+        animRef.header = self.createNullAnimHeader(flags=flags)
         animRef.initValue = self.createVector2(x, y)
         animRef.nullValue = self.createVector2(x, y)
         return animRef
         
-    def createNullVector3AnimationReference(self, x, y, z):
+    def createNullVector3AnimationReference(self, x, y, z, flags=1):
         animRef = m3.Vector3AnimationReference()
-        animRef.header = self.createNullAnimHeader()
+        animRef.header = self.createNullAnimHeader(flags=flags)
         animRef.initValue = self.createVector3(x, y, z)
         animRef.nullValue = self.createVector3(x, y, z)
         return animRef
@@ -809,25 +808,25 @@ class Exporter:
         animRef.nullValue = value
         return animRef
         
-    def createNullUInt32AnimationReference(self, value):
+    def createNullUInt32AnimationReference(self, value, flags=0):
         animRef = m3.UInt32AnimationReference()
-        animRef.header = self.createNullAnimHeader()
+        animRef.header = self.createNullAnimHeader(flags = flags)
         animRef.initValue = value
         animRef.nullValue = value
         return animRef
         
-    def createNullFloatAnimationReference(self, initValue, nullValue=None):
+    def createNullFloatAnimationReference(self, initValue, nullValue=None, flags=1):
         if nullValue == None:
             nullValue = initValue
         animRef = m3.FloatAnimationReference()
-        animRef.header = self.createNullAnimHeader()
+        animRef.header = self.createNullAnimHeader(flags=flags)
         animRef.initValue = initValue
         animRef.nullValue = nullValue
         return animRef
     
-    def createNullAnimHeader(self):
+    def createNullAnimHeader(self, flags=0):
         animRefHeader = m3.AnimationReferenceHeader()
-        animRefHeader.flags = 0
+        animRefHeader.flags = flags
         animRefHeader.animFlags = 0
         animRefHeader.animId = self.createUniqueAnimId()
         return animRefHeader
