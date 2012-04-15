@@ -293,6 +293,7 @@ class Exporter:
                     staticMeshBoneIndex = self.boneNameToBoneIndexMap.get(staticMeshBoneName)
                     if staticMeshBoneIndex == None:
                         staticMeshBoneIndex = self.addBoneWithRestPosAndReturnIndex(model, staticMeshBoneName,  realBone=True)
+                        model.bones[staticMeshBoneIndex].setNamedBit("flags", "skinned", True)
                         self.boneNameToBoneIndexMap[staticMeshBoneName] = staticMeshBoneIndex
                     staticMeshLookupIndex = len(model.boneLookup)
                     model.boneLookup.append(staticMeshBoneIndex)
