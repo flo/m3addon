@@ -89,6 +89,10 @@ def rawBytesToHex(rawBytes):
     
 class Section:
     \"\"\"Has fields indexEntry and contentClass and sometimes also the fields rawBytes and content \"\"\"
+    
+    def __init__(self):
+        self.timesReferenced = 0
+    
     def determineContentField(self):
         indexEntry = self.indexEntry
         self.content = self.contentClass.createInstances(rawBytes=self.rawBytes, count=indexEntry.repetitions)
@@ -122,6 +126,7 @@ def resolveRef(ref, sections, expectedType, variable):
             return expectedType.createEmptyArray()
     
     referencedSection = sections[ref.index]
+    referencedSection.timesReferenced += 1
     indexEntry = referencedSection.indexEntry
     
     if indexEntry.repetitions < ref.entries:
@@ -1166,10 +1171,31 @@ def loadSections(filename):
 def resolveReferencesOfSections(sections):
     for section in sections:
         section.resolveReferences(sections)
-        
+
+def checkThatAllSectionsGotReferenced(sections):
+    numberOfUnreferencedSections = 0
+    for sectionIndex, section in enumerate(sections):
+
+        if (section.timesReferenced == 0) and (sectionIndex != 0):
+            numberOfUnreferencedSections += 1
+            stderr.write("WARNING: %sV%s (%d repetitions) got %d times referenced\\n" % (section.indexEntry.tag, section.indexEntry.version, section.indexEntry.repetitions , section.timesReferenced))
+            reference = Reference()
+            reference.entries = section.indexEntry.repetitions
+            reference.index = sectionIndex
+            reference.flags = 0
+            bytesToSearch = reference.toBytes()
+            for sectionToCheck in sections:
+                positionInSection = sectionToCheck.rawBytes.find(bytesToSearch)
+                if positionInSection != -1:
+                    stderr.write("  -> Found a reference at offset %d in a section of type %sV%s\\n" % (positionInSection, sectionToCheck.indexEntry.tag,sectionToCheck.indexEntry.version)) 
+
+    if numberOfUnreferencedSections > 0:
+        raise Exception("Unable to load all data: There were %d unreferenced sections. View log for details" % numberOfUnreferencedSections)
+
 def loadModel(filename):
     sections = loadSections(filename)
     resolveReferencesOfSections(sections)
+    checkThatAllSectionsGotReferenced(sections)
     header = sections[0].content[0]
     model = header.model[0]
     MODLV23.validateInstance(model,"model")
