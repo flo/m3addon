@@ -728,13 +728,6 @@
             </description>
             <field name="unknown" size="48" />
         </structure>
-
-        <structure name="RIB_" version="6" size="748" >
-            <description>
-                Unknown
-            </description>
-            <field name="unknown" size="748" />
-        </structure>
         
         <structure name="SRIB" version="0" size="272" >
             <description>
@@ -743,6 +736,15 @@
             <field name="unknown" size="272" />
         </structure>
         
+        <structure name="RIB_" version="6" size="748" >
+            <description>
+                Unknown
+            </description>
+            <field name="unknown0" size="436" />
+            <field offset="436" name="sribData" type="Reference" refTo="SRIBV0" />
+            <field name="unknown1" size="300" />
+        </structure>
+
         <structure name="IKJT" version="0" size="32" >
             <description>
                 Unknown
