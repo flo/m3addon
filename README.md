@@ -6,15 +6,16 @@ The python scripts can be used as a blender addon.
 Currently the following content can be exported:
 
   * Animated Meshes made out of triangles with 1 UV layer
-  * Partly animated M3 Materials
-  * Partly animated M3 Particle Systems
+  * Animated M3 Standard Materials
+  * Animated M3 Particle Systems (max. 1 works currently)
+  * Animated M3 Attachment Points
 
 The following content can be imported:
 
   * Animated Meshes with 1 UV layer
   * Animated M3 Materials
   * Animated M3 Particle Systems
-  * Attachment Points (disabled)
+  * Animated M3 Attachment Points
 
 The script printXml.py can also be used to convert a m3 file into a XML file. It
 takes a m3 file as argument and prints the XML on the command line.
@@ -55,7 +56,7 @@ To create a particle system and preview it in the Starcraft 2 editor you can per
 4. Add a particle system by clicking on "+" in the "M3 Particle Systems" panel
 5. Validate that your particle system has a valid material selected
 6. Specifiy an absolute file path in the "M3 Quick Export" panel
-7. Click on "Export Particle Systems" in the "M3 Quick Export" panels
+7. Click on "Export As M3" in the "M3 Quick Export" panels
 8. Open the previewer in the Starcraft 2 editor by using the menu "Window/Previewer"
 9. Use the previewer menu "File/Add File" to preview the exported model in the SC2 Editor
 
