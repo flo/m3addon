@@ -710,9 +710,18 @@
 
         <structure name="ATVL" version="0" size="116" >
             <description>
-                Unknown
+                Attachment Volume
             </description>
-            <field name="unknown" size="116" />
+            <field name="bone0" type="uint32" />
+            <field name="bone1" type="uint32"/>
+            <!-- 1=sphere 2=cylinder -->
+            <field name="type" type="uint32" default-value="1" />
+            <field name="bone2" type="uint32"/>
+            <field name="matrix" type="Matrix44"/>
+            <field name="unknown1" size="24" />
+            <field name="radius" type="float"/>
+            <field name="length" type="float" default-value="0.0" />
+            <field name="unknown3" size="4" />
         </structure>
 
         <structure name="DIS_" version="4" size="68" >
@@ -849,9 +858,9 @@
             <field name="unknown42" type="float" default-value="0.0" />
             <field name="unknown43" type="float" default-value="0.0" />
             <field offset="696" name="SSGS" type="Reference" refTo="SSGSV1" />
-            <field offset="708" name="ATVL" type="Reference" refTo="ATVLV0" />
-            <field name="F" type="Reference" refTo="U16_V0"/>
-            <field name="G" type="Reference" refTo="U16_V0"/>
+            <field offset="708" name="attachmentVolumes" type="Reference" refTo="ATVLV0" />
+            <field offset="720" name="attachmentVolumesAddon0" type="Reference" refTo="U16_V0"/>
+            <field offset="732" name="attachmentVolumesAddon1" type="Reference" refTo="U16_V0"/>
             <field offset="744" name="bbscData" type="Reference" refTo="BBSCV0" />
             <field offset="756" name="tmdData" type="Reference" />
             <field name="uniqueUnknownNumber" type="uint32" />

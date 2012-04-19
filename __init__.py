@@ -80,6 +80,18 @@ def handleTypeOrBoneSuffixChange(self, context):
     self.name = "%s (%s)" % (boneSuffix, typeName)
 
 
+def handleAttachmentVolumeTypeChange(self, context):
+    if not self.volumeType in ["1", "2"]:
+        self.volumeRadius = 0.0
+    else:
+        if self.volumeRadius == 0.0:
+            self.volumeRadius = 1.0
+    if self.volumeType != "2":
+        self.volumeLength = 0.0
+    else:
+        if self.volumeLength == 0.0:
+            self.volumeLength = 1.0
+
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
     newIndex = scene.m3_animation_index
@@ -119,6 +131,10 @@ particleTypeList =  [("0", "Point", "Particles spawn at a certain point"),
                         ("3", 'Unknown', 'It\'s unknown what kind of particle system this is'),
                         ("4", 'Cylinder', 'Particles spawn in a cylinder like area')
                         ]
+attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment point"), 
+                            ("1", 'Sphere', "A sphere with the given radius"), 
+                            ("2", 'Cylinder', 'Cylinder')
+                           ]
 matDefaultSettingsList = [("MESH", "Mesh Material", "A material for meshes"), 
                         ("PARTICLE", 'Particle Material', "Material for particle systems")
                         ]
@@ -284,9 +300,12 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     
     
 class M3AttachmentPoint(bpy.types.PropertyGroup):
-    name = bpy.props.StringProperty(name="name", default="Attachment", options=set())
-    boneName = bpy.props.EnumProperty(items=availableBones, options=set())
-    
+    name = bpy.props.StringProperty(name="name", options=set())
+    boneName = bpy.props.StringProperty(name="boneName", options=set())
+    volumeType = bpy.props.EnumProperty(default="-1",update=handleAttachmentVolumeTypeChange, items=attachmentVolumeTypeList, options=set())
+    volumeRadius = bpy.props.FloatProperty(default=1.0, options=set())
+    volumeLength = bpy.props.FloatProperty(default=0.0, options=set())
+
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
 
@@ -614,8 +633,13 @@ class AttachmentPointsPanel(bpy.types.Panel):
         if currentIndex >= 0 and currentIndex < len(scene.m3_attachment_points):
             attachment_point = scene.m3_attachment_points[currentIndex]
             layout.separator()
-            layout.prop(attachment_point, 'boneName', text="Bone")
             layout.prop(attachment_point, 'name', text="Name")
+            layout.prop(attachment_point, 'boneName', text="Bone")
+            layout.prop(attachment_point, 'volumeType', text="Volume: ")
+            if int(attachment_point.volumeType) >= 1: 
+                layout.prop(attachment_point, 'volumeRadius', text="Volume Radius")
+            if int(attachment_point.volumeType) >= 2:
+                layout.prop(attachment_point, 'volumeLength', text="Volume Length")
 
 class M3_MATERIALS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.materials_add'
@@ -800,9 +824,7 @@ class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
         attachment_point = scene.m3_attachment_points.add()
         name = self.findUnusedName(scene)
         attachment_point.name = name
-        boneNames = boneNameSet()
-        if name in boneNames:
-            attachment_point.boneName = name
+        attachment_point.boneName = name
 
         scene.m3_attachment_point_index = len(scene.m3_attachment_points)-1
         return{'FINISHED'}
@@ -812,6 +834,10 @@ class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
         for attachment_point in scene.m3_attachment_points:
             usedNames.add(attachment_point.name)
         suggestedNames = ["Ref_Center", "Ref_Origin", "Ref_Overhead", "Ref_Target"]
+
+        for boneName in boneNameSet():
+            if boneName.startswith("Ref_"):
+                suggestedNames.add(boneName)
         unusedName = None
         for suggestedName in suggestedNames:
             if not suggestedName in usedNames:

@@ -643,7 +643,7 @@ class Exporter:
     def initAttachmentPoints(self, model):
         scene = self.scene
         for attachmentPointIndex, attachmentPoint in enumerate(scene.m3_attachment_points):
-            boneName = attachmentPoint.name
+            boneName = attachmentPoint.boneName
             boneIndex = self.boneNameToBoneIndexMap.get(boneName)
             if boneIndex == None:
                 boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=True)
@@ -652,6 +652,19 @@ class Exporter:
             m3AttachmentPoint.bone = boneIndex
             model.attachmentPoints.append(m3AttachmentPoint)
             model.attachmentPointAddons.append(0xffff)
+            
+            if attachmentPoint.volumeType != "-1":
+                m3AttachmentVolume = m3.ATVLV0()
+                m3AttachmentVolume.bone0 = boneIndex
+                m3AttachmentVolume.bone1 = boneIndex
+                m3AttachmentVolume.bone2 = boneIndex
+                m3AttachmentVolume.type = int(attachmentPoint.volumeType)
+                m3AttachmentVolume.radius = attachmentPoint.volumeRadius
+                m3AttachmentVolume.length = attachmentPoint.volumeLength
+                m3AttachmentVolume.matrix = self.createIdentityMatrix()
+                model.attachmentVolumes.append(m3AttachmentVolume)
+                model.attachmentVolumesAddon0.append(0)
+                model.attachmentVolumesAddon1.append(0)
 
     def toM3ColorComponent(self, blenderColorComponent):
         v = round(blenderColorComponent * 255)
