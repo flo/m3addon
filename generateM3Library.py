@@ -22,7 +22,7 @@
 import xml.dom.minidom
 from xml.dom.minidom import Node
 import re
-
+from sys import stderr
 class Visitor:
     def visitStart(self, generalDataMap):
         pass
@@ -252,7 +252,9 @@ class FieldOffsetChecker(Visitor):
         specifiedOffsetString = fieldDataMap["specifiedOffsetString"]
         if specifiedOffsetString != None:
             if specifiedOffsetString == "":
-                stderr.write("Field %s of %s has an empty offset. The calculated offset is %d." % (fieldName, fullName, offset));
+                fieldName = fieldDataMap["fieldName"]
+                fullName = classDataMap["fullName"]
+                stderr.write("Field %s of %s has an empty offset. The calculated offset is %d.\n" % (fieldName, fullName, offset));
             else:
                 specifiedOffset = int(specifiedOffsetString)
                 if specifiedOffset != offset:
