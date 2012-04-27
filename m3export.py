@@ -712,9 +712,9 @@ class Exporter:
         m3Bone.flags = 0
         m3Bone.setNamedBit("flags", "real", realBone)
         m3Bone.parent = -1
-        m3Bone.location = self.createNullVector3AnimationReference(0.0, 0.0, 0.0)
+        m3Bone.location = self.createNullVector3AnimationReference(0.0, 0.0, 0.0, initIsNullValue=True)
         m3Bone.rotation = self.createNullQuaternionAnimationReference(x=0.0, y=0.0, z=0.0, w=1.0)
-        m3Bone.scale = self.createNullVector3AnimationReference(1.0, 1.0, 1.0)
+        m3Bone.scale = self.createNullVector3AnimationReference(1.0, 1.0, 1.0, initIsNullValue=True)
         m3Bone.ar1 = self.createNullUInt32AnimationReference(1)
         return m3Bone
 
@@ -786,7 +786,7 @@ class Exporter:
         m3Layer.unknown7 = self.createNullVector2AnimationReference(0.0, 0.0, flags=0)
         m3Layer.unknown8 = self.createNullInt16AnimationReference(0)
         m3Layer.uvOffset = self.createNullVector2AnimationReference(0.0, 0.0, flags=1)
-        m3Layer.uvAngle = self.createNullVector3AnimationReference(0.0, 0.0, 0.0, flags=1)
+        m3Layer.uvAngle = self.createNullVector3AnimationReference(0.0, 0.0, 0.0, flags=1, initIsNullValue=False)
         m3Layer.uvTiling = self.createNullVector2AnimationReference(1.0, 1.0, flags=1)
         m3Layer.unknown9 = self.createNullUInt32AnimationReference(0, flags=1)
         m3Layer.unknown10 = self.createNullFloatAnimationReference(1.0, flags=1)
@@ -797,14 +797,17 @@ class Exporter:
         animRef = m3.Vector2AnimationReference()
         animRef.header = self.createNullAnimHeader(flags=flags)
         animRef.initValue = self.createVector2(x, y)
-        animRef.nullValue = self.createVector2(x, y)
+        animRef.nullValue = self.createVector2(0.0, 0.0)
         return animRef
         
-    def createNullVector3AnimationReference(self, x, y, z, flags=1):
+    def createNullVector3AnimationReference(self, x, y, z, initIsNullValue, flags=1):
         animRef = m3.Vector3AnimationReference()
         animRef.header = self.createNullAnimHeader(flags=flags)
         animRef.initValue = self.createVector3(x, y, z)
-        animRef.nullValue = self.createVector3(x, y, z)
+        if initIsNullValue:
+            animRef.nullValue = self.createVector3(x, y, z)
+        else:
+            animRef.nullValue = self.createVector3(0.0, 0.0, 0.0)
         return animRef
     
     def createNullQuaternionAnimationReference(self, x=0.0, y=0.0, z=0.0, w=1.0):
@@ -818,14 +821,14 @@ class Exporter:
         animRef = m3.Int16AnimationReference()
         animRef.header = self.createNullAnimHeader()
         animRef.initValue = value
-        animRef.nullValue = value
+        animRef.nullValue = 0
         return animRef
         
     def createNullUInt32AnimationReference(self, value, flags=0):
         animRef = m3.UInt32AnimationReference()
         animRef.header = self.createNullAnimHeader(flags = flags)
         animRef.initValue = value
-        animRef.nullValue = value
+        animRef.nullValue = 0
         return animRef
         
     def createNullFloatAnimationReference(self, initValue, nullValue=None, flags=1):
@@ -834,7 +837,7 @@ class Exporter:
         animRef = m3.FloatAnimationReference()
         animRef.header = self.createNullAnimHeader(flags=flags)
         animRef.initValue = initValue
-        animRef.nullValue = nullValue
+        animRef.nullValue = 0.0
         return animRef
     
     def createNullAnimHeader(self, flags=0):
@@ -1020,7 +1023,7 @@ class BlenderToM3DataTransferer:
         animRef.header = self.exporter.createNullAnimHeader()
         m3CurrentColor =  self.exporter.toM3Color(getattr(self.blenderObject, fieldName))
         animRef.initValue = m3CurrentColor
-        animRef.nullValue = m3CurrentColor
+        animRef.nullValue = self.exporter.createColor(0,0,0,0)
         setattr(self.m3Object, fieldName, animRef)
         
         animId = animRef.header.animId
@@ -1064,8 +1067,8 @@ class BlenderToM3DataTransferer:
         animRef.header = self.exporter.createNullAnimHeader()
         currentValue =  getattr(self.blenderObject, fieldName)
         animRef.initValue = currentValue
-        animRef.nullValue = currentValue
-        
+        animRef.nullValue = type(currentValue)(0)
+        print(fieldName, (type(animRef.nullValue)))
         animId = animRef.header.animId
         animPath = self.animPathPrefix + fieldName
         
@@ -1113,7 +1116,7 @@ class BlenderToM3DataTransferer:
         animRef.header = self.exporter.createNullAnimHeader()
         currentBVector =  getattr(self.blenderObject, fieldName)
         animRef.initValue = self.exporter.createVector3FromBlenderVector(currentBVector)
-        animRef.nullValue = self.exporter.createVector3FromBlenderVector(currentBVector)
+        animRef.nullValue = self.exporter.createVector3(0.0,0.0,0.0)
         setattr(self.m3Object, fieldName, animRef)
         
         
