@@ -34,7 +34,9 @@ def printObject(indent, name, objectToPrint):
         print (("\t"*indent) + "<%s>" % name)
         for fieldName in objectToPrint.fields:
             fieldValue = getattr(objectToPrint,fieldName)
-            if fieldValue.__class__ == list:
+            if fieldValue == None:
+                print (("\t"*(indent+1)) + "<%s />" % fieldName)
+            elif fieldValue.__class__ == list:
                 print (("\t"*(indent+1)) + "<%s>" % fieldName)
                 for entry in fieldValue:
                     printObject(indent+2,fieldName+"-element", entry)
