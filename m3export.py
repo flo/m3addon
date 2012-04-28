@@ -1068,7 +1068,6 @@ class BlenderToM3DataTransferer:
         currentValue =  getattr(self.blenderObject, fieldName)
         animRef.initValue = currentValue
         animRef.nullValue = type(currentValue)(0)
-        print(fieldName, (type(animRef.nullValue)))
         animId = animRef.header.animId
         animPath = self.animPathPrefix + fieldName
         
