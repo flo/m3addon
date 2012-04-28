@@ -63,7 +63,7 @@ def setAnimationWithIndexToCurrentData(scene, animationIndex):
             assignedAction.targetName = targetObject.name
             if targetObject.animation_data.action != None:
                 assignedAction.actionName = targetObject.animation_data.action.name
-    if scene.animation_data != None:
+    if scene.animation_data != None and scene.animation_data.action != None:
         assignedAction = animation.assignedActions.add()
         assignedAction.targetName = scene.name
         assignedAction.actionName = scene.animation_data.action.name
