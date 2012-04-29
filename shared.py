@@ -38,6 +38,14 @@ rotFixMatrixInverted = rotFixMatrix.transposed()
 
 animFlagsForAnimatedProperty = 6
 
+star2ParticlePrefix = "Star2Part"
+
+
+def toValidBoneName(name):
+    maxLength = 31
+    return name[:maxLength]    
+
+
 def locRotScaleMatrix(location, rotation, scale):
     """ Important: rotation must be a normalized quaternion """
     # to_matrix() only works properly with normalized quaternions.

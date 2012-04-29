@@ -221,10 +221,6 @@ def determineAbsoluteBoneRestPositions(model):
         matrices.append(matrix)
     return matrices
 
-def toValidBoneName(name):
-    maxLength = 31
-    return name[:maxLength]    
-
 ownerTypeScene = "Scene"
 ownerTypeArmature = "Armature"
 
@@ -442,7 +438,7 @@ class Importer:
     def adjustPoseBones(self, m3Bones, relEditBoneMatrices):
         index = 0
         for bone, relEditBoneMatrix in zip(m3Bones, relEditBoneMatrices):
-            poseBone = self.armatureObject.pose.bones[toValidBoneName(bone.name)]
+            poseBone = self.armatureObject.pose.bones[shared.toValidBoneName(bone.name)]
             scale = toBlenderVector3(bone.scale.initValue)
             rotation = toBlenderQuaternion(bone.rotation.initValue)
             location = toBlenderVector3(bone.location.initValue)
@@ -518,7 +514,7 @@ class Importer:
             animation =  scene.m3_animations[animationData.animationIndex]
             animIdToTimeValueMap = animationData.animIdToTimeValueMap
             action = self.createOrGetActionFor(animationData, ownerTypeArmature)
-            boneName = toValidBoneName(m3Bone.name)
+            boneName = shared.toValidBoneName(m3Bone.name)
             locationAnimPath = 'pose.bones["%s"].location' % boneName
             timeToLocationMap = animIdToTimeValueMap.get(m3Bone.location.header.animId,{0:m3Bone.location.initValue})
             timeToLocationMap = convertToBlenderVector3Map(timeToLocationMap)
@@ -636,11 +632,10 @@ class Importer:
             visitFieldPropertyPairs(blenderObject=particle_system, m3Object=particlesEntry, fieldVisitor=fieldVisitor)
             boneEntry = self.model.bones[particlesEntry.bone]
             fullBoneName = boneEntry.name
-            star2ParticlePrefix = "Star2Part"
-            if fullBoneName.startswith(star2ParticlePrefix):
-                particle_system.boneSuffix = fullBoneName[len(star2ParticlePrefix):]
+            if fullBoneName.startswith(shared.star2ParticlePrefix):
+                particle_system.boneSuffix = fullBoneName[len(shared.star2ParticlePrefix):]
             else:
-                print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, star2ParticlePrefix))
+                print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                 particle_system.boneSuffix = fullBoneName
             particle_system.emissionAreaType = str(particlesEntry.emissionAreaType)
             particle_system.materialName = self.model.standardMaterials[particlesEntry.matmIndex].name
@@ -757,7 +752,7 @@ class Importer:
                 boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
                 vertexGroupLookup = []
                 for boneIndex in boneIndexLookup:
-                    boneName = toValidBoneName(model.bones[boneIndex].name)
+                    boneName = shared.toValidBoneName(model.bones[boneIndex].name)
                     if boneName in meshObject.vertex_groups:
                         vertexGroup = meshObject.vertex_groups[boneName]
                     else:
@@ -799,7 +794,7 @@ class Importer:
         editBones = []
         index = 0
         for boneEntry in m3Bones:
-            editBone = self.armature.edit_bones.new(toValidBoneName(boneEntry.name))
+            editBone = self.armature.edit_bones.new(shared.toValidBoneName(boneEntry.name))
             if boneEntry.parent != -1:
                 parentEditBone = editBones[boneEntry.parent]
                 editBone.parent = parentEditBone
