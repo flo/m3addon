@@ -73,7 +73,7 @@ def availableMaterials(self, context):
 def handleTypeOrBoneSuffixChange(self, context):
     typeName = "Unknown"
     for typeId, name, description in particleTypeList:
-        if typeId == self.type:
+        if typeId == self.emissionAreaType:
             typeName = name
     
     boneSuffix = self.boneSuffix
@@ -125,11 +125,16 @@ def handleAnimationSequenceIndexChange(self, context):
                 
     scene.m3_animation_old_index = newIndex
 
+
+particleTypesWithRadius = ["2", "4"]
+particleTypesWithWidth = ["1", "3"]
+particleTypesWithLength = ["1", "3"]
+particleTypesWithHeight = ["3", "4"]
 particleTypeList =  [("0", "Point", "Particles spawn at a certain point"), 
-                        ("1", 'Plane', "Particles move on a plane which is always rotated to camera"), 
-                        ("2", 'Sphere', 'Particles spawn on a sphere and move outwards or to it\'s center'),
-                        ("3", 'Unknown', 'It\'s unknown what kind of particle system this is'),
-                        ("4", 'Cylinder', 'Particles spawn in a cylinder like area')
+                        ("1", 'Plane', "Particles spawn in a rectangle"), 
+                        ("2", 'Sphere', 'Particles spawn in a sphere'),
+                        ("3", 'Cuboid', 'Particles spawn in a cuboid'),
+                        ("4", 'Cylinder', 'Particles spawn in a cylinder')
                         ]
 attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment point"), 
                             ("1", 'Sphere', "A sphere with the given radius"), 
@@ -223,52 +228,58 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     # The name gets calculated like this: name = boneSuffix (type)
     name = bpy.props.StringProperty(options={"SKIP_SAVE"})
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleTypeOrBoneSuffixChange, default="Particle System")
-    type = bpy.props.EnumProperty(default="2", items=particleTypeList, update=handleTypeOrBoneSuffixChange, options=set())
     materialName = bpy.props.EnumProperty(items=availableMaterials, options=set())
     maxParticles = bpy.props.IntProperty(default=20, subtype="UNSIGNED",options=set())
-    initEmissSpeed = bpy.props.FloatProperty(name="init. emiss. speed",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission.")
-    speedVar = bpy.props.FloatProperty(default=1.0, name="speed var",options={"ANIMATABLE"})
-    speedVarEnabled = bpy.props.BoolProperty(options=set(),default=False)
-    angleY = bpy.props.FloatProperty(default=0.0, name="angleY", options={"ANIMATABLE"})
-    angleX = bpy.props.FloatProperty(default=0.0, name="angleX", options={"ANIMATABLE"})
-    speedX = bpy.props.FloatProperty(default=0.0, name="speedX", options={"ANIMATABLE"})
-    speedY = bpy.props.FloatProperty(default=0.0, name="speedY", options={"ANIMATABLE"})
-    lifespan = bpy.props.FloatProperty(default=0.5, name="lifespan", options={"ANIMATABLE"})
-    decay = bpy.props.FloatProperty(default=5.0, name="decay", options={"ANIMATABLE"})
-    decayEnabled = bpy.props.BoolProperty(default=True, name="decayEnabled", options=set())
-    emissSpeed2 = bpy.props.FloatProperty(default=0.0, name="emiss. speed 2",options=set())
-    scaleRatio = bpy.props.FloatProperty(default=1.0, name="scale ratio",options=set())
+    emissionSpeed = bpy.props.FloatProperty(name="emis. speed",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission")
+    emissionSpeedVariance = bpy.props.FloatProperty(default=1.0, name="emiss. speed var.",options={"ANIMATABLE"}, description="If enabled, particles won't emit with a constant speed but with the given speed variance")
+    emissionSpeedVarianceEnabled = bpy.props.BoolProperty(options=set(),default=False, description="Specifies if the speed variance value will be used to randomize the emission speed")
+    emissionAngleX = bpy.props.FloatProperty(default=0.0, name="emis. angle X", subtype="ANGLE", options={"ANIMATABLE"}, description="Specifies the X rotation of the emission vector")
+    emissionAngleY = bpy.props.FloatProperty(default=0.0, name="emis. angle Y", subtype="ANGLE", options={"ANIMATABLE"}, description="Specifies the Y rotation of the emission vector")
+    emissionSpreadX = bpy.props.FloatProperty(default=0.0, name="emissionSpreadX", options={"ANIMATABLE"}, description="Specifies in radian by how much the emission vector can be randomly rotated around the X axis")
+    emissionSpreadY = bpy.props.FloatProperty(default=0.0, name="emissionSpreadY", options={"ANIMATABLE"}, description="Specifies in radian by how much the emission vector can be randomly rotated around the Y axis")
+    lifespan = bpy.props.FloatProperty(default=0.5, name="lifespan", options={"ANIMATABLE"},  description="Specfies how long it takes before the particles start to decay")
+    decay = bpy.props.FloatProperty(default=5.0, name="decay", options={"ANIMATABLE"}, description="Specifies how long particles will fade out")
+    decayEnabled = bpy.props.BoolProperty(default=True, name="decayEnabled", options=set(), description="Specifies if particles decay/fade out")
+    zAcceleration = bpy.props.FloatProperty(default=0.0, name="z acceleration",options=set(), description="Negative gravity which does not get influenced by the emission vector")
     unknownFloat1a = bpy.props.FloatProperty(default=1.0, name="unknownFloat1a",options=set())
-    unknownFloat1b = bpy.props.FloatProperty(default=0.5, name="unknownFloat1b",options=set())
-    unknownFloat1c = bpy.props.FloatProperty(default=1.0, name="unknownFloat1c",options=set())
-    pemitScale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), name="pemit scale", size=3, subtype="XYZ", options={"ANIMATABLE"})
-    speedUnk1 = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), name="speedUnk1", size=3, subtype="XYZ", options={"ANIMATABLE"})
-    color1a = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.5), name="color1a", size=4, subtype="COLOR", options={"ANIMATABLE"})
-    color1b = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.5), name="color1b", size=4, subtype="COLOR", options={"ANIMATABLE"})
-    color1c = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.0), name="color1c", size=4, subtype="COLOR", options={"ANIMATABLE"})
+    unknownFloat1b = bpy.props.FloatProperty(default=1.0, name="unknownFloat1b",options=set())
+    unknownFloat1c = bpy.props.FloatProperty(default=0.5, name="unknownFloat1c",options=set())
+    unknownFloat1d = bpy.props.FloatProperty(default=1.0, name="unknownFloat1d",options=set())
+    particleSizes1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), name="particle sizes 1", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first two values are the initial and final size of particles")
+    rotationValues1 = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), name="rotation values 1", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first value is the inital rotation and the second value is the rotation speed")
+    initialColor1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.5), name="initial color 1", size=4, subtype="COLOR", options={"ANIMATABLE"}, description="Color of the particle when it gets emitted")
+    finalColor1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.5), name="final color 1", size=4, subtype="COLOR", options={"ANIMATABLE"}, description="The color the particle will have when it vanishes")
+    unknownColor1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.0), name="unknown color 1", size=4, subtype="COLOR", options={"ANIMATABLE"})
     emissSpeed3 = bpy.props.FloatProperty(default=1.0, name="emiss. speed 3",options=set())
     unknownFloat2a = bpy.props.FloatProperty(default=0.0, name="unknownFloat2a",options=set())
     unknownFloat2b = bpy.props.FloatProperty(default=1.0, name="unknownFloat2b",options=set())
     unknownFloat2c = bpy.props.FloatProperty(default=2.0, name="unknownFloat2c",options=set())
-    trailingEnabled = bpy.props.BoolProperty(default=True, options=set())
-    emissRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
-    emissArea = bpy.props.FloatVectorProperty(default=(0.1, 0.1, 0.1), name="emiss. area", size=3, subtype="XYZ", options={"ANIMATABLE"})
+    trailingEnabled = bpy.props.BoolProperty(default=True, options=set(), description="If trailing is enabled then particles don't follow the particle emitter")
+    emissionRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
+    emissionAreaType = bpy.props.EnumProperty(default="2", items=particleTypeList, update=handleTypeOrBoneSuffixChange, options=set())
+    emissionAreaSize = bpy.props.FloatVectorProperty(default=(0.1, 0.1, 0.1), name="emis. area size", size=3, subtype="XYZ", options={"ANIMATABLE"})
     tailUnk1 = bpy.props.FloatVectorProperty(default=(0.05, 0.05, 0.05), name="tail unk.", size=3, subtype="XYZ", options={"ANIMATABLE"})
-    pivotSpread = bpy.props.FloatProperty(default=2.0, name="pivot spread", options={"ANIMATABLE"})
+    emissionAreaRadius = bpy.props.FloatProperty(default=2.0, name="emis. area radius", options={"ANIMATABLE"})
     spreadUnk = bpy.props.FloatProperty(default=0.05, name="spread unk.", options={"ANIMATABLE"})
     radialEmissionEnabled = bpy.props.BoolProperty(default=False, options=set())
-    pemitScale2Enabled = bpy.props.BoolProperty(default=False, options=set())
-    pemitScale2 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), name="pemit scale 2", size=3, subtype="XYZ", options={"ANIMATABLE"})
-    pemitRotateEnabled = bpy.props.BoolProperty(default=False, options=set())
-    pemitRotate = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), name="pemit rotate", size=3, subtype="XYZ", options={"ANIMATABLE"})
-    color2Enabled = bpy.props.BoolProperty(default=False, options=set())
-    color2a = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.0), name="color2a", size=4, subtype="COLOR", options={"ANIMATABLE"})
-    color2b = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 1.0), name="color2b", size=4, subtype="COLOR", options={"ANIMATABLE"})
-    color2c = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 1.0), name="color2c", size=4, subtype="COLOR", options={"ANIMATABLE"})
+    randomizeWithParticleSizes2 = bpy.props.BoolProperty(default=False, options=set(), description="Specifies if particles have random sizes")
+    particleSizes2 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), name="particle sizes 2", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first two values are used to determine a random initial and final size for a particle")
+    randomizeWithRotationValues2 = bpy.props.BoolProperty(default=False, options=set())
+    rotationValues2 = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), name="rotation values 2", size=3, subtype="XYZ", options={"ANIMATABLE"})
+    randomizeWithColor2 = bpy.props.BoolProperty(default=False, options=set())
+    initialColor2 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.0), name="initial color 2", size=4, subtype="COLOR", options={"ANIMATABLE"})
+    finalColor2 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 1.0), name="final color 2", size=4, subtype="COLOR", options={"ANIMATABLE"})
+    unknownColor2 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 1.0), name="unknown color 2", size=4, subtype="COLOR", options={"ANIMATABLE"})
     partEmit = bpy.props.IntProperty(default=0, subtype="UNSIGNED", options={"ANIMATABLE"})
-    lifespanRatio = bpy.props.FloatProperty(default=1.0, name="lifespan ratio",options=set())
-    columns = bpy.props.IntProperty(default=0, subtype="UNSIGNED", name="columns", options=set())
-    rows = bpy.props.IntProperty(default=0, subtype="UNSIGNED", name="rows", options=set())
+    phase1StartImageIndex = bpy.props.IntProperty(default=0, min=0, max=255, subtype="UNSIGNED", options=set(), description="Specifies the cell index shown at start of phase 1 when the image got divided into rows and collumns")
+    phase1EndImageIndex = bpy.props.IntProperty(default=0, min=0, max=255, subtype="UNSIGNED", options=set(), description="Specifies the cell index shown at end of phase 1 when the image got divided into rows and collumns")
+    phase2StartImageIndex = bpy.props.IntProperty(default=0, min=0, max=255, subtype="UNSIGNED", options=set(), description="Specifies the cell index shown at start of phase 2 when the image got divided into rows and collumns")
+    phase2EndImageIndex = bpy.props.IntProperty(default=0, min=0, max=255, subtype="UNSIGNED", options=set(), description="Specifies the cell index shown at end of phase 2 when the image got divided into rows and collumns")
+    relativePhase1Length = bpy.props.FloatProperty(default=1.0, min=0.0, max=1.0, subtype="FACTOR" ,name="relative phase 1 length", options=set(), description="A value of 0.4 means that 40% of the lifetime of the particle the phase 1 image animation will play")
+    numberOfColumns = bpy.props.IntProperty(default=0, min=0, subtype="UNSIGNED", name="columns", options=set(), description="Specifies in how many columns the image gets divided")
+    numberOfRows = bpy.props.IntProperty(default=0, min=0, subtype="UNSIGNED", name="rows", options=set(), description="Specifies in how many rows the image gets divided")
+    columnWidth = bpy.props.FloatProperty(default=float("inf"), min=0.0, max=1.0, name="columnWidth", options=set(), description="Specifies the width of one column, relative to an image with width 1")
+    rowHeight = bpy.props.FloatProperty(default=float("inf"), min=0.0, max=1.0, name="rowHeight", options=set(), description="Specifies the height of one row, relative to an image with height 1")
     sort = bpy.props.BoolProperty(options=set())
     collideTerrain = bpy.props.BoolProperty(options=set())
     collideObjects = bpy.props.BoolProperty(options=set())
@@ -466,30 +477,56 @@ class ParticleSystemsPanel(bpy.types.Panel):
             particle_system = scene.m3_particle_systems[currentIndex]
             layout.separator()
             layout.prop(particle_system, 'boneSuffix',text="Name")
-            layout.prop(particle_system, 'type',text="Type")
             layout.prop(particle_system, 'materialName',text="Material")
-            layout.prop(particle_system, 'maxParticles', text="Particle Maximum")
-            layout.prop(particle_system, 'initEmissSpeed', text="Init. Emiss. Speed")
-
-            split = layout.split()
-            row = split.row()
-            row.prop(particle_system, 'speedVarEnabled')
-            sub = row.column(align=True)
-            sub.active = particle_system.speedVarEnabled
-            sub.prop(particle_system, 'speedVar', text="Speed Var")
             
             split = layout.split()
+            col = split.column()
+            col.row().label("Emis. Area:")
+            col = col.row().column(align=True)
+            col.prop(particle_system, 'emissionAreaType',text="")
+            sub = col.row()
+            sub.active = particle_system.emissionAreaType in particleTypesWithLength
+            sub.prop(particle_system, 'emissionAreaSize', index=0, text="Length")
+            sub =  col.row()
+            sub.active = particle_system.emissionAreaType in particleTypesWithWidth
+            sub.prop(particle_system, 'emissionAreaSize', index=1, text="Width")
+            sub = col.row()
+            sub.active = particle_system.emissionAreaType in particleTypesWithHeight
+            sub.prop(particle_system, 'emissionAreaSize', index=2, text="Height")
+            sub = col.row()
+            sub.active = particle_system.emissionAreaType in particleTypesWithRadius
+            sub.prop(particle_system, 'emissionAreaRadius',text="Radius")
+            
+            split = layout.split()
+            col = split.column()
+            col.prop(particle_system, 'emissionRate', text="Particles Per Second")
+            col.prop(particle_system, 'maxParticles', text="Particle Maximum")
+            
+            layout.prop(particle_system, 'trailingEnabled', text="Trailing")
+
+            split = layout.split()
+            col = split.column()
+            col.prop(particle_system, 'emissionSpeed', text="Particle Speed")
+            row = col.row()
+            row.prop(particle_system, 'emissionSpeedVarianceEnabled', text="")
+            sub = row.column(align=True)
+            sub.active = particle_system.emissionSpeedVarianceEnabled
+            sub.prop(particle_system, 'emissionSpeedVariance', text="Speed Variance")
+
+            split = layout.split()
+            split.active = not particle_system.radialEmissionEnabled
             col = split.column()
             sub = col.column(align=True)
             sub.label(text="Angle:")
-            sub.prop(particle_system, "angleX", text="X")
-            sub.prop(particle_system, "angleY", text="Y")
+            sub.prop(particle_system, "emissionAngleX", text="X")
+            sub.prop(particle_system, "emissionAngleY", text="Y")
             col = split.column()
             sub = col.column(align=True)
-            sub.label(text="Speed:")
-            sub.prop(particle_system, "speedX", text="X")
-            sub.prop(particle_system, "speedY", text="Y")
-            
+            sub.label(text="Spread:")
+            sub.prop(particle_system, "emissionSpreadX", text="X")
+            sub.prop(particle_system, "emissionSpreadY", text="Y")
+            layout.prop(particle_system, 'radialEmissionEnabled', text="Radial Emission")
+
             layout.prop(particle_system, 'lifespan', text="Lifespan")
             
             split = layout.split()
@@ -499,29 +536,89 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.active = particle_system.decayEnabled
             sub.prop(particle_system, 'decay', text="Decay")
             
-            layout.prop(particle_system, 'emissSpeed2', text="Emiss. Speed 2")
-            layout.prop(particle_system, 'scaleRatio', text="Scale Ratio")
+            layout.prop(particle_system, 'zAcceleration', text="Z-Acceleration")
             
+            split = layout.split()
+            col = split.column()
+            col.label(text="Color:")
+            sub = col.column(align=True)
+            sub.prop(particle_system, "initialColor1", text="Initial")
+            sub.prop(particle_system, "finalColor1", text="Final")
+            sub.prop(particle_system, "unknownColor1", text="Unknown")
+            col = split.column()
+            col.prop(particle_system, "randomizeWithColor2", text="Randomize With:")
+            sub = col.column(align=True)
+            sub.active = particle_system.randomizeWithColor2
+            sub.prop(particle_system, "initialColor2", text="Initial")
+            sub.prop(particle_system, "finalColor2", text="Final")
+            sub.prop(particle_system, "unknownColor2", text="Unknown")
+            
+
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Size (Particle):")
+            sub.prop(particle_system, 'particleSizes1', index=0, text="Initial")
+            sub.prop(particle_system, 'particleSizes1', index=1, text="Final")
+            sub.prop(particle_system, 'particleSizes1', index=2, text="Unknown")
+            col = split.column()
+            col.prop(particle_system, "randomizeWithParticleSizes2", text="Randomize With:")
+            sub = col.column(align=True)
+            sub.active = particle_system.randomizeWithParticleSizes2
+            sub.prop(particle_system, 'particleSizes2', index=0, text="Initial")
+            sub.prop(particle_system, 'particleSizes2', index=1, text="Final")
+            sub.prop(particle_system, 'particleSizes2', index=2, text="Unknown")
+
+
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Rotation (Particle):")
+            sub.prop(particle_system, 'rotationValues1', index=0, text="Initial")
+            sub.prop(particle_system, 'rotationValues1', index=1, text="Speed")
+            sub.prop(particle_system, 'rotationValues1', index=2, text="Unknown")
+            col = split.column()
+            col.prop(particle_system, "randomizeWithRotationValues2", text="Randomize With:")
+            sub = col.column(align=True)
+            sub.active = particle_system.randomizeWithRotationValues2
+            sub.prop(particle_system, 'rotationValues2', index=0, text="Initial")
+            sub.prop(particle_system, 'rotationValues2', index=1, text="Speed")
+            sub.prop(particle_system, 'rotationValues2', index=2, text="Unknown")
+
+            split = layout.split()
+            row = split.row()
+            sub = row.column(align=True)
+            sub.label(text="Column:")
+            sub.prop(particle_system, 'numberOfColumns', text="Count")
+            sub.prop(particle_system, 'columnWidth', text="Width")
+            row = split.row()
+            sub = row.column(align=True)
+            sub.label(text="Row:")
+            sub.prop(particle_system, 'numberOfRows', text="Count")
+            sub.prop(particle_system, 'rowHeight', text="Height")
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Phase 1 Image Index:")
+            sub.prop(particle_system, 'phase1StartImageIndex', text="Inital")
+            sub.prop(particle_system, 'phase1EndImageIndex', text="Final")
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Phase 2 Image Index:")
+            sub.prop(particle_system, 'phase2StartImageIndex', text="Inital")
+            sub.prop(particle_system, 'phase2EndImageIndex', text="Final")
+            layout.prop(particle_system, 'relativePhase1Length', text="Relative Phase 1 Length")
+
+
             split = layout.split()
             col = split.column()
             sub = col.column(align=True)
             sub.label(text="Unknown Floats 1:")
-            sub.prop(particle_system, "unknownFloat1a", text="X")
-            sub.prop(particle_system, "unknownFloat1b", text="Y")
-            sub.prop(particle_system, "unknownFloat1c", text="Z")
-            col = split.column()
-            col.prop(particle_system, 'pemitScale', text="Pemit. Scale")
-            split = layout.split()
-            col = split.column()
-            col.prop(particle_system, 'speedUnk1', text="Unknown Speed 1")
-            
-            split = layout.split()
-            col = split.column()
-            sub = col.column(align=True)
-            sub.label(text="Colors:")
-            sub.prop(particle_system, "color1a", text="")
-            sub.prop(particle_system, "color1b", text="")
-            sub.prop(particle_system, "color1c", text="")
+            sub.prop(particle_system, 'unknownFloat1a', text="")
+            sub.prop(particle_system, "unknownFloat1b", text="")
+            sub.prop(particle_system, "unknownFloat1c", text="")
+            sub.prop(particle_system, "unknownFloat1d", text="")
             
             layout.prop(particle_system, 'emissSpeed3', text="Emiss. Speed 3")
             
@@ -532,56 +629,12 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.prop(particle_system, "unknownFloat2a", text="X")
             sub.prop(particle_system, "unknownFloat2b", text="Y")
             sub.prop(particle_system, "unknownFloat2c", text="Z")
-            
-            layout.prop(particle_system, 'trailingEnabled', text="Trailing")
-            
-            layout.prop(particle_system, 'emissRate', text="Emiss. Rate")
-            
-            split = layout.split()
-            col = split.column()
-            col.prop(particle_system, 'emissArea', text="Emiss. Area")
-            
-            split = layout.split()
-            col = split.column()
-            col.prop(particle_system, 'tailUnk1', text="Tail Unk1")
-            
-            layout.prop(particle_system, 'pivotSpread', text="Pivot Spread")
+                        
+            layout.prop(particle_system, 'tailUnk1', text="Tail Unk1")
             layout.prop(particle_system, 'spreadUnk', text="Spread Unk")
-            layout.prop(particle_system, 'radialEmissionEnabled', text="Radial Emission")
-            
-            split = layout.split()
-            row = split.row()
-            sub = row.column(align=True)
-            sub.prop(particle_system, 'pemitScale2Enabled', text="Pemit Scale 2:")
-            subsub = sub.column()
-            subsub.active = particle_system.pemitScale2Enabled
-            subsub.prop(particle_system, 'pemitScale2', text="")
-            
-            split = layout.split()
-            row = split.row()
-            sub = row.column(align=True)
-            sub.prop(particle_system, 'pemitRotateEnabled', text="Pemit Rotate:")
-            subsub = sub.column()
-            subsub.active = particle_system.pemitRotateEnabled
-            subsub.prop(particle_system, 'pemitRotate', text="")
-            
-            split = layout.split()
-            col = split.column()
-            sub = col.column(align=True)
-            sub.prop(particle_system, 'color2Enabled', text="Colors 2:")
-            subsub = sub.column()
-            subsub.active = particle_system.color2Enabled
-            subsub.prop(particle_system, "color2a", text="")
-            subsub.prop(particle_system, "color2b", text="")
-            subsub.prop(particle_system, "color2c", text="")
-            
             layout.prop(particle_system, 'partEmit', text="Part. Emit.")
-            layout.prop(particle_system, 'lifespanRatio', text="Lifespan Ratio.")
 
-            split = layout.split()
-            row = split.row()
-            row.prop(particle_system, 'columns', text="Columns")
-            row.prop(particle_system, 'rows', text="Rows")
+
             
             layout.prop(particle_system, 'sort', text="Sort")
             layout.prop(particle_system, 'collideTerrain', text="Collide Terrain")

@@ -588,29 +588,29 @@
             <description>Particle System</description>
             <field offset="0" name="bone" type="uint32" />
             <field offset="4" name="matmIndex" type="uint32" />
-            <field offset="8" name="initEmissSpeed" type="FloatAnimationReference" />
-            <field offset="28" name="speedVar" type="FloatAnimationReference" />
-            <field offset="48" name="speedVarEnabled" type="uint32" />
-            <field offset="52" name="angleY" type="FloatAnimationReference" />
-            <field offset="72" name="angleX" type="FloatAnimationReference" />
-            <field offset="92" name="speedX" type="FloatAnimationReference" />
-            <field offset="112" name="speedY" type="FloatAnimationReference" />
+            <field offset="8" name="emissionSpeed" type="FloatAnimationReference" />
+            <field offset="28" name="emissionSpeedVariance" type="FloatAnimationReference" />
+            <field offset="48" name="emissionSpeedVarianceEnabled" type="uint32" />
+            <field offset="52" name="emissionAngleX" type="FloatAnimationReference" />
+            <field offset="72" name="emissionAngleY" type="FloatAnimationReference" />
+            <field offset="92" name="emissionSpreadX" type="FloatAnimationReference" />
+            <field offset="112" name="emissionSpreadY" type="FloatAnimationReference" />
             <field offset="132" name="lifespan" type="FloatAnimationReference" />
             <field offset="152" name="decay" type="FloatAnimationReference" />
             <field offset="172" name="decayEnabled" type="uint32" />
             <field offset="176" name="unknown0" type="uint32" expected-value="0" />
             <field offset="180" name="unknown1" type="uint32" expected-value="0" />
             <field offset="184" name="unknown2" type="uint32" expected-value="0" />
-            <field offset="188" name="emissSpeed2" type="float" />
-            <field offset="192" name="scaleRatio" type="float" />
-            <field offset="196" name="unknownFloat1a" type="float" default-value="1.0" />
-            <field offset="200" name="unknownFloat1b" type="float" default-value="1.0" />
-            <field offset="204" name="unknownFloat1c" type="float" default-value="1.0" />
-            <field offset="208" name="pemitScale" type="Vector3AnimationReference" />
-            <field offset="244" name="speedUnk1" type="Vector3AnimationReference" />
-            <field offset="280" name="color1a" type="ColorAnimationReference" />
-            <field offset="300" name="color1b" type="ColorAnimationReference" />
-            <field offset="320" name="color1c" type="ColorAnimationReference" />
+            <field offset="188" name="zAcceleration" type="float" />
+            <field offset="192" name="unknownFloat1a" type="float" />
+            <field offset="196" name="unknownFloat1b" type="float" default-value="1.0" />
+            <field offset="200" name="unknownFloat1c" type="float" default-value="1.0" />
+            <field offset="204" name="unknownFloat1d" type="float" default-value="1.0" />
+            <field offset="208" name="particleSizes1" type="Vector3AnimationReference" />
+            <field offset="244" name="rotationValues1" type="Vector3AnimationReference" />
+            <field offset="280" name="initialColor1" type="ColorAnimationReference" />
+            <field offset="300" name="finalColor1" type="ColorAnimationReference" />
+            <field offset="320" name="unknownColor1" type="ColorAnimationReference" />
             <field offset="340" name="emissSpeed3" type="float" />
             <field offset="344" name="unknownFloat2a" type="float" default-value="0.0" />
             <field offset="348" name="unknownFloat2b" type="float" default-value="1.0"/>
@@ -622,39 +622,42 @@
             <field offset="372" name="unknownFloat3a" type="float" default-value="0.0" />
             <field offset="376" name="unknownFloat3b" type="float" default-value="0.0" />
             <field offset="380" name="unknownFloat3c" type="float" default-value="0.0" />
-            <field offset="384" name="unknownFloat3d" type="float" default-value="0.0" />
+            <field offset="384" name="unknownFloat3d" type="float" default-value="0.1" />
             <field offset="388" name="indexPlusHighestIndex" type="uint32" />
             <field offset="392" name="maxParticles" type="uint32" />
-            <field offset="396" name="emissRate" type="FloatAnimationReference" />
-            <field offset="416" name="type" type="uint32" />
-            <field offset="420" name="emissArea" type="Vector3AnimationReference" />
+            <field offset="396" name="emissionRate" type="FloatAnimationReference" />
+            <field offset="416" name="emissionAreaType" type="uint32" />
+            <field offset="420" name="emissionAreaSize" type="Vector3AnimationReference" />
             <field offset="456" name="tailUnk1" type="Vector3AnimationReference" />
-            <field offset="492" name="pivotSpread" type="FloatAnimationReference" />
+            <field offset="492" name="emissionAreaRadius" type="FloatAnimationReference" />
             <field offset="512" name="spreadUnk" type="FloatAnimationReference" />
             <field offset="532" name="radialEmissionEnabled" type="uint32" />
-            <field offset="536" name="pemitScale2Enabled" type="uint32" />
-            <field offset="540" name="pemitScale2" type="Vector3AnimationReference" />
-            <field offset="576" name="pemitRotateEnabled" type="uint32" />
-            <field offset="580" name="pemitRotate" type="Vector3AnimationReference" />
-            <field offset="616" name="color2Enabled" type="uint32" />
-            <field offset="620" name="color2a" type="ColorAnimationReference" />
-            <field offset="640" name="color2b" type="ColorAnimationReference" />
-            <field offset="660" name="color2c" type="ColorAnimationReference" />
+            <field offset="536" name="randomizeWithParticleSizes2" type="uint32" />
+            <field offset="540" name="particleSizes2" type="Vector3AnimationReference" />
+            <field offset="576" name="randomizeWithRotationValues2" type="uint32" />
+            <field offset="580" name="rotationValues2" type="Vector3AnimationReference" />
+            <field offset="616" name="randomizeWithColor2" type="uint32" />
+            <field offset="620" name="initialColor2" type="ColorAnimationReference" />
+            <field offset="640" name="finalColor2" type="ColorAnimationReference" />
+            <field offset="660" name="unknownColor2" type="ColorAnimationReference" />
             <field offset="680" name="unknown7" type="uint32" default-value="0" />
             <field offset="684" name="partEmit" type="Int16AnimationReference" />
-            <field offset="700" name="speedUnk2" type="Vector4As4uint8" /> <!-- maybe -->
-            <field offset="704" name="lifespanRatio" type="float" />
-            <field offset="708" name="columns" type="uint16" />
-            <field offset="710" name="rows" type="uint16" />
-            <field offset="712" name="unknownFloat4a" type="float" default-value="inf" />
-            <field offset="716" name="unknownFloat4b" type="float" default-value="inf" />
-            <field offset="720" name="unknown8" type="uint32" default-value="0" />
-            <field offset="724" name="unknownFloat5" type="float" default-value="0.0"/>
-            <field offset="728" name="unknown9" type="int32" default-value="-1" />
+            <field offset="700" name="phase1StartImageIndex" type="uint8"  default-value="0" />
+            <field offset="701" name="phase1EndImageIndex" type="uint8"  default-value="0" />
+            <field offset="702" name="phase2EndImageIndex" type="uint8" default-value="0" />
+            <field offset="703" name="phase2StartImageIndex" type="uint8" expected-value="0" />
+            <field offset="704" name="relativePhase1Length" type="float" />
+            <field offset="708" name="numberOfColumns" type="uint16" />
+            <field offset="710" name="numberOfRows" type="uint16" />
+            <field offset="712" name="columnWidth" type="float" default-value="inf" />
+            <field offset="716" name="rowHeight" type="float" default-value="inf" />
+            <field offset="720" name="unknownFloat4" type="float" default-value="0.0" />
+            <field offset="724" name="unknownFloat5" type="float" default-value="1.0"/>
+            <field offset="728" name="unknown9" type="int32" expected-value="-1" />
             <field offset="732" name="unknown10" size="24"/>
             <field offset="756" name="unknownFloat6" type="float" default-value="1.0" />
             <field offset="760" name="unknown11" size="8"/>
-            <field offset="768" name="unknownFloat7" type="float" default-value="1.0"/>
+            <field offset="768" name="unknownFloat7" type="float" expected-value="1.0"/>
             <field offset="772" name="unknown12" size="416"/>
             <field offset="1188" name="flags" type="uint32" default-value="0" >
                 <bits>
@@ -698,7 +701,7 @@
             <description>
                 Particle System Copy/Instance
             </description>
-            <field offset="0" name="emissRate" type="FloatAnimationReference" />
+            <field offset="0" name="emissionRate" type="FloatAnimationReference" />
             <field offset="20" name="partEmit" type="Int16AnimationReference" />
             <field offset="36" name="bone" type="uint32" />
         </structure>

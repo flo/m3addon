@@ -255,7 +255,7 @@ def visitFieldPropertyPairs(blenderObject, m3Object, fieldVisitor):
                         fieldVisitor.visitBoolean(blenderObject, m3Object, fieldName)
                     elif propertyType == bpy.props.IntProperty:
                         fieldVisitor.visitInt(blenderObject, m3Object, fieldName)
-                elif fieldTypeName == "int32":
+                elif fieldTypeName in ["int32", "uint16", "int16", "uint8", "int8"]:
                     if propertyType == bpy.props.IntProperty:
                         fieldVisitor.visitInt(blenderObject, m3Object, fieldName)
                 elif fieldTypeName == "Vector3AnimationReference":
@@ -642,7 +642,7 @@ class Importer:
             else:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, star2ParticlePrefix))
                 particle_system.boneSuffix = fullBoneName
-            particle_system.type = str(particlesEntry.type)
+            particle_system.emissionAreaType = str(particlesEntry.emissionAreaType)
             particle_system.materialName = self.model.standardMaterials[particlesEntry.matmIndex].name
             particle_system.sort = particlesEntry.getNamedBit("flags", "sort")
             particle_system.collideTerrain = particlesEntry.getNamedBit("flags", "collideTerrain")
