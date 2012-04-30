@@ -45,6 +45,8 @@ def toValidBoneName(name):
     maxLength = 31
     return name[:maxLength]    
 
+def boneNameForPartileSystem(boneSuffix):
+    return toValidBoneName(star2ParticlePrefix + boneSuffix)
 
 def locRotScaleMatrix(location, rotation, scale):
     """ Important: rotation must be a normalized quaternion """

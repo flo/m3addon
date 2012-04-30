@@ -71,6 +71,7 @@ def availableMaterials(self, context):
     return list
 
 def handleTypeOrBoneSuffixChange(self, context):
+    scene = context.scene
     typeName = "Unknown"
     for typeId, name, description in particleTypeList:
         if typeId == self.emissionAreaType:
@@ -78,6 +79,14 @@ def handleTypeOrBoneSuffixChange(self, context):
     
     boneSuffix = self.boneSuffix
     self.name = "%s (%s)" % (boneSuffix, typeName)
+
+    if self.boneSuffix != self.oldBoneSuffix:
+        oldBoneName = shared.boneNameForPartileSystem(self.oldBoneSuffix)
+        newBoneName = shared.boneNameForPartileSystem(self.boneSuffix)
+        bone, armatureObject = findBoneWithArmatureObject(scene, oldBoneName)
+        if bone != None:
+            bone.name = newBoneName
+    self.oldBoneSuffix = self.boneSuffix
 
 
 def handleAttachmentVolumeTypeChange(self, context):
@@ -125,7 +134,26 @@ def handleAnimationSequenceIndexChange(self, context):
                 
     scene.m3_animation_old_index = newIndex
 
+def iterateArmatureObjects(scene):
+    for obj in scene.objects:
+        if obj.type == "ARMATURE":
+            if obj.data != None:
+                yield obj
 
+def findArmatureObjectForNewBone(scene):
+    for obj in iterateArmatureObjects(scene):
+        return obj
+    return None
+
+def findBoneWithArmatureObject(scene, boneName):
+    for armatureObject in iterateArmatureObjects(scene):
+        armature = armatureObject.data
+        for bone in armature.bones:
+            if bone.name == boneName:
+                return (bone, armatureObject)
+    return (None, None)
+
+    
 particleTypesWithRadius = ["2", "4"]
 particleTypesWithWidth = ["1", "3"]
 particleTypesWithLength = ["1", "3"]
@@ -228,6 +256,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     # The name gets calculated like this: name = boneSuffix (type)
     name = bpy.props.StringProperty(options={"SKIP_SAVE"})
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleTypeOrBoneSuffixChange, default="Particle System")
+    oldBoneSuffix = bpy.props.StringProperty(options={"SKIP_SAVE"})
     materialName = bpy.props.EnumProperty(items=availableMaterials, options=set())
     maxParticles = bpy.props.IntProperty(default=20, subtype="UNSIGNED",options=set())
     emissionSpeed = bpy.props.FloatProperty(name="emis. speed",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission")
@@ -838,44 +867,37 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
         handleTypeOrBoneSuffixChange(particle_system, context)
         scene.m3_particle_system_index = len(scene.m3_particle_systems)-1
         
-        boneName = shared.toValidBoneName(shared.star2ParticlePrefix + particle_system.boneSuffix)
-        if not self.boneExists(boneName):
+        boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
+        bone, armatureObject = findBoneWithArmatureObject(scene, boneName)
+        boneExists = bone != None
+        if boneExists:
+            armature = armatureObject.data
+            armatureObject.select = True
+            bpy.ops.object.mode_set(mode='POSE')
+        else:
             if bpy.ops.object.mode_set.poll():
                 bpy.ops.object.mode_set(mode='OBJECT')
-            armatureObject = self.findArmatureObjectForNewBone(self)
+            armatureObject = findArmatureObjectForNewBone(scene)
             if armatureObject == None:
                 armature = bpy.data.armatures.new(name="Armature")
                 armatureObject = bpy.data.objects.new("Armature", armature)
                 scene.objects.link(armatureObject)
             else:
                 armature = armatureObject.data
-            scene.objects.active = armatureObject
             armatureObject.select = True
             bpy.ops.object.mode_set(mode='EDIT')
-            for bone in armature.bones:
-                bone.select = False
             editBone = armature.edit_bones.new(boneName)
             editBone.head = (0, 0, 0)
             editBone.tail = (1, 0, 0)
-            editBone.select = True
             bpy.ops.object.mode_set(mode='POSE')
+            bone = armature.bones[boneName]
+        scene.objects.active = armatureObject
+        armatureObject.select = True
+        for currentBone in armature.bones:
+            currentBone.select = False
+        bone.select = True
         return{'FINISHED'}
-    
-    def boneExists(self, boneName):
-        for armature in bpy.data.armatures:
-            for bone in armature.bones:
-                if bone.name == boneName:
-                    return True
-        return False
-    
-    def findArmaturOebjectForNewBone(self, scene):
-        for obj in scene.objects:
-            if obj.type == "ARMATURE":
-                if obj.data != None:
-                    return obj
-        return None
 
-    
     def findUnusedName(self, scene):
         usedNames = set()
         for particle_system in scene.m3_particle_systems:
