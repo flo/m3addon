@@ -542,11 +542,11 @@ class Exporter:
     def initParticles(self, model):
         scene = self.scene
         for particleSystemIndex, particleSystem in enumerate(scene.m3_particle_systems):
-            boneName = "Star2Part" + particleSystem.boneSuffix
+            boneSuffix = particleSystem.boneSuffix
+            boneName = shared.boneNameForPartileSystem(boneSuffix)
             boneIndex = self.boneNameToBoneIndexMap.get(boneName)
             if boneIndex == None:
                 boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
-            
             m3ParticleSystem = m3.PAR_V12()
             m3ParticleSystem.bone = boneIndex
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
