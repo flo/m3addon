@@ -134,6 +134,11 @@ def handleAnimationSequenceIndexChange(self, context):
                 
     scene.m3_animation_old_index = newIndex
 
+def handlePartileSystemIndexChanged(self, context):
+    scene = context.scene
+    partileSystem = scene.m3_particle_systems[scene.m3_particle_system_index]
+    selectOrCreateBoneForPartileSystem(scene, partileSystem)
+
 def iterateArmatureObjects(scene):
     for obj in scene.objects:
         if obj.type == "ARMATURE":
@@ -153,6 +158,36 @@ def findBoneWithArmatureObject(scene, boneName):
                 return (bone, armatureObject)
     return (None, None)
 
+def selectOrCreateBoneForPartileSystem(scene, particle_system):
+        boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
+        bone, armatureObject = findBoneWithArmatureObject(scene, boneName)
+        boneExists = bone != None
+        if boneExists:
+            armature = armatureObject.data
+            armatureObject.select = True
+            bpy.ops.object.mode_set(mode='POSE')
+        else:
+            if bpy.ops.object.mode_set.poll():
+                bpy.ops.object.mode_set(mode='OBJECT')
+            armatureObject = findArmatureObjectForNewBone(scene)
+            if armatureObject == None:
+                armature = bpy.data.armatures.new(name="Armature")
+                armatureObject = bpy.data.objects.new("Armature", armature)
+                scene.objects.link(armatureObject)
+            else:
+                armature = armatureObject.data
+            armatureObject.select = True
+            bpy.ops.object.mode_set(mode='EDIT')
+            editBone = armature.edit_bones.new(boneName)
+            editBone.head = (0, 0, 0)
+            editBone.tail = (1, 0, 0)
+            bpy.ops.object.mode_set(mode='POSE')
+            bone = armature.bones[boneName]
+        scene.objects.active = armatureObject
+        armatureObject.select = True
+        for currentBone in armature.bones:
+            currentBone.select = False
+        bone.select = True
     
 particleTypesWithRadius = ["2", "4"]
 particleTypesWithWidth = ["1", "3"]
@@ -867,35 +902,7 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
         handleTypeOrBoneSuffixChange(particle_system, context)
         scene.m3_particle_system_index = len(scene.m3_particle_systems)-1
         
-        boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
-        bone, armatureObject = findBoneWithArmatureObject(scene, boneName)
-        boneExists = bone != None
-        if boneExists:
-            armature = armatureObject.data
-            armatureObject.select = True
-            bpy.ops.object.mode_set(mode='POSE')
-        else:
-            if bpy.ops.object.mode_set.poll():
-                bpy.ops.object.mode_set(mode='OBJECT')
-            armatureObject = findArmatureObjectForNewBone(scene)
-            if armatureObject == None:
-                armature = bpy.data.armatures.new(name="Armature")
-                armatureObject = bpy.data.objects.new("Armature", armature)
-                scene.objects.link(armatureObject)
-            else:
-                armature = armatureObject.data
-            armatureObject.select = True
-            bpy.ops.object.mode_set(mode='EDIT')
-            editBone = armature.edit_bones.new(boneName)
-            editBone.head = (0, 0, 0)
-            editBone.tail = (1, 0, 0)
-            bpy.ops.object.mode_set(mode='POSE')
-            bone = armature.bones[boneName]
-        scene.objects.active = armatureObject
-        armatureObject.select = True
-        for currentBone in armature.bones:
-            currentBone.select = False
-        bone.select = True
+        selectOrCreateBoneForPartileSystem(scene, particle_system)
         return{'FINISHED'}
 
     def findUnusedName(self, scene):
@@ -1060,7 +1067,7 @@ def register():
     bpy.types.Scene.m3_materials = bpy.props.CollectionProperty(type=M3Material)
     bpy.types.Scene.m3_material_index = bpy.props.IntProperty()
     bpy.types.Scene.m3_particle_systems = bpy.props.CollectionProperty(type=M3ParticleSystem)
-    bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty()
+    bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(update=handlePartileSystemIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty()
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
