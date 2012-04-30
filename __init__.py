@@ -112,7 +112,7 @@ def handleAnimationSequenceIndexChange(self, context):
                     newObjectNameToActionMap[assignedAction.targetName] = action                
                 elif action.id_root == 'SCENE':
                     newSceneAction = action
-        for targetObject in bpy.data.objects:
+        for targetObject in scene.objects:
             targetObject.animation_data_clear()
             newAction = newObjectNameToActionMap.get(targetObject.name)
             if newAction != None:
@@ -842,7 +842,7 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
         if not self.boneExists(boneName):
             if bpy.ops.object.mode_set.poll():
                 bpy.ops.object.mode_set(mode='OBJECT')
-            armatureObject = self.findArmatureObjectForNewBone()
+            armatureObject = self.findArmatureObjectForNewBone(self)
             if armatureObject == None:
                 armature = bpy.data.armatures.new(name="Armature")
                 armatureObject = bpy.data.objects.new("Armature", armature)
@@ -868,8 +868,8 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
                     return True
         return False
     
-    def findArmatureObjectForNewBone(self):
-        for obj in bpy.data.objects:
+    def findArmaturOebjectForNewBone(self, scene):
+        for obj in scene.objects:
             if obj.type == "ARMATURE":
                 if obj.data != None:
                     return obj

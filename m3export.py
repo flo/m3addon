@@ -418,7 +418,7 @@ class Exporter:
         
     def findMeshObject(self):
         meshObject = None
-        for currentObject in bpy.data.objects:
+        for currentObject in self.scene.objects:
             if currentObject.type == 'MESH':
                 if meshObject == None:
                     meshObject = currentObject
@@ -434,7 +434,7 @@ class Exporter:
             return None
     
     def findArmatureObjects(self):
-        for currentObject in bpy.data.objects:
+        for currentObject in self.scene.objects:
             if currentObject.type == 'ARMATURE':
                 yield currentObject
     
