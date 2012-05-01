@@ -160,15 +160,20 @@ def findBoneWithArmatureObject(scene, boneName):
 
 def selectOrCreateBoneForPartileSystem(scene, particle_system):
         boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
+        if bpy.ops.object.mode_set.poll():
+           bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.ops.object.select_all.poll():
+           bpy.ops.object.select_all(action='DESELECT')
         bone, armatureObject = findBoneWithArmatureObject(scene, boneName)
         boneExists = bone != None
         if boneExists:
             armature = armatureObject.data
             armatureObject.select = True
-            bpy.ops.object.mode_set(mode='POSE')
-        else:
+            scene.objects.active = armatureObject
+            print("test")
             if bpy.ops.object.mode_set.poll():
-                bpy.ops.object.mode_set(mode='OBJECT')
+                bpy.ops.object.mode_set(mode='POSE')
+        else:
             armatureObject = findArmatureObjectForNewBone(scene)
             if armatureObject == None:
                 armature = bpy.data.armatures.new(name="Armature")
@@ -177,6 +182,7 @@ def selectOrCreateBoneForPartileSystem(scene, particle_system):
             else:
                 armature = armatureObject.data
             armatureObject.select = True
+            scene.objects.active = armatureObject
             bpy.ops.object.mode_set(mode='EDIT')
             editBone = armature.edit_bones.new(boneName)
             editBone.head = (0, 0, 0)
