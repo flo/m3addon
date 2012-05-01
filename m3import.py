@@ -708,51 +708,47 @@ class Importer:
 
         numberOfVertices = len(self.model.vertices) // vertexClass.size
         m3Vertices = vertexClass.createInstances(rawBytes=self.model.vertices, count=numberOfVertices)
-        vertexPositions = []
-        for m3Vertex in m3Vertices:
-            # todo use toBlenderVector3( and allocate somehow list in advance
-            position = (m3Vertex.position.x, m3Vertex.position.y, m3Vertex.position.z)
-            vertexPositions.append(position)
-        
-        bpy.ops.object.mode_set(mode='OBJECT')
 
-        # create faces
-        faces = []
         for division in self.model.divisions:
             divisionFaceIndices = division.faces
             for region in division.regions:
+                bpy.ops.object.mode_set(mode='OBJECT')
+
+                vertexPositions = []
+                for vertexIndex in range(region.firstVertexIndex,region.firstVertexIndex + region.numberOfVertices):
+                    m3Vertex = m3Vertices[vertexIndex]
+                    position = (m3Vertex.position.x, m3Vertex.position.y, m3Vertex.position.z)
+                    vertexPositions.append(position)
                 firstVertexIndexIndex = region.firstFaceVertexIndexIndex
                 lastVertexIndexIndex = firstVertexIndexIndex + region.numberOfFaceVertexIndices
                 vertexIndexIndex = firstVertexIndexIndex
                 firstVertexIndex = region.firstVertexIndex
                 assert region.numberOfFaceVertexIndices % 3 == 0
+
+                faces = []
                 while vertexIndexIndex + 2 <= lastVertexIndexIndex:
-                    i0 = firstVertexIndex + divisionFaceIndices[vertexIndexIndex]
-                    i1 = firstVertexIndex + divisionFaceIndices[vertexIndexIndex + 1]
-                    i2 = firstVertexIndex + divisionFaceIndices[vertexIndexIndex + 2]
+                    i0 = divisionFaceIndices[vertexIndexIndex]
+                    i1 = divisionFaceIndices[vertexIndexIndex + 1]
+                    i2 = divisionFaceIndices[vertexIndexIndex + 2]
                     face = (i0, i1, i2)
                     faces.append(face)
                     vertexIndexIndex += 3
-                    
 
-        mesh = bpy.data.meshes.new('Mesh')
-        meshObject = bpy.data.objects.new('MeshObject', mesh)
-        meshObject.location = (0,0,0)
-        meshObject.show_name = True
-        bpy.context.scene.objects.link(meshObject)
-        mesh.from_pydata(vertexPositions, [], faces)
-        mesh.update(calc_edges=True)
-        
-        
-        uvLayer = mesh.uv_textures.new()
-        for faceIndex, face in enumerate(faces):
-            faceUV = uvLayer.data[faceIndex]
-            faceUV.uv1 = toBlenderUVCoordinate(m3Vertices[face[0]].uv0)
-            faceUV.uv2 = toBlenderUVCoordinate(m3Vertices[face[1]].uv0)
-            faceUV.uv3 = toBlenderUVCoordinate(m3Vertices[face[2]].uv0)
+                mesh = bpy.data.meshes.new('Mesh')
+                meshObject = bpy.data.objects.new('MeshObject', mesh)
+                meshObject.location = (0,0,0)
+                meshObject.show_name = True
+                bpy.context.scene.objects.link(meshObject)
+                mesh.from_pydata(vertexPositions, [], faces)
+                mesh.update(calc_edges=True)
+                
+                uvLayer = mesh.uv_textures.new()
+                for faceIndex, face in enumerate(faces):
+                    faceUV = uvLayer.data[faceIndex]
+                    faceUV.uv1 = toBlenderUVCoordinate(m3Vertices[firstVertexIndex + face[0]].uv0)
+                    faceUV.uv2 = toBlenderUVCoordinate(m3Vertices[firstVertexIndex + face[1]].uv0)
+                    faceUV.uv3 = toBlenderUVCoordinate(m3Vertices[firstVertexIndex + face[2]].uv0)
 
-        for division in self.model.divisions:
-            for region in division.regions:
                 boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
                 vertexGroupLookup = []
                 for boneIndex in boneIndexLookup:
@@ -762,8 +758,7 @@ class Importer:
                     else:
                         vertexGroup =  meshObject.vertex_groups.new(boneName)
                     vertexGroupLookup.append(vertexGroup)
-                
-                for vertexIndex in range(region.firstVertexIndex,region.numberOfVertices):
+                for vertexIndex in range(region.firstVertexIndex,region.firstVertexIndex + region.numberOfVertices):
                     m3Vertex = m3Vertices[vertexIndex]
                     boneWeightsAsInt = [m3Vertex.boneWeight0, m3Vertex.boneWeight1, m3Vertex.boneWeight2, m3Vertex.boneWeight3]
                     boneLookupIndices = [m3Vertex.boneLookupIndex0, m3Vertex.boneLookupIndex1,  m3Vertex.boneLookupIndex2,  m3Vertex.boneLookupIndex3]
@@ -772,12 +767,12 @@ class Importer:
                         if boneWeightAsInt != 0:
                             vertexGroup = vertexGroupLookup[boneLookupIndex]
                             boneWeight = boneWeightAsInt / 255.0
-                            vertexGroup.add([vertexIndex], boneWeight, 'REPLACE')
-        
-        modifier = meshObject.modifiers.new('UseArmature', 'ARMATURE')
-        modifier.object = self.armatureObject
-        modifier.use_bone_envelopes = False
-        modifier.use_vertex_groups = True
+                            vertexGroup.add([vertexIndex - region.firstVertexIndex], boneWeight, 'REPLACE')
+
+                modifier = meshObject.modifiers.new('UseArmature', 'ARMATURE')
+                modifier.object = self.armatureObject
+                modifier.use_bone_envelopes = False
+                modifier.use_vertex_groups = True
         
     def determineRelEditBoneMatrices(self, m3Bones, editBones):
         absEditBoneMatrices = []
