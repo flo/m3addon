@@ -184,40 +184,42 @@ class Exporter:
                         locationTimeValuesInMS, locations = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, locations)
                         rotationTimeValuesInMS, rotations = shared.simplifyQuaternionAnimationWithInterpolation(timeValuesInMS, rotations)
                         scaleTimeValuesInMS, scales = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, scales)
-                        
-                        m3Locs = self.createVector3sFromBlenderVectors(locations)
-                        m3Rots = self.createQuaternionsFromBlenderQuaternions(rotations)
-                        m3Scas = self.createVector3sFromBlenderVectors(scales)
-                        
+                                                
                         animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
 
-                        m3AnimBlock = m3.SD3VV0()
-                        m3AnimBlock.frames = locationTimeValuesInMS
-                        m3AnimBlock.flags = 0
-                        m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
-                        m3AnimBlock.keys = m3Locs
-                        animIdToAnimDataMap[locationAnimId] = m3AnimBlock
-                        
-                        m3AnimBlock = m3.SD4QV0()
-                        m3AnimBlock.frames = rotationTimeValuesInMS
-                        m3AnimBlock.flags = 0
-                        m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
-                        m3AnimBlock.keys = m3Rots
-                        animIdToAnimDataMap[rotationAnimId] = m3AnimBlock
-                    
-                        m3AnimBlock = m3.SD3VV0()
-                        m3AnimBlock.frames = scaleTimeValuesInMS
-                        m3AnimBlock.flags = 0
-                        m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
-                        m3AnimBlock.keys = m3Scas
-                        animIdToAnimDataMap[scaleAnimId] = m3AnimBlock
-                        
-                        bone.location.header.flags = 1
-                        bone.location.header.animFlags = shared.animFlagsForAnimatedProperty
-                        bone.rotation.header.flags = 1
-                        bone.rotation.header.animFlags = shared.animFlagsForAnimatedProperty
-                        bone.scale.header.flags = 1
-                        bone.scale.header.animFlags = shared.animFlagsForAnimatedProperty
+                        if self.vectorArrayContainsNotOnly(locations, location):
+                            m3Locs = self.createVector3sFromBlenderVectors(locations)
+                            m3AnimBlock = m3.SD3VV0()
+                            m3AnimBlock.frames = locationTimeValuesInMS
+                            m3AnimBlock.flags = 0
+                            m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
+                            m3AnimBlock.keys = m3Locs
+                            animIdToAnimDataMap[locationAnimId] = m3AnimBlock
+                            bone.location.header.flags = 1
+                            bone.location.header.animFlags = shared.animFlagsForAnimatedProperty
+
+                        if self.quaternionArrayContainsNotOnly(rotations, rotation):
+                            m3Rots = self.createQuaternionsFromBlenderQuaternions(rotations)
+                            m3AnimBlock = m3.SD4QV0()
+                            m3AnimBlock.frames = rotationTimeValuesInMS
+                            m3AnimBlock.flags = 0
+                            m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
+                            m3AnimBlock.keys = m3Rots
+                            animIdToAnimDataMap[rotationAnimId] = m3AnimBlock
+                            bone.rotation.header.flags = 1
+                            bone.rotation.header.animFlags = shared.animFlagsForAnimatedProperty
+
+                        if self.vectorArrayContainsNotOnly(scales, scale):
+                            m3Scas = self.createVector3sFromBlenderVectors(scales)
+                            m3AnimBlock = m3.SD3VV0()
+                            m3AnimBlock.frames = scaleTimeValuesInMS
+                            m3AnimBlock.flags = 0
+                            m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
+                            m3AnimBlock.keys = m3Scas
+                            animIdToAnimDataMap[scaleAnimId] = m3AnimBlock
+                            bone.scale.header.flags = 1
+                            bone.scale.header.animFlags = shared.animFlagsForAnimatedProperty
+                       
                         bone.setNamedBit("flags", "animated", True)
                    
                         
@@ -227,7 +229,19 @@ class Exporter:
                 absoluteInverseBoneRestPos = self.createRestPositionFromBlender4x4Matrix(absoluteInverseRestPoseMatrixFixed)
                 model.absoluteInverseBoneRestPositions.append(absoluteInverseBoneRestPos)
                 boneNameToAbsInvRestPoseMatrix[blenderBone.name] = absRestPosMatrix.inverted()
-    
+
+    def vectorArrayContainsNotOnly(self, vectorArray, vector):
+        for v in vectorArray:
+            if not shared.vectorsAlmostEqual(vector, v):
+                return True
+        return False
+        
+    def quaternionArrayContainsNotOnly(self, quaternionArray, quaternion):
+        for q in quaternionArray:
+            if not shared.quaternionsAlmostEqual(quaternion, q):
+                return True
+        return False
+
     def initMesh(self, model):
         meshObject = self.findMeshObject()
         hasMesh = meshObject != None
