@@ -180,14 +180,11 @@ class Exporter:
                             rotations.append(rot)
                             scales.append(sca)
                         
-                        self.makeQuaternionsInterpolatable(rotations)
-                        locationTimeValuesInMS, locations = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, locations)
-                        rotationTimeValuesInMS, rotations = shared.simplifyQuaternionAnimationWithInterpolation(timeValuesInMS, rotations)
-                        scaleTimeValuesInMS, scales = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, scales)
-                                                
+                        self.makeQuaternionsInterpolatable(rotations)                                                
                         animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
 
                         if self.vectorArrayContainsNotOnly(locations, location):
+                            locationTimeValuesInMS, locations = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, locations)
                             m3Locs = self.createVector3sFromBlenderVectors(locations)
                             m3AnimBlock = m3.SD3VV0()
                             m3AnimBlock.frames = locationTimeValuesInMS
@@ -199,6 +196,7 @@ class Exporter:
                             bone.location.header.animFlags = shared.animFlagsForAnimatedProperty
 
                         if self.quaternionArrayContainsNotOnly(rotations, rotation):
+                            rotationTimeValuesInMS, rotations = shared.simplifyQuaternionAnimationWithInterpolation(timeValuesInMS, rotations)
                             m3Rots = self.createQuaternionsFromBlenderQuaternions(rotations)
                             m3AnimBlock = m3.SD4QV0()
                             m3AnimBlock.frames = rotationTimeValuesInMS
@@ -210,6 +208,7 @@ class Exporter:
                             bone.rotation.header.animFlags = shared.animFlagsForAnimatedProperty
 
                         if self.vectorArrayContainsNotOnly(scales, scale):
+                            scaleTimeValuesInMS, scales = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, scales)
                             m3Scas = self.createVector3sFromBlenderVectors(scales)
                             m3AnimBlock = m3.SD3VV0()
                             m3AnimBlock.frames = scaleTimeValuesInMS
