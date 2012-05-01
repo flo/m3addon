@@ -478,10 +478,9 @@
 
         <structure name="MATM" version="0" size="8">
             <description>A reference to a material of a specified type</description>
-            <field name="matType" type="uint32" default-value="1" />
-            <field name="matIndex" type="uint32" />
+            <field name="materialType" type="uint32" default-value="1" />
+            <field name="materialIndex" type="uint32" />
         </structure>
-
 
 
         <structure name="LAYR" version="22" size="356" >
@@ -587,7 +586,7 @@
         <structure name="PAR_" version="12" size="1316" >
             <description>Particle System</description>
             <field offset="0" name="bone" type="uint32" />
-            <field offset="4" name="matmIndex" type="uint32" />
+            <field offset="4" name="materialReferenceIndex" type="uint32" />
             <field offset="8" name="emissionSpeed" type="FloatAnimationReference" />
             <field offset="28" name="emissionSpeedVariance" type="FloatAnimationReference" />
             <field offset="48" name="emissionSpeedVarianceEnabled" type="uint32" />

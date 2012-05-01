@@ -632,16 +632,21 @@ class Exporter:
             m3ParticleSystem.setNamedBit("flags", "copy", particleSystem.copy)
             m3ParticleSystem.ar1 = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
 
-            materialIndices = []
-            for materialIndex, material in enumerate(scene.m3_materials):
-                if material.name == particleSystem.materialName:
-                    materialIndices.append(materialIndex)
+            materialReferenceIndices = []
+            for materialReferenceIndex, materialReference in enumerate(model.materialReferences):
+                if materialReference.materialType == 1:
+                    material = model.standardMaterials[materialReference.materialIndex]
+                    if material.name == particleSystem.materialName:
+                        materialReferenceIndices.append(materialReferenceIndex)
+                else:
+                    raise Exception("Exporting particle system with non standard materials is not supported yet")
             
-            if len(materialIndices) > 1:
+            if len(materialReferenceIndices) > 1:
                 raise Exception("There are multiple materials with the same name")
-            elif len(materialIndices) == 0:
-                raise Exception("The material %s referenced by the particle system %s does not exist" % (m3ParticleSystem.materialName, m3ParticleSystem.name))
-            m3ParticleSystem.matmIndex = materialIndices[0]
+            elif len(materialReferenceIndices) == 0:
+                print("End:", bytes(particleSystem.materialName, "ASCII"))
+                raise Exception("The material %s referenced by the particle system %s does not exist" % (particleSystem.materialName, particleSystem.boneSuffix))
+            m3ParticleSystem.materialReferenceIndex = materialReferenceIndices[0]
 
             model.particles.append(m3ParticleSystem)
 
@@ -858,8 +863,8 @@ class Exporter:
     
     def createMaterialReference(self, materialIndex, materialType):
         materialReference = m3.MATMV0()
-        materialReference.matType = materialType
-        materialReference.matIndex = materialIndex
+        materialReference.materialType = materialType
+        materialReference.materialIndex = materialIndex
         return materialReference
 
     def createEmptyDivision(self):
