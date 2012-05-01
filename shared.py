@@ -92,3 +92,48 @@ def vectorInterpolationFunction(leftInterpolationValue, rightInterpolationValue,
 
 def quaternionInterpolationFunction(leftInterpolationValue, rightInterpolationValue, rightFactor):
     return leftInterpolationValue.slerp(rightInterpolationValue, rightFactor)
+    
+def vectorsAlmostEqual(vectorExpected, vectorActual):
+    diff = vectorExpected - vectorActual
+    return diff.length < 0.00001
+    
+def quaternionsAlmostEqual(q0, q1):
+    distanceSqr = sqr(q0.x-q1.x)+sqr(q0.y-q1.y)+sqr(q0.z-q1.z)+sqr(q0.w-q1.w)
+    return distanceSqr < sqr(0.00001)
+
+def simplifyVectorAnimationWithInterpolation(timeValuesInMS, vectors):
+    return simplifyAnimationWithInterpolation(timeValuesInMS, vectors, vectorInterpolationFunction, vectorsAlmostEqual)
+
+def simplifyQuaternionAnimationWithInterpolation(timeValuesInMS, vectors):
+    return simplifyAnimationWithInterpolation(timeValuesInMS, vectors, quaternionInterpolationFunction, quaternionsAlmostEqual)
+
+def simplifyAnimationWithInterpolation(timeValuesInMS, values, interpolationFunction, almostEqualFunction):
+    if len(timeValuesInMS) < 2:
+        return timeValuesInMS, values
+    leftTimeInMS = timeValuesInMS[0]
+    leftValue = values[0]
+    currentTimeInMS = timeValuesInMS[1]
+    currentValue = values[1]
+    newTimeValuesInMS = [leftTimeInMS]
+    newValues = [leftValue]
+    for rightTimeInMS, rightValue in zip(timeValuesInMS[2:], values[2:]):
+        timeSinceLeftTime =  currentTimeInMS - leftTimeInMS
+        intervalLength = rightTimeInMS - leftTimeInMS
+        rightFactor = timeSinceLeftTime / intervalLength
+        expectedValue = interpolationFunction(leftValue, rightValue, rightFactor)
+        if almostEqualFunction(expectedValue, currentValue):
+            # ignore current value since it's interpolatable:
+            print ("Ignoring %s since it's interpolatable with %s and %s" % (currentValue, leftValue, rightValue))
+            pass
+        else:
+            print ("Can't interpolate %s  with %s and %s" % (currentValue, leftValue, rightValue))
+
+            newTimeValuesInMS.append(currentTimeInMS)
+            newValues.append(currentValue)
+            leftTimeInMS = currentTimeInMS
+            leftValue = currentValue
+        currentValue = rightValue
+        currentTimeInMS = rightTimeInMS
+    newTimeValuesInMS.append(timeValuesInMS[-1])
+    newValues.append(values[-1])
+    return newTimeValuesInMS, newValues

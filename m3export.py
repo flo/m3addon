@@ -179,8 +179,11 @@ class Exporter:
                             locations.append(loc)
                             rotations.append(rot)
                             scales.append(sca)
-                            
+                        
                         self.makeQuaternionsInterpolatable(rotations)
+                        locationTimeValuesInMS, locations = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, locations)
+                        rotationTimeValuesInMS, rotations = shared.simplifyQuaternionAnimationWithInterpolation(timeValuesInMS, rotations)
+                        scaleTimeValuesInMS, scales = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, scales)
                         
                         m3Locs = self.createVector3sFromBlenderVectors(locations)
                         m3Rots = self.createQuaternionsFromBlenderQuaternions(rotations)
@@ -189,21 +192,21 @@ class Exporter:
                         animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
 
                         m3AnimBlock = m3.SD3VV0()
-                        m3AnimBlock.frames = timeValuesInMS
+                        m3AnimBlock.frames = locationTimeValuesInMS
                         m3AnimBlock.flags = 0
                         m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
                         m3AnimBlock.keys = m3Locs
                         animIdToAnimDataMap[locationAnimId] = m3AnimBlock
                         
                         m3AnimBlock = m3.SD4QV0()
-                        m3AnimBlock.frames = timeValuesInMS
+                        m3AnimBlock.frames = rotationTimeValuesInMS
                         m3AnimBlock.flags = 0
                         m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
                         m3AnimBlock.keys = m3Rots
                         animIdToAnimDataMap[rotationAnimId] = m3AnimBlock
                     
                         m3AnimBlock = m3.SD3VV0()
-                        m3AnimBlock.frames = timeValuesInMS
+                        m3AnimBlock.frames = scaleTimeValuesInMS
                         m3AnimBlock.flags = 0
                         m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
                         m3AnimBlock.keys = m3Scas
