@@ -111,7 +111,7 @@ def extendTimeToValueMapByInterpolation(timeToVectorMap, wantedTimes, interpolat
                 intervalLength = rightInterpolationTime - leftInterpolationTime
                 rightFactor = timeSinceLeftTime / intervalLength
                 leftFactor = 1 - rightFactor
-                timeToVectorMap[wantedTime] = interpolationFunc(leftFactor, leftInterpolationValue, rightFactor, rightInterpolationValue)
+                timeToVectorMap[wantedTime] = interpolationFunc(leftInterpolationValue, rightInterpolationValue, rightFactor)
             wantedTimesIndex += 1
             if wantedTimesIndex == len(wantedTimes):
                 return
@@ -122,17 +122,11 @@ def extendTimeToValueMapByInterpolation(timeToVectorMap, wantedTimes, interpolat
     for wantedTime in wantedTimes[wantedTimesIndex:]:
         timeToVectorMap[wantedTime] = leftInterpolationValue
 
-def vectorInterpolationFunction(leftFactor, leftInterpolationValue, rightFactor, rightInterpolationValue):
-    return leftInterpolationValue.lerp(rightInterpolationValue, rightFactor)
-
-def quaternionInterpolationFunction(leftFactor, leftInterpolationValue, rightFactor, rightInterpolationValue):
-    return leftInterpolationValue.slerp(rightInterpolationValue, rightFactor)
-
 def extendTimeToVectorMapByInterpolation(timeToVectorMap, wantedTimes):
-    return extendTimeToValueMapByInterpolation(timeToVectorMap, wantedTimes, vectorInterpolationFunction)
+    return extendTimeToValueMapByInterpolation(timeToVectorMap, wantedTimes, shared.vectorInterpolationFunction)
 
 def extendTimeToQuaternionMapByInterpolation(timeToVectorMap, wantedTimes):
-    return extendTimeToValueMapByInterpolation(timeToVectorMap, wantedTimes, quaternionInterpolationFunction)
+    return extendTimeToValueMapByInterpolation(timeToVectorMap, wantedTimes, shared.quaternionInterpolationFunction)
 
 def convertToBlenderVector3Map(timeToM3VectorMap):
     result = {}

@@ -86,3 +86,9 @@ def smoothQuaternionTransition(previousQuaternion, quaternionToFix):
     sumOfSquaresMinus =  sqr(-quaternionToFix.x - previousQuaternion.x) + sqr(-quaternionToFix.y - previousQuaternion.y) + sqr(-quaternionToFix.z - previousQuaternion.z) + sqr(-quaternionToFix.w - previousQuaternion.w)
     if sumOfSquaresMinus < sumOfSquares:
         quaternionToFix.negate()
+
+def vectorInterpolationFunction(leftInterpolationValue, rightInterpolationValue, rightFactor):
+    return leftInterpolationValue.lerp(rightInterpolationValue, rightFactor)
+
+def quaternionInterpolationFunction(leftInterpolationValue, rightInterpolationValue, rightFactor):
+    return leftInterpolationValue.slerp(rightInterpolationValue, rightFactor)
