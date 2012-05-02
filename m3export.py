@@ -600,7 +600,7 @@ class Exporter:
             transferer.transferAnimatableVector3("tailUnk1")
             transferer.transferAnimatableFloat("emissionAreaRadius")
             transferer.transferAnimatableFloat("spreadUnk")
-            transferer.transferBoolToInt("radialEmissionEnabled")
+            transferer.transferEnum("emissionType")
             transferer.transferBoolToInt("randomizeWithParticleSizes2")
             transferer.transferAnimatableVector3("particleSizes2")
             transferer.transferBoolToInt("randomizeWithRotationValues2")

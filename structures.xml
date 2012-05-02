@@ -630,7 +630,7 @@
             <field offset="456" name="tailUnk1" type="Vector3AnimationReference" />
             <field offset="492" name="emissionAreaRadius" type="FloatAnimationReference" />
             <field offset="512" name="spreadUnk" type="FloatAnimationReference" />
-            <field offset="532" name="radialEmissionEnabled" type="uint32" />
+            <field offset="532" name="emissionType" type="uint32" />
             <field offset="536" name="randomizeWithParticleSizes2" type="uint32" />
             <field offset="540" name="particleSizes2" type="Vector3AnimationReference" />
             <field offset="576" name="randomizeWithRotationValues2" type="uint32" />

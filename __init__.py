@@ -170,7 +170,6 @@ def selectOrCreateBoneForPartileSystem(scene, particle_system):
             armature = armatureObject.data
             armatureObject.select = True
             scene.objects.active = armatureObject
-            print("test")
             if bpy.ops.object.mode_set.poll():
                 bpy.ops.object.mode_set(mode='POSE')
         else:
@@ -205,6 +204,10 @@ particleTypeList =  [("0", "Point", "Particles spawn at a certain point"),
                         ("3", 'Cuboid', 'Particles spawn in a cuboid'),
                         ("4", 'Cylinder', 'Particles spawn in a cylinder')
                         ]
+                        
+particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a configureable direction with a configurable spread"), 
+                        ("1", 'Radial', "Particles move into all kinds of directions"), 
+                        ("2", 'Unknown', 'Particles spawn in a sphere')]
 attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment point"), 
                             ("1", 'Sphere', "A sphere with the given radius"), 
                             ("2", 'Cylinder', 'Cylinder')
@@ -331,7 +334,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     tailUnk1 = bpy.props.FloatVectorProperty(default=(0.05, 0.05, 0.05), name="tail unk.", size=3, subtype="XYZ", options={"ANIMATABLE"})
     emissionAreaRadius = bpy.props.FloatProperty(default=2.0, name="emis. area radius", options={"ANIMATABLE"})
     spreadUnk = bpy.props.FloatProperty(default=0.05, name="spread unk.", options={"ANIMATABLE"})
-    radialEmissionEnabled = bpy.props.BoolProperty(default=False, options=set())
+    emissionType = bpy.props.EnumProperty(default="0", items=particleEmissionTypeList, options=set())
     randomizeWithParticleSizes2 = bpy.props.BoolProperty(default=False, options=set(), description="Specifies if particles have random sizes")
     particleSizes2 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), name="particle sizes 2", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first two values are used to determine a random initial and final size for a particle")
     randomizeWithRotationValues2 = bpy.props.BoolProperty(default=False, options=set())
@@ -583,8 +586,9 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.active = particle_system.emissionSpeedVarianceEnabled
             sub.prop(particle_system, 'emissionSpeedVariance', text="Speed Variance")
 
+            layout.prop(particle_system, 'emissionType', text="Emission Type")
             split = layout.split()
-            split.active = not particle_system.radialEmissionEnabled
+            split.active = particle_system.emissionType != "1"
             col = split.column()
             sub = col.column(align=True)
             sub.label(text="Angle:")
@@ -595,7 +599,6 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.label(text="Spread:")
             sub.prop(particle_system, "emissionSpreadX", text="X")
             sub.prop(particle_system, "emissionSpreadY", text="Y")
-            layout.prop(particle_system, 'radialEmissionEnabled', text="Radial Emission")
 
             layout.prop(particle_system, 'lifespan', text="Lifespan")
             

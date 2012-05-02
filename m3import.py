@@ -632,6 +632,7 @@ class Importer:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                 particle_system.boneSuffix = fullBoneName
             particle_system.emissionAreaType = str(particlesEntry.emissionAreaType)
+            particle_system.emissionType = str(particlesEntry.emissionType)
             materialReference = self.model.materialReferences[particlesEntry.materialReferenceIndex]
             if materialReference.materialType != 1:
                 raise Exception("Particle System doesn't use a standard material")
