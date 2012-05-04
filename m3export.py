@@ -802,7 +802,7 @@ class Exporter:
         m3Layer.setNamedBit("flags", "textureWrapX", layer.textureWrapX)
         m3Layer.setNamedBit("flags", "textureWrapY", layer.textureWrapY)
         m3Layer.setNamedBit("flags", "colorEnabled", layer.colorEnabled)
-        transferer.transferInt("uvChannel")
+        transferer.transferEnum("uvSource")
         m3Layer.setNamedBit("alphaFlags", "alphaAsTeamColor", layer.alphaAsTeamColor)
         m3Layer.setNamedBit("alphaFlags", "alphaOnly", layer.alphaOnly)
         m3Layer.setNamedBit("alphaFlags", "alphaBasedShading", layer.alphaBasedShading)

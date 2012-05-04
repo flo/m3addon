@@ -204,7 +204,15 @@ particleTypeList =  [("0", "Point", "Particles spawn at a certain point"),
                         ("3", 'Cuboid', 'Particles spawn in a cuboid'),
                         ("4", 'Cylinder', 'Particles spawn in a cylinder')
                         ]
-                        
+
+uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole image UVs for particles"),
+                 ("1", "UV Layer 2", "Second UV layer which can be used for decals"),
+                 ("3", "UV Layer 3", "Third UV layer?"),
+                 ("4", "UV Layer 4", "Fourth UV layer?"),
+                 ("5", "Unknown", "Unknown"),
+                 ("6", "Animated Particle UV", "The texture gets divided as specified by the particle system to create multiple small image frames which play then as an animation")
+                 ] 
+
 particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a configureable direction with a configurable spread"), 
                         ("1", 'Radial', "Particles move into all kinds of directions"), 
                         ("2", 'Unknown', 'Particles spawn in a sphere')]
@@ -259,7 +267,7 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     textureWrapX = bpy.props.BoolProperty(options=set(), default=True)
     textureWrapY = bpy.props.BoolProperty(options=set(), default=True)
     colorEnabled = bpy.props.BoolProperty(options=set(), default=False)
-    uvChannel = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
+    uvSource = bpy.props.EnumProperty(items=uvSourceList, options=set(), default="0")
     brightMult = bpy.props.FloatProperty(name="bright. mult.",options={"ANIMATABLE"}, default=1.0)
     brightMult2 = bpy.props.FloatProperty(name="bright. mult. 2",options={"ANIMATABLE"})
     brightness = bpy.props.FloatProperty(name="brightness", options={"ANIMATABLE"}, default=1.0)
@@ -504,6 +512,7 @@ class MatrialLayersPanel(bpy.types.Panel):
             if layerIndex >= 0 and layerIndex < len(material.layers):
                 layer = material.layers[layerIndex]
                 layout.prop(layer, 'imagePath', text="Image Path")
+                layout.prop(layer, 'uvSource', text="UV Source")
                 layout.prop(layer, 'textureWrapX', text="Tex. Wrap X")
                 layout.prop(layer, 'textureWrapY', text="Tex. Wrap Y")
                 layout.prop(layer, 'alphaAsTeamColor', text="Alpha As Team Color")

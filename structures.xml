@@ -495,7 +495,7 @@
                     <bit mask="0x200" name="colorEnabled" />
                 </bits>
             </field>
-            <field name="uvChannel" type="uint32" />
+            <field name="uvSource" type="uint32" />
             <field name="alphaFlags" type="uint32" default-value="0" >
                 <bits>
                     <bit mask="0x1" name="alphaAsTeamColor" />

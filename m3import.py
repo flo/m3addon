@@ -586,6 +586,7 @@ class Importer:
                 animPathPrefix = "m3_materials[%s].layers[%s]." % (index, layerIndex)
                 fieldVisitor = BlenderPropertiesSettingFieldVisitor(self, animPathPrefix)
                 visitFieldPropertyPairs(blenderObject=materialLayer, m3Object=materialLayersEntry, fieldVisitor=fieldVisitor)
+                materialLayer.uvSource = str(materialLayersEntry.uvSource)
                 materialLayer.textureWrapX = materialLayersEntry.getNamedBit("flags", "textureWrapX")
                 materialLayer.textureWrapY = materialLayersEntry.getNamedBit("flags", "textureWrapY")
                 materialLayer.colorEnabled = materialLayersEntry.getNamedBit("flags", "colorEnabled")
