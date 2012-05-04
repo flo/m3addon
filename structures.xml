@@ -587,16 +587,16 @@
             <description>Particle System</description>
             <field offset="0" name="bone" type="uint32" />
             <field offset="4" name="materialReferenceIndex" type="uint32" />
-            <field offset="8" name="emissionSpeed" type="FloatAnimationReference" />
-            <field offset="28" name="emissionSpeedVariance" type="FloatAnimationReference" />
-            <field offset="48" name="emissionSpeedVarianceEnabled" type="uint32" />
+            <field offset="8" name="emissionSpeed1" type="FloatAnimationReference" />
+            <field offset="28" name="emissionSpeed2" type="FloatAnimationReference" />
+            <field offset="48" name="randomizeWithEmissionSpeed2" type="uint32" />
             <field offset="52" name="emissionAngleX" type="FloatAnimationReference" />
             <field offset="72" name="emissionAngleY" type="FloatAnimationReference" />
             <field offset="92" name="emissionSpreadX" type="FloatAnimationReference" />
             <field offset="112" name="emissionSpreadY" type="FloatAnimationReference" />
-            <field offset="132" name="lifespan" type="FloatAnimationReference" />
-            <field offset="152" name="decay" type="FloatAnimationReference" />
-            <field offset="172" name="decayEnabled" type="uint32" />
+            <field offset="132" name="lifespan1" type="FloatAnimationReference" />
+            <field offset="152" name="lifespan2" type="FloatAnimationReference" />
+            <field offset="172" name="randomizeWithLifespan2" type="uint32" />
             <field offset="176" name="unknown0" type="uint32" expected-value="0" />
             <field offset="180" name="unknown1" type="uint32" expected-value="0" />
             <field offset="184" name="unknown2" type="uint32" expected-value="0" />

@@ -311,16 +311,16 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     oldBoneSuffix = bpy.props.StringProperty(options={"SKIP_SAVE"})
     materialName = bpy.props.EnumProperty(items=availableMaterials, options=set())
     maxParticles = bpy.props.IntProperty(default=20, subtype="UNSIGNED",options=set())
-    emissionSpeed = bpy.props.FloatProperty(name="emis. speed",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission")
-    emissionSpeedVariance = bpy.props.FloatProperty(default=1.0, name="emiss. speed var.",options={"ANIMATABLE"}, description="If enabled, particles won't emit with a constant speed but with the given speed variance")
-    emissionSpeedVarianceEnabled = bpy.props.BoolProperty(options=set(),default=False, description="Specifies if the speed variance value will be used to randomize the emission speed")
+    emissionSpeed1 = bpy.props.FloatProperty(name="emis. speed 1",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission")
+    emissionSpeed2 = bpy.props.FloatProperty(default=1.0, name="emiss. speed 2",options={"ANIMATABLE"}, description="If emission speed randomization is enabled this value specfies the other end of the range of random speeds")
+    randomizeWithEmissionSpeed2 = bpy.props.BoolProperty(options=set(),default=False, description="Specifies if the second emission speed value should be used to generate random emission speeds")
     emissionAngleX = bpy.props.FloatProperty(default=0.0, name="emis. angle X", subtype="ANGLE", options={"ANIMATABLE"}, description="Specifies the X rotation of the emission vector")
     emissionAngleY = bpy.props.FloatProperty(default=0.0, name="emis. angle Y", subtype="ANGLE", options={"ANIMATABLE"}, description="Specifies the Y rotation of the emission vector")
     emissionSpreadX = bpy.props.FloatProperty(default=0.0, name="emissionSpreadX", options={"ANIMATABLE"}, description="Specifies in radian by how much the emission vector can be randomly rotated around the X axis")
     emissionSpreadY = bpy.props.FloatProperty(default=0.0, name="emissionSpreadY", options={"ANIMATABLE"}, description="Specifies in radian by how much the emission vector can be randomly rotated around the Y axis")
-    lifespan = bpy.props.FloatProperty(default=0.5, name="lifespan", options={"ANIMATABLE"},  description="Specfies how long it takes before the particles start to decay")
-    decay = bpy.props.FloatProperty(default=5.0, name="decay", options={"ANIMATABLE"}, description="Specifies how long particles will fade out")
-    decayEnabled = bpy.props.BoolProperty(default=True, name="decayEnabled", options=set(), description="Specifies if particles decay/fade out")
+    lifespan1 = bpy.props.FloatProperty(default=0.5, name="lifespan1", options={"ANIMATABLE"},  description="Specfies how long it takes before the particles start to decay")
+    lifespan2 = bpy.props.FloatProperty(default=5.0, name="lifespan2", options={"ANIMATABLE"}, description="If random lifespans are enabled this specifies the other end of the range for random lifespan values")
+    randomizeWithLifespan2 = bpy.props.BoolProperty(default=True, name="randomizeWithLifespan2", options=set(), description="Specifies if particles should have random lifespans")
     zAcceleration = bpy.props.FloatProperty(default=0.0, name="z acceleration",options=set(), description="Negative gravity which does not get influenced by the emission vector")
     unknownFloat1a = bpy.props.FloatProperty(default=1.0, name="unknownFloat1a",options=set())
     unknownFloat1b = bpy.props.FloatProperty(default=1.0, name="unknownFloat1b",options=set())
@@ -588,12 +588,14 @@ class ParticleSystemsPanel(bpy.types.Panel):
 
             split = layout.split()
             col = split.column()
-            col.prop(particle_system, 'emissionSpeed', text="Particle Speed")
-            row = col.row()
-            row.prop(particle_system, 'emissionSpeedVarianceEnabled', text="")
-            sub = row.column(align=True)
-            sub.active = particle_system.emissionSpeedVarianceEnabled
-            sub.prop(particle_system, 'emissionSpeedVariance', text="Speed Variance")
+            col.label(text="Emis. Speed.:")
+            sub = col.column(align=True)
+            sub.prop(particle_system, "emissionSpeed1", text="")
+            col = split.column()
+            col.prop(particle_system, "randomizeWithEmissionSpeed2", text="Randomize With:")
+            sub = col.column(align=True)
+            sub.active = particle_system.randomizeWithEmissionSpeed2
+            sub.prop(particle_system, "emissionSpeed2", text="")
 
             layout.prop(particle_system, 'emissionType', text="Emission Type")
             split = layout.split()
@@ -608,15 +610,18 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.label(text="Spread:")
             sub.prop(particle_system, "emissionSpreadX", text="X")
             sub.prop(particle_system, "emissionSpreadY", text="Y")
-
-            layout.prop(particle_system, 'lifespan', text="Lifespan")
             
             split = layout.split()
-            row = split.row()
-            row.prop(particle_system, 'decayEnabled', text="")
-            sub = row.column(align=True)
-            sub.active = particle_system.decayEnabled
-            sub.prop(particle_system, 'decay', text="Decay")
+            col = split.column()
+            col.label(text="Lifespan:")
+            sub = col.column(align=True)
+            sub.prop(particle_system, "lifespan1", text="")
+            col = split.column()
+            col.prop(particle_system, "randomizeWithLifespan2", text="Randomize With:")
+            sub = col.column(align=True)
+            sub.active = particle_system.randomizeWithLifespan2
+            sub.prop(particle_system, "lifespan2", text="")
+            
             
             layout.prop(particle_system, 'zAcceleration', text="Z-Acceleration")
             
