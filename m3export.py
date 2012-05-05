@@ -587,7 +587,7 @@ class Exporter:
             transferer.transferAnimatableColor("initialColor1")
             transferer.transferAnimatableColor("finalColor1")
             transferer.transferAnimatableColor("unknownColor1")
-            transferer.transferFloat("emissSpeed3")
+            transferer.transferFloat("slowdown")
             transferer.transferFloat("unknownFloat2a")
             transferer.transferFloat("unknownFloat2b")
             transferer.transferFloat("unknownFloat2c")

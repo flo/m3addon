@@ -331,7 +331,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     initialColor1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.5), name="initial color 1", size=4, subtype="COLOR", options={"ANIMATABLE"}, description="Color of the particle when it gets emitted")
     finalColor1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.5), name="final color 1", size=4, subtype="COLOR", options={"ANIMATABLE"}, description="The color the particle will have when it vanishes")
     unknownColor1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.0), name="unknown color 1", size=4, subtype="COLOR", options={"ANIMATABLE"})
-    emissSpeed3 = bpy.props.FloatProperty(default=1.0, name="emiss. speed 3",options=set())
+    slowdown = bpy.props.FloatProperty(default=1.0, min=0.0, name="slowdown" ,options=set(), description="The amounth of speed reduction in the particles lifetime")
     unknownFloat2a = bpy.props.FloatProperty(default=0.0, name="unknownFloat2a",options=set())
     unknownFloat2b = bpy.props.FloatProperty(default=1.0, name="unknownFloat2b",options=set())
     unknownFloat2c = bpy.props.FloatProperty(default=2.0, name="unknownFloat2c",options=set())
@@ -707,7 +707,7 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.prop(particle_system, "unknownFloat1c", text="")
             sub.prop(particle_system, "unknownFloat1d", text="")
             
-            layout.prop(particle_system, 'emissSpeed3', text="Emiss. Speed 3")
+            layout.prop(particle_system, 'slowdown', text="Slowdown")
             
             split = layout.split()
             col = split.column()

@@ -610,7 +610,7 @@
             <field offset="280" name="initialColor1" type="ColorAnimationReference" />
             <field offset="300" name="finalColor1" type="ColorAnimationReference" />
             <field offset="320" name="unknownColor1" type="ColorAnimationReference" />
-            <field offset="340" name="emissSpeed3" type="float" />
+            <field offset="340" name="slowdown" type="float" />
             <field offset="344" name="unknownFloat2a" type="float" default-value="0.0" />
             <field offset="348" name="unknownFloat2b" type="float" default-value="1.0"/>
             <field offset="352" name="unknownFloat2c" type="float" default-value="1.0"/>
