@@ -243,7 +243,10 @@ matLayerAndEmisBlendModeList = [("0", "Mod", "no description yet"),
 matSpecularTypeList = [("0", "RGB", "no description yet"), 
                         ("1", 'Alpha Only', "no description yet")
                         ]
-
+class M3AnimIdData(bpy.types.PropertyGroup):
+    animId = bpy.props.IntProperty(name="animId", options=set())
+    animPath = bpy.props.StringProperty(name="animPath", options=set())
+    objectId =  bpy.props.StringProperty(name="objectId", options=set())
 
 class AssignedActionOfM3Animation(bpy.types.PropertyGroup):
     targetName = bpy.props.StringProperty(name="targetName", options=set())
@@ -361,6 +364,10 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     numberOfRows = bpy.props.IntProperty(default=0, min=0, subtype="UNSIGNED", name="rows", options=set(), description="Specifies in how many rows the image gets divided")
     columnWidth = bpy.props.FloatProperty(default=float("inf"), min=0.0, max=1.0, name="columnWidth", options=set(), description="Specifies the width of one column, relative to an image with width 1")
     rowHeight = bpy.props.FloatProperty(default=float("inf"), min=0.0, max=1.0, name="rowHeight", options=set(), description="Specifies the height of one row, relative to an image with height 1")
+    unknownFloat4 = bpy.props.FloatProperty(default=0.0, name="unknownFloat4",options=set())
+    unknownFloat5 = bpy.props.FloatProperty(default=1.0, name="unknownFloat5",options=set())
+    unknownFloat6 = bpy.props.FloatProperty(default=1.0, name="unknownFloat6",options=set())
+    unknownFloat7 = bpy.props.FloatProperty(default=1.0, name="unknownFloat7",options=set())
     sort = bpy.props.BoolProperty(options=set())
     collideTerrain = bpy.props.BoolProperty(options=set())
     collideObjects = bpy.props.BoolProperty(options=set())
@@ -721,6 +728,10 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(particle_system, 'spreadUnk', text="Spread Unk")
             layout.prop(particle_system, 'partEmit', text="Part. Emit.")
 
+            layout.prop(particle_system, "unknownFloat4", text="Unknown Float 4")
+            layout.prop(particle_system, "unknownFloat5", text="Unknown Float 5")
+            layout.prop(particle_system, "unknownFloat6", text="Unknown Float 6")
+            layout.prop(particle_system, "unknownFloat7", text="Unknown Float 7")
 
             
             layout.prop(particle_system, 'sort', text="Sort")
@@ -1094,6 +1105,7 @@ def register():
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty()
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
+    bpy.types.Scene.m3_animation_ids = bpy.props.CollectionProperty(type=M3AnimIdData)
 
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)

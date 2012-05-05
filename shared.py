@@ -39,6 +39,9 @@ rotFixMatrixInverted = rotFixMatrix.transposed()
 animFlagsForAnimatedProperty = 6
 
 star2ParticlePrefix = "Star2Part"
+animObjectIdModel = "MODEL"
+animObjectIdArmature = "ARMATURE"
+animObjectIdScene = "SCENE"
 
 
 def toValidBoneName(name):

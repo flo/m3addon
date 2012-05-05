@@ -339,10 +339,12 @@ class Importer:
     
     def importFile(self, filename):
         scene = bpy.context.scene
+        self.scene = scene
         self.model = m3.loadModel(filename)
         self.armature = bpy.data.armatures.new(name="Armature")
         scene.render.fps = FRAME_RATE
         self.animations = []
+        self.storeModelId()
         self.createAnimations()
         self.createArmatureObject()
         self.createBones()
@@ -354,7 +356,12 @@ class Importer:
         if len(scene.m3_animations) >= 1:
             scene.m3_animation_old_index = -1
             scene.m3_animation_index = 0
-            
+    
+    def storeModelId(self):
+        animIdData = self.scene.m3_animation_ids.add()
+        animIdData.animId = self.model.uniqueUnknownNumber
+        animIdData.animPath = ""
+        animIdData.objectId = shared.animObjectIdModel
 
     def createArmatureObject(self):
         #bpy.ops.object.mode_set(mode='OBJECT')
@@ -509,17 +516,33 @@ class Importer:
             animIdToTimeValueMap = animationData.animIdToTimeValueMap
             action = self.createOrGetActionFor(animationData, ownerTypeArmature)
             boneName = shared.toValidBoneName(m3Bone.name)
-            locationAnimPath = 'pose.bones["%s"].location' % boneName
-            timeToLocationMap = animIdToTimeValueMap.get(m3Bone.location.header.animId,{0:m3Bone.location.initValue})
-            timeToLocationMap = convertToBlenderVector3Map(timeToLocationMap)
             
-            rotationAnimPath = 'pose.bones["%s"].rotation_quaternion' % boneName
-            timeToRotationMap = animIdToTimeValueMap.get(m3Bone.rotation.header.animId,{0:m3Bone.rotation.initValue})
-            timeToRotationMap = convertToBlenderQuaternionMap(timeToRotationMap)
+            locationAnimId = m3Bone.location.header.animId
+            locationAnimPath = 'pose.bones["%s"].location' % boneName
+            timeToLocationMap = animIdToTimeValueMap.get(locationAnimId,{0:m3Bone.location.initValue})
+            timeToLocationMap = convertToBlenderVector3Map(timeToLocationMap)
+            animIdData = scene.m3_animation_ids.add()
+            animIdData.animId = locationAnimId
+            animIdData.animPath = locationAnimPath
+            animIdData.objectId = shared.animObjectIdArmature;
 
+            rotationAnimId = m3Bone.rotation.header.animId
+            rotationAnimPath = 'pose.bones["%s"].rotation_quaternion' % boneName
+            timeToRotationMap = animIdToTimeValueMap.get(rotationAnimId, {0:m3Bone.rotation.initValue})
+            timeToRotationMap = convertToBlenderQuaternionMap(timeToRotationMap)
+            animIdData = scene.m3_animation_ids.add()
+            animIdData.animId = rotationAnimId
+            animIdData.animPath = rotationAnimPath
+            animIdData.objectId = shared.animObjectIdArmature;
+
+            scaleAnimId = m3Bone.scale.header.animId
             scaleAnimPath = 'pose.bones["%s"].scale' % boneName
-            timeToScaleMap = animIdToTimeValueMap.get(m3Bone.scale.header.animId,{0:m3Bone.scale.initValue})
+            timeToScaleMap = animIdToTimeValueMap.get(scaleAnimId,{0:m3Bone.scale.initValue})
             timeToScaleMap = convertToBlenderVector3Map(timeToScaleMap)
+            animIdData = scene.m3_animation_ids.add()
+            animIdData.animId = scaleAnimId
+            animIdData.animPath = scaleAnimPath
+            animIdData.objectId = shared.animObjectIdArmature;
 
             rotKeys = list(timeToRotationMap.keys())
             rotKeys.sort()
@@ -896,18 +919,30 @@ class Importer:
                 yield (action, timeValueMap)
 
     def animateFloat(self, ownerType, path, animId):
+        animIdData = self.scene.m3_animation_ids.add()
+        animIdData.animId = animId
+        animIdData.animPath = path
+        animIdData.objectId = shared.animObjectIdScene #TODO as argument
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
             curve = action.fcurves.new(path, 0)
             for frame, value in frameValuePairs(timeValueMap):
                 insertLinearKeyFrame(curve, frame, value)
     
     def animateInteger(self, ownerType, path, animId):
+        animIdData = self.scene.m3_animation_ids.add()
+        animIdData.animId = animId
+        animIdData.animPath = path
+        animIdData.objectId = shared.animObjectIdScene
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
             curve = action.fcurves.new(path, 0)
             for frame, value in frameValuePairs(timeValueMap):
                 insertConstantKeyFrame(curve, frame, value)
 
     def animateVector3(self, ownerType, path, animId):
+        animIdData = self.scene.m3_animation_ids.add()
+        animIdData.animId = animId
+        animIdData.animPath = path
+        animIdData.objectId = shared.animObjectIdScene
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
             xCurve = action.fcurves.new(path, 0)
             yCurve = action.fcurves.new(path, 1)
@@ -919,6 +954,10 @@ class Importer:
                 insertLinearKeyFrame(zCurve, frame, value.z)
 
     def animateColor(self, ownerType, path, animId):
+        animIdData = self.scene.m3_animation_ids.add()
+        animIdData.animId = animId
+        animIdData.animPath = path
+        animIdData.objectId = shared.animObjectIdScene
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
             redCurve = action.fcurves.new(path, 0)
             greenCurve = action.fcurves.new(path, 1)
