@@ -123,11 +123,8 @@ def simplifyAnimationWithInterpolation(timeValuesInMS, values, interpolationFunc
         expectedValue = interpolationFunction(leftValue, rightValue, rightFactor)
         if almostEqualFunction(expectedValue, currentValue):
             # ignore current value since it's interpolatable:
-            print ("Ignoring %s since it's interpolatable with %s and %s" % (currentValue, leftValue, rightValue))
             pass
         else:
-            print ("Can't interpolate %s  with %s and %s" % (currentValue, leftValue, rightValue))
-
             newTimeValuesInMS.append(currentTimeInMS)
             newValues.append(currentValue)
             leftTimeInMS = currentTimeInMS

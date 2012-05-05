@@ -660,7 +660,6 @@ class Exporter:
             if len(materialReferenceIndices) > 1:
                 raise Exception("There are multiple materials with the same name")
             elif len(materialReferenceIndices) == 0:
-                print("End:", bytes(particleSystem.materialName, "ASCII"))
                 raise Exception("The material %s referenced by the particle system %s does not exist" % (particleSystem.materialName, particleSystem.boneSuffix))
             m3ParticleSystem.materialReferenceIndex = materialReferenceIndices[0]
 
