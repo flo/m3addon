@@ -567,9 +567,9 @@ class Exporter:
             m3ParticleSystem.bone = boneIndex
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ParticleSystem, blenderObject=particleSystem, animPathPrefix=animPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
-            transferer.transferAnimatableFloat("emissionSpeed")
-            transferer.transferAnimatableFloat("emissionSpeedVariance")
-            transferer.transferBoolToInt("emissionSpeedVarianceEnabled")
+            transferer.transferAnimatableFloat("emissionSpeed1")
+            transferer.transferAnimatableFloat("emissionSpeed2")
+            transferer.transferBoolToInt("randomizeWithEmissionSpeed2")
             transferer.transferAnimatableFloat("emissionAngleX")
             transferer.transferAnimatableFloat("emissionAngleY")
             transferer.transferAnimatableFloat("emissionSpreadX")
