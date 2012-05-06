@@ -244,7 +244,9 @@ matSpecularTypeList = [("0", "RGB", "no description yet"),
                         ("1", 'Alpha Only', "no description yet")
                         ]
 class M3AnimIdData(bpy.types.PropertyGroup):
-    animId = bpy.props.IntProperty(name="animId", options=set())
+    # animId is actually an unsigned integer but blender can store only signed ones
+    # thats why the number range needs to be moved into the negative for storage
+    animIdMinus2147483648 = bpy.props.IntProperty(name="animId", options=set())
     animPath = bpy.props.StringProperty(name="animPath", options=set())
     objectId =  bpy.props.StringProperty(name="objectId", options=set())
 

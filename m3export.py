@@ -79,8 +79,9 @@ class Exporter:
         self.usedAnimIds = {self.boundingAnimId}
 
         for animIdData in self.scene.m3_animation_ids:
-            self.animIdMap[animIdData.objectId, animIdData.animPath] = animIdData.animId
-            self.usedAnimIds.add(animIdData.animId)
+            animId = animIdData.animIdMinus2147483648 + 2147483648 
+            self.animIdMap[animIdData.objectId, animIdData.animPath] = animId
+            self.usedAnimIds.add(animId)
     
     def getAnimIdFor(self, objectId, animPath):
         result = self.animIdMap.get((objectId, animPath))
