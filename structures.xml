@@ -499,6 +499,16 @@
             <field name="materialIndex" type="uint32" />
         </structure>
 
+        <structure name="PATU" version="4" size="152">
+            <description>Unknown</description>
+            <field name="unknown" size="152" />
+        </structure>
+
+        <structure name="TRGD" version="0" size="24">
+            <description>Unknown</description>
+            <field name="unknown0" type="Reference" refTo="U32_V0" />
+            <field name="name" type="Reference" refTo="CHARV0" />
+        </structure>
 
         <structure name="LAYR" version="22" size="356" >
             <description>Describes one of the 13 layers of an material</description>
@@ -875,8 +885,8 @@
             <field offset="528" name="ikjtData" type="Reference" refTo="IKJTV0"/>
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
             <field name="unknownMaybeRef5" type="Reference" />
-            <field offset="552" name="PATU" type="Reference" />
-            <field offset="564" name="TRGD" type="Reference" />
+            <field offset="552" name="patuData" type="Reference" refTo="PATUV4" />
+            <field offset="564" name="trgdData" type="Reference" refTo="TRGDV0" />
             <field name="absoluteInverseBoneRestPositions" type="Reference" refTo="IREFV0" />
             <!-- Always 0, 1 or 2-->
             <field name="unknown32" type="uint32" default-value="1"/>
