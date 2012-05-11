@@ -392,8 +392,8 @@
 
         <structure name="SEQS" version="1" size="96" >
             <description>Animation Sequence</description>
-            <field offset="0" name="unknown0" type="int32" expected-value="-1"/>
-            <field offset="4" name="unknown1" type="int32" expected-value="-1"/>
+            <field offset="0" name="unknown0" type="int32" default-value="-1"/>
+            <field offset="4" name="unknown1" type="int32" default-value="-1"/>
             <field offset="8" name="name" type="Reference" refTo="CHARV0"/>
             <field offset="20" name="animStartInMS" type="uint32" />
             <field offset="24" name="animEndInMS" type="uint32" />
