@@ -692,16 +692,16 @@ class Importer:
         print("Loading attachment points and volumes")
         currentScene = bpy.context.scene
         boneIndexToAttachmentPointMap = {}
-        for attachmentPointEntry in self.model.attachmentPoints:
+        for attachmentPointIndex, attachmentPointEntry in enumerate(self.model.attachmentPoints):
             attachmentPoint = currentScene.m3_attachment_points.add()
             attachmentPoint.name = attachmentPointEntry.name
             attachmentPoint.boneName =  self.model.bones[attachmentPointEntry.bone].name
-            boneIndexToAttachmentPointMap[attachmentPointEntry.bone] = attachmentPoint
+            boneIndexToAttachmentPointMap[attachmentPointEntry.bone] = attachmentPointIndex
             attachmentPoint.volumeType = "-1"
         for attachmentVolume in self.model.attachmentVolumes:
             if attachmentVolume.bone0 != attachmentVolume.bone1 or attachmentVolume.bone0 != attachmentVolume.bone2:
                 raise Exception("Can't handle a special attachment volume")
-            attachmentPoint = boneIndexToAttachmentPointMap[attachmentVolume.bone0]
+            attachmentPoint =  currentScene.m3_attachment_points[boneIndexToAttachmentPointMap[attachmentVolume.bone0]]
             if not attachmentVolume.type in [1, 2]:
                 raise Exception("Unhandled attachment volume type %d" % attachmentVolume.type)
             attachmentPoint.volumeType = str(attachmentVolume.type)
