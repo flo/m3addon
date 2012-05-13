@@ -7,10 +7,6 @@ from generateM3Library import generateM3Library
 generateM3Library()
 from m3 import *
 
-inputFile = sys.argv[1]
-
-model = loadModel(inputFile)
-
 def byteDataToHex(byteData):
     s = "0x"
     for i in range(len(byteData)):
@@ -47,4 +43,16 @@ def printObject(indent, name, objectToPrint):
     else:
         printXmlElement(indent,name,str(objectToPrint))
 
-printObject(0,"model",model)
+if __name__ == "__main__":
+    if len(sys.argv) -1 != 1:
+        sys.stderr.write("""\
+Require one argument!
+Useage:
+    printXml.py /path/to/m3/file.m3
+Or:
+    printXml.py /path/to/m3/file.m3 > /path/to/xml/file/to/create.xml
+""")
+        sys.exit(2)
+    inputFile = sys.argv[1]
+    model = loadModel(inputFile)
+    printObject(0,"model",model)
