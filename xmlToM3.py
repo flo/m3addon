@@ -26,14 +26,15 @@ generateM3Library()
 from m3 import *
 import xml.dom.minidom
 from xml.dom.minidom import Node
-
+import argparse
+import os
 
 def createSingleStructureElement(xmlNode, typeClass):
     createdObject = typeClass()
     for child in xmlNode.childNodes:
         if type(child) == xml.dom.minidom.Text:
             if not child.wholeText.isspace():
-                raise Exception("Unexpected content \"%s\" within element %s", (child.wholeText, parentXmlNode.nodeName))
+                raise Exception("Unexpected content \"%s\" within element %s", (child.wholeText, xmlNode.nodeName))
         else:
             fieldName = child.nodeName
             fieldTypeInfo = typeClass.getFieldTypeInfo(fieldName)
@@ -104,10 +105,45 @@ def createElementList(xmlNode, parentName, typeName, typeClass):
         
     return createdList
         
-inputFile = sys.argv[1]
-outputFile = sys.argv[2]
-doc = xml.dom.minidom.parse(inputFile)
-modelElement = doc.firstChild
 
-model = createSingleElement(modelElement,"MODLV23", MODLV23 )
-saveAndInvalidateModel(model,outputFile)
+
+def convertFile(inputFilePath, outputDirectory):
+    if outputDirectory != None:
+        fileName = os.path.basename(inputFilePath)
+        outputFilePath = os.path.join(outputDirectory, fileName[:-4])
+    else:
+        outputFilePath = inputFilePath[:-4]
+    print("Converting %s -> %s" % (inputFilePath, outputFilePath))
+    doc = xml.dom.minidom.parse(inputFilePath)
+    modelElement = doc.firstChild
+    model = createSingleElement(modelElement, "MODLV23", MODLV23)
+    saveAndInvalidateModel(model, outputFilePath)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('path', nargs='+', help="Either a *.m3.xml file or a directory with *.m3.xml files generated with m3ToXml.py")
+    parser.add_argument('--output-directory', '-o', help='Directory in which m3 files will be placed')
+    args = parser.parse_args()
+    outputDirectory = args.output_directory
+    if outputDirectory != None and not os.path.isdir(outputDirectory):
+        sys.stderr.write("%s is not a directory" % outputDirectory)
+        sys.exit(2)
+    for filePath in args.path:
+        if not (filePath.endswith(".m3.xml") or os.path.isdir(filePath)):
+            sys.stderr.write("%s neither a directory nor does it end with '.m3.xml'\n" % filePath)
+            sys.exit(2)
+    counter = 0
+    for filePath in args.path:
+        if os.path.isdir(filePath):
+            for fileName in os.listdir(filePath):
+                inputFilePath = os.path.join(filePath, fileName)
+                if fileName.endswith(".m3.xml"):
+                     convertFile(inputFilePath, outputDirectory)
+                     counter += 1
+        else:
+            convertFile(filePath, outputDirectory)
+            counter += 1
+    if counter == 1:
+        print("Converted %d file from .m3.xml to .m3" % counter)
+    else:
+        print("Converted %d files from .m3.xml to .m3" % counter)
