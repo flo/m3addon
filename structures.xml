@@ -810,7 +810,23 @@
             </description>
             <field name="unknown" size="32" />
         </structure>
+
+        <structure name="SHBX" version="0" size="64" >
+            <description>
+                Unknown
+            </description>
+            <field name="unknown" size="64" />
+        </structure>
         
+        <structure name="CAM_" version="3" size="180" >
+            <description>
+                Camera
+            </description>
+            <field name="unknown0" size="4" />
+            <field name="name" type="Reference" refTo="CHARV0" />
+            <field name="unknown1" size="164" />
+        </structure>
+
         <structure name="MODL" version="23" size="784" >
             <description>
                 Describes the content of the file.
@@ -863,9 +879,9 @@
             <field offset="228" name="attachmentPoints" type="Reference" refTo="ATT_V1" />
             <field offset="240" name="attachmentPointAddons" type="Reference" refTo="U16_V0"/>
             <field offset="252" name="lights" type="Reference" refTo="LITEV7" />
-            <field offset="264" name="shbxData" type="Reference" />
-            <field offset="276" name="cameras" type="Reference" />
-            <field offset="288" name="d" type="Reference" />
+            <field offset="264" name="shbxData" type="Reference" refTo="SHBXV0" />
+            <field offset="276" name="cameras" type="Reference" refTo="CAM_V3" />
+            <field offset="288" name="d" type="Reference" refTo="U16_V0" />
             <field offset="300" name="materialReferences" type="Reference" refTo="MATMV0" />
             <field offset="312" name="standardMaterials" type="Reference" refTo="MAT_V15" />
             <field offset="324" name="displacementMaterials" type="Reference" refTo="DIS_V4" />
