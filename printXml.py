@@ -16,43 +16,55 @@ def byteDataToHex(byteData):
         s +=hexValue
     return s
 
-def printXmlElement(indent, name, stringValue):
-    print (("\t"*indent) + ("<%s>" % name) + stringValue + ("</%s>" % name))
+def printXmlElement(out, indent, name, stringValue):
+    out.write(("\t"*indent) + ("<%s>" % name) + stringValue + ("</%s>\n" % name))
 
 
-def printObject(indent, name, objectToPrint):
+def printObject(out, indent, name, objectToPrint):
     if type(objectToPrint) == int:
-        printXmlElement(indent,name,hex(objectToPrint))
+        printXmlElement(out, indent, name, hex(objectToPrint))
     elif type(objectToPrint) == bytearray or type(objectToPrint) == bytes:
         s = byteDataToHex(objectToPrint)
-        printXmlElement(indent,name,s)
+        printXmlElement(out, indent, name, s)
     elif hasattr(type(objectToPrint),"fields"):
-        print (("\t"*indent) + "<%s>" % name)
+        out.write(("\t"*indent) + "<%s>\n" % name)
         for fieldName in objectToPrint.fields:
             fieldValue = getattr(objectToPrint,fieldName)
             if fieldValue == None:
-                print (("\t"*(indent+1)) + "<%s />" % fieldName)
+                out.write(("\t"*(indent+1)) + "<%s />\n" % fieldName)
             elif fieldValue.__class__ == list:
-                print (("\t"*(indent+1)) + "<%s>" % fieldName)
+                out.write(("\t"*(indent+1)) + "<%s>\n" % fieldName)
                 for entry in fieldValue:
-                    printObject(indent+2,fieldName+"-element", entry)
-                print (("\t"*(indent+1)) + "</%s>" % fieldName)
+                    printObject(out, indent+2,fieldName+"-element", entry)
+                out.write(("\t"*(indent+1)) + "</%s>\m" % fieldName)
             else:
-                printObject(indent+1,fieldName, fieldValue)
-        print (("\t"*indent) + "</%s>" % name)
+                printObject(out, indent+1,fieldName, fieldValue)
+        out.write(("\t"*indent) + "</%s>\n" % name)
     else:
-        printXmlElement(indent,name,str(objectToPrint))
+        printXmlElement(out, indent, name, str(objectToPrint))
+
+def printFile(out, inputFile):
+    model = loadModel(inputFile)
+    printObject(out, 0, "model", model)
 
 if __name__ == "__main__":
-    if len(sys.argv) -1 != 1:
+    argumentCount = (len(sys.argv) -1)
+    
+    if argumentCount == 1: 
+        printFile(sys.stdout, sys.argv[1])
+    elif argumentCount == 2:
+        outputFile = open(sys.argv[2], "w")
+        try:
+            printFile(outputFile, sys.argv[1])
+        finally:
+            outputFile.close()
+    else:
         sys.stderr.write("""\
-Require one argument!
+Require one or two arguments!
 Useage:
     printXml.py /path/to/m3/file.m3
 Or:
-    printXml.py /path/to/m3/file.m3 > /path/to/xml/file/to/create.xml
+    printXml.py /path/to/m3/file.m3 /path/to/xml/file/to/create.xml
 """)
         sys.exit(2)
-    inputFile = sys.argv[1]
-    model = loadModel(inputFile)
-    printObject(0,"model",model)
+
