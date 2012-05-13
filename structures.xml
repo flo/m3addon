@@ -773,8 +773,8 @@
                 Displacement Material
             </description>
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
-            <field offset="12" name="unknown0" size="4" />
-            <field offset="16" name="unknown1" type="FloatAnimationReference" />
+            <field offset="12" name="unknown0" type="uint32" expected-value="0" />
+            <field offset="16" name="strengthFactor" type="FloatAnimationReference" />
             <field offset="36" name="normalLayer" type="Reference" refTo="LAYRV22" />
             <field offset="48" name="strengthLayer" type="Reference" refTo="LAYRV22" />
             <field offset="60" name="flags" type="uint32" />
