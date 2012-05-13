@@ -679,7 +679,7 @@
             <field offset="716" name="rowHeight" type="float" default-value="inf" />
             <field offset="720" name="unknownFloat4" type="float" default-value="0.0" />
             <field offset="724" name="unknownFloat5" type="float" default-value="1.0"/>
-            <field offset="728" name="unknown9" type="int32" expected-value="-1" />
+            <field offset="728" name="unknown9" type="int32" default-value="-1" />
             <field offset="732" name="unknown10" size="24"/>
             <field offset="756" name="unknownFloat6" type="float" default-value="1.0" />
             <field offset="760" name="unknown11" size="8"/>
