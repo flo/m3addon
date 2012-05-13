@@ -39,7 +39,7 @@ def printObject(out, indent, name, objectToPrint):
                 out.write(("\t"*(indent+1)) + "<%s>\n" % fieldName)
                 for entry in fieldValue:
                     printObject(out, indent+2,fieldName+"-element", entry)
-                out.write(("\t"*(indent+1)) + "</%s>\m" % fieldName)
+                out.write(("\t"*(indent+1)) + "</%s>\n" % fieldName)
             else:
                 printObject(out, indent+1,fieldName, fieldValue)
         out.write(("\t"*indent) + "</%s>\n" % name)
@@ -51,28 +51,40 @@ def printFile(out, inputFile):
     printObject(out, 0, "model", model)
 
 
+def convertFile(inputFilePath, outputDirectory):
+    if outputDirectory != None:
+        fileName = os.path.basename(inputFilePath)
+        outputFilePath = os.path.join(outputDirectory, fileName+ ".xml")
+    else:
+        outputFilePath = inputFilePath + ".xml"
+    print("Converting %s -> %s" % (inputFilePath, outputFilePath))
+    outputFile = open(outputFilePath, "w")
+    try:
+        printFile(outputFile, inputFilePath)
+    finally:
+        outputFile.close()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('path', nargs='+', help="Either a m3 file or a directory with m3 files")
     parser.add_argument('--output-directory', '-o', help='directory in which the xml files get stored')
-    parser.add_argument('--input-directory', '-i', help='directory with m3 files to convert')
     args = parser.parse_args()
-    inputDirectory = args.input_directory
     outputDirectory = args.output_directory
-    if not os.path.isdir(inputDirectory):
-        sys.stderr.write("%s is not a directory" % inputDirectory)
-        sys.exit(2)
-    if not os.path.isdir(outputDirectory):
+    if outputDirectory != None and not os.path.isdir(outputDirectory):
         sys.stderr.write("%s is not a directory" % outputDirectory)
         sys.exit(2)
-    for fileName in os.listdir(args.input_directory):
-        inputFilePath = os.path.join(inputDirectory, fileName)
-        if fileName.endswith(".m3"):
-            outputFilePath = os.path.join(outputDirectory, fileName[:-3] + ".xml")
-            print("Converting %s -> %s" % (inputFilePath, outputFilePath))
-            outputFile = open(outputFilePath, "w")
-            try:
-                printFile(outputFile, inputFilePath)
-            finally:
-                outputFile.close()
-
+    counter = 0
+    for filePath in args.path:
+        if os.path.isdir(filePath):
+            for fileName in os.listdir(filePath):
+                inputFilePath = os.path.join(filePath, fileName)
+                if fileName.endswith(".m3"):
+                     convertFile(inputFilePath, outputDirectory)
+                     counter += 1
+        else:
+            convertFile(filePath, outputDirectory)
+            counter += 1
+    if counter == 1:
+        print("Converted %d file" % counter)
+    else:
+        print("Converted %d files" % counter)
