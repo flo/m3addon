@@ -702,11 +702,12 @@ class Importer:
             if attachmentVolume.bone0 != attachmentVolume.bone1 or attachmentVolume.bone0 != attachmentVolume.bone2:
                 raise Exception("Can't handle a special attachment volume")
             attachmentPoint =  currentScene.m3_attachment_points[boneIndexToAttachmentPointMap[attachmentVolume.bone0]]
-            if not attachmentVolume.type in [1, 2]:
+            if not attachmentVolume.type in [0, 1, 2]:
                 raise Exception("Unhandled attachment volume type %d" % attachmentVolume.type)
             attachmentPoint.volumeType = str(attachmentVolume.type)
-            attachmentPoint.volumeRadius = attachmentVolume.radius
-            attachmentPoint.volumeLength = attachmentVolume.length
+            attachmentPoint.volumeSize0 = attachmentVolume.size0
+            attachmentPoint.volumeSize1 = attachmentVolume.size1
+            attachmentPoint.volumeSize2 = attachmentVolume.size2
 
     def createMesh(self):
         model = self.model

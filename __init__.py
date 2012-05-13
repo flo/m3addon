@@ -90,16 +90,23 @@ def handleTypeOrBoneSuffixChange(self, context):
 
 
 def handleAttachmentVolumeTypeChange(self, context):
-    if not self.volumeType in ["1", "2"]:
-        self.volumeRadius = 0.0
+    if self.volumeType in ["0", "1", "2"]:
+       if self.volumeSize0 == 0.0:
+            self.volumeSize0 = 1.0
     else:
-        if self.volumeRadius == 0.0:
-            self.volumeRadius = 1.0
-    if self.volumeType != "2":
-        self.volumeLength = 0.0
+        self.volumeSize0 = 0.0
+
+    if self.volumeType in ["0", "2"]:
+        if self.volumeSize1 == 0.0:
+            self.volumeSize1 = 1.0
     else:
-        if self.volumeLength == 0.0:
-            self.volumeLength = 1.0
+        self.volumeSize1 = 0.0
+
+    if self.volumeType in ["0"]:
+        if self.volumeSize2 == 0.0:
+            self.volumeSize2 = 1.0
+    else:
+        self.volumeSize2 = 0.0
 
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
@@ -217,8 +224,9 @@ particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a c
                         ("1", 'Radial', "Particles move into all kinds of directions"), 
                         ("2", 'Unknown', 'Particles spawn in a sphere')]
 attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment point"), 
-                            ("1", 'Sphere', "A sphere with the given radius"), 
-                            ("2", 'Cylinder', 'Cylinder')
+                            ("0", 'Cuboid', "Volume with the shape of a cuboid with the given width, length and height"),
+                            ("1", 'Sphere', "Volume with the shape of a sphere with the given radius"), 
+                            ("2", 'Cylinder', 'Volume with the shape of a cylinder with the given radius and height')
                            ]
 matDefaultSettingsList = [("MESH", "Mesh Material", "A material for meshes"), 
                         ("PARTICLE", 'Particle Material', "Material for particle systems")
@@ -404,8 +412,9 @@ class M3AttachmentPoint(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", options=set())
     boneName = bpy.props.StringProperty(name="boneName", options=set())
     volumeType = bpy.props.EnumProperty(default="-1",update=handleAttachmentVolumeTypeChange, items=attachmentVolumeTypeList, options=set())
-    volumeRadius = bpy.props.FloatProperty(default=1.0, options=set())
-    volumeLength = bpy.props.FloatProperty(default=0.0, options=set())
+    volumeSize0 = bpy.props.FloatProperty(default=1.0, options=set())
+    volumeSize1 = bpy.props.FloatProperty(default=0.0, options=set())
+    volumeSize2 = bpy.props.FloatProperty(default=0.0, options=set())
 
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
@@ -789,10 +798,16 @@ class AttachmentPointsPanel(bpy.types.Panel):
             layout.prop(attachment_point, 'name', text="Name")
             layout.prop(attachment_point, 'boneName', text="Bone")
             layout.prop(attachment_point, 'volumeType', text="Volume: ")
-            if int(attachment_point.volumeType) >= 1: 
-                layout.prop(attachment_point, 'volumeRadius', text="Volume Radius")
-            if int(attachment_point.volumeType) >= 2:
-                layout.prop(attachment_point, 'volumeLength', text="Volume Length")
+            if attachment_point.volumeType in ["1", "2"]: 
+                layout.prop(attachment_point, 'volumeSize0', text="Volume Radius")
+            elif attachment_point.volumeType in  ["0"]:
+                layout.prop(attachment_point, 'volumeSize0', text="Volume Width")
+            if attachment_point.volumeType in ["0"]:
+                layout.prop(attachment_point, 'volumeSize1', text="Volume Length")
+            elif attachment_point.volumeType in ["2"]:
+                layout.prop(attachment_point, 'volumeSize1', text="Volume Height")
+            if attachment_point.volumeType in ["0"]:
+                layout.prop(attachment_point, 'volumeSize2', text="Volume Height")
 
 class M3_MATERIALS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.materials_add'

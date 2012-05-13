@@ -724,8 +724,9 @@ class Exporter:
                 m3AttachmentVolume.bone1 = boneIndex
                 m3AttachmentVolume.bone2 = boneIndex
                 m3AttachmentVolume.type = int(attachmentPoint.volumeType)
-                m3AttachmentVolume.radius = attachmentPoint.volumeRadius
-                m3AttachmentVolume.length = attachmentPoint.volumeLength
+                m3AttachmentVolume.size0 = attachmentPoint.volumeSize0
+                m3AttachmentVolume.size1 = attachmentPoint.volumeSize1
+                m3AttachmentVolume.size2 = attachmentPoint.volumeSize2
                 m3AttachmentVolume.matrix = self.createIdentityMatrix()
                 model.attachmentVolumes.append(m3AttachmentVolume)
                 model.attachmentVolumesAddon0.append(0)

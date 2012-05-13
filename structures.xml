@@ -749,17 +749,23 @@
         <structure name="ATVL" version="0" size="116" >
             <description>
                 Attachment Volume
+                
+                The type attribute specifies the meaning of the size values:
+                
+                0 = Cuboid (width=size0, length=size1, height=size2)
+                1 = Sphere (radius=size0)
+                2 = Cylinder (radius=size0, height=size1)) 
             </description>
             <field name="bone0" type="uint32" />
             <field name="bone1" type="uint32"/>
-            <!-- 1=sphere 2=cylinder -->
+
             <field name="type" type="uint32" default-value="1" />
             <field name="bone2" type="uint32"/>
             <field name="matrix" type="Matrix44"/>
             <field name="unknown1" size="24" />
-            <field name="radius" type="float"/>
-            <field name="length" type="float" default-value="0.0" />
-            <field name="unknown3" size="4" />
+            <field name="size0" type="float"/>
+            <field name="size1" type="float" default-value="0.0" />
+            <field name="size2" type="float" default-value="0.0" />
         </structure>
 
         <structure name="DIS_" version="4" size="68" >
