@@ -6,6 +6,9 @@ import sys
 from generateM3Library import generateM3Library
 generateM3Library()
 from m3 import *
+import argparse
+import os.path
+import os
 
 def byteDataToHex(byteData):
     s = "0x"
@@ -47,24 +50,29 @@ def printFile(out, inputFile):
     model = loadModel(inputFile)
     printObject(out, 0, "model", model)
 
+
+
 if __name__ == "__main__":
-    argumentCount = (len(sys.argv) -1)
-    
-    if argumentCount == 1: 
-        printFile(sys.stdout, sys.argv[1])
-    elif argumentCount == 2:
-        outputFile = open(sys.argv[2], "w")
-        try:
-            printFile(outputFile, sys.argv[1])
-        finally:
-            outputFile.close()
-    else:
-        sys.stderr.write("""\
-Require one or two arguments!
-Useage:
-    printXml.py /path/to/m3/file.m3
-Or:
-    printXml.py /path/to/m3/file.m3 /path/to/xml/file/to/create.xml
-""")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--output-directory', '-o', help='directory in which the xml files get stored')
+    parser.add_argument('--input-directory', '-i', help='directory with m3 files to convert')
+    args = parser.parse_args()
+    inputDirectory = args.input_directory
+    outputDirectory = args.output_directory
+    if not os.path.isdir(inputDirectory):
+        sys.stderr.write("%s is not a directory" % inputDirectory)
         sys.exit(2)
+    if not os.path.isdir(outputDirectory):
+        sys.stderr.write("%s is not a directory" % outputDirectory)
+        sys.exit(2)
+    for fileName in os.listdir(args.input_directory):
+        inputFilePath = os.path.join(inputDirectory, fileName)
+        if fileName.endswith(".m3"):
+            outputFilePath = os.path.join(outputDirectory, fileName[:-3] + ".xml")
+            print("Converting %s -> %s" % (inputFilePath, outputFilePath))
+            outputFile = open(outputFilePath, "w")
+            try:
+                printFile(outputFile, inputFilePath)
+            finally:
+                outputFile.close()
 
