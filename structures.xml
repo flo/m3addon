@@ -568,7 +568,7 @@
             <field name="unknown12" type="uint32" default-value="0" />
             <field name="tintStrength" type="float" default-value="4.0" />
             <field name="unknown13" type="float" default-value="0.0" />
-            <field name="unknown14" type="float" expected-value="1.0" />
+            <field name="unknown14" type="float" default-value="1.0" />
             <field name="unknown15" type="float" default-value="1.0" />
         </structure>
 
