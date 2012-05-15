@@ -214,10 +214,15 @@ particleTypeList =  [("0", "Point", "Particles spawn at a certain point"),
 
 uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole image UVs for particles"),
                  ("1", "UV Layer 2", "Second UV layer which can be used for decals"),
-                 ("3", "UV Layer 3", "Third UV layer?"),
-                 ("4", "UV Layer 4", "Fourth UV layer?"),
-                 ("5", "Unknown", "Unknown"),
-                 ("6", "Animated Particle UV", "The texture gets divided as specified by the particle system to create multiple small image frames which play then as an animation")
+                 ("2", "UV Layer 2", "Third UV layer"),
+                 ("3", "UV Layer 4", "Fourth UV layer?"),
+                 ("4", "Unknown (value 4)", "Unknown"),
+                 ("5", "Unknown (value 5)", "Unknown"),
+                 ("6", "Animated Particle UV", "The texture gets divided as specified by the particle system to create multiple small image frames which play then as an animation"),
+                 ("7", "Unknown (value 7)", "Unknown"),
+                 ("8", "Unknown (value 8)", "Unknown"),
+                 ("9", "Unknown (value 9)", "Unknown"),
+                 ("10", "Unknown (value 9)", "Unknown")
                  ] 
 
 particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a configureable direction with a configurable spread"), 

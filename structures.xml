@@ -117,7 +117,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="VEC2V0" />
             <field name="nullValue" type="VEC2V0" />
-            <field name="unknown" type="uint32" expected-value="0"  />
+            <field name="unknown" type="uint32" default-value="0"  />
         </structure>
         <structure name="QuaternionAnimationReference" size="44">
             <description>Animatable vector4</description>
@@ -242,6 +242,24 @@
             <field name="uv0" type="Vector2As2int16" />
             <field name="uv1" type="Vector2As2int16" />
             <field name="uv2" type="Vector2As2int16" />
+            <field name="tangent" type="Vector4As4uint8" />
+        </structure>
+        <structure name="VertexFormat0x19e007d" size="44" >
+            <description>Vertex with four UV coordinates</description>
+            <field name="position" type="VEC3V0" />
+            <field name="boneWeight0" type="uint8" default-value="0" />
+            <field name="boneWeight1" type="uint8" default-value="0" />
+            <field name="boneWeight2" type="uint8" default-value="0" />
+            <field name="boneWeight3" type="uint8" default-value="0" />
+            <field name="boneLookupIndex0" type="uint8" default-value="0" />
+            <field name="boneLookupIndex1" type="uint8" default-value="0" />
+            <field name="boneLookupIndex2" type="uint8" default-value="0" />
+            <field name="boneLookupIndex3" type="uint8" default-value="0" />
+            <field name="normal" type="Vector4As4uint8" />
+            <field name="uv0" type="Vector2As2int16" />
+            <field name="uv1" type="Vector2As2int16" />
+            <field name="uv2" type="Vector2As2int16" />
+            <field name="uv3" type="Vector2As2int16" />
             <field name="tangent" type="Vector4As4uint8" />
         </structure>
         <structure name="EVNT" version="1" size="104">
@@ -469,7 +487,7 @@
         
         <structure name="MSEC" version="1" size="72">
             <description></description>
-            <field name="unknown0" type="uint32" expected-value="0" />
+            <field name="unknown0" type="uint32" default-value="0" />
             <field name="boundingsAnimation" type="BNDSV0AnimationReference" />
         </structure>
 
@@ -609,6 +627,20 @@
             <field name="unknownAnimationRef1" type="UInt32AnimationReference" />
             <field name="unknownAnimationRef2" type="UInt32AnimationReference" />
         </structure>
+
+        <structure name="CMS_" version="0" size="24" >
+            <description>Composite Material Section</description>
+            <field offset="0" name="index" type="uint32" />
+            <field offset="4" name="unknown" type="FloatAnimationReference" />
+        </structure>
+        
+        <structure name="CMP_" version="2" size="28" >
+            <description>Composite Material</description>
+            <field offset="0" name="name" type="Reference" refTo="CHARV0" />
+            <field offset="12" name="unknown" type="uint32" />
+            <field offset="16" name="sections" type="Reference" refTo="CMS_V0" />
+        </structure>
+        
 
         <structure name="PAR_" version="12" size="1316" >
             <description>Particle System</description>
@@ -893,7 +925,7 @@
             <field offset="300" name="materialReferences" type="Reference" refTo="MATMV0" />
             <field offset="312" name="standardMaterials" type="Reference" refTo="MAT_V15" />
             <field offset="324" name="displacementMaterials" type="Reference" refTo="DIS_V4" />
-            <field offset="336" name="compositeMaterials" type="Reference" />
+            <field offset="336" name="compositeMaterials" type="Reference" refTo="CMP_V2"/>
             <field offset="348" name="terrainMaterials" type="Reference" />
             <field name="volData" type="Reference" />
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
@@ -937,10 +969,8 @@
             <field offset="732" name="attachmentVolumesAddon1" type="Reference" refTo="U16_V0"/>
             <field offset="744" name="bbscData" type="Reference" refTo="BBSCV0" />
             <field offset="756" name="tmdData" type="Reference" />
-            <field name="uniqueUnknownNumber" type="uint32" />
-            <field name="unknown45" type="uint32" expected-value="0" />
-            <field name="unknown46" type="uint32" expected-value="0" />
-            <field name="unknown47" type="uint32" expected-value="0" />
+            <field offset="768" name="uniqueUnknownNumber" type="uint32" />
+            <field offset="772" name="unknown45" type="Reference" refTo="U32_V0" />
         </structure>
         <structure name="MD34" version="11" size="24">
             <description>Header of a M3 file: Can be found at the start of the file.</description>
