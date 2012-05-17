@@ -513,30 +513,33 @@ class Importer:
             timeToScaleMap[timeInMS] = scale
         
     def animateBone(self, m3Bone, leftCorrectionMatrix, rightCorrectionMatrix):
+        boneName = shared.toValidBoneName(m3Bone.name)
+        locationAnimId = m3Bone.location.header.animId
+        locationAnimPath = 'pose.bones["%s"].location' % boneName
+        self.addAnimIdData(locationAnimId, objectId=shared.animObjectIdArmature, animPath=locationAnimPath)
+
+        rotationAnimId = m3Bone.rotation.header.animId
+        rotationAnimPath = 'pose.bones["%s"].rotation_quaternion' % boneName
+        self.addAnimIdData(rotationAnimId, objectId=shared.animObjectIdArmature, animPath=rotationAnimPath)
+        
+        scaleAnimId = m3Bone.scale.header.animId
+        scaleAnimPath = 'pose.bones["%s"].scale' % boneName
+        self.addAnimIdData(scaleAnimId, objectId=shared.animObjectIdArmature, animPath=scaleAnimPath)
+
         for animationData in self.animations:
             scene = bpy.context.scene
             animation =  scene.m3_animations[animationData.animationIndex]
             animIdToTimeValueMap = animationData.animIdToTimeValueMap
             action = self.createOrGetActionFor(animationData, ownerTypeArmature)
-            boneName = shared.toValidBoneName(m3Bone.name)
-            
-            locationAnimId = m3Bone.location.header.animId
-            locationAnimPath = 'pose.bones["%s"].location' % boneName
+
             timeToLocationMap = animIdToTimeValueMap.get(locationAnimId,{0:m3Bone.location.initValue})
             timeToLocationMap = convertToBlenderVector3Map(timeToLocationMap)
-            self.addAnimIdData(locationAnimId, objectId=shared.animObjectIdArmature, animPath=locationAnimPath)
 
-            rotationAnimId = m3Bone.rotation.header.animId
-            rotationAnimPath = 'pose.bones["%s"].rotation_quaternion' % boneName
             timeToRotationMap = animIdToTimeValueMap.get(rotationAnimId, {0:m3Bone.rotation.initValue})
             timeToRotationMap = convertToBlenderQuaternionMap(timeToRotationMap)
-            self.addAnimIdData(rotationAnimId, objectId=shared.animObjectIdArmature, animPath=rotationAnimPath)
 
-            scaleAnimId = m3Bone.scale.header.animId
-            scaleAnimPath = 'pose.bones["%s"].scale' % boneName
             timeToScaleMap = animIdToTimeValueMap.get(scaleAnimId,{0:m3Bone.scale.initValue})
             timeToScaleMap = convertToBlenderVector3Map(timeToScaleMap)
-            self.addAnimIdData(scaleAnimId, objectId=shared.animObjectIdArmature, animPath=scaleAnimPath)
 
             rotKeys = list(timeToRotationMap.keys())
             rotKeys.sort()
