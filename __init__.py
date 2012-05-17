@@ -1087,7 +1087,7 @@ class M3_OT_import(bpy.types.Operator, ImportHelper):
     bl_options = {'UNDO'}
 
     filename_ext = ".m3"
-    filter_glob = StringProperty(default="*.m3", options={'HIDDEN'})
+    filter_glob = StringProperty(default="*.m3;*.m3a", options={'HIDDEN'})
 
     filepath = bpy.props.StringProperty(
         name="File Path", 

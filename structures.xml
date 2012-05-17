@@ -497,7 +497,8 @@
             <field name="regions" type="Reference" refTo="REGNV3" />
             <field name="bat" type="Reference" refTo="BAT_V1" />
             <field name="msec" type="Reference" refTo="MSECV1" />
-            <field name="unknown" type="uint32" expected-value="1" />
+            <!-- m3: 1, m3a: 0 -->
+            <field name="unknown" type="uint32" default-value="1" />
         </structure>
     
         <structure name="ATT_" version="1" size="20">
