@@ -38,6 +38,7 @@ from . import shared
 import bpy
 import mathutils
 import math
+from bpy_extras import io_utils
 
 def toBlenderQuaternion(m3Quaternion):
     return mathutils.Quaternion((m3Quaternion.w, m3Quaternion.x, m3Quaternion.y, m3Quaternion.z))
@@ -756,15 +757,21 @@ class Importer:
                 meshObject.location = (0,0,0)
                 meshObject.show_name = True
                 bpy.context.scene.objects.link(meshObject)
-                mesh.from_pydata(vertexPositions, [], faces)
-                mesh.update(calc_edges=True)
                 
-                uvLayer = mesh.uv_textures.new()
+                
+                mesh.vertices.add(len(vertexPositions))
+                mesh.vertices.foreach_set("co", io_utils.unpack_list(vertexPositions))
+
+                mesh.tessfaces.add(len(faces))
+                mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(faces))
+
+                uvLayer = mesh.tessface_uv_textures.new()
                 for faceIndex, face in enumerate(faces):
                     faceUV = uvLayer.data[faceIndex]
                     faceUV.uv1 = toBlenderUVCoordinate(m3Vertices[firstVertexIndex + face[0]].uv0)
                     faceUV.uv2 = toBlenderUVCoordinate(m3Vertices[firstVertexIndex + face[1]].uv0)
                     faceUV.uv3 = toBlenderUVCoordinate(m3Vertices[firstVertexIndex + face[2]].uv0)
+                mesh.update(calc_edges=True)
 
                 boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
                 vertexGroupLookup = []

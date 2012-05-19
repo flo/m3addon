@@ -313,10 +313,10 @@ class Exporter:
         else:
             raise Exception("Mesh must have no modifiers except single one for the armature")
             
-
+        mesh.update(calc_tessface=True)
         firstFaceVertexIndexIndex = len(division.faces)
         m3Vertices = []
-        for blenderFace in mesh.faces:
+        for blenderFace in mesh.tessfaces:
             if len(blenderFace.vertices) != 3:
                 raise Exception("Only the export of meshes with triangles has been implemented")
             for faceRelativeVertexIndex, blenderVertexIndex in enumerate(blenderFace.vertices):
@@ -356,8 +356,8 @@ class Exporter:
                     boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshLookupIndex
                     m3Vertex.boneWeight0 = 255
                     m3Vertex.boneLookupIndex0 = staticMeshBoneIndex
-                if len(mesh.uv_textures) >= 1:
-                    uvData = mesh.uv_textures[0].data[blenderFace.index]
+                if len(mesh.tessface_uv_textures) >= 1:
+                    uvData = mesh.tessface_uv_textures[0].data[blenderFace.index]
                     m3Vertex.uv0 = self.convertBlenderToM3UVCoordinates(getattr(uvData, "uv%d" % (faceRelativeVertexIndex + 1)))
                 else:
                     raise Exception("Exporting meshes without texture coordinates isn't supported yet")
