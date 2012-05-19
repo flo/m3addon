@@ -629,6 +629,23 @@
             <field name="unknownAnimationRef2" type="UInt32AnimationReference" />
         </structure>
 
+		 <structure name="VOL_" version="0" size="84" >
+            <description>Volume Material</description>
+            <field offset="0" name="name" type="Reference" refTo="CHARV0" />
+			<field offset="12" name="unknown" type="uint32" default-value="0" />
+			<field offset="16" name="unknownSection1" size="4" />
+			<field offset="20" name="unknownSection4" type="uint32" size="4" />
+			<field offset="24" name="unknownSection9" type="uint32" size="4" />
+			<field offset="28" name="volumeDensity" type="float" size="4" />
+			<field offset="32" name="unknownSection7" type="float" size="4" />
+			<field offset="36" name="unknownSection8" type="float" size="4" />
+			<field offset="40" name="colorDefiningLayer" type="Reference" refTo="LAYRV22" />
+			<field offset="52" name="unknownLayer2" type="Reference" refTo="LAYRV22" />
+			<field offset="64" name="unknownLayer3" type="Reference" refTo="LAYRV22" />
+			<field offset="76" name="unknownSection2" size="4" />
+			<field offset="80" name="unknownSection3" size="4" />
+        </structure>
+		
         <structure name="CMS_" version="0" size="24" >
             <description>Composite Material Section</description>
             <field offset="0" name="index" type="uint32" />
@@ -928,7 +945,7 @@
             <field offset="324" name="displacementMaterials" type="Reference" refTo="DIS_V4" />
             <field offset="336" name="compositeMaterials" type="Reference" refTo="CMP_V2"/>
             <field offset="348" name="terrainMaterials" type="Reference" />
-            <field name="volData" type="Reference" />
+            <field offset="360" name="volumeMaterials" type="Reference" refTo="VOL_V0" />
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
             <field name="unknownMaybeRef0" type="Reference" />
             <field name="crepData" type="Reference" />
