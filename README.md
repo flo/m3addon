@@ -12,7 +12,7 @@ Currently the following content can be exported:
 
 The following content can be imported:
 
-  * Animated meshes with 1 UV layer
+  * Animated meshes
   * Animated M3 standard materials
   * Animated M3 particle systems
   * Animated M3 attachment points and volumes

@@ -765,14 +765,17 @@ class Importer:
                 mesh.tessfaces.add(len(faces))
                 mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(faces))
 
-                uvLayer = mesh.tessface_uv_textures.new()
-                for faceIndex, face in enumerate(faces):
-                    faceUV = uvLayer.data[faceIndex]
-                    faceUV.uv1 = toBlenderUVCoordinate(m3Vertices[firstVertexIndex + face[0]].uv0)
-                    faceUV.uv2 = toBlenderUVCoordinate(m3Vertices[firstVertexIndex + face[1]].uv0)
-                    faceUV.uv3 = toBlenderUVCoordinate(m3Vertices[firstVertexIndex + face[2]].uv0)
-                mesh.update(calc_edges=True)
+                for vertexUVAttribute in ["uv0", "uv1", "uv2", "uv3"]:
+                    if vertexUVAttribute in vertexClass.fieldToTypeInfoMap: 
+                        uvLayer = mesh.tessface_uv_textures.new()
+                        for faceIndex, face in enumerate(faces):
+                            faceUV = uvLayer.data[faceIndex]
+                            faceUV.uv1 = toBlenderUVCoordinate(getattr(m3Vertices[firstVertexIndex + face[0]],vertexUVAttribute))
+                            faceUV.uv2 = toBlenderUVCoordinate(getattr(m3Vertices[firstVertexIndex + face[1]],vertexUVAttribute))
+                            faceUV.uv3 = toBlenderUVCoordinate(getattr(m3Vertices[firstVertexIndex + face[2]],vertexUVAttribute))
 
+                mesh.update(calc_edges=True)
+                
                 boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
                 vertexGroupLookup = []
                 for boneIndex in boneIndexLookup:
