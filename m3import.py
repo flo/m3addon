@@ -731,25 +731,20 @@ class Importer:
             divisionFaceIndices = division.faces
             for region in division.regions:
                 bpy.ops.object.mode_set(mode='OBJECT')
-
-                vertexPositions = []
-                for vertexIndex in range(region.firstVertexIndex,region.firstVertexIndex + region.numberOfVertices):
-                    m3Vertex = m3Vertices[vertexIndex]
-                    position = (m3Vertex.position.x, m3Vertex.position.y, m3Vertex.position.z)
-                    vertexPositions.append(position)
+                regionVertexIndices = range(region.firstVertexIndex,region.firstVertexIndex + region.numberOfVertices)
                 firstVertexIndexIndex = region.firstFaceVertexIndexIndex
                 lastVertexIndexIndex = firstVertexIndexIndex + region.numberOfFaceVertexIndices
                 vertexIndexIndex = firstVertexIndexIndex
                 firstVertexIndex = region.firstVertexIndex
                 assert region.numberOfFaceVertexIndices % 3 == 0
 
-                faces = []
+                facesWithOldIndices = [] # old index = index of vertex in m3Vertices
                 while vertexIndexIndex + 2 <= lastVertexIndexIndex:
-                    i0 = divisionFaceIndices[vertexIndexIndex]
-                    i1 = divisionFaceIndices[vertexIndexIndex + 1]
-                    i2 = divisionFaceIndices[vertexIndexIndex + 2]
+                    i0 = firstVertexIndex + divisionFaceIndices[vertexIndexIndex]
+                    i1 = firstVertexIndex + divisionFaceIndices[vertexIndexIndex + 1]
+                    i2 = firstVertexIndex + divisionFaceIndices[vertexIndexIndex + 2]
                     face = (i0, i1, i2)
-                    faces.append(face)
+                    facesWithOldIndices.append(face)
                     vertexIndexIndex += 3
 
                 mesh = bpy.data.meshes.new('Mesh')
@@ -758,21 +753,52 @@ class Importer:
                 meshObject.show_name = True
                 bpy.context.scene.objects.link(meshObject)
                 
+                # merge vertices together which have always the same position and normal:
+                # This way there are not only fewer vertices to edit,
+                # but also the calculated normals will more likly match
+                # the given ones.
+                vertexPositions = []
+                nextNewVertexIndex = 0
+                oldVertexIndexToNewVertexIndexMap = {}
+                vertexIdTupleToNewIndexMap = {}
+                for vertexIndex in regionVertexIndices:
+                    m3Vertex = m3Vertices[vertexIndex]
+                    v = m3Vertex
+                    idTuple = (v.position.x, v.position.y, v.position.z, v.boneWeight0, v.boneWeight1, v.boneWeight2, v.boneWeight3, v.boneLookupIndex0, v.boneLookupIndex1, v.boneLookupIndex2, v.boneLookupIndex3, v.normal.x, v.normal.y, v.normal.z, v.normal.w)
+                    newIndex = vertexIdTupleToNewIndexMap.get(idTuple)
+                    if newIndex == None:
+                        newIndex = nextNewVertexIndex
+                        nextNewVertexIndex += 1
+                        position = (m3Vertex.position.x, m3Vertex.position.y, m3Vertex.position.z)
+                        vertexPositions.append(position)
+                        vertexIdTupleToNewIndexMap[idTuple] = newIndex
+                    oldVertexIndexToNewVertexIndexMap[vertexIndex] = newIndex
+                
+                # since vertices got merged, the indices of the faces aren't correct anymore.
+                # the old face indices however are still later required to figure out
+                # what Uv coordinates a face has.
+                facesWithNewIndices = []
+                for faceWithOldIndices in facesWithOldIndices:
+                    i0 = oldVertexIndexToNewVertexIndexMap[faceWithOldIndices[0]]
+                    i1 = oldVertexIndexToNewVertexIndexMap[faceWithOldIndices[1]]
+                    i2 = oldVertexIndexToNewVertexIndexMap[faceWithOldIndices[2]]
+                    faceWithNewIndices = (i0, i1, i2)
+                    facesWithNewIndices.append(faceWithNewIndices)
                 
                 mesh.vertices.add(len(vertexPositions))
                 mesh.vertices.foreach_set("co", io_utils.unpack_list(vertexPositions))
 
-                mesh.tessfaces.add(len(faces))
-                mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(faces))
+                mesh.tessfaces.add(len(facesWithNewIndices))
+                mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(facesWithNewIndices))
 
                 for vertexUVAttribute in ["uv0", "uv1", "uv2", "uv3"]:
                     if vertexUVAttribute in vertexClass.fieldToTypeInfoMap: 
                         uvLayer = mesh.tessface_uv_textures.new()
-                        for faceIndex, face in enumerate(faces):
+                        for faceIndex, face in enumerate(facesWithOldIndices):
                             faceUV = uvLayer.data[faceIndex]
-                            faceUV.uv1 = toBlenderUVCoordinate(getattr(m3Vertices[firstVertexIndex + face[0]],vertexUVAttribute))
-                            faceUV.uv2 = toBlenderUVCoordinate(getattr(m3Vertices[firstVertexIndex + face[1]],vertexUVAttribute))
-                            faceUV.uv3 = toBlenderUVCoordinate(getattr(m3Vertices[firstVertexIndex + face[2]],vertexUVAttribute))
+                            faceUV.uv1 = toBlenderUVCoordinate(getattr(m3Vertices[face[0]],vertexUVAttribute))
+                            faceUV.uv2 = toBlenderUVCoordinate(getattr(m3Vertices[face[1]],vertexUVAttribute))
+                            faceUV.uv3 = toBlenderUVCoordinate(getattr(m3Vertices[face[2]],vertexUVAttribute))
 
                 mesh.update(calc_edges=True)
                 
@@ -794,7 +820,7 @@ class Importer:
                         if boneWeightAsInt != 0:
                             vertexGroup = vertexGroupLookup[boneLookupIndex]
                             boneWeight = boneWeightAsInt / 255.0
-                            vertexGroup.add([vertexIndex - region.firstVertexIndex], boneWeight, 'REPLACE')
+                            vertexGroup.add([oldVertexIndexToNewVertexIndexMap[vertexIndex]], boneWeight, 'REPLACE')
 
                 modifier = meshObject.modifiers.new('UseArmature', 'ARMATURE')
                 modifier.object = self.armatureObject
