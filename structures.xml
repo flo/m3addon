@@ -480,7 +480,7 @@
             <description></description>
             <field name="unknown0" type="uint32" expected-value="0" />
             <field name="subId" type="uint16" />
-            <field name="unknown1" type="uint32" expected-value="0" />
+            <field name="unknown1" type="uint32" default-value="0" />
             <field name="matId" type="uint16" />
             <field name="unknown2" type="int16" default-value="-1" />
         </structure>
