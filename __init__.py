@@ -231,7 +231,9 @@ particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a c
 attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment point"), 
                             ("0", 'Cuboid', "Volume with the shape of a cuboid with the given width, length and height"),
                             ("1", 'Sphere', "Volume with the shape of a sphere with the given radius"), 
-                            ("2", 'Cylinder', 'Volume with the shape of a cylinder with the given radius and height')
+                            ("2", 'Cylinder', 'Volume with the shape of a cylinder with the given radius and height'),
+                            ("3", 'Unknown 3', 'Unknown Volume with id 3'),
+                            ("4", 'Unknown 4', 'Unknown Volume with id 4')
                            ]
 matDefaultSettingsList = [("MESH", "Mesh Material", "A material for meshes"), 
                         ("PARTICLE", 'Particle Material', "Material for particle systems")

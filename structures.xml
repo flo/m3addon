@@ -806,16 +806,16 @@
                 1 = Sphere (radius=size0)
                 2 = Cylinder (radius=size0, height=size1)) 
             </description>
-            <field name="bone0" type="uint32" />
-            <field name="bone1" type="uint32"/>
-
-            <field name="type" type="uint32" default-value="1" />
-            <field name="bone2" type="uint32"/>
-            <field name="matrix" type="Matrix44"/>
-            <field name="unknown1" size="24" />
-            <field name="size0" type="float"/>
-            <field name="size1" type="float" default-value="0.0" />
-            <field name="size2" type="float" default-value="0.0" />
+            <field offset="0" name="bone0" type="uint32" />
+            <field offset="4" name="bone1" type="uint32"/>
+            <field offset="8" name="type" type="uint32" default-value="1" />
+            <field offset="12" name="bone2" type="uint32"/>
+            <field offset="16" name="matrix" type="Matrix44"/>
+            <field offset="80" name="unknown0" type="Reference" refTo="VEC3V0" />
+            <field offset="92" name="unknown1" type="Reference" refTo="U16_V0" />
+            <field offset="104" name="size0" type="float"/>
+            <field offset="108" name="size1" type="float" default-value="0.0" />
+            <field offset="112" name="size2" type="float" default-value="0.0" />
         </structure>
 
         <structure name="DIS_" version="4" size="68" >
