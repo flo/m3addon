@@ -964,7 +964,7 @@ class Exporter:
         return boundings
 
     def createVector4(self, x, y, z, w):
-        v = m3.Vector4()
+        v = m3.VEC4V0()
         v.x = x
         v.y = y
         v.z = z

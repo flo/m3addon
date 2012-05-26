@@ -49,7 +49,7 @@
             <field name="y" type="float" />
             <field name="z" type="float"/>
         </structure>
-        <structure name="Vector4" size="16">
+        <structure name="VEC4" version="0" size="16">
             <description>A Vector with 4 components</description>
             <field name="x" type="float"/>
             <field name="y" type="float" />
@@ -65,10 +65,10 @@
         </structure>
         <structure name="Matrix44" size="64">
             <description>A 4x4 Matrix</description>
-            <field name="x" type="Vector4"/>
-            <field name="y" type="Vector4" />
-            <field name="z" type="Vector4"/>
-            <field name="w" type="Vector4"/>
+            <field name="x" type="VEC4V0"/>
+            <field name="y" type="VEC4V0" />
+            <field name="z" type="VEC4V0"/>
+            <field name="w" type="VEC4V0"/>
         </structure>
         <structure name="Vector4As4uint8" size="4">
             <description>A vector out of 4 bytes which must be converted with the formula (((i / 255.0) * 2) -1) to get the actual float value</description>
@@ -479,8 +479,7 @@
             <field name="unknown4" type="uint8" default-value="1" />
             <field name="rootBoneIndex" type="uint16" />
         </structure>
-        
-        
+
         <structure name="BAT_" version="1" size="14" >
             <description></description>
             <field name="unknown0" type="uint32" expected-value="0" />
@@ -794,6 +793,24 @@
             <field name="unknown" size="104" />
         </structure>
 
+        <structure name="PHSH" version="1" size="132" >
+            <description></description>
+            <field offset="0" name="unknown0" size="72" />
+            <field offset="72" name="unknown1" type="SmallReference" refTo="VEC3V0" />
+            <field offset="80" name="unknown2" size="16" />
+            <field offset="96" name="unknown3" type="SmallReference" refTo="U16_V0" />
+            <field offset="104" name="unknown4" size="4" />
+            <field offset="108" name="unknown5" type="SmallReference" refTo="VEC4V0" />
+            <field offset="116" name="unknown6" size="16" />
+        </structure>
+        
+        <structure name="PHRB" version="2" size="104" >
+            <description></description>
+            <field offset="0" name="unknown0" size="80" />
+            <field offset="80" name="phshData" type="Reference" refTo="PHSHV1" />
+            <field offset="92" name="unknown1" size="12" />
+        </structure>
+
         <structure name="SSGS" version="1" size="108" >
             <description>
                 Unknown
@@ -962,7 +979,7 @@
             <field offset="456" name="wrpData" type="Reference" />
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
             <field name="unknownMaybeRef1" type="Reference" />
-            <field offset="480" name="RHRB" type="Reference" />
+            <field offset="480" name="phrbData" type="Reference" refTo="PHRBV2"/>
             <!-- it grew in size between version from 3x2 to 3x3 which indicates a reference-->
             <field name="unknownMaybeRef2" type="Reference" />
             <field name="unknownMaybeRef3" type="Reference" />
