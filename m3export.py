@@ -282,101 +282,120 @@ class Exporter:
         return False
 
     def initMesh(self, model):
-        meshObject = self.findMeshObject()
-        hasMesh = meshObject != None
-        model.setNamedBit("flags", "hasMesh", hasMesh)
+        meshObjects = list(self.findMeshObjects())
+        
+        model.setNamedBit("flags", "hasMesh", len(meshObjects) > 0)
         model.boundings = self.createAlmostEmptyBoundingsWithRadius(2.0)
 
-        if not hasMesh:
+        if len(meshObjects) == 0:
             model.numberOfBonesToCheckForSkin = 0
             model.divisions = [self.createEmptyDivision()]
             return
-            
-        mesh = meshObject.data
         
         division = m3.DIV_V2()
         model.divisions.append(division)
-        
-        firstBoneLookupIndex = len(model.boneLookup)
-        staticMeshBoneName = "StaticMesh"
-        boneNameToBoneLookupIndexMap = {}
-        boneNamesOfArmature = set()
-        if len(meshObject.modifiers) == 0:
-            pass
-        elif len(meshObject.modifiers) == 1 and (meshObject.modifiers[0].type == "ARMATURE"):
-            modifier = meshObject.modifiers[0]
-            armatureObject = modifier.object
-            if armatureObject != None:
-                armature = armatureObject.data
-                for blenderBoneIndex, blenderBone in enumerate(armature.bones):
-                    boneNamesOfArmature.add(blenderBone.name)
-        else:
-            raise Exception("Mesh must have no modifiers except single one for the armature")
-            
-        mesh.update(calc_tessface=True)
-        firstFaceVertexIndexIndex = len(division.faces)
         m3Vertices = []
-        for blenderFace in mesh.tessfaces:
-            if len(blenderFace.vertices) != 3:
-                raise Exception("Only the export of meshes with triangles has been implemented")
-            for faceRelativeVertexIndex, blenderVertexIndex in enumerate(blenderFace.vertices):
-                blenderVertex =  mesh.vertices[blenderVertexIndex]
-                m3Vertex = m3.VertexFormat0x182007d()
-                m3Vertex.position = self.blenderToM3Vector(blenderVertex.co)
+        for meshIndex, meshObject in enumerate(self.findMeshObjects()):   
+            mesh = meshObject.data
+            
+            firstBoneLookupIndex = len(model.boneLookup)
+            staticMeshBoneName = "StaticMesh"
+            boneNameToBoneLookupIndexMap = {}
+            boneNamesOfArmature = set()
+            if len(meshObject.modifiers) == 0:
+                pass
+            elif len(meshObject.modifiers) == 1 and (meshObject.modifiers[0].type == "ARMATURE"):
+                modifier = meshObject.modifiers[0]
+                armatureObject = modifier.object
+                if armatureObject != None:
+                    armature = armatureObject.data
+                    for blenderBoneIndex, blenderBone in enumerate(armature.bones):
+                        boneNamesOfArmature.add(blenderBone.name)
+            else:
+                raise Exception("Mesh must have no modifiers except single one for the armature")
                 
-                boneWeightSlot = 0
-                for gIndex, g in enumerate(blenderVertex.groups):
-                    vertexGroupIndex = g.group
-                    vertexGroup = meshObject.vertex_groups[vertexGroupIndex]
-                    boneIndex = self.boneNameToBoneIndexMap.get(vertexGroup.name)
-                    if boneIndex != None and vertexGroup.name in boneNamesOfArmature:
-                        boneLookupIndex = boneNameToBoneLookupIndexMap.get(vertexGroup.name)
-                        if boneLookupIndex == None:
-                            boneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
-                            model.boneLookup.append(boneIndex)
-                            boneNameToBoneLookupIndexMap[vertexGroup.name] = boneLookupIndex
-                        bone = model.bones[boneIndex]
-                        bone.setNamedBit("flags", "skinned", True)
-                        boneWeight = round(g.weight * 255)
-                        if boneWeight != 0:
-                            if boneWeightSlot == 4:
-                                raise Exception("The m3 format supports at maximum 4 bone weights per vertex")
-                            setattr(m3Vertex, "boneWeight%d" % boneWeightSlot, boneWeight)
-                            setattr(m3Vertex, "boneLookupIndex%d" % boneWeightSlot, boneLookupIndex)
-                            boneWeightSlot += 1
-                isStaticVertex = (boneWeightSlot == 0)
-                if isStaticVertex:                    
-                    staticMeshBoneIndex = self.boneNameToBoneIndexMap.get(staticMeshBoneName)
-                    if staticMeshBoneIndex == None:
-                        staticMeshBoneIndex = self.addBoneWithRestPosAndReturnIndex(model, staticMeshBoneName,  realBone=True)
-                        model.bones[staticMeshBoneIndex].setNamedBit("flags", "skinned", True)
-                        self.boneNameToBoneIndexMap[staticMeshBoneName] = staticMeshBoneIndex
-                    staticMeshLookupIndex = len(model.boneLookup)
-                    model.boneLookup.append(staticMeshBoneIndex)
-                    boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshLookupIndex
-                    m3Vertex.boneWeight0 = 255
-                    m3Vertex.boneLookupIndex0 = staticMeshBoneIndex
-                if len(mesh.tessface_uv_textures) >= 1:
-                    uvData = mesh.tessface_uv_textures[0].data[blenderFace.index]
-                    m3Vertex.uv0 = self.convertBlenderToM3UVCoordinates(getattr(uvData, "uv%d" % (faceRelativeVertexIndex + 1)))
-                else:
-                    raise Exception("Exporting meshes without texture coordinates isn't supported yet")
-                m3Vertex.normal = self.blenderVector3AndScaleToM3Vector4As4uint8(-blenderVertex.normal, 1.0)
-                m3Vertex.tangent = self.createVector4As4uint8FromFloats(0.0, 0.0, 0.0, 0.0)
-                m3.VertexFormat0x182007d.validateInstance(m3Vertex, "vertex")
-                m3Vertices.append(m3Vertex)
+            mesh.update(calc_tessface=True)
+            firstFaceVertexIndexIndex = len(division.faces)
+            for blenderFace in mesh.tessfaces:
+                if len(blenderFace.vertices) != 3:
+                    raise Exception("Only the export of meshes with triangles has been implemented")
+                for faceRelativeVertexIndex, blenderVertexIndex in enumerate(blenderFace.vertices):
+                    blenderVertex =  mesh.vertices[blenderVertexIndex]
+                    m3Vertex = m3.VertexFormat0x182007d()
+                    m3Vertex.position = self.blenderToM3Vector(blenderVertex.co)
+                    
+                    boneWeightSlot = 0
+                    for gIndex, g in enumerate(blenderVertex.groups):
+                        vertexGroupIndex = g.group
+                        vertexGroup = meshObject.vertex_groups[vertexGroupIndex]
+                        boneIndex = self.boneNameToBoneIndexMap.get(vertexGroup.name)
+                        if boneIndex != None and vertexGroup.name in boneNamesOfArmature:
+                            boneLookupIndex = boneNameToBoneLookupIndexMap.get(vertexGroup.name)
+                            if boneLookupIndex == None:
+                                boneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
+                                model.boneLookup.append(boneIndex)
+                                boneNameToBoneLookupIndexMap[vertexGroup.name] = boneLookupIndex
+                            bone = model.bones[boneIndex]
+                            bone.setNamedBit("flags", "skinned", True)
+                            boneWeight = round(g.weight * 255)
+                            if boneWeight != 0:
+                                if boneWeightSlot == 4:
+                                    raise Exception("The m3 format supports at maximum 4 bone weights per vertex")
+                                setattr(m3Vertex, "boneWeight%d" % boneWeightSlot, boneWeight)
+                                setattr(m3Vertex, "boneLookupIndex%d" % boneWeightSlot, boneLookupIndex)
+                                boneWeightSlot += 1
+                    isStaticVertex = (boneWeightSlot == 0)
+                    if isStaticVertex:                    
+                        staticMeshBoneIndex = self.boneNameToBoneIndexMap.get(staticMeshBoneName)
+                        if staticMeshBoneIndex == None:
+                            staticMeshBoneIndex = self.addBoneWithRestPosAndReturnIndex(model, staticMeshBoneName,  realBone=True)
+                            model.bones[staticMeshBoneIndex].setNamedBit("flags", "skinned", True)
+                            self.boneNameToBoneIndexMap[staticMeshBoneName] = staticMeshBoneIndex
+                        staticMeshLookupIndex = len(model.boneLookup)
+                        model.boneLookup.append(staticMeshBoneIndex)
+                        boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshLookupIndex
+                        m3Vertex.boneWeight0 = 255
+                        m3Vertex.boneLookupIndex0 = staticMeshBoneIndex
+                    if len(mesh.tessface_uv_textures) >= 1:
+                        uvData = mesh.tessface_uv_textures[0].data[blenderFace.index]
+                        m3Vertex.uv0 = self.convertBlenderToM3UVCoordinates(getattr(uvData, "uv%d" % (faceRelativeVertexIndex + 1)))
+                    else:
+                        raise Exception("Exporting meshes without texture coordinates isn't supported yet")
+                    m3Vertex.normal = self.blenderVector3AndScaleToM3Vector4As4uint8(-blenderVertex.normal, 1.0)
+                    m3Vertex.tangent = self.createVector4As4uint8FromFloats(0.0, 0.0, 0.0, 0.0)
+                    m3.VertexFormat0x182007d.validateInstance(m3Vertex, "vertex")
+                    m3Vertices.append(m3Vertex)
+             
+            vertexIndicesOfFaces = list(range(firstFaceVertexIndexIndex,firstFaceVertexIndexIndex + len(m3Vertices)))
+            division.faces.extend(vertexIndicesOfFaces)
+                    
+            # find a bone which hasn't a parent in the list
+            rootBoneIndex = None
+            exlusiveBoneLookupEnd = firstBoneLookupIndex + len(boneNameToBoneLookupIndexMap)
+            indicesOfUsedBones = model.boneLookup[firstBoneLookupIndex:exlusiveBoneLookupEnd]
+            rootBoneIndex = self.findRootBoneIndex(model, indicesOfUsedBones)
+            rootBone = model.bones[rootBoneIndex]
+            
+            region = m3.REGNV3()
+            region.firstVertexIndex = 0
+            region.numberOfVertices = len(m3Vertices)
+            region.firstFaceVertexIndexIndex = firstFaceVertexIndexIndex
+            region.numberOfFaceVertexIndices = len(vertexIndicesOfFaces)
+            region.numberOfBones = len(boneNameToBoneLookupIndexMap)
+            region.firstBoneLookupIndex = firstBoneLookupIndex
+            region.numberOfBoneLookupIndices = len(boneNameToBoneLookupIndexMap)
+            region.rootBoneIndex = model.boneLookup[firstBoneLookupIndex]
+            division.regions.append(region)
+            
+            bat = m3.BAT_V1()
+            bat.subId = meshIndex
+            if len(self.scene.m3_materials) == 0:
+                raise Exception("Require a m3 material to export a mesh")
+            bat.matId = 0
+            division.bat.append(bat)
         
         model.vertices = m3.VertexFormat0x182007d.rawBytesForOneOrMore(m3Vertices)
-        model.vFlags = 0x182007d   
-        vertexIndicesOfFaces = list(range(firstFaceVertexIndexIndex,firstFaceVertexIndexIndex + len(m3Vertices)))
-        division.faces.extend(vertexIndicesOfFaces)
-        
-        bat = m3.BAT_V1()
-        bat.subId = 0
-        if len(self.scene.m3_materials) == 0:
-            raise Exception("Require a m3 material to export a mesh")
-        bat.matId = 0
-        division.bat.append(bat)
+        model.vFlags = 0x182007d  
         
         minV = mathutils.Vector((float("inf"), float("inf") ,float("inf")))
         maxV = mathutils.Vector((-float("inf"), -float("inf"), -float("inf")))
@@ -385,34 +404,16 @@ class Exporter:
             for i in range(3):  
                 minV[i] = min(minV[i], blenderVertex.co[i])
                 maxV[i] = max(maxV[i], blenderVertex.co[i])
-                
-                
-        # find a bone which hasn't a parent in the list
-        rootBoneIndex = None
-        exlusiveBoneLookupEnd = firstBoneLookupIndex + len(boneNameToBoneLookupIndexMap)
-        indicesOfUsedBones = model.boneLookup[firstBoneLookupIndex:exlusiveBoneLookupEnd]
-        rootBoneIndex = self.findRootBoneIndex(model, indicesOfUsedBones)
-        rootBone = model.bones[rootBoneIndex]
-        
         diffV = minV - maxV
         radius = diffV.length / 2
         division.msec.append(self.createEmptyMSec(minX=minV[0], minY=minV[1], minZ=minV[2], maxX=maxV[0], maxY=maxV[1], maxZ=maxV[2], radius=radius))
-        region = m3.REGNV3()
-        region.firstVertexIndex = 0
-        region.numberOfVertices = len(m3Vertices)
-        region.firstFaceVertexIndexIndex = firstFaceVertexIndexIndex
-        region.numberOfFaceVertexIndices = len(vertexIndicesOfFaces)
-        region.numberOfBones = len(boneNameToBoneLookupIndexMap)
-        region.firstBoneLookupIndex = firstBoneLookupIndex
-        region.numberOfBoneLookupIndices = len(boneNameToBoneLookupIndexMap)
-        region.rootBoneIndex = model.boneLookup[firstBoneLookupIndex]
-        division.regions.append(region)
         
         numberOfBonesToCheckForSkin = 0
         for boneIndex, bone in enumerate(model.bones):
             if bone.getNamedBit("flags","skinned"):
                 numberOfBonesToCheckForSkin = boneIndex + 1
         model.numberOfBonesToCheckForSkin = numberOfBonesToCheckForSkin
+
     
     def findRootBoneIndex(self, model, boneIndices):
         boneIndexSet = set(boneIndices)
@@ -471,29 +472,17 @@ class Exporter:
         boneRestPos = self.createIdentityRestPosition()
         model.absoluteInverseBoneRestPositions.append(boneRestPos)
         return boneIndex
-        
-    def findMeshObject(self):
-        meshObject = None
-        for currentObject in self.scene.objects:
-            if currentObject.type == 'MESH':
-                if meshObject == None:
-                    meshObject = currentObject
-                else:
-                    raise Exception("Multiple mesh objects can't be exported yet")
-        if (meshObject == None):
-            return None
-    
-        mesh = meshObject.data
-        if len(mesh.vertices) > 0:
-            return meshObject
-        else:
-            return None
-    
+
     def findArmatureObjects(self):
         for currentObject in self.scene.objects:
             if currentObject.type == 'ARMATURE':
                 yield currentObject
     
+    def findMeshObjects(self):
+        for currentObject in self.scene.objects:
+            if currentObject.type == 'MESH':
+                yield currentObject
+
     def frameToMS(self, frame):
         frameRate = self.scene.render.fps
         return round((frame / frameRate) * 1000.0)
