@@ -79,12 +79,13 @@ def increaseToValidSectionSize(size):
     else:
         return size
             
-def rawBytesToHex(rawBytes):
-    \"\"\" for debug purposes\"\"\"
-    s = ""
-    for i in range(0, len(rawBytes)):
-        rawByte = rawBytes[i]
-        s += hex(rawByte)
+def byteDataToHex(byteData):
+    s = "0x"
+    for i in range(len(byteData)):
+        hexValue = hex(byteData[i])[2:]
+        if len(hexValue) <= 1:
+            hexValue = "0"+hexValue
+        s +=hexValue
     return s
     
 class Section:
@@ -1186,10 +1187,21 @@ def checkThatAllSectionsGotReferenced(sections):
             reference.index = sectionIndex
             reference.flags = 0
             bytesToSearch = reference.toBytes()
+            possibleReferences = 0
             for sectionToCheck in sections:
                 positionInSection = sectionToCheck.rawBytes.find(bytesToSearch)
                 if positionInSection != -1:
+                    possibleReferences += 1
                     stderr.write("  -> Found a reference at offset %d in a section of type %sV%s\\n" % (positionInSection, sectionToCheck.indexEntry.tag,sectionToCheck.indexEntry.version)) 
+            if possibleReferences == 0:
+                bytesToSearch = bytesToSearch[0:-4]
+                for sectionToCheck in sections:
+                    positionInSection = sectionToCheck.rawBytes.find(bytesToSearch)
+                    if positionInSection != -1:
+                        flagBytes = sectionToCheck.rawBytes[positionInSection+8:positionInSection+12]
+                        flagsAsHex = byteDataToHex(flagBytes)
+                        stderr.write("  -> Found maybe a reference at offset %d in a section of type %sV%s with flag %s\\n" % (positionInSection, sectionToCheck.indexEntry.tag,sectionToCheck.indexEntry.version, flagsAsHex)) 
+
 
     if numberOfUnreferencedSections > 0:
         raise Exception("Unable to load all data: There were %d unreferenced sections. View log for details" % numberOfUnreferencedSections)
