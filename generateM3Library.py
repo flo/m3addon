@@ -986,6 +986,8 @@ class GetFieldTypeInfoMethodAdder(Visitor):
         generalDataMap["out"].write(methodText)
 
 class ValidateMethodAdder(Visitor):
+    intRefToMinValue = {"I16_V0":(-(2<<15)), "U16_V0":0, "I32_V0":(-(2<<31)), "U32_V0":0}
+    intRefToMaxValue = {"I16_V0":((2<<15)-1), "U16_V0":((2<<16)-1), "I32_V0":((2<<31)-1), "U32_V0":((2<<32)-1)}
     defaultTemplate="""
     @staticmethod
     def validateInstance(instance, id):
@@ -1044,9 +1046,11 @@ class ValidateMethodAdder(Visitor):
         if (type(instance.%(fieldName)s) != list):
             raise Exception("%%s is not a list of integers" %% (fieldId))
         for itemIndex, item in enumerate(instance.%(fieldName)s):
+            itemId = "%%s[%%d]" %% (fieldId, itemIndex)
             if type(item) != int: 
-                itemId = "%%s[%%d]" %% (fieldId, itemIndex)
                 raise Exception("%%s is not an integer" %% (itemId))
+            if (item < %(minValue)d) or (item > %(maxValue)d):
+                raise Exception("%%s has value %%d which is not in range [%(minValue)d, %(maxValue)d]"  %% (itemId, item))
 """
 
     def visitClassStart(self, generalDataMap, classDataMap):
@@ -1075,7 +1079,9 @@ class ValidateMethodAdder(Visitor):
                 elif refTo == "REALV0":
                     self.statements +=  ValidateMethodAdder.validateREALV0Reference % {"fieldName":fieldName}
                 elif refTo in  ["I16_V0", "U16_V0", "I32_V0", "U32_V0"]:
-                    self.statements +=  ValidateMethodAdder.validateIntReference % {"fieldName":fieldName}
+                    minValue = ValidateMethodAdder.intRefToMinValue[refTo]
+                    maxValue = ValidateMethodAdder.intRefToMaxValue[refTo]
+                    self.statements +=  ValidateMethodAdder.validateIntReference % {"fieldName":fieldName, "minValue":minValue, "maxValue":maxValue}
                 else:
                     self.statements +=  ValidateMethodAdder.validateList % {"fieldName":fieldName, "refTo":refTo}
             else:
