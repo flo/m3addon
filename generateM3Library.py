@@ -433,13 +433,13 @@ class ReferenceFeatureAdder(Visitor):
         pass #nothing to do
 """
     introduceReferencesTemplate = """\
-        indexReference = indexMaker.getIndexReferenceTo(self.%(fieldName)s, %(refTo)s)
-        %(refTo)s.introduceIndexReferencesForOneOrMore(self.%(fieldName)s, indexMaker)
+        indexReference = indexMaker.getIndexReferenceTo(self.%(fieldName)s, %(referenceClass)s, %(refTo)s)
+        %(refTo)s.introduceIndexReferencesForOneOrMore(self.%(fieldName)s,  indexMaker)
         self.%(fieldName)s = indexReference
 """
 
     introduceReferencesForNoneTemplate = """\
-        self.%(fieldName)s = indexMaker.getIndexReferenceTo(self.%(fieldName)s, None)
+        self.%(fieldName)s = indexMaker.getIndexReferenceTo(self.%(fieldName)s, %(referenceClass)s, None)
 """
 
     def visitClassStart(self, generalDataMap, classDataMap):
@@ -451,7 +451,7 @@ class ReferenceFeatureAdder(Visitor):
         fieldName = fieldDataMap["fieldName"]
         fieldType = fieldDataMap["typeString"]
         knownStructs = generalDataMap["knownStructs"]
-        if fieldType == "Reference":
+        if fieldType == "Reference" or fieldType == "SmallReference":
             refTo = fieldDataMap["refTo"]
             if (refTo != None) and (not (refTo in knownStructs)):
                 raise Exception("Structure %s referenced by %s.%s is not defined" % (refTo,fullName,fieldName))
@@ -460,7 +460,7 @@ class ReferenceFeatureAdder(Visitor):
                 template = ReferenceFeatureAdder.introduceReferencesForNoneTemplate
             else:
                 template = ReferenceFeatureAdder.introduceReferencesTemplate
-            self.introduceReferencesAssigments += template % {"fieldName": fieldName, "refTo":refTo}
+            self.introduceReferencesAssigments += template % {"fieldName": fieldName, "referenceClass": fieldType, "refTo":refTo}
             self.resolveAssigments += "        self.%(fieldName)s = resolveRef(self.%(fieldName)s,sections,%(refTo)s,\"%(fullName)s.%(fieldName)s\")\n" % {"fieldName": fieldName, "fullName":fullName, "refTo": refTo}
             
     def visitClassEnd(self, generalDataMap, classDataMap):
@@ -521,7 +521,7 @@ class ExpectedAndDefaultConstantsDeterminer(Visitor):
                     defaultValueConstant = 'float("inf")'
                 else:
                     defaultValueConstant = defaultValueString
-        elif fieldType == "Reference":
+        elif fieldType == "Reference" or fieldType == "SmallReference":
             if refTo in knownStructs:
                 defaultValueConstant = '%s.createEmptyArray()' % (refTo)
             else:
@@ -960,7 +960,7 @@ class GetFieldTypeInfoMethodAdder(Visitor):
         fieldType = fieldDataMap["typeString"]
         fieldIndex = fieldDataMap["fieldIndex"]
         knownStructs = generalDataMap["knownStructs"]
-        if (fieldType == 'Reference'):
+        if (fieldType == 'Reference' or fieldType == 'SmallReference'):
             fieldType = fieldDataMap["refTo"]
             fieldIsList = True
         else:
@@ -1066,7 +1066,7 @@ class ValidateMethodAdder(Visitor):
             self.statements += ValidateMethodAdder.validateIntTemplate % {"fieldName":fieldName}
         elif fieldType == "float":
             self.statements += ValidateMethodAdder.validateFloatTemplate % {"fieldName":fieldName}
-        elif fieldType == "Reference":
+        elif fieldType == "Reference" or fieldType == "SmallReference":
             if refTo in knownStructs:
                 if refTo == "CHARV0":
                     self.statements +=  ValidateMethodAdder.validateCHARV0Reference % {"fieldName":fieldName}
@@ -1223,7 +1223,7 @@ class IndexReferenceSourceAndSectionListMaker:
         self.nextFreeIndexPosition = 0
         self.sections = []
     
-    def getIndexReferenceTo(self, objectToSave, objectClass):
+    def getIndexReferenceTo(self, objectToSave, referenceClass, objectClass):
         if id(objectToSave) in self.objectsIdToIndexReferenceMap.keys():
             return self.objectsIdToIndexReferenceMap[id(objectToSave)]
         
@@ -1232,10 +1232,11 @@ class IndexReferenceSourceAndSectionListMaker:
         else:
             repetitions = objectClass.countOneOrMore(objectToSave)
         
-        indexReference = Reference()
+        indexReference = referenceClass()
         indexReference.entries = repetitions
         indexReference.index = self.nextFreeIndexPosition
-        indexReference.flags = 0
+        if (referenceClass == Reference):
+            indexReference.flags = 0
         
         if (repetitions > 0):
             indexEntry = MD34IndexEntry()
@@ -1263,7 +1264,7 @@ def modelToSections(model):
     header.model = model
     
     indexMaker = IndexReferenceSourceAndSectionListMaker()
-    indexMaker.getIndexReferenceTo([header], MD34V11)
+    indexMaker.getIndexReferenceTo([header], Reference ,MD34V11)
     header.introduceIndexReferences(indexMaker)
     sections = indexMaker.sections
     header.indexOffset = indexMaker.offset

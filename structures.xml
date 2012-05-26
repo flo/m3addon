@@ -33,6 +33,11 @@
             <field name="index" type="uint32" />
             <field name="flags" type="uint32" />
         </structure>
+        <structure name="SmallReference" size="8">
+            <description>A reference to one or more entries in a file</description>
+            <field name="entries" type="uint32"/>
+            <field name="index" type="uint32" />
+        </structure>
         <structure name="VEC2" version="0" size="8">
             <description>A Vector with 2 components</description>
             <field name="x" type="float"/>
