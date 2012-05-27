@@ -80,6 +80,47 @@ About the Implementation
   2. The method saveAndInvalidateModel of the m3.py file gets used to convert the latter data structure into a m3 file.
 
 
+Common Errors and how to fix them
+---------------------------------
+* Error message "Exception: XYZ_V4.unknown0 has value 42 instead of the expected value int(0)":
+    * In the structure.xml file it's configured what structures exists, what fields those structures have,
+      and what their default or expected value is. The exceptions means, that the field "unknown0" of the structure "XYZ_" has
+      been configured in the structure.xml file to be 0, but it was actually 42. For each structure exists an XML
+      element in the structure.xml file. Just search for the structure name ("XYZ_" in the example) to find it. In the structure
+      xml element there are field elements. To fix the given error message we would search in the structure element for the field with the name attribute "unknown0"
+      and would replace the attribute expected-value="0" with default-value="0".
+* Error message "Exception: There were 1 unknown sections":
+    * The error message means that the m3 file contained a structure that it is unknown to the script since it has not been defined in the structure.xml file.
+      You can fix the error message by defining the unknown section. To do that have a look at the log, it will contain a message like this:
+         * "ERROR: Unknown section at offset 436124 with tag=XYZ_ version=1 repetitions=2 sectionLengthInBytes=32 guessedUnusedSectionBytes=4 guessedBytesPerEntry=14.0"
+      The error message means that it found a section in the m3 file that contains two (repetitions=2) entries of type XYZ_.
+      The script guesses that 4 bytes are unused and knowns that the section is 32 bytes long. So it calculates 2*X-4=32 where X is the number of guessed bytes per entry.
+      The result of this calculation is printed at the end "guessedBytesPerEntry=14.0". So the script guesses that the structure XYZ_ is 14 bytes long.
+      To fix the upper example error message we would add the following xml element to the structure.xml file:
+      ``<structure name="XYZ_" version="1" size="14">``
+          ``<description>Unknown</description>``
+          ``<field name="unknown" size="14" />``
+       ``</structure>``
+      Note that name, version and size attributes of need to be adjusted to what got reported in the error message.
+* Error message "Field ABCDV7.xyz can be marked as a reference pointing to XYZ_V1":
+    * To fix this example error message, we would search in the structure.xml file for a structure called "ABCD" with the attribute version="7".
+      It will contain a xml element field with the attribute name="xyz". To this field we would add an attribute refTo="XYZ_V1".
+* Error message "Exception: Unable to load all data: There were 1 unreferenced sections. View log for details"
+    * When this error occurs, you will find in the log a message like this: "WARNING: XYZ_V1 (2 repetitions) got 0 times referenced"
+      Every section in a m3 file gets usually referenced exactly 1 time(except for the header). The error message means
+      that there is a section that contains 2 structures of type XYZ_ in version 1, but which got not referenced from anywhere.
+      Most likely there is actually a reference to this section but which hasn't been configured as such in the structure.xml file.
+      If you are lucky, then there will be exactly 1 line below the former warning which looks like this:
+      "-> Found a reference at offset 56 in a section of type ABCDV7". To fix the error message we need to change the structure
+      definition of ABCD in version 7 to contain a field definition like this:
+      `<field offset="56" name="xyzData" type="Reference" refTo="XYZ_V1" />`
+      The name of the field can be freely choosen. It can be that the section in which the refernce got found contains
+      multiple structures. In that case it can be that the structure with the reference (ABCD in the example) is smaller
+      then the found offset. In this case the found reference is not in the first element of the section, but in a later one.
+      Assume the size of ABCD in version 7 would be 40. Then the offset 56 would mean that the second element of type ABCD has at
+      the relative offset 16 a reference to XYZ_V1. In that case the added field xml element would have the value 16 as offset.
+
+
 License (GPL 2.0 or later)
 --------------------------
 
