@@ -850,7 +850,7 @@ class Exporter:
         transferer.transferAnimatableFloat("brightMult2")
         m3Layer.unknown6 = self.createNullUInt32AnimationReference(0)
         m3Layer.unknown7 = self.createNullVector2AnimationReference(0.0, 0.0, flags=0)
-        m3Layer.unknown8 = self.createNullInt16AnimationReference(0)
+        m3Layer.unknown8 = self.createNullUInt16AnimationReference(0)
         m3Layer.uvOffset = self.createNullVector2AnimationReference(0.0, 0.0, flags=1)
         m3Layer.uvAngle = self.createNullVector3AnimationReference(0.0, 0.0, 0.0, flags=1, initIsNullValue=False)
         m3Layer.uvTiling = self.createNullVector2AnimationReference(1.0, 1.0, flags=1)
@@ -889,7 +889,14 @@ class Exporter:
         animRef.initValue = value
         animRef.nullValue = 0
         return animRef
-        
+    
+    def createNullUInt16AnimationReference(self, value):
+        animRef = m3.UInt16AnimationReference()
+        animRef.header = self.createNullAnimHeader()
+        animRef.initValue = value
+        animRef.nullValue = 0
+        return animRef  
+    
     def createNullUInt32AnimationReference(self, value, flags=0):
         animRef = m3.UInt32AnimationReference()
         animRef.header = self.createNullAnimHeader(flags = flags)
