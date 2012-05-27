@@ -138,6 +138,13 @@
             <field name="nullValue" type="uint32" />
             <field name="unknown" type="uint32" expected-value="0" />
         </structure>
+        <structure name="UInt16AnimationReference" size="16">
+            <description>Animatable uint16</description>
+            <field name="header" type="AnimationReferenceHeader" />
+            <field name="initValue" type="uint16" />
+            <field name="nullValue" type="uint16" />
+            <field name="unknown" type="uint32" expected-value="0" />
+        </structure>
         <structure name="Int16AnimationReference" size="16">
             <description>Animatable int16</description>
             <field name="header" type="AnimationReferenceHeader" />
@@ -327,7 +334,13 @@
             <field name="fend" type="uint32" />
             <field name="keys" type="Reference" refTo="I16_V0" />
         </structure>
-        
+        <structure name="SDU6" version="0" size="32">
+            <description>Animation block with reference to U16_</description>
+            <field name="frames" type="Reference" refTo="I32_V0" />
+            <field name="flags" type="uint32" />
+            <field name="fend" type="uint32" />
+            <field name="keys" type="Reference" refTo="U16_V0"/>
+        </structure>
         <structure name="SD4Q" version="0" size="32" >
             <description>Animation block with reference to QUAT</description>
             <field name="frames" type="Reference" refTo="I32_V0" />
@@ -406,7 +419,7 @@
             <field name="sdr3" type="Reference" refTo="SDR3V0" />
             <field name="unknownRef8" type="Reference" />
             <field name="sds6" type="Reference" refTo="SDS6V0" />
-            <field name="unknownRef10" type="Reference" />
+            <field name="sdu6" type="Reference" refTo="SDU6V0" />
             <field name="unknownRef11" type="Reference" />
             <field name="unknownRef12" type="Reference" />
             <field name="sdfg" type="Reference" refTo="SDFGV0" />
@@ -562,7 +575,7 @@
             <field name="unknown5" size="8" />
             <field name="unknown6" type="UInt32AnimationReference" />
             <field name="unknown7" type="Vector2AnimationReference" />
-            <field name="unknown8" type="Int16AnimationReference" />
+            <field name="unknown8" type="UInt16AnimationReference" />
             <field name="uvOffset" type="Vector2AnimationReference" />
             <field name="uvAngle" type="Vector3AnimationReference" />
             <field name="uvTiling" type="Vector2AnimationReference" />
