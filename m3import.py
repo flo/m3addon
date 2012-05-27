@@ -858,7 +858,7 @@ class Importer:
         return editBones
 
     def createAnimIdToKeyFramesMapFor(self, stc):
-        keyFramesLists = [stc.sdev, stc.sd2v, stc.sd3v, stc.sd4q, stc.sdcc, stc.sdr3, stc.unknownRef8, stc.sds6, stc.unknownRef10, stc.unknownRef11, stc.unknownRef12, stc.sdfg, stc.sdmb]
+        keyFramesLists = [stc.sdev, stc.sd2v, stc.sd3v, stc.sd4q, stc.sdcc, stc.sdr3, stc.unknownRef8, stc.sds6, stc.sdu6, stc.unknownRef11, stc.unknownRef12, stc.sdfg, stc.sdmb]
         animIdToTimeValueMap = {}
         for i in range(len(stc.animIds)):
             animId = stc.animIds[i]
