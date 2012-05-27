@@ -316,6 +316,12 @@ class Exporter:
                 
             mesh.update(calc_tessface=True)
             firstFaceVertexIndexIndex = len(division.faces)
+            firstVertexIndexIndex = len(m3Vertices)
+            print(firstVertexIndexIndex, firstFaceVertexIndexIndex)
+            regionFaceVertexIndices = []
+            regionVertices = []
+            vertexDataTupleToIndexMap = {}
+            nextVertexIndex = 0
             for blenderFace in mesh.tessfaces:
                 if len(blenderFace.vertices) != 3:
                     raise Exception("Only the export of meshes with triangles has been implemented")
@@ -363,12 +369,21 @@ class Exporter:
                         raise Exception("Exporting meshes without texture coordinates isn't supported yet")
                     m3Vertex.normal = self.blenderVector3AndScaleToM3Vector4As4uint8(-blenderVertex.normal, 1.0)
                     m3Vertex.tangent = self.createVector4As4uint8FromFloats(0.0, 0.0, 0.0, 0.0)
-                    m3.VertexFormat0x182007d.validateInstance(m3Vertex, "vertex")
-                    m3Vertices.append(m3Vertex)
-             
-            vertexIndicesOfFaces = list(range(firstFaceVertexIndexIndex,firstFaceVertexIndexIndex + len(m3Vertices)))
-            division.faces.extend(vertexIndicesOfFaces)
-                    
+                    v = m3Vertex
+                    #TODO once multiple uvs get exported, the vertexIdTuple needs to include other uvs too
+                    vertexIdTuple = (v.position.x, v.position.y, v.position.z, v.boneWeight0, v.boneWeight1, v.boneWeight2, v.boneWeight3, v.boneLookupIndex0, v.boneLookupIndex1, v.boneLookupIndex2, v.boneLookupIndex3, v.normal.x, v.normal.y, v.normal.z, v.uv0.x, v.uv0.y)
+
+                    vertexIndex = vertexDataTupleToIndexMap.get(vertexIdTuple)
+                    if vertexIndex == None:
+                        vertexIndex = nextVertexIndex
+                        vertexDataTupleToIndexMap[vertexIdTuple] = vertexIndex
+                        nextVertexIndex += 1
+                        regionVertices.append(m3Vertex)
+                        m3.VertexFormat0x182007d.validateInstance(m3Vertex, "vertex")
+                    regionFaceVertexIndices.append(vertexIndex)
+            
+            division.faces.extend(regionFaceVertexIndices)
+            m3Vertices.extend(regionVertices)
             # find a bone which hasn't a parent in the list
             rootBoneIndex = None
             exlusiveBoneLookupEnd = firstBoneLookupIndex + len(boneNameToBoneLookupIndexMap)
@@ -377,10 +392,10 @@ class Exporter:
             rootBone = model.bones[rootBoneIndex]
             
             region = m3.REGNV3()
-            region.firstVertexIndex = 0
-            region.numberOfVertices = len(m3Vertices)
+            region.firstVertexIndex = firstVertexIndexIndex
+            region.numberOfVertices = len(regionVertices)
             region.firstFaceVertexIndexIndex = firstFaceVertexIndexIndex
-            region.numberOfFaceVertexIndices = len(vertexIndicesOfFaces)
+            region.numberOfFaceVertexIndices = len(regionFaceVertexIndices)
             region.numberOfBones = len(boneNameToBoneLookupIndexMap)
             region.firstBoneLookupIndex = firstBoneLookupIndex
             region.numberOfBoneLookupIndices = len(boneNameToBoneLookupIndexMap)
