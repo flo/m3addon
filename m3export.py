@@ -611,85 +611,8 @@ class Exporter:
             m3ParticleSystem.bone = boneIndex
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ParticleSystem, blenderObject=particleSystem, animPathPrefix=animPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
-            transferer.transferAnimatableFloat("emissionSpeed1")
-            transferer.transferAnimatableFloat("emissionSpeed2")
-            transferer.transferBoolToInt("randomizeWithEmissionSpeed2")
-            transferer.transferAnimatableFloat("emissionAngleX")
-            transferer.transferAnimatableFloat("emissionAngleY")
-            transferer.transferAnimatableFloat("emissionSpreadX")
-            transferer.transferAnimatableFloat("emissionSpreadY")
-            transferer.transferAnimatableFloat("lifespan1")
-            transferer.transferAnimatableFloat("lifespan2")
-            transferer.transferBoolToInt("randomizeWithLifespan2")
-            transferer.transferFloat("zAcceleration")
-            transferer.transferFloat("unknownFloat1a")
-            transferer.transferFloat("unknownFloat1b")
-            transferer.transferFloat("unknownFloat1c")
-            transferer.transferFloat("unknownFloat1d")
-            transferer.transferAnimatableVector3("particleSizes1")
-            transferer.transferAnimatableVector3("rotationValues1")
-            transferer.transferAnimatableColor("initialColor1")
-            transferer.transferAnimatableColor("finalColor1")
-            transferer.transferAnimatableColor("unknownColor1")
-            transferer.transferFloat("slowdown")
-            transferer.transferFloat("unknownFloat2a")
-            transferer.transferFloat("unknownFloat2b")
-            transferer.transferFloat("unknownFloat2c")
-            transferer.transferBoolToInt("trailingEnabled")
+            shared.transferParticleSystem(transferer)
             m3ParticleSystem.indexPlusHighestIndex = len(scene.m3_particle_systems) -1 + particleSystemIndex
-            transferer.transferInt("maxParticles")
-            transferer.transferAnimatableFloat("emissionRate")
-            transferer.transferEnum("emissionAreaType")
-            transferer.transferAnimatableVector3("emissionAreaSize")
-            transferer.transferAnimatableVector3("tailUnk1")
-            transferer.transferAnimatableFloat("emissionAreaRadius")
-            transferer.transferAnimatableFloat("spreadUnk")
-            transferer.transferEnum("emissionType")
-            transferer.transferBoolToInt("randomizeWithParticleSizes2")
-            transferer.transferAnimatableVector3("particleSizes2")
-            transferer.transferBoolToInt("randomizeWithRotationValues2")
-            transferer.transferAnimatableVector3("rotationValues2")
-            transferer.transferBoolToInt("randomizeWithColor2")
-            transferer.transferAnimatableColor("initialColor2")
-            transferer.transferAnimatableColor("finalColor2")
-            transferer.transferAnimatableColor("unknownColor2")
-            transferer.transferAnimatableInt16("partEmit")
-            transferer.transferInt("phase1StartImageIndex")
-            transferer.transferInt("phase1EndImageIndex")
-            transferer.transferInt("phase2StartImageIndex")
-            transferer.transferInt("phase2EndImageIndex")
-            transferer.transferFloat("relativePhase1Length")
-            transferer.transferInt("numberOfColumns")
-            transferer.transferInt("numberOfRows")
-            transferer.transferFloat("columnWidth")
-            transferer.transferFloat("rowHeight")
-            m3ParticleSystem.setNamedBit("flags", "sort", particleSystem.sort)
-            m3ParticleSystem.setNamedBit("flags", "collideTerrain", particleSystem.collideTerrain)
-            m3ParticleSystem.setNamedBit("flags", "collideObjects", particleSystem.collideObjects)
-            m3ParticleSystem.setNamedBit("flags", "spawnOnBounce", particleSystem.spawnOnBounce)
-            m3ParticleSystem.setNamedBit("flags", "useInnerShape", particleSystem.useInnerShape)
-            m3ParticleSystem.setNamedBit("flags", "inheritEmissionParams", particleSystem.inheritEmissionParams)
-            m3ParticleSystem.setNamedBit("flags", "inheritParentVel", particleSystem.inheritParentVel)
-            m3ParticleSystem.setNamedBit("flags", "sortByZHeight", particleSystem.sortByZHeight)
-            m3ParticleSystem.setNamedBit("flags", "reverseIteration", particleSystem.reverseIteration)
-            m3ParticleSystem.setNamedBit("flags", "smoothRotation", particleSystem.smoothRotation)
-            m3ParticleSystem.setNamedBit("flags", "bezSmoothRotation", particleSystem.bezSmoothRotation)
-            m3ParticleSystem.setNamedBit("flags", "smoothSize", particleSystem.smoothSize)
-            m3ParticleSystem.setNamedBit("flags", "bezSmoothSize", particleSystem.bezSmoothSize)
-            m3ParticleSystem.setNamedBit("flags", "smoothColor", particleSystem.smoothColor)
-            m3ParticleSystem.setNamedBit("flags", "bezSmoothColor", particleSystem.bezSmoothColor)
-            m3ParticleSystem.setNamedBit("flags", "litParts", particleSystem.litParts)
-            m3ParticleSystem.setNamedBit("flags", "randFlipBookStart", particleSystem.randFlipBookStart)
-            m3ParticleSystem.setNamedBit("flags", "multiplyByGravity", particleSystem.multiplyByGravity)
-            m3ParticleSystem.setNamedBit("flags", "clampTailParts", particleSystem.clampTailParts)
-            m3ParticleSystem.setNamedBit("flags", "spawnTrailingParts", particleSystem.spawnTrailingParts)
-            m3ParticleSystem.setNamedBit("flags", "useVertexAlpha", particleSystem.useVertexAlpha)
-            m3ParticleSystem.setNamedBit("flags", "modelParts", particleSystem.modelParts)
-            m3ParticleSystem.setNamedBit("flags", "swapYZonModelParts", particleSystem.swapYZonModelParts)
-            m3ParticleSystem.setNamedBit("flags", "scaleTimeByParent", particleSystem.scaleTimeByParent)
-            m3ParticleSystem.setNamedBit("flags", "useLocalTime", particleSystem.useLocalTime)
-            m3ParticleSystem.setNamedBit("flags", "simulateOnInit", particleSystem.simulateOnInit)
-            m3ParticleSystem.setNamedBit("flags", "copy", particleSystem.copy)
             m3ParticleSystem.ar1 = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
 
             materialReferenceIndices = []
@@ -802,28 +725,9 @@ class Exporter:
         
     def createMaterial(self, materialIndex, material):
         m3Material = m3.MAT_V15()
-        m3Material.name = material.name
-        m3Material.setNamedBit("flags", "unfogged", material.unfogged)
-        m3Material.setNamedBit("flags", "twoSided", material.twoSided)
-        m3Material.setNamedBit("flags", "unshaded", material.unshaded)
-        m3Material.setNamedBit("flags", "noShadowsCast", material.noShadowsCast)
-        m3Material.setNamedBit("flags", "noHitTest", material.noHitTest)
-        m3Material.setNamedBit("flags", "noShadowsReceived", material.noShadowsReceived)
-        m3Material.setNamedBit("flags", "depthPrepass", material.depthPrepass)
-        m3Material.setNamedBit("flags", "useTerrainHDR", material.useTerrainHDR)
-        m3Material.setNamedBit("flags", "splatUVfix", material.splatUVfix)
-        m3Material.setNamedBit("flags", "softBlending", material.softBlending)
-        m3Material.setNamedBit("flags", "forParticles", material.forParticles)
-        m3Material.setNamedBit("unknownFlags", "unknownFlag0x1", material.unknownFlag0x1)
-        m3Material.setNamedBit("unknownFlags", "unknownFlag0x4", material.unknownFlag0x4)
-        m3Material.setNamedBit("unknownFlags", "unknownFlag0x8", material.unknownFlag0x8)
-        m3Material.setNamedBit("unknownFlags", "unknownFlag0x200", material.unknownFlag0x200)
-        m3Material.blendMode = int(material.blendMode)
-        m3Material.priority = material.priority
-        m3Material.specularity = material.specularity
-        m3Material.specMult = material.specMult
-        m3Material.emisMult = material.emisMult
-        
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=None, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+        shared.transferStandardMaterial(transferer)
+
         layerIndex = 0
         for layer, layerFieldName in zip(material.layers, shared.materialLayerFieldNames):
             animPathPrefix = "m3_materials[%s].layers[%s]." % (materialIndex, layerIndex)
@@ -831,27 +735,14 @@ class Exporter:
             setattr(m3Material, layerFieldName, [m3Layer])
             layerIndex += 1
 
-        m3Material.layerBlendType = int(material.layerBlendType)
-        m3Material.emisBlendType = int(material.emisBlendType)
-        m3Material.specType = int(material.specType)
         m3Material.unknownAnimationRef1 = self.createNullUInt32AnimationReference(0)
         m3Material.unknownAnimationRef2 = self.createNullUInt32AnimationReference(0)
         return m3Material
 
     def createMaterialLayer(self, layer, animPathPrefix):
         m3Layer = m3.LAYRV22()
-        m3Layer.imagePath = layer.imagePath
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
-        transferer.transferAnimatableColor("color")
-        m3Layer.setNamedBit("flags", "textureWrapX", layer.textureWrapX)
-        m3Layer.setNamedBit("flags", "textureWrapY", layer.textureWrapY)
-        m3Layer.setNamedBit("flags", "colorEnabled", layer.colorEnabled)
-        transferer.transferEnum("uvSource")
-        m3Layer.setNamedBit("alphaFlags", "alphaAsTeamColor", layer.alphaAsTeamColor)
-        m3Layer.setNamedBit("alphaFlags", "alphaOnly", layer.alphaOnly)
-        m3Layer.setNamedBit("alphaFlags", "alphaBasedShading", layer.alphaBasedShading)
-        transferer.transferAnimatableFloat("brightMult")
-        transferer.transferAnimatableFloat("brightMult2")
+        shared.transferMaterialLayer(transferer)
         m3Layer.unknown6 = self.createNullUInt32AnimationReference(0)
         m3Layer.unknown7 = self.createNullVector2AnimationReference(0.0, 0.0, flags=0)
         m3Layer.unknown8 = self.createNullUInt16AnimationReference(0)
@@ -860,7 +751,6 @@ class Exporter:
         m3Layer.uvTiling = self.createNullVector2AnimationReference(1.0, 1.0, flags=1)
         m3Layer.unknown9 = self.createNullUInt32AnimationReference(0, flags=1)
         m3Layer.unknown10 = self.createNullFloatAnimationReference(1.0, flags=1)
-        transferer.transferAnimatableFloat("brightness")
         return m3Layer
 
     def createNullVector2AnimationReference(self, x, y, flags=1):
@@ -1233,14 +1123,22 @@ class BlenderToM3DataTransferer:
         setattr(self.m3Object, fieldName , value)
         
     def transferBoolToInt(self, fieldName):
-        boolValue = getattr(self.blenderObject, fieldName)
-        if boolValue:
+        booleanValue = getattr(self.blenderObject, fieldName)
+        if booleanValue:
             intValue = 1
         else:
             intValue = 0
         setattr(self.m3Object, fieldName , intValue)
 
+    def transferBit(self, m3FieldName, bitName):
+        booleanValue = getattr(self.blenderObject, bitName)
+        self.m3Object.setNamedBit(m3FieldName, bitName, booleanValue)
+
     def transferFloat(self, fieldName):
+        value = getattr(self.blenderObject, fieldName)
+        setattr(self.m3Object, fieldName , value)
+        
+    def transferString(self, fieldName):
         value = getattr(self.blenderObject, fieldName)
         setattr(self.m3Object, fieldName , value)
         
