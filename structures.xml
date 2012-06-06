@@ -278,10 +278,10 @@
             <description>A sequence end event</description>
             <field name="name" type="Reference" refTo="CHARV0" expected-value="Evt_SeqEnd"/>
             <field name="unknown0" type="int32" expected-value="-1" />
-            <field name="unknown1" type="int16" expected-value="-1" />
+            <field name="unknown1" type="int16" default-value="-1" />
             <field name="unknown2" type="uint16" expected-value="0" />
             <field name="matrix" type="Matrix44" />
-            <field name="unknown3" type="uint32" expected-value="4" />
+            <field name="unknown3" type="uint32" default-value="4" />
             <field name="unknown4" type="uint32" expected-value="0" />
             <field name="unknown5" type="uint32" expected-value="0" />
             <field name="unknown6" type="uint32" expected-value="0" />
@@ -708,7 +708,7 @@
             <field offset="344" name="unknownFloat2a" type="float" default-value="0.0" />
             <field offset="348" name="unknownFloat2b" type="float" default-value="1.0"/>
             <field offset="352" name="unknownFloat2c" type="float" default-value="1.0"/>
-            <field offset="356" name="unknown4" type="uint32" expected-value="0" />
+            <field offset="356" name="unknown4" type="float" default-value="0" />
             <field offset="360" name="trailingEnabled" type="uint32" />
             <field offset="364" name="unknown5" type="uint32" default-value="0" />
             <field offset="368" name="unknown6" type="uint32" default-value="0" />
