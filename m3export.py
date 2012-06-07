@@ -292,10 +292,27 @@ class Exporter:
             model.divisions = [self.createEmptyDivision()]
             return
         
+        uvCoordinatesPerVertex = 1 # Never saw a m3 model with at least 1 UV layer
+        for meshObject in meshObjects:
+            mesh = meshObject.data
+            uvCoordinatesPerVertex = max(uvCoordinatesPerVertex, len(mesh.tessface_uv_textures))
+
+        if uvCoordinatesPerVertex == 1:
+            model.vFlags = 0x182007d  
+        elif uvCoordinatesPerVertex == 2:
+            model.vFlags = 0x186007d
+        elif uvCoordinatesPerVertex == 3:
+            model.vFlags = 0x18e007d
+        elif uvCoordinatesPerVertex == 4:
+            model.vFlags = 0x19e007d
+        else:
+            raise Exception("The m3 format seems to supports only 1-4 UV layers per mesh, not %d" % uvCoordinatesPerVertex)
+        m3VertexFormatClass = m3.structMap["VertexFormat" + hex(model.vFlags)]
+
         division = m3.DIV_V2()
         model.divisions.append(division)
         m3Vertices = []
-        for meshIndex, meshObject in enumerate(self.findMeshObjects()):   
+        for meshIndex, meshObject in enumerate(meshObjects):   
             mesh = meshObject.data
             
             firstBoneLookupIndex = len(model.boneLookup)
@@ -326,7 +343,7 @@ class Exporter:
                     raise Exception("Only the export of meshes with triangles has been implemented")
                 for faceRelativeVertexIndex, blenderVertexIndex in enumerate(blenderFace.vertices):
                     blenderVertex =  mesh.vertices[blenderVertexIndex]
-                    m3Vertex = m3.VertexFormat0x182007d()
+                    m3Vertex = m3VertexFormatClass()
                     m3Vertex.position = self.blenderToM3Vector(blenderVertex.co)
                     
                     boneWeightSlot = 0
@@ -361,16 +378,31 @@ class Exporter:
                         boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshLookupIndex
                         m3Vertex.boneWeight0 = 255
                         m3Vertex.boneLookupIndex0 = staticMeshBoneIndex
-                    if len(mesh.tessface_uv_textures) >= 1:
-                        uvData = mesh.tessface_uv_textures[0].data[blenderFace.index]
-                        m3Vertex.uv0 = self.convertBlenderToM3UVCoordinates(getattr(uvData, "uv%d" % (faceRelativeVertexIndex + 1)))
-                    else:
-                        raise Exception("Exporting meshes without texture coordinates isn't supported yet")
+                    for uvLayerIndex in range(0,uvCoordinatesPerVertex):
+                        m3AttributeName = "uv" + str(uvLayerIndex)
+                        blenderAttributeName = "uv%d" % (faceRelativeVertexIndex + 1)
+                        if len(mesh.tessface_uv_textures) > uvLayerIndex:
+                            uvData = mesh.tessface_uv_textures[uvLayerIndex].data[blenderFace.index]
+                            blenderUVCoord = getattr(uvData, blenderAttributeName)
+                            m3UVCoord = self.convertBlenderToM3UVCoordinates(blenderUVCoord)
+                            setattr(m3Vertex, m3AttributeName, m3UVCoord)
+                        else:
+                            setattr(m3Vertex, m3AttributeName, self.createM3UVVector(0.0, 0.0))
+
                     m3Vertex.normal = self.blenderVector3AndScaleToM3Vector4As4uint8(-blenderVertex.normal, 1.0)
                     m3Vertex.tangent = self.createVector4As4uint8FromFloats(0.0, 0.0, 0.0, 0.0)
                     v = m3Vertex
-                    #TODO once multiple uvs get exported, the vertexIdTuple needs to include other uvs too
-                    vertexIdTuple = (v.position.x, v.position.y, v.position.z, v.boneWeight0, v.boneWeight1, v.boneWeight2, v.boneWeight3, v.boneLookupIndex0, v.boneLookupIndex1, v.boneLookupIndex2, v.boneLookupIndex3, v.normal.x, v.normal.y, v.normal.z, v.uv0.x, v.uv0.y)
+                    vertexIdList = []
+                    vertexIdList.extend((v.position.x, v.position.y, v.position.z))
+                    vertexIdList.extend((v.boneWeight0, v.boneWeight1, v.boneWeight2, v.boneWeight3))
+                    vertexIdList.extend((v.boneLookupIndex0, v.boneLookupIndex1, v.boneLookupIndex2, v.boneLookupIndex3))
+                    vertexIdList.extend((v.normal.x, v.normal.y, v.normal.z))
+                    for i in range(uvCoordinatesPerVertex):
+                        uvAttribute = "uv" + str(i)
+                        uvVector = getattr(v, uvAttribute)
+                        vertexIdList.append(uvVector.x)
+                        vertexIdList.append(uvVector.y)
+                    vertexIdTuple = tuple(vertexIdList)
 
                     vertexIndex = vertexDataTupleToIndexMap.get(vertexIdTuple)
                     if vertexIndex == None:
@@ -378,7 +410,7 @@ class Exporter:
                         vertexDataTupleToIndexMap[vertexIdTuple] = vertexIndex
                         nextVertexIndex += 1
                         regionVertices.append(m3Vertex)
-                        m3.VertexFormat0x182007d.validateInstance(m3Vertex, "vertex")
+                        m3VertexFormatClass.validateInstance(m3Vertex, "vertex")
                     regionFaceVertexIndices.append(vertexIndex)
             
             division.faces.extend(regionFaceVertexIndices)
@@ -408,8 +440,7 @@ class Exporter:
             bat.matId = 0
             division.bat.append(bat)
         
-        model.vertices = m3.VertexFormat0x182007d.rawBytesForOneOrMore(m3Vertices)
-        model.vFlags = 0x182007d  
+        model.vertices = m3VertexFormatClass.rawBytesForOneOrMore(m3Vertices)
         
         minV = mathutils.Vector((float("inf"), float("inf") ,float("inf")))
         maxV = mathutils.Vector((-float("inf"), -float("inf"), -float("inf")))
@@ -469,11 +500,14 @@ class Exporter:
         m3Vector.w = convert(w)
         return m3Vector
         
-    def convertBlenderToM3UVCoordinates(self, blenderUV):
+    def createM3UVVector(self, x, y):
         m3UV = m3.Vector2As2int16()
-        m3UV.x = round(blenderUV.x * 2048) 
-        m3UV.y = round((1 - blenderUV.y) * 2048) 
+        m3UV.x = round(x * 2048) 
+        m3UV.y = round((1 - y) * 2048) 
         return m3UV
+        
+    def convertBlenderToM3UVCoordinates(self, blenderUV):
+        return self.createM3UVVector(blenderUV.x, blenderUV.y)
     
     def blenderToM3Vector(self, blenderVector3):
         return self.createVector3(blenderVector3.x, blenderVector3.y, blenderVector3.z)
