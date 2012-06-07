@@ -5,7 +5,7 @@ The Python scripts can be used as a Blender addon.
 
 Currently the following content can be exported:
 
-  * Up to one animated mesh made out of triangles with 1 UV layer
+  * Animated meshes made out of triangles that share the first material
   * Animated M3 standard materials
   * Animated M3 particle systems
   * Animated M3 attachment points and volumes
@@ -17,11 +17,11 @@ The following content can be imported:
   * Animated M3 particle systems
   * Animated M3 attachment points and volumes
 
-The script printXml.py can also be used to convert a m3 file into a XML file. It
+The script m3ToXml.py can also be used to convert a m3 file into a XML file. It
 takes a m3 file as argument and prints the XML on the command line.
 
-The script xmlToM3.py should not be used, but could theoretically convert a
-XML file exported by printXml.py back into a m3 file.
+The script xmlToM3.py can convert the XML files exported by m3ToXml.py
+back into a m3 file.
 
 The file structures.xml gets used by the script generateM3Library.py to create
 a blender independent python library for loading and saving m3 files.
