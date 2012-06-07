@@ -217,114 +217,84 @@ def determineAbsoluteBoneRestPositions(model):
     return matrices
 
 ownerTypeScene = "Scene"
-ownerTypeArmature = "Armature"
-
-
-def visitFieldPropertyPairs(blenderObject, m3Object, fieldVisitor):
-    blenderClass = blenderObject.__class__
-    m3Class = m3Object.__class__
-    for fieldName in m3Class.fields:
-        if hasattr(blenderClass, fieldName):
-            propertyTypeAndArgs = getattr(blenderClass, fieldName)
-            if (type(propertyTypeAndArgs) == tuple) and (len(propertyTypeAndArgs) == 2):
-                propertyType = propertyTypeAndArgs[0]
-                propertyArgs = propertyTypeAndArgs[1]
-                fieldTypeInfo = m3Class.getFieldTypeInfo(fieldName)
-                fieldTypeName = fieldTypeInfo.typeName
-                fieldIsList =  fieldTypeInfo.isList
+ownerTypeArmature = "Armature"          
                 
-                if fieldTypeName == "FloatAnimationReference":
-                    if not (propertyType == bpy.props.FloatProperty and "ANIMATABLE" in propertyArgs["options"]):
-                        raise Exception("The property %(fieldName)s of %(blenderClass)s should be an animatable float" % {"fieldName":fieldName, "blenderClass":blenderClass })
-                    fieldVisitor.visitAnimatableFloat(blenderObject, m3Object, fieldName)
-                elif fieldTypeName == "float":
-                    if not (propertyType == bpy.props.FloatProperty and (not ("ANIMATABLE" in propertyArgs["options"]))):
-                        raise Exception("The property %(fieldName)s of %(blenderClass)s should be an float which isn't animatable" % {"fieldName":fieldName, "blenderClass":blenderClass })
-                    fieldVisitor.visitFloat(blenderObject, m3Object, fieldName)
-                elif fieldTypeName == "uint32":
-                    if (propertyType == bpy.props.BoolProperty):
-                        fieldVisitor.visitBoolean(blenderObject, m3Object, fieldName)
-                    elif propertyType == bpy.props.IntProperty:
-                        fieldVisitor.visitInt(blenderObject, m3Object, fieldName)
-                elif fieldTypeName in ["int32", "uint16", "int16", "uint8", "int8"]:
-                    if propertyType == bpy.props.IntProperty:
-                        fieldVisitor.visitInt(blenderObject, m3Object, fieldName)
-                elif fieldTypeName == "Vector3AnimationReference":
-                    if not (propertyType == bpy.props.FloatVectorProperty and (propertyArgs["size"] == 3) and ("ANIMATABLE" in propertyArgs["options"])):
-                        raise Exception("The property %(fieldName)s of %(blenderClass)s should be an animated float vector of size 3" % {"fieldName":fieldName, "blenderClass":blenderClass })
-                    fieldVisitor.visitAnimatableVector3(blenderObject, m3Object, fieldName)
-                elif fieldTypeName == "ColorAnimationReference":
-                    if not (propertyType == bpy.props.FloatVectorProperty and (propertyArgs["size"] == 4) and ("ANIMATABLE" in propertyArgs["options"])):
-                        raise Exception("The property %(fieldName)s of %(blenderClass)s should be an animated float vector of size 4" % {"fieldName":fieldName, "blenderClass":blenderClass })
-                    fieldVisitor.visitAnimatableColor(blenderObject, m3Object, fieldName)
-                elif fieldTypeName == "Int16AnimationReference":
-                    if not (propertyType == bpy.props.IntProperty and "ANIMATABLE" in propertyArgs["options"]):
-                        raise Exception("The property %(fieldName)s of %(blenderClass)s should be an animatable integer" % {"fieldName":fieldName, "blenderClass":blenderClass })
-                    fieldVisitor.visitAnimatableInteger(blenderObject, m3Object, fieldName)
-                elif fieldTypeName == "CHARV0":
-                    if not (propertyType == bpy.props.StringProperty and not "ANIMATABLE" in propertyArgs["options"]):
-                        raise Exception("The property %(fieldName)s of %(blenderClass)s should be a non animatable string" % {"fieldName":fieldName, "blenderClass":blenderClass })
-                    fieldVisitor.visitString(blenderObject, m3Object, fieldName)
-                
-                
-class BlenderPropertiesSettingFieldVisitor:
-    def __init__(self, importer, animPathPrefix):
+class M3ToBlenderDataTransferer:
+    def __init__(self, importer, animPathPrefix, blenderObject, m3Object):
         self.importer = importer
         self.animPathPrefix = animPathPrefix
+        self.blenderObject = blenderObject
+        self.m3Object = m3Object
     
-    def visitAnimatableFloat(self, blenderObject, m3Object, fieldName):
-        animationReference = getattr(m3Object, fieldName)
-        setattr(blenderObject, fieldName, animationReference.initValue)
+    def transferAnimatableFloat(self, fieldName):
+        animationReference = getattr(self.m3Object, fieldName)
+        setattr(self.blenderObject, fieldName, animationReference.initValue)
         animationHeader = animationReference.header
         animId = animationHeader.animId
         animPath = self.animPathPrefix +  fieldName
         self.importer.animateFloat(ownerTypeScene, animPath, animId)
         
-    def visitAnimatableInteger(self, blenderObject, m3Object, fieldName):
-        animationReference = getattr(m3Object, fieldName)
-        setattr(blenderObject, fieldName, animationReference.initValue)
+    def transferAnimatableInteger(self, fieldName):
+        """ Helper method"""
+        animationReference = getattr(self.m3Object, fieldName)
+        setattr(self.blenderObject, fieldName, animationReference.initValue)
         animationHeader = animationReference.header
         animId = animationHeader.animId
         animPath = self.animPathPrefix + fieldName
         self.importer.animateInteger(ownerTypeScene, animPath, animId)
+
+    def transferAnimatableInt16(self, fieldName):
+        self.transferAnimatableInteger(fieldName)
+
+    def transferAnimatableUInt32(self, fieldName):
+        self.transferAnimatableInteger(fieldName)
+
+    
+    def transferFloat(self, fieldName):
+        setattr(self.blenderObject, fieldName, getattr(self.m3Object, fieldName))
         
-    def visitFloat(self, blenderObject, m3Object, fieldName):
-        setattr(blenderObject, fieldName, getattr(m3Object, fieldName))
+    def transferInt(self, fieldName):
+        setattr(self.blenderObject, fieldName, getattr(self.m3Object, fieldName))
         
-    def visitInt(self, blenderObject, m3Object, fieldName):
-        setattr(blenderObject, fieldName, getattr(m3Object, fieldName))
-        
-    def visitString(self, blenderObject, m3Object, fieldName):
-        value = getattr(m3Object, fieldName)
+    def transferString(self, fieldName):
+        value = getattr(self.m3Object, fieldName)
         if value == None:
             value = ""
-        setattr(blenderObject, fieldName, value)
+        setattr(self.blenderObject, fieldName, value)
 
-    def visitBoolean(self, blenderObject, m3Object, fieldName):
-        integerValue = getattr(m3Object, fieldName)
+    def transferBoolean(self, fieldName):
+        integerValue = getattr(self.m3Object, fieldName)
         if integerValue == 0:
-            setattr(blenderObject, fieldName, False)
+            setattr(self.blenderObject, fieldName, False)
         elif integerValue == 1:
-            setattr(blenderObject, fieldName, True)
+            setattr(self.blenderObject, fieldName, True)
         else:
             print("WARNING: %s was neither 0 nor 1" % fieldName)
+            
+    def transferBit(self, m3FieldName, bitName):
+        setattr(self.blenderObject, bitName, self.m3Object.getNamedBit(m3FieldName, bitName))
+
     
-    def visitAnimatableVector3(self, blenderObject, m3Object, fieldName):
-        animationReference = getattr(m3Object, fieldName)
-        setattr(blenderObject, fieldName, toBlenderVector3(animationReference.initValue))
+    def transferAnimatableVector3(self, fieldName):
+        animationReference = getattr(self.m3Object, fieldName)
+        setattr(self.blenderObject, fieldName, toBlenderVector3(animationReference.initValue))
         animationHeader = animationReference.header
         animId = animationHeader.animId
         animPath = self.animPathPrefix + fieldName
         self.importer.animateVector3(ownerTypeScene, animPath, animId)
 
         
-    def visitAnimatableColor(self, blenderObject, m3Object, fieldName):
-        animationReference = getattr(m3Object, fieldName)
-        setattr(blenderObject, fieldName, toBlenderColorVector(animationReference.initValue))
+    def transferAnimatableColor(self, fieldName):
+        animationReference = getattr(self.m3Object, fieldName)
+        setattr(self.blenderObject, fieldName, toBlenderColorVector(animationReference.initValue))
         animationHeader = animationReference.header
         animId = animationHeader.animId
         animPath = self.animPathPrefix + fieldName
         self.importer.animateColor(ownerTypeScene, animPath, animId)
+        
+    def transferEnum(self, fieldName):
+        value = str(getattr(self.m3Object, fieldName))
+        setattr(self.blenderObject, fieldName, value)
 
 class AnimationData:
     def __init__(self, animIdToTimeValueMap, ownerTypeToActionMap, animationIndex):
@@ -597,45 +567,18 @@ class Importer:
         for materialsEntry in self.model.standardMaterials:
             material = currentScene.m3_materials.add()
             animPathPrefix = "m3_materials[%s]." % index
-            fieldVisitor = BlenderPropertiesSettingFieldVisitor(self, animPathPrefix)
-            visitFieldPropertyPairs(blenderObject=material, m3Object=materialsEntry, fieldVisitor=fieldVisitor)
+            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=materialsEntry)
+            shared.transferStandardMaterial(materialTransferer)
             layerIndex = 0
             for (layerName, layerFieldName) in zip(shared.materialLayerNames, shared.materialLayerFieldNames):
                 materialLayersEntry = getattr(materialsEntry,layerFieldName)[0]
                 materialLayer = material.layers.add()
                 materialLayer.name = layerName
                 animPathPrefix = "m3_materials[%s].layers[%s]." % (index, layerIndex)
-                fieldVisitor = BlenderPropertiesSettingFieldVisitor(self, animPathPrefix)
-                visitFieldPropertyPairs(blenderObject=materialLayer, m3Object=materialLayersEntry, fieldVisitor=fieldVisitor)
-                materialLayer.uvSource = str(materialLayersEntry.uvSource)
-                materialLayer.textureWrapX = materialLayersEntry.getNamedBit("flags", "textureWrapX")
-                materialLayer.textureWrapY = materialLayersEntry.getNamedBit("flags", "textureWrapY")
-                materialLayer.colorEnabled = materialLayersEntry.getNamedBit("flags", "colorEnabled")
-                materialLayer.alphaAsTeamColor = materialLayersEntry.getNamedBit("alphaFlags", "alphaAsTeamColor")
-                materialLayer.alphaOnly = materialLayersEntry.getNamedBit("alphaFlags", "alphaOnly")
-                materialLayer.alphaBasedShading = materialLayersEntry.getNamedBit("alphaFlags", "alphaBasedShading")
+                layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
+                shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1
             index += 1
-            material.blendMode = str(materialsEntry.blendMode)
-            material.layerBlendType = str(materialsEntry.layerBlendType)
-            material.emisBlendType = str(materialsEntry.emisBlendType)
-            material.specType = str(materialsEntry.specType)
-            material.unfogged = materialsEntry.getNamedBit("flags", "unfogged")
-            material.twoSided = materialsEntry.getNamedBit("flags", "twoSided")
-            material.unshaded = materialsEntry.getNamedBit("flags", "unshaded")
-            material.noShadowsCast = materialsEntry.getNamedBit("flags", "noShadowsCast")
-            material.noHitTest = materialsEntry.getNamedBit("flags", "noHitTest")
-            material.noShadowsReceived = materialsEntry.getNamedBit("flags", "noShadowsReceived")
-            material.depthPrepass = materialsEntry.getNamedBit("flags", "depthPrepass")
-            material.useTerrainHDR = materialsEntry.getNamedBit("flags", "useTerrainHDR")
-            material.splatUVfix = materialsEntry.getNamedBit("flags", "splatUVfix")
-            material.softBlending = materialsEntry.getNamedBit("flags", "softBlending")
-            material.forParticles = materialsEntry.getNamedBit("flags", "forParticles")
-            material.unknownFlag0x1 = materialsEntry.getNamedBit("unknownFlags", "unknownFlag0x1")
-            material.unknownFlag0x4 = materialsEntry.getNamedBit("unknownFlags", "unknownFlag0x4")
-            material.unknownFlag0x8 = materialsEntry.getNamedBit("unknownFlags", "unknownFlag0x8")
-            material.unknownFlag0x200 = materialsEntry.getNamedBit("unknownFlags", "unknownFlag0x200")
-
 
     def createParticleSystems(self):
         currentScene = bpy.context.scene
@@ -644,8 +587,8 @@ class Importer:
         for particlesEntry in self.model.particles:
             particle_system = currentScene.m3_particle_systems.add()
             animPathPrefix = "m3_particle_systems[%s]." % index
-            fieldVisitor = BlenderPropertiesSettingFieldVisitor(self, animPathPrefix)
-            visitFieldPropertyPairs(blenderObject=particle_system, m3Object=particlesEntry, fieldVisitor=fieldVisitor)
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=particle_system, m3Object=particlesEntry)
+            shared.transferParticleSystem(transferer)
             boneEntry = self.model.bones[particlesEntry.bone]
             fullBoneName = boneEntry.name
             if fullBoneName.startswith(shared.star2ParticlePrefix):
@@ -653,42 +596,10 @@ class Importer:
             else:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                 particle_system.boneSuffix = fullBoneName
-            particle_system.emissionAreaType = str(particlesEntry.emissionAreaType)
-            particle_system.emissionType = str(particlesEntry.emissionType)
             materialReference = self.model.materialReferences[particlesEntry.materialReferenceIndex]
             if materialReference.materialType != 1:
                 raise Exception("Particle System doesn't use a standard material")
-
-            particle_system.materialName = self.model.standardMaterials[materialReference.materialIndex].name
-            particle_system.sort = particlesEntry.getNamedBit("flags", "sort")
-            particle_system.collideTerrain = particlesEntry.getNamedBit("flags", "collideTerrain")
-            particle_system.collideObjects = particlesEntry.getNamedBit("flags", "collideObjects")
-            particle_system.spawnOnBounce = particlesEntry.getNamedBit("flags", "spawnOnBounce")
-            particle_system.useInnerShape = particlesEntry.getNamedBit("flags", "useInnerShape")
-            particle_system.inheritEmissionParams = particlesEntry.getNamedBit("flags", "inheritEmissionParams")
-            particle_system.inheritParentVel = particlesEntry.getNamedBit("flags", "inheritParentVel")
-            particle_system.sortByZHeight = particlesEntry.getNamedBit("flags", "sortByZHeight")
-            particle_system.reverseIteration = particlesEntry.getNamedBit("flags", "reverseIteration")
-            particle_system.smoothRotation = particlesEntry.getNamedBit("flags", "smoothRotation")
-            particle_system.bezSmoothRotation = particlesEntry.getNamedBit("flags", "bezSmoothRotation")
-            particle_system.smoothSize = particlesEntry.getNamedBit("flags", "smoothSize")
-            particle_system.bezSmoothSize = particlesEntry.getNamedBit("flags", "bezSmoothSize")
-            particle_system.smoothColor = particlesEntry.getNamedBit("flags", "smoothColor")
-            particle_system.bezSmoothColor = particlesEntry.getNamedBit("flags", "bezSmoothColor")
-            particle_system.litParts = particlesEntry.getNamedBit("flags", "litParts")
-            particle_system.randFlipBookStart = particlesEntry.getNamedBit("flags", "randFlipBookStart")
-            particle_system.multiplyByGravity = particlesEntry.getNamedBit("flags", "multiplyByGravity")
-            particle_system.clampTailParts = particlesEntry.getNamedBit("flags", "clampTailParts")
-            particle_system.spawnTrailingParts = particlesEntry.getNamedBit("flags", "spawnTrailingParts")
-            particle_system.fixLengthTailParts = particlesEntry.getNamedBit("flags", "fixLengthTailParts")
-            particle_system.useVertexAlpha = particlesEntry.getNamedBit("flags", "useVertexAlpha")
-            particle_system.modelParts = particlesEntry.getNamedBit("flags", "modelParts")
-            particle_system.swapYZonModelParts = particlesEntry.getNamedBit("flags", "swapYZonModelParts")
-            particle_system.scaleTimeByParent = particlesEntry.getNamedBit("flags", "scaleTimeByParent")
-            particle_system.useLocalTime = particlesEntry.getNamedBit("flags", "useLocalTime")
-            particle_system.simulateOnInit = particlesEntry.getNamedBit("flags", "simulateOnInit")
-            particle_system.copy = particlesEntry.getNamedBit("flags", "copy")
-            
+            particle_system.materialName = self.model.standardMaterials[materialReference.materialIndex].name            
             index += 1
 
 
@@ -914,16 +825,11 @@ class Importer:
             if (sequence.name != stg.name):
                 raise Exception("Name of sequence and it's transformation group does not match")
             animation = scene.m3_animations.add()
-            animation.name = sequence.name
             animation.startFrame = msToFrame(sequence.animStartInMS)
             animation.exlusiveEndFrame = msToFrame(sequence.animEndInMS)
-            animation.notLooping =  sequence.getNamedBit("flags", "notLooping")
-            animation.alwaysGlobal =  sequence.getNamedBit("flags", "alwaysGlobal")
-            animation.globalInPreviewer =  sequence.getNamedBit("flags", "globalInPreviewer")
+            transferer = M3ToBlenderDataTransferer(self, None, blenderObject=animation, m3Object=sequence)
+            shared.transferAnimation(transferer)
             
-            fieldVisitor = BlenderPropertiesSettingFieldVisitor(self, None)
-            visitFieldPropertyPairs(blenderObject=animation, m3Object=sequence, fieldVisitor=fieldVisitor)
-
             animIdToTimeValueMap = {}
             ownerTypeToActionMap = {}
             for stcIndex in stg.stcIndices:

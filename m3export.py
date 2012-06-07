@@ -317,7 +317,6 @@ class Exporter:
             mesh.update(calc_tessface=True)
             firstFaceVertexIndexIndex = len(division.faces)
             firstVertexIndexIndex = len(m3Vertices)
-            print(firstVertexIndexIndex, firstFaceVertexIndexIndex)
             regionFaceVertexIndices = []
             regionVertices = []
             vertexDataTupleToIndexMap = {}
@@ -531,14 +530,10 @@ class Exporter:
             animIds.sort()
             
             m3Sequence = m3.SEQSV1()
-            m3Sequence.name = animation.name
             m3Sequence.animStartInMS = self.frameToMS(animation.startFrame)
             m3Sequence.animEndInMS = self.frameToMS(animation.exlusiveEndFrame)
-            m3Sequence.movementSpeed = animation.movementSpeed
-            m3Sequence.setNamedBit("flags", "notLooping", animation.notLooping)
-            m3Sequence.setNamedBit("flags", "alwaysGlobal", animation.alwaysGlobal)
-            m3Sequence.setNamedBit("flags", "globalInPreviewer", animation.globalInPreviewer)
-            m3Sequence.frequency = animation.frequency
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Sequence, blenderObject=animation, animPathPrefix=None, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+            shared.transferAnimation(transferer)
             m3Sequence.boundingSphere = self.createAlmostEmptyBoundingsWithRadius(2)
             seqIndex = len(model.sequences)
             model.sequences.append(m3Sequence)
@@ -1122,7 +1117,7 @@ class BlenderToM3DataTransferer:
         value = getattr(self.blenderObject, fieldName)
         setattr(self.m3Object, fieldName , value)
         
-    def transferBoolToInt(self, fieldName):
+    def transferBoolean(self, fieldName):
         booleanValue = getattr(self.blenderObject, fieldName)
         if booleanValue:
             intValue = 1
