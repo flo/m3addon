@@ -5,7 +5,7 @@ The Python scripts can be used as a Blender addon.
 
 Currently the following content can be exported:
 
-  * Animated meshes made out of triangles that share the first material
+  * Animated meshes that use all the first material
   * Animated M3 standard materials
   * Animated M3 particle systems
   * Animated M3 attachment points and volumes

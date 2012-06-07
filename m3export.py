@@ -339,9 +339,24 @@ class Exporter:
             vertexDataTupleToIndexMap = {}
             nextVertexIndex = 0
             for blenderFace in mesh.tessfaces:
-                if len(blenderFace.vertices) != 3:
-                    raise Exception("Only the export of meshes with triangles has been implemented")
-                for faceRelativeVertexIndex, blenderVertexIndex in enumerate(blenderFace.vertices):
+                faceRelativeVertexIndexAndBlenderVertexIndexTuples = []
+                if len(blenderFace.vertices) == 3 or len(blenderFace.vertices) == 4:
+                    faceRelativeVertexIndexAndBlenderVertexIndexTuples.append((0, blenderFace.vertices[0]))
+                    faceRelativeVertexIndexAndBlenderVertexIndexTuples.append((1, blenderFace.vertices[1]))
+                    faceRelativeVertexIndexAndBlenderVertexIndexTuples.append((2, blenderFace.vertices[2]))
+                    
+                    if len(blenderFace.vertices) == 4:
+                        faceRelativeVertexIndexAndBlenderVertexIndexTuples.append((0, blenderFace.vertices[0]))
+                        faceRelativeVertexIndexAndBlenderVertexIndexTuples.append((2, blenderFace.vertices[2]))
+                        faceRelativeVertexIndexAndBlenderVertexIndexTuples.append((3, blenderFace.vertices[3]))
+                    
+                else:
+                    raise Exception("Only the export of meshes with triangles and quads has been implemented")
+                
+                
+                
+                
+                for faceRelativeVertexIndex, blenderVertexIndex in faceRelativeVertexIndexAndBlenderVertexIndexTuples:
                     blenderVertex =  mesh.vertices[blenderVertexIndex]
                     m3Vertex = m3VertexFormatClass()
                     m3Vertex.position = self.blenderToM3Vector(blenderVertex.co)
