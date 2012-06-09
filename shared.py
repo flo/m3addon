@@ -29,6 +29,8 @@ materialLayerFieldNames = ["diffuseLayer", "decalLayer", "specularLayer", "selfI
 materialLayerNames = ["Diffuse", "Decal", "Specular", "Self Illumination", 
     "Emissive", "Reflection", "Evio", "Evio Mask", "Alpha Mask", "Bump", "Height", "Layer 12", "Layer 13"]
 
+materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume"]
+standardMaterialTypeIndex = 1
 
 rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
                                  (-1, 0, 0, 0),
@@ -80,6 +82,14 @@ def setAnimationWithIndexToCurrentData(scene, animationIndex):
         assignedAction = animation.assignedActions.add()
         assignedAction.targetName = scene.name
         assignedAction.actionName = scene.animation_data.action.name
+
+def getMaterial(scene, materialTypeIndex, materialIndex):
+    if materialTypeIndex == standardMaterialTypeIndex:
+        return scene.m3_standard_materials[materialIndex]
+    return None
+    
+def calculateMaterialLabel(materialName, materialTypeIndex):
+    return "%s (%s)" % (materialName, materialNames[materialTypeIndex])
 
 def sqr(x):
     return x*x
@@ -139,6 +149,7 @@ def simplifyAnimationWithInterpolation(timeValuesInMS, values, interpolationFunc
     return newTimeValuesInMS, newValues
     
 def transferParticleSystem(transferer):
+    transferer.transferInt("materialReferenceIndex")
     transferer.transferAnimatableFloat("emissionSpeed1")
     transferer.transferAnimatableFloat("emissionSpeed2")
     transferer.transferBoolean("randomizeWithEmissionSpeed2")

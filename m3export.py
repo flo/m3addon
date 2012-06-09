@@ -450,7 +450,7 @@ class Exporter:
             
             bat = m3.BAT_V1()
             bat.subId = meshIndex
-            if len(self.scene.m3_materials) == 0:
+            if len(self.scene.m3_material_references) == 0:
                 raise Exception("Require a m3 material to export a mesh")
             bat.matId = 0
             division.bat.append(bat)
@@ -658,22 +658,6 @@ class Exporter:
             shared.transferParticleSystem(transferer)
             m3ParticleSystem.indexPlusHighestIndex = len(scene.m3_particle_systems) -1 + particleSystemIndex
             m3ParticleSystem.ar1 = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
-
-            materialReferenceIndices = []
-            for materialReferenceIndex, materialReference in enumerate(model.materialReferences):
-                if materialReference.materialType == 1:
-                    material = model.standardMaterials[materialReference.materialIndex]
-                    if material.name == particleSystem.materialName:
-                        materialReferenceIndices.append(materialReferenceIndex)
-                else:
-                    raise Exception("Exporting particle system with non standard materials is not supported yet")
-            
-            if len(materialReferenceIndices) > 1:
-                raise Exception("There are multiple materials with the same name")
-            elif len(materialReferenceIndices) == 0:
-                raise Exception("The material %s referenced by the particle system %s does not exist" % (particleSystem.materialName, particleSystem.boneSuffix))
-            m3ParticleSystem.materialReferenceIndex = materialReferenceIndices[0]
-
             model.particles.append(m3ParticleSystem)
 
     def initAttachmentPoints(self, model):
@@ -756,25 +740,26 @@ class Exporter:
         return m3Bone
 
     def initMaterials(self, model):
-        standardMaterials = []
-        materialReferences = model.materialReferences
         scene = self.scene
         
-        for materialIndex, material in enumerate(scene.m3_materials):
-            materialType = 1 # 1 = standard material
-            materialReferences.append(self.createMaterialReference(materialIndex, materialType))
-            standardMaterials.append(self.createMaterial(materialIndex, material))
-        model.materialReferences = materialReferences 
-        model.standardMaterials = standardMaterials
+        supportedMaterialTypes = [shared.standardMaterialTypeIndex]
+        for materialReference in scene.m3_material_references:
+            materialType = materialReference.materialType
+            if materialType in supportedMaterialTypes:
+                materialIndex = materialReference.materialIndex
+                model.materialReferences.append(self.createMaterialReference(materialIndex, materialType))
         
-    def createMaterial(self, materialIndex, material):
+        for materialIndex, standardMaterial in enumerate(scene.m3_standard_materials):
+            model.standardMaterials.append(self.createStandardMaterial(materialIndex, standardMaterial))
+        
+    def createStandardMaterial(self, materialIndex, material):
         m3Material = m3.MAT_V15()
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=None, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
         shared.transferStandardMaterial(transferer)
 
         layerIndex = 0
         for layer, layerFieldName in zip(material.layers, shared.materialLayerFieldNames):
-            animPathPrefix = "m3_materials[%s].layers[%s]." % (materialIndex, layerIndex)
+            animPathPrefix = "m3_standard_materials[%s].layers[%s]." % (materialIndex, layerIndex)
             m3Layer = self.createMaterialLayer(layer, animPathPrefix)
             setattr(m3Material, layerFieldName, [m3Layer])
             layerIndex += 1
@@ -1018,7 +1003,6 @@ class Exporter:
         return None
 
 class BlenderToM3DataTransferer:
-    
     def __init__(self, exporter, m3Object, blenderObject, animPathPrefix,  actionOwnerName, actionOwnerType):
         self.exporter = exporter
         self.m3Object = m3Object

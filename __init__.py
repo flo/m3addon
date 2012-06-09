@@ -66,7 +66,7 @@ def availableBones(self, context):
 
 def availableMaterials(self, context):
     list = [("", "None", "No Material")]
-    for material in context.scene.m3_materials:
+    for material in context.scene.m3_material_references:
         list.append((material.name, material.name, material.name))
     return list
 
@@ -88,7 +88,17 @@ def handleTypeOrBoneSuffixChange(self, context):
             bone.name = newBoneName
     self.oldBoneSuffix = self.boneSuffix
 
-
+def handleMaterialNameChange(self, context):
+    scene = context.scene
+    materialName = self.name
+    materialReferenceIndex = self.materialReferenceIndex
+    if materialReferenceIndex != -1:
+        materialReference = scene.m3_material_references[self.materialReferenceIndex]
+        materialIndex = materialReference.materialIndex
+        materialType = materialReference.materialType
+        label = shared.calculateMaterialLabel(materialName, materialType)
+        materialReference.name = label
+    
 def handleAttachmentVolumeTypeChange(self, context):
     if self.volumeType in ["0", "1", "2"]:
        if self.volumeSize0 == 0.0:
@@ -234,9 +244,10 @@ attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment 
                             ("2", 'Cylinder', 'Volume with the shape of a cylinder with the given radius and height'),
                             ("3", 'Unknown 3', 'Unknown Volume with id 3'),
                             ("4", 'Unknown 4', 'Unknown Volume with id 4')
-                           ]
-matDefaultSettingsList = [("MESH", "Mesh Material", "A material for meshes"), 
-                        ("PARTICLE", 'Particle Material', "Material for particle systems")
+                           ] 
+    
+matDefaultSettingsList = [("MESH", "Mesh Standard Material", "A material for meshes"), 
+                        ("PARTICLE", 'Particle Standard Material', "Material for particle systems")
                         ]
                         
 matBlendModeList = [("0", "Opaque", "no description yet"), 
@@ -297,6 +308,13 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
 
 class M3Material(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Material", options=set())
+    materialType = bpy.props.IntProperty(options=set())
+    materialIndex = bpy.props.IntProperty(options=set())
+    
+class M3StandardMaterial(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="name", default="Material", update=handleMaterialNameChange, options=set())
+    # the following field gets used to update the name of the material reference:
+    materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
     layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
     blendMode = bpy.props.EnumProperty(items=matBlendModeList, options=set(), default="0")
     priority = bpy.props.IntProperty(options=set())
@@ -329,7 +347,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options={"SKIP_SAVE"})
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleTypeOrBoneSuffixChange, default="Particle System")
     oldBoneSuffix = bpy.props.StringProperty(options={"SKIP_SAVE"})
-    materialName = bpy.props.EnumProperty(items=availableMaterials, options=set())
+    materialReferenceIndex = bpy.props.IntProperty(default=0, subtype="UNSIGNED",options=set())
     maxParticles = bpy.props.IntProperty(default=20, subtype="UNSIGNED",options=set())
     emissionSpeed1 = bpy.props.FloatProperty(name="emis. speed 1",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission")
     emissionSpeed2 = bpy.props.FloatProperty(default=1.0, name="emiss. speed 2",options={"ANIMATABLE"}, description="If emission speed randomization is enabled this value specfies the other end of the range of random speeds")
@@ -469,8 +487,8 @@ class AnimationSequencesPanel(bpy.types.Panel):
             layout.prop(animation, 'globalInPreviewer', text="Global In Previewer")
 
 
-class MaterialsPanel(bpy.types.Panel):
-    bl_idname = "OBJECT_PT_M3_materials"
+class MaterialReferencesPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_material_references"
     bl_label = "M3 Materials"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -481,40 +499,57 @@ class MaterialsPanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_materials", scene, "m3_material_index", rows=2)
+        col.template_list(scene, "m3_material_references", scene, "m3_material_reference_index", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.materials_add", icon='ZOOMIN', text="")
         col.operator("m3.materials_remove", icon='ZOOMOUT', text="")
 
-        materialIndex = scene.m3_material_index
-        if materialIndex >= 0 and materialIndex < len(scene.m3_materials):
-            material = scene.m3_materials[materialIndex]
-            layout.separator()
-            layout.prop(material, 'name', text="Name")
-            layout.prop(material, 'blendMode', text="Blend Mode")
-            layout.prop(material, 'priority', text="Priority")
-            layout.prop(material, 'specularity', text="Specularity")
-            layout.prop(material, 'specMult', text="Spec. Mult.")
-            layout.prop(material, 'emisMult', text="Emis. Mult.")
-            layout.prop(material, 'layerBlendType', text="Layer Blend Type")
-            layout.prop(material, 'emisBlendType', text="Emis. Blend Type")
-            layout.prop(material, 'specType', text="Spec. Type")
-            layout.prop(material, 'unknownFlag0x1', text="unknownFlag0x1")
-            layout.prop(material, 'unknownFlag0x4', text="unknownFlag0x4")
-            layout.prop(material, 'unknownFlag0x8', text="unknownFlag0x8")
-            layout.prop(material, 'unknownFlag0x200', text="unknownFlag0x200")
-            layout.prop(material, 'unfogged', text="Unfogged")
-            layout.prop(material, 'twoSided', text="Two Sided")
-            layout.prop(material, 'unshaded', text="Unshaded")
-            layout.prop(material, 'noShadowsCast', text="No Shadows Cast")
-            layout.prop(material, 'noHitTest', text="No Hit Test")
-            layout.prop(material, 'noShadowsReceived', text="No Shadows Received")
-            layout.prop(material, 'depthPrepass', text="Depth Prepass")
-            layout.prop(material, 'useTerrainHDR', text="Use Terrain HDR")
-            layout.prop(material, 'splatUVfix', text="Splat UV Fix")
-            layout.prop(material, 'softBlending', text="Soft Blending")
-            layout.prop(material, 'forParticles', text="For Particles (?)")
+class MaterialPropertiesPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_material_properties"
+    bl_label = "M3 Material Properties"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+
+        materialReferenceIndex = scene.m3_material_reference_index
+        if materialReferenceIndex >= 0 and materialReferenceIndex < len(scene.m3_material_references):
+            materialReference = scene.m3_material_references[materialReferenceIndex]
+            materialType = materialReference.materialType
+            materialIndex = materialReference.materialIndex
+            
+            if materialType == shared.standardMaterialTypeIndex:
+                material = scene.m3_standard_materials[materialIndex]
+                layout.prop(material, 'name', text="Name")
+                layout.prop(material, 'blendMode', text="Blend Mode")
+                layout.prop(material, 'priority', text="Priority")
+                layout.prop(material, 'specularity', text="Specularity")
+                layout.prop(material, 'specMult', text="Spec. Mult.")
+                layout.prop(material, 'emisMult', text="Emis. Mult.")
+                layout.prop(material, 'layerBlendType', text="Layer Blend Type")
+                layout.prop(material, 'emisBlendType', text="Emis. Blend Type")
+                layout.prop(material, 'specType', text="Spec. Type")
+                layout.prop(material, 'unknownFlag0x1', text="unknownFlag0x1")
+                layout.prop(material, 'unknownFlag0x4', text="unknownFlag0x4")
+                layout.prop(material, 'unknownFlag0x8', text="unknownFlag0x8")
+                layout.prop(material, 'unknownFlag0x200', text="unknownFlag0x200")
+                layout.prop(material, 'unfogged', text="Unfogged")
+                layout.prop(material, 'twoSided', text="Two Sided")
+                layout.prop(material, 'unshaded', text="Unshaded")
+                layout.prop(material, 'noShadowsCast', text="No Shadows Cast")
+                layout.prop(material, 'noHitTest', text="No Hit Test")
+                layout.prop(material, 'noShadowsReceived', text="No Shadows Received")
+                layout.prop(material, 'depthPrepass', text="Depth Prepass")
+                layout.prop(material, 'useTerrainHDR', text="Use Terrain HDR")
+                layout.prop(material, 'splatUVfix', text="Splat UV Fix")
+                layout.prop(material, 'softBlending', text="Soft Blending")
+                layout.prop(material, 'forParticles', text="For Particles (?)")
+            else:
+                layout.label(text=("Unsupported material type %d" % materialType))
 
 class MatrialLayersPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_layers"
@@ -529,37 +564,41 @@ class MatrialLayersPanel(bpy.types.Panel):
         row = layout.row()
         col = row.column()
 
-        materialIndex = scene.m3_material_index
-        if materialIndex >= 0 and materialIndex < len(scene.m3_materials):
-            material = scene.m3_materials[materialIndex]
-            col.template_list(material, "layers", scene, "m3_material_layer_index", rows=2)
-            layerIndex = scene.m3_material_layer_index
-            if layerIndex >= 0 and layerIndex < len(material.layers):
-                layer = material.layers[layerIndex]
-                layout.prop(layer, 'imagePath', text="Image Path")
-                layout.prop(layer, 'uvSource', text="UV Source")
-                layout.prop(layer, 'textureWrapX', text="Tex. Wrap X")
-                layout.prop(layer, 'textureWrapY', text="Tex. Wrap Y")
-                layout.prop(layer, 'alphaAsTeamColor', text="Alpha As Team Color")
-                layout.prop(layer, 'alphaOnly', text="Alpha Only")
-                layout.prop(layer, 'alphaBasedShading', text="Alpha Based Shading")
-                split = layout.split()
-                row = split.row()
-                row.prop(layer, 'colorEnabled', text="Color:")
-                sub = row.column(align=True)
-                sub.active = layer.colorEnabled
-                sub.prop(layer, 'color', text="")
-                
-                split = layout.split()
-                col = split.column()
-                sub = col.column(align=True)
-                sub.label(text="Brightness:")
-                sub.prop(layer, "brightness", text="")
-                sub.prop(layer, "brightMult", text="Multiplier")
-                sub.prop(layer, "brightMult2", text="Multiplier 2")
-                
+        materialIndex = scene.m3_material_reference_index
+        if materialIndex >= 0 and materialIndex < len(scene.m3_material_references):
+            materialReference = scene.m3_material_references[materialIndex]
+            materialType = materialReference.materialType
+            materialIndex = materialReference.materialIndex
+            
+            if materialType == shared.standardMaterialTypeIndex:
+                material = scene.m3_standard_materials[materialIndex]
+                col.template_list(material, "layers", scene, "m3_material_layer_index", rows=2)
+                layerIndex = scene.m3_material_layer_index
+                if layerIndex >= 0 and layerIndex < len(material.layers):
+                    layer = material.layers[layerIndex]
+                    layout.prop(layer, 'imagePath', text="Image Path")
+                    layout.prop(layer, 'uvSource', text="UV Source")
+                    layout.prop(layer, 'textureWrapX', text="Tex. Wrap X")
+                    layout.prop(layer, 'textureWrapY', text="Tex. Wrap Y")
+                    layout.prop(layer, 'alphaAsTeamColor', text="Alpha As Team Color")
+                    layout.prop(layer, 'alphaOnly', text="Alpha Only")
+                    layout.prop(layer, 'alphaBasedShading', text="Alpha Based Shading")
+                    split = layout.split()
+                    row = split.row()
+                    row.prop(layer, 'colorEnabled', text="Color:")
+                    sub = row.column(align=True)
+                    sub.active = layer.colorEnabled
+                    sub.prop(layer, 'color', text="")
+                    
+                    split = layout.split()
+                    col = split.column()
+                    sub = col.column(align=True)
+                    sub.label(text="Brightness:")
+                    sub.prop(layer, "brightness", text="")
+                    sub.prop(layer, "brightMult", text="Multiplier")
+                    sub.prop(layer, "brightMult2", text="Multiplier 2")
         else:
-            col.label(text="no m3 material selected")
+            col.label(text="No properties to display")
 
 
 class ParticleSystemsPanel(bpy.types.Panel):
@@ -584,7 +623,7 @@ class ParticleSystemsPanel(bpy.types.Panel):
             particle_system = scene.m3_particle_systems[currentIndex]
             layout.separator()
             layout.prop(particle_system, 'boneSuffix',text="Name")
-            layout.prop(particle_system, 'materialName',text="Material")
+            layout.prop(particle_system, 'materialReferenceIndex',text="Material Index")
             
             split = layout.split()
             col = split.column()
@@ -820,7 +859,7 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.materials_add'
     bl_label       = "Add M3 Material"
     bl_description = "Adds an material for the export to Starcraft 2"
-    
+
     defaultSetting = bpy.props.EnumProperty(items=matDefaultSettingsList, options=set(), default="MESH")
     name = bpy.props.StringProperty(name="name", default="Stand", options=set())
     
@@ -837,44 +876,53 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
   
     def execute(self, context):
         scene = context.scene
+        defaultSettingMesh = "MESH"
         defaultSettingParticle = "PARTICLE"
-        material = scene.m3_materials.add()
-        material.name = self.name
-        for (layerName, layerFieldName) in zip(shared.materialLayerNames, shared.materialLayerFieldNames):
-            layer = material.layers.add()
-            layer.name = layerName
-            if layerFieldName == "diffuseLayer":
-                if self.defaultSetting != defaultSettingParticle:
+        if self.defaultSetting in [defaultSettingMesh, defaultSettingParticle]:
+            materialIndex = len(scene.m3_standard_materials)
+            materialType = shared.standardMaterialTypeIndex
+            materialReferenceIndex = len(scene.m3_material_references)
+            materialReference = scene.m3_material_references.add()
+            materialReference.materialIndex = materialIndex
+            materialReference.materialType = materialType
+            material = scene.m3_standard_materials.add()
+            material.materialReferenceIndex = materialReferenceIndex
+            material.name = self.name
+            for (layerName, layerFieldName) in zip(shared.materialLayerNames, shared.materialLayerFieldNames):
+                layer = material.layers.add()
+                layer.name = layerName
+                if layerFieldName == "diffuseLayer":
+                    if self.defaultSetting != defaultSettingParticle:
+                        layer.alphaAsTeamColor = True
+                if layerFieldName == "evioMaskLayer":
+                    layer.alphaOnly = True
+                elif layerFieldName in ["alphaMaskLayer", "layer12", "layer13"]:
+                    layer.textureWrapX = False
+                    layer.textureWrapY = False
                     layer.alphaAsTeamColor = True
-            if layerFieldName == "evioMaskLayer":
-                layer.alphaOnly = True
-            elif layerFieldName in ["alphaMaskLayer", "layer12", "layer13"]:
-                layer.textureWrapX = False
-                layer.textureWrapY = False
-                layer.alphaAsTeamColor = True
-            elif layerFieldName == "heightLayer":
-                layer.textureWrapX = False
-                layer.textureWrapY = False
-                layer.alphaOnly = True
+                elif layerFieldName == "heightLayer":
+                    layer.textureWrapX = False
+                    layer.textureWrapY = False
+                    layer.alphaOnly = True
+            
+            if self.defaultSetting == defaultSettingParticle:
+                material.unfogged = True
+                material.blendMode = "2"
+                material.layerBlendType = "2"
+                material.emisBlendType = "2"
+                material.noShadowsCast = True
+                material.noHitTest = True
+                material.noShadowsReceived = True
+                material.forParticles = True
+                material.unknownFlag0x1 = True
+                material.unknownFlag0x2 = True
+                material.unknownFlag0x8 = True
         
-        if self.defaultSetting == defaultSettingParticle:
-            material.unfogged = True
-            material.blendMode = "2"
-            material.layerBlendType = "2"
-            material.emisBlendType = "2"
-            material.noShadowsCast = True
-            material.noHitTest = True
-            material.noShadowsReceived = True
-            material.forParticles = True
-            material.unknownFlag0x1 = True
-            material.unknownFlag0x2 = True
-            material.unknownFlag0x8 = True
-         
-        scene.m3_material_index = len(scene.m3_materials)-1
+        scene.m3_material_reference_index = len(scene.m3_material_references)-1
         return {'FINISHED'}
     def findUnusedName(self, scene):
         usedNames = set()
-        for material in scene.m3_materials:
+        for material in scene.m3_standard_materials:
             usedNames.add(material.name)
         unusedName = None
         counter = 1
@@ -892,9 +940,37 @@ class M3_MATERIALSS_OT_remove(bpy.types.Operator):
     
     def invoke(self, context, event):
         scene = context.scene
-        if scene.m3_material_index >= 0:
-            scene.m3_materials.remove(scene.m3_material_index)
-            scene.m3_material_index -= 1
+        referenceIndex = scene.m3_material_reference_index
+        if referenceIndex>= 0:
+            # Check if material is in use, and abort:
+            for particle_system in scene.m3_particle_systems:
+                if particle_system.materialReferenceIndex == referenceIndex:
+                    self.report({"ERROR"}, "Can't delete: The particle system '%s' is using this material" % particle_system.name)
+                    return {"CANCELLED"}
+                    
+            for higherReferenceIndex in range(referenceIndex+1,len(scene.m3_material_references)):
+                higherReference = scene.m3_material_references[higherReferenceIndex]
+                material = shared.getMaterial(scene, higherReference.materialType, higherReference.materialIndex)
+                if material != None:
+                    material.materialReferenceIndex -= 1
+                    
+            materialReference = scene.m3_material_references[referenceIndex]
+            materialIndex = materialReference.materialIndex
+            materialType = materialReference.materialType
+            
+            for particle_system in scene.m3_particle_systems:
+                if particle_system.materialReferenceIndex > referenceIndex:
+                    particle_system.materialReferenceIndex -= 1
+            
+            for otherReference in scene.m3_material_references:
+                if otherReference.materialType == materialType and otherReference.materialIndex > materialIndex:
+                    otherReference.materialIndex -= 1
+
+            if materialType == shared.standardMaterialTypeIndex:
+                scene.m3_standard_materials.remove(materialIndex)
+            
+            scene.m3_material_references.remove(scene.m3_material_reference_index)
+            scene.m3_material_reference_index -= 1
         return{'FINISHED'}
 
 class M3_ANIMATIONS_OT_add(bpy.types.Operator):
@@ -954,8 +1030,8 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
         scene = context.scene
         particle_system = scene.m3_particle_systems.add()
         particle_system.boneSuffix = self.findUnusedName(scene)
-        if len(scene.m3_materials) >= 1:
-            particle_system.materialName = scene.m3_materials[0].name
+        if len(scene.m3_material_references) >= 1:
+            particle_system.materialName = scene.m3_material_references[0].name
 
         handleTypeOrBoneSuffixChange(particle_system, context)
         scene.m3_particle_system_index = len(scene.m3_particle_systems)-1
@@ -1122,8 +1198,9 @@ def register():
     bpy.types.Scene.m3_animation_old_index = bpy.props.IntProperty()
     bpy.types.Scene.m3_animations = bpy.props.CollectionProperty(type=M3Animation)
     bpy.types.Scene.m3_material_layer_index = bpy.props.IntProperty()
-    bpy.types.Scene.m3_materials = bpy.props.CollectionProperty(type=M3Material)
-    bpy.types.Scene.m3_material_index = bpy.props.IntProperty()
+    bpy.types.Scene.m3_material_references = bpy.props.CollectionProperty(type=M3Material)
+    bpy.types.Scene.m3_standard_materials = bpy.props.CollectionProperty(type=M3StandardMaterial)
+    bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty()
     bpy.types.Scene.m3_particle_systems = bpy.props.CollectionProperty(type=M3ParticleSystem)
     bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(update=handlePartileSystemIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)

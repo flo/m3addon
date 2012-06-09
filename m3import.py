@@ -562,23 +562,37 @@ class Importer:
                 insertLinearKeyFrame(scaZCurve, frame, scale.z)
     
     def createMaterials(self):
-        currentScene = bpy.context.scene
-        index = 0
-        for materialsEntry in self.model.standardMaterials:
-            material = currentScene.m3_materials.add()
-            animPathPrefix = "m3_materials[%s]." % index
-            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=materialsEntry)
+        scene = bpy.context.scene
+
+        for materialIndex, m3Material in enumerate(self.model.standardMaterials):
+            m3Material = self.model.standardMaterials[materialIndex]
+            material = scene.m3_standard_materials.add()
+            animPathPrefix = "m3_standard_materials[%s]." % materialIndex
+            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferStandardMaterial(materialTransferer)
             layerIndex = 0
             for (layerName, layerFieldName) in zip(shared.materialLayerNames, shared.materialLayerFieldNames):
-                materialLayersEntry = getattr(materialsEntry,layerFieldName)[0]
+                materialLayersEntry = getattr(m3Material, layerFieldName)[0]
                 materialLayer = material.layers.add()
                 materialLayer.name = layerName
-                animPathPrefix = "m3_materials[%s].layers[%s]." % (index, layerIndex)
+                animPathPrefix = "m3_standard_materials[%s].layers[%s]." % (materialIndex, layerIndex)
                 layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
                 shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1
-            index += 1
+        for m3MaterialReference in self.model.materialReferences:
+            materialType = m3MaterialReference.materialType
+            materialIndex = m3MaterialReference.materialIndex
+            material = shared.getMaterial(scene, materialType, materialIndex)
+            if material != None:
+                material.materialReferenceIndex = len(scene.m3_material_references)
+                materialName = material.name
+            else:
+                materialName = "?"
+            materialLabel = shared.calculateMaterialLabel(materialName, materialType)
+            materialReference = scene.m3_material_references.add()
+            materialReference.name = materialLabel
+            materialReference.materialType = materialType
+            materialReference.materialIndex = materialIndex
 
     def createParticleSystems(self):
         currentScene = bpy.context.scene
@@ -596,10 +610,7 @@ class Importer:
             else:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                 particle_system.boneSuffix = fullBoneName
-            materialReference = self.model.materialReferences[particlesEntry.materialReferenceIndex]
-            if materialReference.materialType != 1:
-                raise Exception("Particle System doesn't use a standard material")
-            particle_system.materialName = self.model.standardMaterials[materialReference.materialIndex].name            
+            
             index += 1
 
 
