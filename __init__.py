@@ -247,7 +247,8 @@ attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment 
                            ] 
     
 matDefaultSettingsList = [("MESH", "Mesh Standard Material", "A material for meshes"), 
-                        ("PARTICLE", 'Particle Standard Material', "Material for particle systems")
+                        ("PARTICLE", 'Particle Standard Material', "Material for particle systems"),
+                        ("DISPLACEMENT", "Displacement Material", "Moves the colors of the background to other locations")
                         ]
                         
 matBlendModeList = [("0", "Opaque", "no description yet"), 
@@ -339,6 +340,14 @@ class M3StandardMaterial(bpy.types.PropertyGroup):
     unknownFlag0x4 = bpy.props.BoolProperty(options=set(), description="Makes mesh materials turn black but should be set for particle systems", default=False)
     unknownFlag0x8 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=False)
     unknownFlag0x200 = bpy.props.BoolProperty(options=set())
+
+class M3DisplacementMaterial(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="name", default="Material", update=handleMaterialNameChange, options=set())
+    # the following field gets used to update the name of the material reference:
+    materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
+    strengthFactor = bpy.props.FloatProperty(name="strength factor",options={"ANIMATABLE"}, default=1.0, description="Factor that gets multiplicated with the strength values")
+    layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
+    priority = bpy.props.IntProperty(options=set())
 
 class M3ParticleSystem(bpy.types.PropertyGroup):
 
@@ -548,6 +557,11 @@ class MaterialPropertiesPanel(bpy.types.Panel):
                 layout.prop(material, 'splatUVfix', text="Splat UV Fix")
                 layout.prop(material, 'softBlending', text="Soft Blending")
                 layout.prop(material, 'forParticles', text="For Particles (?)")
+            elif materialType == shared.displacementMaterialTypeIndex:
+                material = scene.m3_displacement_materials[materialIndex]
+                layout.prop(material, 'name', text="Name")
+                layout.prop(material, 'strengthFactor', text="Strength Factor")
+                layout.prop(material, 'priority', text="Priority")
             else:
                 layout.label(text=("Unsupported material type %d" % materialType))
 
@@ -570,8 +584,8 @@ class MatrialLayersPanel(bpy.types.Panel):
             materialType = materialReference.materialType
             materialIndex = materialReference.materialIndex
             
-            if materialType == shared.standardMaterialTypeIndex:
-                material = scene.m3_standard_materials[materialIndex]
+            material = shared.getMaterial(scene, materialType, materialIndex)
+            if material != None:
                 col.template_list(material, "layers", scene, "m3_material_layer_index", rows=2)
                 layerIndex = scene.m3_material_layer_index
                 if layerIndex >= 0 and layerIndex < len(material.layers):
@@ -878,17 +892,13 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
         scene = context.scene
         defaultSettingMesh = "MESH"
         defaultSettingParticle = "PARTICLE"
+        defaultSettingDisplacement = "DISPLACEMENT"
+
         if self.defaultSetting in [defaultSettingMesh, defaultSettingParticle]:
-            materialIndex = len(scene.m3_standard_materials)
             materialType = shared.standardMaterialTypeIndex
-            materialReferenceIndex = len(scene.m3_material_references)
-            materialReference = scene.m3_material_references.add()
-            materialReference.materialIndex = materialIndex
-            materialReference.materialType = materialType
+            materialIndex = len(scene.m3_standard_materials)
             material = scene.m3_standard_materials.add()
-            material.materialReferenceIndex = materialReferenceIndex
-            material.name = self.name
-            for (layerName, layerFieldName) in zip(shared.materialLayerNames, shared.materialLayerFieldNames):
+            for (layerName, layerFieldName) in zip(shared.standardMaterialLayerNames, shared.standardMaterialLayerFieldNames):
                 layer = material.layers.add()
                 layer.name = layerName
                 if layerFieldName == "diffuseLayer":
@@ -917,13 +927,30 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
                 material.unknownFlag0x1 = True
                 material.unknownFlag0x2 = True
                 material.unknownFlag0x8 = True
-        
+        elif self.defaultSetting == defaultSettingDisplacement:
+            materialType = shared.displacementMaterialTypeIndex
+            materialIndex = len(scene.m3_displacement_materials)
+            material = scene.m3_displacement_materials.add()
+            for (layerName, layerFieldName) in zip(shared.displacementMaterialLayerNames, shared.displacementMaterialLayerFieldNames):
+                layer = material.layers.add()
+                layer.name = layerName
+        materialReferenceIndex = len(scene.m3_material_references)
+        materialReference = scene.m3_material_references.add()
+        materialReference.materialIndex = materialIndex
+        materialReference.materialType = materialType
+        material.materialReferenceIndex = materialReferenceIndex
+        material.name = self.name # will also set materialReference name
+
+
         scene.m3_material_reference_index = len(scene.m3_material_references)-1
         return {'FINISHED'}
     def findUnusedName(self, scene):
         usedNames = set()
-        for material in scene.m3_standard_materials:
-            usedNames.add(material.name)
+        for materialReferenceIndex in range(0, len(scene.m3_material_references)):
+            materialReference = scene.m3_material_references[materialReferenceIndex]
+            material = shared.getMaterial(scene, materialReference.materialType, materialReference.materialIndex)
+            if material != None:
+                usedNames.add(material.name)
         unusedName = None
         counter = 1
         while unusedName == None:
@@ -933,7 +960,7 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
             counter += 1
         return unusedName
 
-class M3_MATERIALSS_OT_remove(bpy.types.Operator):
+class M3_MATERIALS_OT_remove(bpy.types.Operator):
     bl_idname      = 'm3.materials_remove'
     bl_label       = "Remove M3 Material"
     bl_description = "Removes the active M3 Material"
@@ -1200,6 +1227,7 @@ def register():
     bpy.types.Scene.m3_material_layer_index = bpy.props.IntProperty()
     bpy.types.Scene.m3_material_references = bpy.props.CollectionProperty(type=M3Material)
     bpy.types.Scene.m3_standard_materials = bpy.props.CollectionProperty(type=M3StandardMaterial)
+    bpy.types.Scene.m3_displacement_materials = bpy.props.CollectionProperty(type=M3DisplacementMaterial)
     bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty()
     bpy.types.Scene.m3_particle_systems = bpy.props.CollectionProperty(type=M3ParticleSystem)
     bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(update=handlePartileSystemIndexChanged)
@@ -1207,7 +1235,7 @@ def register():
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty()
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
     bpy.types.Scene.m3_animation_ids = bpy.props.CollectionProperty(type=M3AnimIdData)
-
+    
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
  

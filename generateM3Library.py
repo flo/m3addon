@@ -52,7 +52,7 @@ from sys import stderr
 
 class NoSuchAttributeException(Exception):
     def __init__(self, attribute):
-        self.msg = "%s is not a known attribute." % attribute
+        super(Exception, self).__init__("%s is not a known attribute." % attribute)
         
 class UnexpectedTagException(Exception):
     def __init__(self, tagName):

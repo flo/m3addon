@@ -867,7 +867,7 @@
             <field offset="16" name="strengthFactor" type="FloatAnimationReference" />
             <field offset="36" name="normalLayer" type="Reference" refTo="LAYRV22" />
             <field offset="48" name="strengthLayer" type="Reference" refTo="LAYRV22" />
-            <field offset="60" name="flags" type="uint32" />
+            <field offset="60" name="flags" type="uint32" default-value="0" />
             <field offset="64" name="priority" type="uint32" />
         </structure>
 

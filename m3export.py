@@ -742,30 +742,50 @@ class Exporter:
     def initMaterials(self, model):
         scene = self.scene
         
-        supportedMaterialTypes = [shared.standardMaterialTypeIndex]
+        supportedMaterialTypes = [shared.standardMaterialTypeIndex, shared.displacementMaterialTypeIndex]
         for materialReference in scene.m3_material_references:
             materialType = materialReference.materialType
             if materialType in supportedMaterialTypes:
                 materialIndex = materialReference.materialIndex
                 model.materialReferences.append(self.createMaterialReference(materialIndex, materialType))
-        
-        for materialIndex, standardMaterial in enumerate(scene.m3_standard_materials):
-            model.standardMaterials.append(self.createStandardMaterial(materialIndex, standardMaterial))
-        
+            else:
+                raise Exception("The material list contains an unsupported material of type %s" % shared.materialNames[materialType])
+        for materialIndex, material in enumerate(scene.m3_standard_materials):
+            model.standardMaterials.append(self.createStandardMaterial(materialIndex, material))
+
+        for materialIndex, material in enumerate(scene.m3_displacement_materials):
+            model.displacementMaterials.append(self.createDisplacementMaterial(materialIndex, material))
+
+
     def createStandardMaterial(self, materialIndex, material):
         m3Material = m3.MAT_V15()
-        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=None, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+        materialAnimPathPrefix = "m3_standard_materials[%s]." % materialIndex
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
         shared.transferStandardMaterial(transferer)
 
         layerIndex = 0
-        for layer, layerFieldName in zip(material.layers, shared.materialLayerFieldNames):
-            animPathPrefix = "m3_standard_materials[%s].layers[%s]." % (materialIndex, layerIndex)
+        for layer, layerFieldName in zip(material.layers, shared.standardMaterialLayerFieldNames):
+            animPathPrefix = materialAnimPathPrefix + ".layers[%s]." % layerIndex
             m3Layer = self.createMaterialLayer(layer, animPathPrefix)
             setattr(m3Material, layerFieldName, [m3Layer])
             layerIndex += 1
 
         m3Material.unknownAnimationRef1 = self.createNullUInt32AnimationReference(0)
         m3Material.unknownAnimationRef2 = self.createNullUInt32AnimationReference(0)
+        return m3Material
+
+    def createDisplacementMaterial(self, materialIndex, material):
+        m3Material = m3.DIS_V4()
+        materialAnimPathPrefix = "m3_displacement_materials[%s]." % materialIndex
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+        shared.transferDisplacementMaterial(transferer)
+
+        layerIndex = 0
+        for layer, layerFieldName in zip(material.layers, shared.displacementMaterialLayerFieldNames):
+            animPathPrefix = materialAnimPathPrefix + ".layers[%s]." % layerIndex
+            m3Layer = self.createMaterialLayer(layer, animPathPrefix)
+            setattr(m3Material, layerFieldName, [m3Layer])
+            layerIndex += 1
         return m3Material
 
     def createMaterialLayer(self, layer, animPathPrefix):
@@ -1066,7 +1086,6 @@ class BlenderToM3DataTransferer:
         currentValue =  getattr(self.blenderObject, fieldName)
         animRef.initValue = currentValue
         animRef.nullValue = type(currentValue)(0)
-        
         for animation, action in self.animationActionTuples:
             frames = self.exporter.getAllFramesOf(animation)
             timeValuesInMS = self.exporter.allFramesToMSValues(frames)

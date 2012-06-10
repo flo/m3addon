@@ -22,15 +22,20 @@
 import bpy
 import mathutils
 
-materialLayerFieldNames = ["diffuseLayer", "decalLayer", "specularLayer", "selfIllumLayer",
+standardMaterialLayerFieldNames = ["diffuseLayer", "decalLayer", "specularLayer", "selfIllumLayer",
     "emissiveLayer", "reflectionLayer", "evioLayer", "evioMaskLayer", "alphaMaskLayer", 
     "bumpLayer", "heightLayer", "layer12", "layer13"]
 
-materialLayerNames = ["Diffuse", "Decal", "Specular", "Self Illumination", 
+standardMaterialLayerNames = ["Diffuse", "Decal", "Specular", "Self Illumination", 
     "Emissive", "Reflection", "Evio", "Evio Mask", "Alpha Mask", "Bump", "Height", "Layer 12", "Layer 13"]
+
+displacementMaterialLayerFieldNames = ["normalLayer", "strengthLayer"]
+displacementMaterialLayerNames = ["Normal", "Strength"]
+
 
 materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume"]
 standardMaterialTypeIndex = 1
+displacementMaterialTypeIndex = 2
 
 rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
                                  (-1, 0, 0, 0),
@@ -86,6 +91,8 @@ def setAnimationWithIndexToCurrentData(scene, animationIndex):
 def getMaterial(scene, materialTypeIndex, materialIndex):
     if materialTypeIndex == standardMaterialTypeIndex:
         return scene.m3_standard_materials[materialIndex]
+    elif materialTypeIndex == displacementMaterialTypeIndex:
+        return scene.m3_displacement_materials[materialIndex]
     return None
     
 def calculateMaterialLabel(materialName, materialTypeIndex):
@@ -255,6 +262,11 @@ def transferStandardMaterial(transferer):
     transferer.transferEnum("layerBlendType")
     transferer.transferEnum("emisBlendType")
     transferer.transferEnum("specType")
+    
+def transferDisplacementMaterial(transferer):
+    transferer.transferString("name")
+    transferer.transferAnimatableFloat("strengthFactor")
+    transferer.transferInt("priority")
 
 def transferMaterialLayer(transferer):
     transferer.transferString("imagePath")

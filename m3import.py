@@ -561,17 +561,15 @@ class Importer:
                 insertLinearKeyFrame(scaYCurve, frame, scale.y)
                 insertLinearKeyFrame(scaZCurve, frame, scale.z)
     
-    def createMaterials(self):
-        scene = bpy.context.scene
-
+    
+    def createStandardMaterials(self, scene):
         for materialIndex, m3Material in enumerate(self.model.standardMaterials):
-            m3Material = self.model.standardMaterials[materialIndex]
             material = scene.m3_standard_materials.add()
             animPathPrefix = "m3_standard_materials[%s]." % materialIndex
             materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferStandardMaterial(materialTransferer)
             layerIndex = 0
-            for (layerName, layerFieldName) in zip(shared.materialLayerNames, shared.materialLayerFieldNames):
+            for (layerName, layerFieldName) in zip(shared.standardMaterialLayerNames, shared.standardMaterialLayerFieldNames):
                 materialLayersEntry = getattr(m3Material, layerFieldName)[0]
                 materialLayer = material.layers.add()
                 materialLayer.name = layerName
@@ -579,6 +577,24 @@ class Importer:
                 layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
                 shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1
+    
+    def createDisplacementMaterials(self, scene):
+        for materialIndex, m3Material in enumerate(self.model.displacementMaterials):
+            material = scene.m3_displacement_materials.add()
+            animPathPrefix = "m3_displacement_materials[%s]." % materialIndex
+            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            shared.transferDisplacementMaterial(materialTransferer)
+            layerIndex = 0
+            for (layerName, layerFieldName) in zip(shared.displacementMaterialLayerNames, shared.displacementMaterialLayerFieldNames):
+                materialLayersEntry = getattr(m3Material, layerFieldName)[0]
+                materialLayer = material.layers.add()
+                materialLayer.name = layerName
+                animPathPrefix = "m3_displacement_materials[%s].layers[%s]." % (materialIndex, layerIndex)
+                layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
+                shared.transferMaterialLayer(layerTransferer)
+                layerIndex += 1
+    
+    def createMaterialReferences(self, scene):
         for m3MaterialReference in self.model.materialReferences:
             materialType = m3MaterialReference.materialType
             materialIndex = m3MaterialReference.materialIndex
@@ -593,6 +609,12 @@ class Importer:
             materialReference.name = materialLabel
             materialReference.materialType = materialType
             materialReference.materialIndex = materialIndex
+    
+    def createMaterials(self):
+        scene = bpy.context.scene
+        self.createStandardMaterials(scene)
+        self.createDisplacementMaterials(scene)
+        self.createMaterialReferences(scene)
 
     def createParticleSystems(self):
         currentScene = bpy.context.scene
