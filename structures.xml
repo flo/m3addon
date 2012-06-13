@@ -567,7 +567,7 @@
                 </bits>
             </field>
             <field name="brightMult" type="FloatAnimationReference" />
-            <field name="brightMult2" type="FloatAnimationReference" />
+            <field name="midtoneOffset" type="FloatAnimationReference" />
             <field name="unknown1" type="uint32" expected-value="0" />
             <field name="unknown2" type="int32" expected-value="-1" />
             <field name="unknown3" size="8" />
@@ -583,10 +583,10 @@
             <field name="unknown10" type="FloatAnimationReference" />
             <field name="brightness" type="FloatAnimationReference" />
             <field name="unknown11" type="int32" default-value="-1" />
-            <field name="unknown12" type="uint32" default-value="0" />
+            <field name="tintFlags" type="uint32" default-value="0" />
             <field name="tintStrength" type="float" default-value="4.0" />
-            <field name="unknown13" type="float" default-value="0.0" />
-            <field name="unknown14" type="float" default-value="1.0" />
+            <field name="tintStart" type="float" default-value="0.0" />
+            <field name="tintCutout" type="float" default-value="1.0" />
             <field name="unknown15" type="float" default-value="1.0" />
         </structure>
 
