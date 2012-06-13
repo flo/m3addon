@@ -295,6 +295,7 @@ class M3Animation(bpy.types.PropertyGroup):
 class M3MaterialLayer(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options={"SKIP_SAVE"}, default="Material Layer")
     imagePath = bpy.props.StringProperty(name="image path", default="", options=set())
+    unknown11 = bpy.props.IntProperty(name="unknown11", default=-1, options=set())
     color = bpy.props.FloatVectorProperty(name="color", size=4, subtype="COLOR", options={"ANIMATABLE"})
     textureWrapX = bpy.props.BoolProperty(options=set(), default=True)
     textureWrapY = bpy.props.BoolProperty(options=set(), default=True)
@@ -592,6 +593,7 @@ class MatrialLayersPanel(bpy.types.Panel):
                     layer = material.layers[layerIndex]
                     layout.prop(layer, 'imagePath', text="Image Path")
                     layout.prop(layer, 'uvSource', text="UV Source")
+                    layout.prop(layer, 'unknown11', text="Unknown11")
                     layout.prop(layer, 'textureWrapX', text="Tex. Wrap X")
                     layout.prop(layer, 'textureWrapY', text="Tex. Wrap Y")
                     layout.prop(layer, 'alphaAsTeamColor', text="Alpha As Team Color")

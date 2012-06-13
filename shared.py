@@ -270,6 +270,7 @@ def transferDisplacementMaterial(transferer):
 
 def transferMaterialLayer(transferer):
     transferer.transferString("imagePath")
+    transferer.transferInt("unknown11")
     transferer.transferAnimatableColor("color")
     transferer.transferBit("flags", "textureWrapX")
     transferer.transferBit("flags", "textureWrapY")
