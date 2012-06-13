@@ -496,9 +496,9 @@
         <structure name="BAT_" version="1" size="14" >
             <description></description>
             <field name="unknown0" type="uint32" expected-value="0" />
-            <field name="subId" type="uint16" />
+            <field name="regionIndex" type="uint16" />
             <field name="unknown1" type="uint32" default-value="0" />
-            <field name="matId" type="uint16" />
+            <field name="materialReferenceIndex" type="uint16" />
             <field name="unknown2" type="int16" default-value="-1" />
         </structure>
         
@@ -512,7 +512,7 @@
             <description>Mesh Division</description>
             <field name="faces" type="Reference" refTo="U16_V0" />
             <field name="regions" type="Reference" refTo="REGNV3" />
-            <field name="bat" type="Reference" refTo="BAT_V1" />
+            <field name="objects" type="Reference" refTo="BAT_V1" />
             <field name="msec" type="Reference" refTo="MSECV1" />
             <!-- m3: 1, m3a: 0 -->
             <field name="unknown" type="uint32" default-value="1" />

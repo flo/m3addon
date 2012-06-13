@@ -1235,7 +1235,7 @@ def register():
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty()
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
     bpy.types.Scene.m3_animation_ids = bpy.props.CollectionProperty(type=M3AnimIdData)
-    
+    bpy.types.Mesh.m3_material_reference_index = bpy.props.IntProperty()
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
  

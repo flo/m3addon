@@ -673,7 +673,8 @@ class Importer:
 
         for division in self.model.divisions:
             divisionFaceIndices = division.faces
-            for region in division.regions:
+            for m3Object in division.objects:
+                region = division.regions[m3Object.regionIndex]
                 bpy.ops.object.mode_set(mode='OBJECT')
                 regionVertexIndices = range(region.firstVertexIndex,region.firstVertexIndex + region.numberOfVertices)
                 firstVertexIndexIndex = region.firstFaceVertexIndexIndex
@@ -696,6 +697,8 @@ class Importer:
                 meshObject.location = (0,0,0)
                 meshObject.show_name = True
                 bpy.context.scene.objects.link(meshObject)
+                
+                mesh.m3_material_reference_index = m3Object.materialReferenceIndex
                 
                 # merge vertices together which have always the same position and normal:
                 # This way there are not only fewer vertices to edit,

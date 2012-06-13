@@ -448,12 +448,13 @@ class Exporter:
             region.rootBoneIndex = model.boneLookup[firstBoneLookupIndex]
             division.regions.append(region)
             
-            bat = m3.BAT_V1()
-            bat.subId = meshIndex
-            if len(self.scene.m3_material_references) == 0:
-                raise Exception("Require a m3 material to export a mesh")
-            bat.matId = 0
-            division.bat.append(bat)
+            m3Object = m3.BAT_V1()
+            m3Object.regionIndex = meshIndex
+            materialReferenceIndex = mesh.m3_material_reference_index
+            if materialReferenceIndex >= len(self.scene.m3_material_references) or materialReferenceIndex < 0 :
+                raise Exception("The mesh %s has the invalid material index %d" % (mesh.name, materialReferenceIndex))
+            m3Object.materialReferenceIndex = materialReferenceIndex
+            division.objects.append(m3Object)
         
         model.vertices = m3VertexFormatClass.rawBytesForOneOrMore(m3Vertices)
         
@@ -878,7 +879,7 @@ class Exporter:
         division = m3.DIV_V2()
         division.faces = []
         division.regions = []
-        division.bat = []
+        division.objects = []
         division.msec = [self.createEmptyMSec()]
         return division
     
