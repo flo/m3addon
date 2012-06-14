@@ -525,7 +525,7 @@
             <field name="bone" type="uint32" />
         </structure>
         <structure name="LITE" version="7" size="212">
-            <description>Light</description>
+            <description>Light types: 0=directional 1=point 2=spot, hotSpot expressed in radians</description>
             <field name="lightType" type="uint8" />
             <field name="unknown1" size="1" />
             <field name="lightBone" type="uint8" />
@@ -533,7 +533,10 @@
             <field name="lightColor" type="VEC3V0" />
             <field name="unknown3" size="16" />
             <field name="lightIntensity" type="FloatAnimationReference" />
-            <field name="unknown4" size="140" />
+            <field name="unknown4" size="108" />
+            <field name="range" type="float" />
+            <field name="unknown5" size="8" />
+            <field name="hotSpot" type="FloatAnimationReference" />
         </structure>
 
         <structure name="MATM" version="0" size="8">
