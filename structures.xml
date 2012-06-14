@@ -682,6 +682,12 @@
             <field offset="16" name="sections" type="Reference" refTo="CMS_V0" />
         </structure>
 
+        <structure name="TER_" version="0" size="24" >
+            <description>Terrain Material</description>
+            <field offset="0" name="name" type="Reference" refTo="CHARV0" />
+            <field offset="12" name="layer" type="Reference" refTo="LAYRV22" />
+        </structure>
+
         <structure name="VOL_" version="0" size="84" >
             <description>Volume Material</description>
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
@@ -993,8 +999,8 @@
             <field offset="300" name="materialReferences" type="Reference" refTo="MATMV0" />
             <field offset="312" name="standardMaterials" type="Reference" refTo="MAT_V15" />
             <field offset="324" name="displacementMaterials" type="Reference" refTo="DIS_V4" />
-            <field offset="336" name="compositeMaterials" type="Reference" refTo="CMP_V2"/>
-            <field offset="348" name="terrainMaterials" type="Reference" />
+            <field offset="336" name="compositeMaterials" type="Reference" refTo="CMP_V2" />
+            <field offset="348" name="terrainMaterials" type="Reference" refTo="TER_V0" />
             <field offset="360" name="volumeMaterials" type="Reference" refTo="VOL_V0" />
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
             <field name="unknownMaybeRef0" type="Reference" />
