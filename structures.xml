@@ -656,23 +656,19 @@
             <field name="unknownAnimationRef2" type="UInt32AnimationReference" />
         </structure>
 
-		 <structure name="VOL_" version="0" size="84" >
-            <description>Volume Material</description>
+        <structure name="DIS_" version="4" size="68" >
+            <description>
+                Displacement Material
+            </description>
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
-			<field offset="12" name="unknown" type="uint32" default-value="0" />
-			<field offset="16" name="unknownSection1" size="4" />
-			<field offset="20" name="unknownSection4" type="uint32" size="4" />
-			<field offset="24" name="unknownSection9" type="uint32" size="4" />
-			<field offset="28" name="volumeDensity" type="float" size="4" />
-			<field offset="32" name="unknownSection7" type="float" size="4" />
-			<field offset="36" name="unknownSection8" type="float" size="4" />
-			<field offset="40" name="colorDefiningLayer" type="Reference" refTo="LAYRV22" />
-			<field offset="52" name="unknownLayer2" type="Reference" refTo="LAYRV22" />
-			<field offset="64" name="unknownLayer3" type="Reference" refTo="LAYRV22" />
-			<field offset="76" name="unknownSection2" size="4" />
-			<field offset="80" name="unknownSection3" size="4" />
+            <field offset="12" name="unknown0" type="uint32" expected-value="0" />
+            <field offset="16" name="strengthFactor" type="FloatAnimationReference" />
+            <field offset="36" name="normalLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="48" name="strengthLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="60" name="flags" type="uint32" default-value="0" />
+            <field offset="64" name="priority" type="uint32" />
         </structure>
-		
+
         <structure name="CMS_" version="0" size="24" >
             <description>Composite Material Section</description>
             <field offset="0" name="index" type="uint32" />
@@ -684,6 +680,23 @@
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
             <field offset="12" name="unknown" type="uint32" />
             <field offset="16" name="sections" type="Reference" refTo="CMS_V0" />
+        </structure>
+
+        <structure name="VOL_" version="0" size="84" >
+            <description>Volume Material</description>
+            <field offset="0" name="name" type="Reference" refTo="CHARV0" />
+            <field offset="12" name="unknown" type="uint32" default-value="0" />
+            <field offset="16" name="unknownSection1" size="4" />
+            <field offset="20" name="unknownSection4" type="uint32" size="4" />
+            <field offset="24" name="unknownSection9" type="uint32" size="4" />
+            <field offset="28" name="volumeDensity" type="float" size="4" />
+            <field offset="32" name="unknownSection7" type="float" size="4" />
+            <field offset="36" name="unknownSection8" type="float" size="4" />
+            <field offset="40" name="colorDefiningLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="52" name="unknownLayer2" type="Reference" refTo="LAYRV22" />
+            <field offset="64" name="unknownLayer3" type="Reference" refTo="LAYRV22" />
+            <field offset="76" name="unknownSection2" size="4" />
+            <field offset="80" name="unknownSection3" size="4" />
         </structure>
         
 
@@ -866,19 +879,6 @@
             <field offset="104" name="size0" type="float"/>
             <field offset="108" name="size1" type="float" default-value="0.0" />
             <field offset="112" name="size2" type="float" default-value="0.0" />
-        </structure>
-
-        <structure name="DIS_" version="4" size="68" >
-            <description>
-                Displacement Material
-            </description>
-            <field offset="0" name="name" type="Reference" refTo="CHARV0" />
-            <field offset="12" name="unknown0" type="uint32" expected-value="0" />
-            <field offset="16" name="strengthFactor" type="FloatAnimationReference" />
-            <field offset="36" name="normalLayer" type="Reference" refTo="LAYRV22" />
-            <field offset="48" name="strengthLayer" type="Reference" refTo="LAYRV22" />
-            <field offset="60" name="flags" type="uint32" default-value="0" />
-            <field offset="64" name="priority" type="uint32" />
         </structure>
 
         <structure name="BBSC" version="0" size="48" >
