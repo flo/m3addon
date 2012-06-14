@@ -282,7 +282,7 @@ class Exporter:
         return False
 
     def initMesh(self, model):
-        meshObjects = list(self.findMeshObjects())
+        meshObjects = list(shared.findMeshObjects(self.scene))
         
         model.setNamedBit("flags", "hasMesh", len(meshObjects) > 0)
         model.boundings = self.createAlmostEmptyBoundingsWithRadius(2.0)
@@ -542,10 +542,7 @@ class Exporter:
             if currentObject.type == 'ARMATURE':
                 yield currentObject
     
-    def findMeshObjects(self):
-        for currentObject in self.scene.objects:
-            if currentObject.type == 'MESH':
-                yield currentObject
+
 
     def frameToMS(self, frame):
         frameRate = self.scene.render.fps

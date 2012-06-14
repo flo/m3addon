@@ -996,7 +996,12 @@ class M3_MATERIALS_OT_remove(bpy.types.Operator):
                 if particle_system.materialReferenceIndex == referenceIndex:
                     self.report({"ERROR"}, "Can't delete: The particle system '%s' is using this material" % particle_system.name)
                     return {"CANCELLED"}
-                    
+            for meshObject in shared.findMeshObjects(scene):
+                mesh = meshObject.data
+                if mesh.m3_material_reference_index == referenceIndex:
+                    self.report({"ERROR"}, "Can't delete: The object '%s' (mesh '%s') is using this material." % (meshObject.name, mesh.name))
+                    return {"CANCELLED"}
+            
             for higherReferenceIndex in range(referenceIndex+1,len(scene.m3_material_references)):
                 higherReference = scene.m3_material_references[higherReferenceIndex]
                 material = shared.getMaterial(scene, higherReference.materialType, higherReference.materialIndex)

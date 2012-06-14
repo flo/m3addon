@@ -154,7 +154,12 @@ def simplifyAnimationWithInterpolation(timeValuesInMS, values, interpolationFunc
     newTimeValuesInMS.append(timeValuesInMS[-1])
     newValues.append(values[-1])
     return newTimeValuesInMS, newValues
-    
+
+def findMeshObjects(scene):
+    for currentObject in scene.objects:
+        if currentObject.type == 'MESH':
+            yield currentObject
+
 def transferParticleSystem(transferer):
     transferer.transferInt("materialReferenceIndex")
     transferer.transferAnimatableFloat("emissionSpeed1")
