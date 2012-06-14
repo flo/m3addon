@@ -302,7 +302,7 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     colorEnabled = bpy.props.BoolProperty(options=set(), default=False)
     uvSource = bpy.props.EnumProperty(items=uvSourceList, options=set(), default="0")
     brightMult = bpy.props.FloatProperty(name="bright. mult.",options={"ANIMATABLE"}, default=1.0)
-    brightMult2 = bpy.props.FloatProperty(name="bright. mult. 2",options={"ANIMATABLE"})
+    midtoneOffset = bpy.props.FloatProperty(name="midtone offset", options={"ANIMATABLE"}, description="Can be used to make dark areas even darker so that only the bright regions remain")
     brightness = bpy.props.FloatProperty(name="brightness", options={"ANIMATABLE"}, default=1.0)
     alphaAsTeamColor = bpy.props.BoolProperty(options=set())
     alphaOnly = bpy.props.BoolProperty(options=set())
@@ -612,7 +612,7 @@ class MatrialLayersPanel(bpy.types.Panel):
                     sub.label(text="Brightness:")
                     sub.prop(layer, "brightness", text="")
                     sub.prop(layer, "brightMult", text="Multiplier")
-                    sub.prop(layer, "brightMult2", text="Multiplier 2")
+                    sub.prop(layer, "midtoneOffset", text="Midtone Offset")
         else:
             col.label(text="No properties to display")
 

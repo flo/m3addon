@@ -280,7 +280,7 @@ def transferMaterialLayer(transferer):
     transferer.transferBit("alphaFlags", "alphaOnly")
     transferer.transferBit("alphaFlags", "alphaBasedShading")
     transferer.transferAnimatableFloat("brightMult")
-    transferer.transferAnimatableFloat("brightMult2")
+    transferer.transferAnimatableFloat("midtoneOffset")
     transferer.transferAnimatableFloat("brightness")
     
 def transferAnimation(transferer):
