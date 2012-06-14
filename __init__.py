@@ -835,6 +835,26 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(particle_system, 'simulateOnInit', text="Simulate On Init")
             layout.prop(particle_system, 'copy', text="Copy")
 
+class MaterialSelectionPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_material_selection"
+    bl_label = "M3 Material Settings"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "material"
+ 
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        return o and (o.data != None) and (o.type == 'MESH')
+ 
+    def draw(self, context):
+        layout = self.layout
+        meshObject = context.object
+        mesh = meshObject.data
+        layout.prop(mesh, 'm3_material_reference_index', text="M3 Material Index")
+
+        
+
 class AttachmentPointsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_attachments"
     bl_label = "M3 Attachment Points"
