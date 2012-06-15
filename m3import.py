@@ -593,7 +593,24 @@ class Importer:
                 layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
                 shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1
-    
+
+    def createTerrainMaterials(self, scene):
+        for materialIndex, m3Material in enumerate(self.model.terrainMaterials):
+            material = scene.m3_terrain_materials.add()
+            animPathPrefix = "m3_terrain_materials[%s]." % materialIndex
+            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            shared.transferTerrainMaterial(materialTransferer)
+            layerIndex = 0
+            for (layerName, layerFieldName) in zip(shared.terrainMaterialLayerNames, shared.terrainMaterialLayerFieldNames):
+                materialLayersEntry = getattr(m3Material, layerFieldName)[0]
+                materialLayer = material.layers.add()
+                materialLayer.name = layerName
+                animPathPrefix = "m3_terrain_materials[%s].layers[%s]." % (materialIndex, layerIndex)
+                layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
+                shared.transferMaterialLayer(layerTransferer)
+                layerIndex += 1
+
+
     def createMaterialReferences(self, scene):
         for m3MaterialReference in self.model.materialReferences:
             materialType = m3MaterialReference.materialType
@@ -614,6 +631,7 @@ class Importer:
         scene = bpy.context.scene
         self.createStandardMaterials(scene)
         self.createDisplacementMaterials(scene)
+        self.createTerrainMaterials(scene)
         self.createMaterialReferences(scene)
 
     def createParticleSystems(self):

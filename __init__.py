@@ -248,7 +248,8 @@ attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment 
     
 matDefaultSettingsList = [("MESH", "Mesh Standard Material", "A material for meshes"), 
                         ("PARTICLE", 'Particle Standard Material', "Material for particle systems"),
-                        ("DISPLACEMENT", "Displacement Material", "Moves the colors of the background to other locations")
+                        ("DISPLACEMENT", "Displacement Material", "Moves the colors of the background to other locations"),
+                        ("TERRAIN", "Terrain Material", "Makes the object look like the ground below it")
                         ]
                         
 matBlendModeList = [("0", "Opaque", "no description yet"), 
@@ -349,6 +350,12 @@ class M3DisplacementMaterial(bpy.types.PropertyGroup):
     strengthFactor = bpy.props.FloatProperty(name="strength factor",options={"ANIMATABLE"}, default=1.0, description="Factor that gets multiplicated with the strength values")
     layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
     priority = bpy.props.IntProperty(options=set())
+    
+class M3TerrainMaterial(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="name", default="Material", update=handleMaterialNameChange, options=set())
+    # the following field gets used to update the name of the material reference:
+    materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
+    layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
 
 class M3ParticleSystem(bpy.types.PropertyGroup):
 
@@ -563,6 +570,9 @@ class MaterialPropertiesPanel(bpy.types.Panel):
                 layout.prop(material, 'name', text="Name")
                 layout.prop(material, 'strengthFactor', text="Strength Factor")
                 layout.prop(material, 'priority', text="Priority")
+            elif materialType == shared.terrainMaterialTypeIndex:
+                material = scene.m3_terrain_materials[materialIndex]
+                layout.prop(material, 'name', text="Name")
             else:
                 layout.label(text=("Unsupported material type %d" % materialType))
 
@@ -915,6 +925,7 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
         defaultSettingMesh = "MESH"
         defaultSettingParticle = "PARTICLE"
         defaultSettingDisplacement = "DISPLACEMENT"
+        defaultSettingTerrain = "TERRAIN"
 
         if self.defaultSetting in [defaultSettingMesh, defaultSettingParticle]:
             materialType = shared.standardMaterialTypeIndex
@@ -954,6 +965,13 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
             materialIndex = len(scene.m3_displacement_materials)
             material = scene.m3_displacement_materials.add()
             for (layerName, layerFieldName) in zip(shared.displacementMaterialLayerNames, shared.displacementMaterialLayerFieldNames):
+                layer = material.layers.add()
+                layer.name = layerName
+        elif self.defaultSetting == defaultSettingTerrain:
+            materialType = shared.terrainMaterialTypeIndex
+            materialIndex = len(scene.m3_terrain_materials)
+            material = scene.m3_terrain_materials.add()
+            for (layerName, layerFieldName) in zip(shared.terrainMaterialLayerNames, shared.terrainMaterialLayerFieldNames):
                 layer = material.layers.add()
                 layer.name = layerName
         materialReferenceIndex = len(scene.m3_material_references)
@@ -1255,6 +1273,7 @@ def register():
     bpy.types.Scene.m3_material_references = bpy.props.CollectionProperty(type=M3Material)
     bpy.types.Scene.m3_standard_materials = bpy.props.CollectionProperty(type=M3StandardMaterial)
     bpy.types.Scene.m3_displacement_materials = bpy.props.CollectionProperty(type=M3DisplacementMaterial)
+    bpy.types.Scene.m3_terrain_materials = bpy.props.CollectionProperty(type=M3TerrainMaterial)
     bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty()
     bpy.types.Scene.m3_particle_systems = bpy.props.CollectionProperty(type=M3ParticleSystem)
     bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(update=handlePartileSystemIndexChanged)
