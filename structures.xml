@@ -593,7 +593,12 @@
             <field name="unknown10" type="FloatAnimationReference" />
             <field name="brightness" type="FloatAnimationReference" />
             <field name="unknown11" type="int32" default-value="-1" />
-            <field name="tintFlags" type="uint32" default-value="0" />
+            <field name="tintFlags" type="uint32" default-value="0">
+                <bits>
+                    <bit mask="0x0" name="useTint" />
+                    <bit mask="0x1" name="tintAlpha" />
+                </bits>
+            </field>                 
             <field name="tintStrength" type="float" default-value="4.0" />
             <field name="tintStart" type="float" default-value="0.0" />
             <field name="tintCutout" type="float" default-value="1.0" />
