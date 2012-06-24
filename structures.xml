@@ -595,8 +595,8 @@
             <field name="unknown11" type="int32" default-value="-1" />
             <field name="tintFlags" type="uint32" default-value="0">
                 <bits>
-                    <bit mask="0x0" name="useTint" />
-                    <bit mask="0x1" name="tintAlpha" />
+                    <bit mask="0x1" name="useTint" />
+                    <bit mask="0x2" name="tintAlpha" />
                 </bits>
             </field>                 
             <field name="tintStrength" type="float" default-value="4.0" />
