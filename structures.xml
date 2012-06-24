@@ -683,7 +683,7 @@
         <structure name="CMP_" version="2" size="28" >
             <description>Composite Material</description>
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
-            <field offset="12" name="unknown" type="uint32" expected-value="0"/>
+            <field offset="12" name="unknown" type="uint32" defalut-value="0"/> <!-- See: SM_MarSaraBar_00.m3 -->
             <field offset="16" name="sections" type="Reference" refTo="CMS_V0" />
         </structure>
 
@@ -850,10 +850,10 @@
             <field offset="0" name="unknown0" size="72" />
             <field offset="72" name="unknown1" type="SmallReference" refTo="VEC3V0" />
             <field offset="80" name="unknown2" size="16" />
-            <field offset="96" name="unknown3" type="SmallReference" refTo="U16_V0" />
-            <field offset="104" name="unknown4" size="4" />
-            <field offset="108" name="unknown5" type="SmallReference" refTo="VEC4V0" />
-            <field offset="116" name="unknown6" size="16" />
+            <field offset="96" name="unknown4" type="SmallReference" refTo="U16_V0" />
+            <field offset="104" name="unknown5" size="4" />
+            <field offset="108" name="unknown6" type="SmallReference" refTo="VEC4V0" />
+            <field offset="116" name="unknown7" size="16" />
         </structure>
         
         <structure name="PHRB" version="2" size="104" >
