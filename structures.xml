@@ -557,7 +557,7 @@
         </structure>
 
         <structure name="LAYR" version="22" size="356" >
-            <description>Describes one of the 13 layers of an material</description>
+            <description>Describes a layer of a material</description>
             <field name="unknown0" type="uint32" expected-value="0" />
             <field name="imagePath" type="Reference" refTo="CHARV0" />
             <field name="color" type="ColorAnimationReference" />
@@ -601,7 +601,7 @@
         </structure>
 
         <structure name="MAT_" version="15" size="268">
-            <description>Material</description>
+            <description>Standard Material</description>
             <field name="name" type="Reference" refTo="CHARV0" />
             <field name="unknownFlags" type="uint32" default-value="0">
                 <bits>
