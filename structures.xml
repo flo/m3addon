@@ -10,6 +10,7 @@
     Credits for gathering information about the m3 file format go to:
     * Florian Köberle - who created the first version of this file by using existing descriptions of the m3 file format
     * NiNtoxicated (madyavic@gmail.com) - who made an m3 Exporter and Importer for 3ds max
+    * Leruster (leruster@gmail.com) - who helped improving the structure.xml file
     * Witchsong (http://code.google.com/p/libm3/) - who made a M3 library and helped NiNtoxicated on sequence data
     * Teal (starcraft.incgamers.com) - who made an PHP M3 parser
     * Blue Isle Studios (http://blueislestudios.com/) - who helped NiNtoxicated
