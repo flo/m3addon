@@ -300,7 +300,12 @@ def transferMaterialLayer(transferer):
     transferer.transferAnimatableFloat("brightMult")
     transferer.transferAnimatableFloat("midtoneOffset")
     transferer.transferAnimatableFloat("brightness")
-    
+    transferer.transferBit("tintFlags", "useTint")
+    transferer.transferBit("tintFlags", "tintAlpha")
+    transferer.transferFloat("tintStrength")
+    transferer.transferFloat("tintStart")
+    transferer.transferFloat("tintCutout")
+
 def transferAnimation(transferer):
     transferer.transferString("name")
     transferer.transferFloat("movementSpeed")

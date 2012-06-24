@@ -318,6 +318,11 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     alphaAsTeamColor = bpy.props.BoolProperty(options=set())
     alphaOnly = bpy.props.BoolProperty(options=set())
     alphaBasedShading = bpy.props.BoolProperty(options=set())
+    useTint = bpy.props.BoolProperty(options=set())
+    tintAlpha = bpy.props.BoolProperty(options=set())
+    tintStrength = bpy.props.FloatProperty(options=set())
+    tintStart = bpy.props.FloatProperty(options=set())
+    tintCutout = bpy.props.FloatProperty(options=set())
 
 class M3Material(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Material", options=set())
@@ -649,6 +654,11 @@ class MatrialLayersPanel(bpy.types.Panel):
                     layout.prop(layer, 'alphaAsTeamColor', text="Alpha As Team Color")
                     layout.prop(layer, 'alphaOnly', text="Alpha Only")
                     layout.prop(layer, 'alphaBasedShading', text="Alpha Based Shading")
+                    layout.prop(layer, 'useTint', text="Use Tint")
+                    layout.prop(layer, 'tintAlpha', text="Tint Alpha")
+                    layout.prop(layer, 'tintStrength', text="Tint Strength")
+                    layout.prop(layer, 'tintStart', text="Tint Start")
+                    layout.prop(layer, 'tintCutout', text="Tint Cutout")
                     split = layout.split()
                     row = split.row()
                     row.prop(layer, 'colorEnabled', text="Color:")
