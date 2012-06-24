@@ -3,19 +3,17 @@ Features
 
 The Python scripts can be used as a Blender addon.
 
-Currently the following content can be exported:
+Currently the following content can be exported and imported:
 
-  * Animated meshes that use all the first material
-  * Animated M3 standard materials
-  * Animated M3 particle systems
-  * Animated M3 attachment points and volumes
-
-The following content can be imported:
-
-  * Animated meshes
-  * Animated M3 standard materials
-  * Animated M3 particle systems
-  * Animated M3 attachment points and volumes
+  * Animations
+  * Meshes with up to 4 UV layers
+  * Most m3 materials:
+      * standard materials
+      * displacement materials
+      * composite materials
+      * terrain materials
+  * M3 particle systems
+  * M3 attachment points and volumes
 
 The script m3ToXml.py can also be used to convert a m3 file into a XML file. It
 takes a m3 file as argument and prints the XML on the command line.
