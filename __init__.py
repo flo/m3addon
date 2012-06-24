@@ -24,7 +24,8 @@ bl_info = {
     'author': 'Florian Köberle',
     "location": "Properties Editor -> Scene -> M3 Panels",
     "description": "Allows to export (and import) simple Starcraft 2 models (.m3) with particle systems. Use on own risk!",
-    "category": "Import-Export"
+    "category": "Import-Export",
+    "tracker_url": "https://github.com/flo/m3addon/issues?state=open"
 }
 
 if "bpy" in locals():
