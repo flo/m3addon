@@ -38,6 +38,7 @@ terrainMaterialLayerNames = ["Terrain"]
 materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume"]
 standardMaterialTypeIndex = 1
 displacementMaterialTypeIndex = 2
+compositeMaterialTypeIndex = 3
 terrainMaterialTypeIndex = 4
 
 rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
@@ -96,6 +97,8 @@ def getMaterial(scene, materialTypeIndex, materialIndex):
         return scene.m3_standard_materials[materialIndex]
     elif materialTypeIndex == displacementMaterialTypeIndex:
         return scene.m3_displacement_materials[materialIndex]
+    elif materialTypeIndex == compositeMaterialTypeIndex:
+        return scene.m3_composite_materials[materialIndex] 
     elif materialTypeIndex == terrainMaterialTypeIndex:
         return scene.m3_terrain_materials[materialIndex] 
     return None
@@ -273,7 +276,13 @@ def transferDisplacementMaterial(transferer):
     transferer.transferString("name")
     transferer.transferAnimatableFloat("strengthFactor")
     transferer.transferInt("priority")
-    
+
+def transferCompositeMaterial(transferer):
+    transferer.transferString("name")
+
+def transferCompositeMaterialSection(transferer):
+    transferer.transferAnimatableFloat("alphaFactor")
+
 def transferTerrainMaterial(transferer):
     transferer.transferString("name")
     

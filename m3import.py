@@ -594,6 +594,19 @@ class Importer:
                 shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1
 
+    def createCompositeMaterials(self, scene):
+        for materialIndex, m3Material in enumerate(self.model.compositeMaterials):
+            material = scene.m3_composite_materials.add()
+            animPathPrefix = "m3_composite_materials[%s]." % materialIndex
+            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            shared.transferCompositeMaterial(materialTransferer)
+            for sectionIndex, m3Section in enumerate(m3Material.sections):
+                section = material.sections.add()
+                animPathPrefix = "m3_composite_materials[%s].sections[%s]." % (materialIndex, sectionIndex)
+                materialSectionTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=section, m3Object=m3Section)
+                shared.transferCompositeMaterialSection(materialSectionTransferer)
+                section.name = self.getNameOfMaterialWithReferenceIndex(m3Section.materialReferenceIndex)
+
     def createTerrainMaterials(self, scene):
         for materialIndex, m3Material in enumerate(self.model.terrainMaterials):
             material = scene.m3_terrain_materials.add()
@@ -623,11 +636,34 @@ class Importer:
             materialReference.materialType = materialType
             materialReference.materialIndex = materialIndex
     
+    def initMaterialReferenceIndexToNameMap(self):
+        self.materialReferenceIndexToNameMap = {}
+        for materialReferenceIndex, materialReference in enumerate(self.model.materialReferences):
+            materialName = self.getMaterialNameByM3MaterialReference(materialReference)
+            self.materialReferenceIndexToNameMap[materialReferenceIndex] = materialName
+                
+            
+    def getMaterialNameByM3MaterialReference(self, materialReference):
+        materialIndex = materialReference.materialIndex
+        materialType = materialReference.materialType
+        if materialType == shared.standardMaterialTypeIndex:
+            return self.model.standardMaterials[materialIndex].name
+        elif materialType == shared.displacementMaterialTypeIndex:
+            return self.model.displacementMaterials[materialIndex].name
+        elif materialType == shared.compositeMaterialTypeIndex:
+            return self.model.compositeMaterials[materialIndex].name
+        elif materialType == shared.terrainMaterialTypeIndex:
+            return self.model.terrainMaterials[materialIndex].name
+        else:
+            return None
+        
     def createMaterials(self):
         print("Loading materials")
         scene = bpy.context.scene
+        self.initMaterialReferenceIndexToNameMap()
         self.createStandardMaterials(scene)
         self.createDisplacementMaterials(scene)
+        self.createCompositeMaterials(scene)
         self.createTerrainMaterials(scene)
         self.createMaterialReferences(scene)
 
@@ -673,8 +709,7 @@ class Importer:
             attachmentPoint.volumeSize2 = attachmentVolume.size2
 
     def getNameOfMaterialWithReferenceIndex(self, materialReferenceIndex):
-        # TODO create a map from index to name in order to deal with existing and missing materials
-        return self.scene.m3_material_references[materialReferenceIndex].name 
+        return self.materialReferenceIndexToNameMap[materialReferenceIndex] 
 
     def createMesh(self):
         model = self.model

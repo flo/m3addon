@@ -107,7 +107,7 @@ def handleMaterialNameChange(self, context):
             mesh = meshObject.data
             if mesh.m3_material_name == oldMaterialName:     
                 mesh.m3_material_name = materialName
-                
+    
 def handleAttachmentVolumeTypeChange(self, context):
     if self.volumeType in ["0", "1", "2"]:
        if self.volumeSize0 == 0.0:
@@ -258,6 +258,7 @@ attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment 
 matDefaultSettingsList = [("MESH", "Mesh Standard Material", "A material for meshes"), 
                         ("PARTICLE", 'Particle Standard Material', "Material for particle systems"),
                         ("DISPLACEMENT", "Displacement Material", "Moves the colors of the background to other locations"),
+                        ("COMPOSITE", "Composite Material", "A combination of multiple materials"),
                         ("TERRAIN", "Terrain Material", "Makes the object look like the ground below it")
                         ]
                         
@@ -359,6 +360,19 @@ class M3DisplacementMaterial(bpy.types.PropertyGroup):
     strengthFactor = bpy.props.FloatProperty(name="strength factor",options={"ANIMATABLE"}, default=1.0, description="Factor that gets multiplicated with the strength values")
     layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
     priority = bpy.props.IntProperty(options=set())
+    
+class M3CompositeMaterialSection(bpy.types.PropertyGroup):
+    # The material name is getting called "name" so that blender names it properly in the list view
+    name = bpy.props.StringProperty(options=set()) 
+    alphaFactor = bpy.props.FloatProperty(name="alphaFactor", options={"ANIMATABLE"}, min=0.0, max=1.0, default=1.0, description="Defines the factor with which the alpha channel gets multiplicated")
+
+class M3CompositeMaterial(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="name", default="Material", update=handleMaterialNameChange, options=set())
+    # the following field gets used to update the name of the material reference:
+    materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
+    layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
+    sections = bpy.props.CollectionProperty(type=M3CompositeMaterialSection, options=set())
+    sectionIndex = bpy.props.IntProperty(options=set(), default=0)
     
 class M3TerrainMaterial(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Material", update=handleMaterialNameChange, options=set())
@@ -579,6 +593,23 @@ class MaterialPropertiesPanel(bpy.types.Panel):
                 layout.prop(material, 'name', text="Name")
                 layout.prop(material, 'strengthFactor', text="Strength Factor")
                 layout.prop(material, 'priority', text="Priority")
+            elif materialType == shared.compositeMaterialTypeIndex:
+                material = scene.m3_composite_materials[materialIndex]
+                layout.prop(material, 'name', text="Name")
+                layout.label("Sections:")
+                row = layout.row()
+                col = row.column()
+                col.template_list(material, "sections", material, "sectionIndex", rows=2)
+                
+                col = row.column(align=True)
+                col.operator("m3.composite_material_add_section", icon='ZOOMIN', text="")
+                col.operator("m3.composite_material_remove_section", icon='ZOOMOUT', text="")
+                sectionIndex = material.sectionIndex
+                if (sectionIndex >= 0) and (sectionIndex < len(material.sections)):
+                    section = material.sections[sectionIndex]
+                    layout.prop_search(section, 'name', scene, 'm3_material_references', text="Material", icon='NONE')
+                    layout.prop(section, "alphaFactor", text="Alpha Factor")
+                
             elif materialType == shared.terrainMaterialTypeIndex:
                 material = scene.m3_terrain_materials[materialIndex]
                 layout.prop(material, 'name', text="Name")
@@ -935,6 +966,7 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
         defaultSettingMesh = "MESH"
         defaultSettingParticle = "PARTICLE"
         defaultSettingDisplacement = "DISPLACEMENT"
+        defaultSettingComposite = "COMPOSITE"
         defaultSettingTerrain = "TERRAIN"
 
         if self.defaultSetting in [defaultSettingMesh, defaultSettingParticle]:
@@ -977,6 +1009,10 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
             for (layerName, layerFieldName) in zip(shared.displacementMaterialLayerNames, shared.displacementMaterialLayerFieldNames):
                 layer = material.layers.add()
                 layer.name = layerName
+        elif self.defaultSetting == defaultSettingComposite:
+            materialType = shared.compositeMaterialTypeIndex
+            materialIndex = len(scene.m3_composite_materials)
+            material = scene.m3_composite_materials.add()
         elif self.defaultSetting == defaultSettingTerrain:
             materialType = shared.terrainMaterialTypeIndex
             materialIndex = len(scene.m3_terrain_materials)
@@ -1051,6 +1087,46 @@ class M3_MATERIALS_OT_remove(bpy.types.Operator):
             
             scene.m3_material_references.remove(scene.m3_material_reference_index)
             scene.m3_material_reference_index -= 1
+        return{'FINISHED'}
+
+class M3_COMPOSITE_MATERIAL_OT_add_section(bpy.types.Operator):
+    bl_idname      = 'm3.composite_material_add_section'
+    bl_label       = "Add a section/layer to the composite material"
+    bl_description = "Adds a section/layer to the composite material"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        materialIndex = scene.m3_material_reference_index
+        if materialIndex >= 0 and materialIndex < len(scene.m3_material_references):
+            materialReference = scene.m3_material_references[materialIndex]
+            materialType = materialReference.materialType
+            materialIndex = materialReference.materialIndex
+            if materialType == shared.compositeMaterialTypeIndex:
+                material = shared.getMaterial(scene, materialType, materialIndex)
+                section = material.sections.add()
+                if len(scene.m3_material_references) >= 1:
+                    section.name = scene.m3_material_references[0].name
+                material.sectionIndex = len(material.sections)-1                
+        return{'FINISHED'}
+
+class M3_COMPOSITE_MATERIAL_OT_remove_section(bpy.types.Operator):
+    bl_idname      = 'm3.composite_material_remove_section'
+    bl_label       = "Removes the selected section/layer from the composite material"
+    bl_description = "Removes the selected section/layer from the composite material"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        materialIndex = scene.m3_material_reference_index
+        if materialIndex >= 0 and materialIndex < len(scene.m3_material_references):
+            materialReference = scene.m3_material_references[materialIndex]
+            materialType = materialReference.materialType
+            materialIndex = materialReference.materialIndex
+            if materialType == shared.compositeMaterialTypeIndex:
+                material = shared.getMaterial(scene, materialType, materialIndex)
+                sectionIndex = material.sectionIndex
+                if (sectionIndex >= 0) and (sectionIndex < len(material.sections)):
+                    material.sections.remove(sectionIndex)
+                    material.sectionIndex = material.sectionIndex-1                
         return{'FINISHED'}
 
 class M3_ANIMATIONS_OT_add(bpy.types.Operator):
@@ -1278,6 +1354,7 @@ def register():
     bpy.types.Scene.m3_material_references = bpy.props.CollectionProperty(type=M3Material)
     bpy.types.Scene.m3_standard_materials = bpy.props.CollectionProperty(type=M3StandardMaterial)
     bpy.types.Scene.m3_displacement_materials = bpy.props.CollectionProperty(type=M3DisplacementMaterial)
+    bpy.types.Scene.m3_composite_materials = bpy.props.CollectionProperty(type=M3CompositeMaterial)
     bpy.types.Scene.m3_terrain_materials = bpy.props.CollectionProperty(type=M3TerrainMaterial)
     bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_particle_systems = bpy.props.CollectionProperty(type=M3ParticleSystem)

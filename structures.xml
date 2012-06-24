@@ -671,14 +671,14 @@
 
         <structure name="CMS_" version="0" size="24" >
             <description>Composite Material Section</description>
-            <field offset="0" name="index" type="uint32" />
-            <field offset="4" name="unknown" type="FloatAnimationReference" />
+            <field offset="0" name="materialReferenceIndex" type="uint32" />
+            <field offset="4" name="alphaFactor" type="FloatAnimationReference" />
         </structure>
         
         <structure name="CMP_" version="2" size="28" >
             <description>Composite Material</description>
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
-            <field offset="12" name="unknown" type="uint32" />
+            <field offset="12" name="unknown" type="uint32" expected-value="0"/>
             <field offset="16" name="sections" type="Reference" refTo="CMS_V0" />
         </structure>
 

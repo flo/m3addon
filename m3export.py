@@ -753,7 +753,7 @@ class Exporter:
     def initMaterials(self, model):
         scene = self.scene
         
-        supportedMaterialTypes = [shared.standardMaterialTypeIndex, shared.displacementMaterialTypeIndex, shared.terrainMaterialTypeIndex]
+        supportedMaterialTypes = [shared.standardMaterialTypeIndex, shared.displacementMaterialTypeIndex, shared.compositeMaterialTypeIndex, shared.terrainMaterialTypeIndex]
         for materialReference in scene.m3_material_references:
             materialType = materialReference.materialType
             if materialType in supportedMaterialTypes:
@@ -766,6 +766,9 @@ class Exporter:
 
         for materialIndex, material in enumerate(scene.m3_displacement_materials):
             model.displacementMaterials.append(self.createDisplacementMaterial(materialIndex, material))
+        
+        for materialIndex, material in enumerate(scene.m3_composite_materials):
+            model.compositeMaterials.append(self.createCompositeMaterial(materialIndex, material))
         
         for materialIndex, material in enumerate(scene.m3_terrain_materials):
             model.terrainMaterials.append(self.createTerrainMaterial(materialIndex, material))
@@ -802,6 +805,20 @@ class Exporter:
             layerIndex += 1
         return m3Material
 
+    def createCompositeMaterial(self, materialIndex, material):
+        m3Material = m3.CMP_V2()
+        materialAnimPathPrefix = "m3_composite_materials[%s]." % materialIndex
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+        shared.transferCompositeMaterial(transferer)
+        for sectionIndex, section in enumerate(material.sections):
+            m3Section = m3.CMS_V0()
+            m3Section.materialReferenceIndex = self.materialNameToReferenceIndexMap[section.name]
+            sectionAnimPathPrefix = "m3_composite_materials[%s].sections[%s]." % (materialIndex, sectionIndex)
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Section, blenderObject=section, animPathPrefix=sectionAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+            shared.transferCompositeMaterialSection(transferer)
+            m3Material.sections.append(m3Section)
+            
+        return m3Material
 
     def createTerrainMaterial(self, materialIndex, material):
         m3Material = m3.TER_V0()
