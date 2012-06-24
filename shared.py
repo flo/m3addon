@@ -99,9 +99,6 @@ def getMaterial(scene, materialTypeIndex, materialIndex):
     elif materialTypeIndex == terrainMaterialTypeIndex:
         return scene.m3_terrain_materials[materialIndex] 
     return None
-    
-def calculateMaterialLabel(materialName, materialTypeIndex):
-    return "%s (%s)" % (materialName, materialNames[materialTypeIndex])
 
 def sqr(x):
     return x*x
@@ -166,7 +163,6 @@ def findMeshObjects(scene):
             yield currentObject
 
 def transferParticleSystem(transferer):
-    transferer.transferInt("materialReferenceIndex")
     transferer.transferAnimatableFloat("emissionSpeed1")
     transferer.transferAnimatableFloat("emissionSpeed2")
     transferer.transferBoolean("randomizeWithEmissionSpeed2")

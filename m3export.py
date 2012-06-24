@@ -54,6 +54,7 @@ class Exporter:
         self.nameToAnimIdToAnimDataMap = {}
         for animation in scene.m3_animations:
             self.nameToAnimIdToAnimDataMap[animation.name] = {}
+        self.initMaterialNameToReferenceIndexMap()
         
         model = self.createModel(m3FileName)
         m3.saveAndInvalidateModel(model, m3FileName)
@@ -280,13 +281,18 @@ class Exporter:
             if not shared.quaternionsAlmostEqual(quaternion, q):
                 return True
         return False
-
+        
+    def initMaterialNameToReferenceIndexMap(self):
+        self.materialNameToReferenceIndexMap = {}
+        for materialReferenceIndex, materialReference in enumerate(self.scene.m3_material_references):
+            self.materialNameToReferenceIndexMap[materialReference.name] = materialReferenceIndex
+        
     def initMesh(self, model):
         meshObjects = list(shared.findMeshObjects(self.scene))
         
         model.setNamedBit("flags", "hasMesh", len(meshObjects) > 0)
         model.boundings = self.createAlmostEmptyBoundingsWithRadius(2.0)
-
+            
         if len(meshObjects) == 0:
             model.numberOfBonesToCheckForSkin = 0
             model.divisions = [self.createEmptyDivision()]
@@ -450,10 +456,12 @@ class Exporter:
             
             m3Object = m3.BAT_V1()
             m3Object.regionIndex = meshIndex
-            materialReferenceIndex = mesh.m3_material_reference_index
-            if materialReferenceIndex >= len(self.scene.m3_material_references) or materialReferenceIndex < 0 :
-                raise Exception("The mesh %s has the invalid material index %d" % (mesh.name, materialReferenceIndex))
+            
+            materialReferenceIndex = self.materialNameToReferenceIndexMap.get(mesh.m3_material_name)
+            if materialReferenceIndex == None:
+                raise Exception("The mesh %s uses '%s' as material, but no m3 material with that name exist!" % (mesh.name, mesh.m3_material_name))
             m3Object.materialReferenceIndex = materialReferenceIndex
+            
             division.objects.append(m3Object)
         
         model.vertices = m3VertexFormatClass.rawBytesForOneOrMore(m3Vertices)
@@ -657,6 +665,11 @@ class Exporter:
             m3ParticleSystem.indexPlusHighestIndex = len(scene.m3_particle_systems) -1 + particleSystemIndex
             m3ParticleSystem.ar1 = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
             model.particles.append(m3ParticleSystem)
+            
+            materialReferenceIndex = self.materialNameToReferenceIndexMap.get(particleSystem.materialName)
+            if materialReferenceIndex == None:
+                raise Exception("The particle system %s uses '%s' as material, but no m3 material with that name exist!" % (particleSystem.name, particleSystem.materialName))
+            m3ParticleSystem.materialReferenceIndex = materialReferenceIndex
 
     def initAttachmentPoints(self, model):
         scene = self.scene

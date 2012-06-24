@@ -616,18 +616,15 @@ class Importer:
             materialType = m3MaterialReference.materialType
             materialIndex = m3MaterialReference.materialIndex
             material = shared.getMaterial(scene, materialType, materialIndex)
-            if material != None:
-                material.materialReferenceIndex = len(scene.m3_material_references)
-                materialName = material.name
-            else:
-                materialName = "?"
-            materialLabel = shared.calculateMaterialLabel(materialName, materialType)
+            if material == None:
+                raise Exception("Model contains unsupported material type %s" % materialType)
             materialReference = scene.m3_material_references.add()
-            materialReference.name = materialLabel
+            materialReference.name = material.name
             materialReference.materialType = materialType
             materialReference.materialIndex = materialIndex
     
     def createMaterials(self):
+        print("Loading materials")
         scene = bpy.context.scene
         self.createStandardMaterials(scene)
         self.createDisplacementMaterials(scene)
@@ -650,7 +647,7 @@ class Importer:
             else:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                 particle_system.boneSuffix = fullBoneName
-            
+            particle_system.materialName = self.getNameOfMaterialWithReferenceIndex(particlesEntry.materialReferenceIndex)
             index += 1
 
 
@@ -674,6 +671,10 @@ class Importer:
             attachmentPoint.volumeSize0 = attachmentVolume.size0
             attachmentPoint.volumeSize1 = attachmentVolume.size1
             attachmentPoint.volumeSize2 = attachmentVolume.size2
+
+    def getNameOfMaterialWithReferenceIndex(self, materialReferenceIndex):
+        # TODO create a map from index to name in order to deal with existing and missing materials
+        return self.scene.m3_material_references[materialReferenceIndex].name 
 
     def createMesh(self):
         model = self.model
@@ -716,7 +717,8 @@ class Importer:
                 meshObject.show_name = True
                 bpy.context.scene.objects.link(meshObject)
                 
-                mesh.m3_material_reference_index = m3Object.materialReferenceIndex
+                mesh.m3_material_name = self.getNameOfMaterialWithReferenceIndex(m3Object.materialReferenceIndex)
+                
                 
                 # merge vertices together which have always the same position and normal:
                 # This way there are not only fewer vertices to edit,

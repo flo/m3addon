@@ -96,9 +96,18 @@ def handleMaterialNameChange(self, context):
         materialReference = scene.m3_material_references[self.materialReferenceIndex]
         materialIndex = materialReference.materialIndex
         materialType = materialReference.materialType
-        label = shared.calculateMaterialLabel(materialName, materialType)
-        materialReference.name = label
-    
+        oldMaterialName = materialReference.name 
+        materialReference.name = materialName
+        
+        for particle_system in scene.m3_particle_systems:
+            if particle_system.materialName == oldMaterialName:
+                particle_system.materialName = materialName
+                
+        for meshObject in shared.findMeshObjects(scene):
+            mesh = meshObject.data
+            if mesh.m3_material_name == oldMaterialName:     
+                mesh.m3_material_name = materialName
+                
 def handleAttachmentVolumeTypeChange(self, context):
     if self.volumeType in ["0", "1", "2"]:
        if self.volumeSize0 == 0.0:
@@ -364,7 +373,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options={"SKIP_SAVE"})
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleTypeOrBoneSuffixChange, default="Particle System")
     oldBoneSuffix = bpy.props.StringProperty(options={"SKIP_SAVE"})
-    materialReferenceIndex = bpy.props.IntProperty(default=0, subtype="UNSIGNED",options=set())
+    materialName = bpy.props.StringProperty(options=set())
     maxParticles = bpy.props.IntProperty(default=20, subtype="UNSIGNED",options=set())
     emissionSpeed1 = bpy.props.FloatProperty(name="emis. speed 1",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission")
     emissionSpeed2 = bpy.props.FloatProperty(default=1.0, name="emiss. speed 2",options={"ANIMATABLE"}, description="If emission speed randomization is enabled this value specfies the other end of the range of random speeds")
@@ -649,13 +658,12 @@ class ParticleSystemsPanel(bpy.types.Panel):
             particle_system = scene.m3_particle_systems[currentIndex]
             layout.separator()
             layout.prop(particle_system, 'boneSuffix',text="Name")
-            layout.prop(particle_system, 'materialReferenceIndex',text="Material Index")
-            
+            layout.prop_search(particle_system, 'materialName', scene, 'm3_material_references', text="Material", icon='NONE')
             split = layout.split()
             col = split.column()
             col.row().label("Emis. Area:")
             col = col.row().column(align=True)
-            col.prop(particle_system, 'emissionAreaType',text="")
+            col.prop(particle_system, 'emissionAreaType', text="")
             sub = col.row()
             sub.active = particle_system.emissionAreaType in particleTypesWithLength
             sub.prop(particle_system, 'emissionAreaSize', index=0, text="Length")
@@ -858,12 +866,11 @@ class MaterialSelectionPanel(bpy.types.Panel):
         return o and (o.data != None) and (o.type == 'MESH')
  
     def draw(self, context):
+        scene = context.scene
         layout = self.layout
         meshObject = context.object
         mesh = meshObject.data
-        layout.prop(mesh, 'm3_material_reference_index', text="M3 Material Index")
-
-        
+        layout.prop_search(mesh, 'm3_material_name', scene, 'm3_material_references', text="M3 Material", icon='NONE')
 
 class AttachmentPointsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_attachments"
@@ -900,6 +907,9 @@ class AttachmentPointsPanel(bpy.types.Panel):
                 layout.prop(attachment_point, 'volumeSize1', text="Volume Height")
             if attachment_point.volumeType in ["0"]:
                 layout.prop(attachment_point, 'volumeSize2', text="Volume Height")
+
+
+
 
 class M3_MATERIALS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.materials_add'
@@ -1009,14 +1019,16 @@ class M3_MATERIALS_OT_remove(bpy.types.Operator):
         scene = context.scene
         referenceIndex = scene.m3_material_reference_index
         if referenceIndex>= 0:
+            materialReference = scene.m3_material_references[referenceIndex]
+            materialName = materialReference.name
             # Check if material is in use, and abort:
             for particle_system in scene.m3_particle_systems:
-                if particle_system.materialReferenceIndex == referenceIndex:
+                if particle_system.materialName == materialName:
                     self.report({"ERROR"}, "Can't delete: The particle system '%s' is using this material" % particle_system.name)
                     return {"CANCELLED"}
             for meshObject in shared.findMeshObjects(scene):
                 mesh = meshObject.data
-                if mesh.m3_material_reference_index == referenceIndex:
+                if mesh.m3_material_name == materialName:
                     self.report({"ERROR"}, "Can't delete: The object '%s' (mesh '%s') is using this material." % (meshObject.name, mesh.name))
                     return {"CANCELLED"}
             
@@ -1029,10 +1041,6 @@ class M3_MATERIALS_OT_remove(bpy.types.Operator):
             materialReference = scene.m3_material_references[referenceIndex]
             materialIndex = materialReference.materialIndex
             materialType = materialReference.materialType
-            
-            for particle_system in scene.m3_particle_systems:
-                if particle_system.materialReferenceIndex > referenceIndex:
-                    particle_system.materialReferenceIndex -= 1
             
             for otherReference in scene.m3_material_references:
                 if otherReference.materialType == materialType and otherReference.materialIndex > materialIndex:
@@ -1135,9 +1143,6 @@ class M3_PARTICLE_SYSTEMS_OT_remove(bpy.types.Operator):
                 scene.m3_particle_systems.remove(scene.m3_particle_system_index)
                 scene.m3_particle_system_index-= 1
         return{'FINISHED'}
-        
-
-        
         
 class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.attachment_points_add'
@@ -1266,22 +1271,22 @@ def menu_func_export(self, context):
 def register():
     bpy.utils.register_module(__name__)
 
-    bpy.types.Scene.m3_animation_index = bpy.props.IntProperty(update=handleAnimationSequenceIndexChange)
-    bpy.types.Scene.m3_animation_old_index = bpy.props.IntProperty()
+    bpy.types.Scene.m3_animation_index = bpy.props.IntProperty(update=handleAnimationSequenceIndexChange, options=set())
+    bpy.types.Scene.m3_animation_old_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_animations = bpy.props.CollectionProperty(type=M3Animation)
-    bpy.types.Scene.m3_material_layer_index = bpy.props.IntProperty()
+    bpy.types.Scene.m3_material_layer_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_material_references = bpy.props.CollectionProperty(type=M3Material)
     bpy.types.Scene.m3_standard_materials = bpy.props.CollectionProperty(type=M3StandardMaterial)
     bpy.types.Scene.m3_displacement_materials = bpy.props.CollectionProperty(type=M3DisplacementMaterial)
     bpy.types.Scene.m3_terrain_materials = bpy.props.CollectionProperty(type=M3TerrainMaterial)
-    bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty()
+    bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_particle_systems = bpy.props.CollectionProperty(type=M3ParticleSystem)
     bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(update=handlePartileSystemIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
-    bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty()
+    bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
     bpy.types.Scene.m3_animation_ids = bpy.props.CollectionProperty(type=M3AnimIdData)
-    bpy.types.Mesh.m3_material_reference_index = bpy.props.IntProperty()
+    bpy.types.Mesh.m3_material_name = bpy.props.StringProperty(options=set())
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
  
