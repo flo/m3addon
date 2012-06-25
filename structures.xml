@@ -529,9 +529,17 @@
             <field name="lightType" type="uint8" />
             <field name="unknown1" size="1" />
             <field name="lightBone" type="uint8" />
-            <field name="unknown2" size="21" />
-            <field name="lightColor" type="VEC3V0" />
-            <field name="unknown3" size="16" />
+            <field name="unknown2" size="1" />
+            <field name="lightFlags" type="uint32" default-value="0x08">
+                <bits>
+                    <bit mask="0x1" name="shadowCast" />
+                    <bit mask="0x2" name="unknownFlag1" />
+                    <bit mask="0x4" name="unknownFlag2" />
+                    <bit mask="0x8" name="turnOn" />
+                </bits>
+            </field>
+            <field name="unknown3" size="8" />
+            <field name="lightColor" type="Vector3AnimationReference" />
             <field name="lightIntensity" type="FloatAnimationReference" />
             <field name="unknown4" size="108" />
             <field name="range" type="float" />
