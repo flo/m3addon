@@ -260,7 +260,8 @@ matDefaultSettingsList = [("MESH", "Mesh Standard Material", "A material for mes
                         ("PARTICLE", 'Particle Standard Material', "Material for particle systems"),
                         ("DISPLACEMENT", "Displacement Material", "Moves the colors of the background to other locations"),
                         ("COMPOSITE", "Composite Material", "A combination of multiple materials"),
-                        ("TERRAIN", "Terrain Material", "Makes the object look like the ground below it")
+                        ("TERRAIN", "Terrain Material", "Makes the object look like the ground below it"),
+                        ("VOLUME", "Volume Material", "A fog like material")
                         ]
                         
 matBlendModeList = [("0", "Opaque", "no description yet"), 
@@ -1041,6 +1042,13 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
             materialIndex = len(scene.m3_terrain_materials)
             material = scene.m3_terrain_materials.add()
             for (layerName, layerFieldName) in zip(shared.terrainMaterialLayerNames, shared.terrainMaterialLayerFieldNames):
+                layer = material.layers.add()
+                layer.name = layerName
+        elif self.defaultSetting == defaultSettingVolume:
+            materialType = shared.volumeMaterialTypeIndex
+            materialIndex = len(scene.m3_volume_materials)
+            material = scene.m3_volume_materials.add()
+            for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
                 layer = material.layers.add()
                 layer.name = layerName
         elif self.defaultSetting == defaultSettingTerrain:
