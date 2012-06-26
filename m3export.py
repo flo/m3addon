@@ -753,7 +753,7 @@ class Exporter:
     def initMaterials(self, model):
         scene = self.scene
         
-        supportedMaterialTypes = [shared.standardMaterialTypeIndex, shared.displacementMaterialTypeIndex, shared.compositeMaterialTypeIndex, shared.terrainMaterialTypeIndex]
+        supportedMaterialTypes = {shared.standardMaterialTypeIndex, shared.displacementMaterialTypeIndex, shared.compositeMaterialTypeIndex, shared.terrainMaterialTypeIndex, shared.volumeMaterialTypeIndex}
         for materialReference in scene.m3_material_references:
             materialType = materialReference.materialType
             if materialType in supportedMaterialTypes:
@@ -773,6 +773,8 @@ class Exporter:
         for materialIndex, material in enumerate(scene.m3_terrain_materials):
             model.terrainMaterials.append(self.createTerrainMaterial(materialIndex, material))
 
+        for materialIndex, material in enumerate(scene.m3_volume_materials):
+            model.volumeMaterials.append(self.createVolumeMaterial(materialIndex, material))
 
     def createStandardMaterial(self, materialIndex, material):
         m3Material = m3.MAT_V15()
@@ -828,6 +830,20 @@ class Exporter:
 
         layerIndex = 0
         for layer, layerFieldName in zip(material.layers, shared.terrainMaterialLayerFieldNames):
+            animPathPrefix = materialAnimPathPrefix + ".layers[%s]." % layerIndex
+            m3Layer = self.createMaterialLayer(layer, animPathPrefix)
+            setattr(m3Material, layerFieldName, [m3Layer])
+            layerIndex += 1
+        return m3Material
+
+    def createVolumeMaterial(self, materialIndex, material):
+        m3Material = m3.VOL_V0()
+        materialAnimPathPrefix = "m3_volume_materials[%s]." % materialIndex
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+        shared.transferVolumeMaterial(transferer)
+
+        layerIndex = 0
+        for layer, layerFieldName in zip(material.layers, shared.volumeMaterialLayerFieldNames):
             animPathPrefix = materialAnimPathPrefix + ".layers[%s]." % layerIndex
             m3Layer = self.createMaterialLayer(layer, animPathPrefix)
             setattr(m3Material, layerFieldName, [m3Layer])

@@ -7,11 +7,12 @@ Currently the following content can be exported and imported:
 
   * Animations
   * Meshes with up to 4 UV layers
-  * Most m3 materials:
+  * All known M3 materials:
       * standard materials
       * displacement materials
       * composite materials
       * terrain materials
+      * volume materials
   * M3 particle systems
   * M3 attachment points and volumes
 

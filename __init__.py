@@ -386,6 +386,13 @@ class M3TerrainMaterial(bpy.types.PropertyGroup):
     materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
     layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
 
+class M3VolumeMaterial(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="name", default="Material", update=handleMaterialNameChange, options=set())
+    # the following field gets used to update the name of the material reference:
+    materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
+    volumeDensity = bpy.props.FloatProperty(name="volume density",options={"ANIMATABLE"}, default=1.0, description="Factor that gets multiplicated with the strength values")
+    layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
+
 class M3ParticleSystem(bpy.types.PropertyGroup):
 
     # name attribute seems to be needed for template_list but is not actually in the m3 file
@@ -619,6 +626,10 @@ class MaterialPropertiesPanel(bpy.types.Panel):
             elif materialType == shared.terrainMaterialTypeIndex:
                 material = scene.m3_terrain_materials[materialIndex]
                 layout.prop(material, 'name', text="Name")
+            elif materialType == shared.volumeMaterialTypeIndex:
+                material = scene.m3_volume_materials[materialIndex]
+                layout.prop(material, 'name', text="Name")
+                layout.prop(material, 'volumeDensity', text="Volume Density")
             else:
                 layout.label(text=("Unsupported material type %d" % materialType))
 
@@ -979,6 +990,7 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
         defaultSettingDisplacement = "DISPLACEMENT"
         defaultSettingComposite = "COMPOSITE"
         defaultSettingTerrain = "TERRAIN"
+        defaultSettingVolume = "VOLUME"
 
         if self.defaultSetting in [defaultSettingMesh, defaultSettingParticle]:
             materialType = shared.standardMaterialTypeIndex
@@ -1029,6 +1041,13 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
             materialIndex = len(scene.m3_terrain_materials)
             material = scene.m3_terrain_materials.add()
             for (layerName, layerFieldName) in zip(shared.terrainMaterialLayerNames, shared.terrainMaterialLayerFieldNames):
+                layer = material.layers.add()
+                layer.name = layerName
+        elif self.defaultSetting == defaultSettingTerrain:
+            materialType = shared.volumeMaterialTypeIndex
+            materialIndex = len(scene.m3_volume_materials)
+            material = scene.m3_volume_materials.add()
+            for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
                 layer = material.layers.add()
                 layer.name = layerName
         materialReferenceIndex = len(scene.m3_material_references)
@@ -1367,6 +1386,7 @@ def register():
     bpy.types.Scene.m3_displacement_materials = bpy.props.CollectionProperty(type=M3DisplacementMaterial)
     bpy.types.Scene.m3_composite_materials = bpy.props.CollectionProperty(type=M3CompositeMaterial)
     bpy.types.Scene.m3_terrain_materials = bpy.props.CollectionProperty(type=M3TerrainMaterial)
+    bpy.types.Scene.m3_volume_materials = bpy.props.CollectionProperty(type=M3VolumeMaterial)
     bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_particle_systems = bpy.props.CollectionProperty(type=M3ParticleSystem)
     bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(update=handlePartileSystemIndexChanged)

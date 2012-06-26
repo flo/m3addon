@@ -35,11 +35,16 @@ displacementMaterialLayerNames = ["Normal", "Strength"]
 terrainMaterialLayerFieldNames = ["layer"]
 terrainMaterialLayerNames = ["Terrain"]
 
+volumeMaterialLayerFieldNames = ["colorDefiningLayer", "unknownLayer2", "unknownLayer3"]
+volumeMaterialLayerNames = ["Color Defining Layer", "Layer 2", "Layer 3"]
+
+
 materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume"]
 standardMaterialTypeIndex = 1
 displacementMaterialTypeIndex = 2
 compositeMaterialTypeIndex = 3
 terrainMaterialTypeIndex = 4
+volumeMaterialTypeIndex = 5
 
 rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
                                  (-1, 0, 0, 0),
@@ -101,6 +106,8 @@ def getMaterial(scene, materialTypeIndex, materialIndex):
         return scene.m3_composite_materials[materialIndex] 
     elif materialTypeIndex == terrainMaterialTypeIndex:
         return scene.m3_terrain_materials[materialIndex] 
+    elif materialTypeIndex == volumeMaterialTypeIndex:
+        return scene.m3_volume_materials[materialIndex] 
     return None
 
 def sqr(x):
@@ -281,11 +288,15 @@ def transferCompositeMaterial(transferer):
     transferer.transferString("name")
 
 def transferCompositeMaterialSection(transferer):
-    transferer.transferAnimatableFloat("alphaFactor")
+    transferer.transferString("name")
 
 def transferTerrainMaterial(transferer):
     transferer.transferString("name")
-    
+
+def transferVolumeMaterial(transferer):
+    transferer.transferString("name")
+    transferer.transferAnimatableFloat("volumeDensity")
+
 def transferMaterialLayer(transferer):
     transferer.transferString("imagePath")
     transferer.transferInt("unknown11")
