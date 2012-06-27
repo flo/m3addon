@@ -66,6 +66,7 @@ class Exporter:
         self.initBones(model)
         self.initMesh(model)
         self.initMaterials(model)
+        self.initCameras(model)
         self.initParticles(model)
         self.initAttachmentPoints(model)
         self.prepareAnimationEndEvents()
@@ -648,6 +649,20 @@ class Exporter:
         else:
             raise Exception("Can't handle animation data of type %s yet" % animDataType)
         m3SequenceTransformationCollection.animRefs.append(animRef)
+
+    def initCameras(self, model):
+        scene = self.scene
+        for cameraIndex, camera in enumerate(scene.m3_cameras):
+            m3Camera = m3.CAM_V3()
+            boneName = camera.name
+            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+            if boneIndex == None:
+                boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+            m3Camera.boneIndex = boneIndex
+            animPathPrefix = "m3_cameras[%s]." % cameraIndex
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Camera, blenderObject=camera, animPathPrefix=animPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+            shared.transferCamera(transferer)
+            model.cameras.append(m3Camera)
 
     def initParticles(self, model):
         scene = self.scene

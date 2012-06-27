@@ -938,17 +938,17 @@
             <description>
                 Camera
             </description>
-            <field offset="0" name="unknown0" size="4" />
+            <field offset="0" name="boneIndex" type="uint32" />
             <field offset="4" name="name" type="Reference" refTo="CHARV0" />
-            <field offset="16" name="fovValue" type="FloatAnimationReference" />
-			<field offset="36" name="unknown1" size="4"/>
-			<field offset="40" name="clipFar" type="FloatAnimationReference" />
-			<field offset="60" name="clipNear" type="FloatAnimationReference" />
+            <field offset="16" name="fieldOfView" type="FloatAnimationReference" />
+			<field offset="36" name="unknown" type="uint32" expected-value="1"/>
+			<field offset="40" name="farClip" type="FloatAnimationReference" />
+			<field offset="60" name="nearClip" type="FloatAnimationReference" />
 			<field offset="80" name="clip2" type="FloatAnimationReference" />
 			<field offset="100" name="focalDepth" type="FloatAnimationReference" />
 			<field offset="120" name="falloffStart" type="FloatAnimationReference" />
 			<field offset="140" name="falloffEnd" type="FloatAnimationReference" />
-			<field offset="160" name="dof" type="FloatAnimationReference" />
+			<field offset="160" name="depthOfField" type="FloatAnimationReference" />
         </structure>
 
         <structure name="MODL" version="23" size="784" >

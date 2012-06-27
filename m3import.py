@@ -320,6 +320,7 @@ class Importer:
         self.createArmatureObject()
         self.createBones()
         self.createMaterials()
+        self.createCameras()
         self.createParticleSystems()
         self.createAttachmentPoints()
         self.createMesh()
@@ -685,6 +686,20 @@ class Importer:
         self.createVolumeMaterials(scene)
         self.createMaterialReferences(scene)
 
+    def createCameras(self):
+        scene = bpy.context.scene
+        print("Loading cameras")
+        for cameraIndex, m3Camera in enumerate(self.model.cameras):
+            camera = scene.m3_cameras.add()
+            animPathPrefix = "m3_cameras[%s]." % cameraIndex
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=camera, m3Object=m3Camera)
+            shared.transferCamera(transferer)
+            m3Bone = self.model.bones[m3Camera.boneIndex]
+            if m3Bone.name != camera.name:
+                raise Exception("Bone of camera '%s' had different name: '%s'" % (camera.name, m3Bone.name))
+            
+            
+            
     def createParticleSystems(self):
         currentScene = bpy.context.scene
         print("Loading particle systems")

@@ -324,3 +324,15 @@ def transferAnimation(transferer):
     transferer.transferBit("flags", "notLooping")
     transferer.transferBit("flags", "alwaysGlobal")
     transferer.transferBit("flags", "globalInPreviewer")
+    
+def transferCamera(transferer):
+    transferer.transferString("name")
+    transferer.transferAnimatableFloat("fieldOfView")
+    transferer.transferAnimatableFloat("farClip")
+    transferer.transferAnimatableFloat("nearClip")
+    transferer.transferAnimatableFloat("clip2")
+    transferer.transferAnimatableFloat("focalDepth")
+    transferer.transferAnimatableFloat("falloffStart")
+    transferer.transferAnimatableFloat("falloffEnd")
+    transferer.transferAnimatableFloat("depthOfField")
+

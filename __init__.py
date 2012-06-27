@@ -394,6 +394,17 @@ class M3VolumeMaterial(bpy.types.PropertyGroup):
     volumeDensity = bpy.props.FloatProperty(name="volume density",options={"ANIMATABLE"}, default=1.0, description="Factor that gets multiplicated with the strength values")
     layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
 
+class M3Camera(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="name", default="Camera", options=set())
+    fieldOfView = bpy.props.FloatProperty(name="fieldOfView", options={"ANIMATABLE"}, default=0.5)
+    farClip = bpy.props.FloatProperty(name="farClip", options={"ANIMATABLE"}, default=10.0)
+    nearClip = bpy.props.FloatProperty(name="nearClip", options={"ANIMATABLE"}, default=10.0)
+    clip2 = bpy.props.FloatProperty(name="clip2", options={"ANIMATABLE"}, default=10.0)
+    focalDepth = bpy.props.FloatProperty(name="focalDepth", options={"ANIMATABLE"}, default=2)
+    falloffStart = bpy.props.FloatProperty(name="falloffStart", options={"ANIMATABLE"}, default=1.0)
+    falloffEnd = bpy.props.FloatProperty(name="falloffEnd", options={"ANIMATABLE"}, default=2.0)
+    depthOfField = bpy.props.FloatProperty(name="depthOfField", options={"ANIMATABLE"}, default=0.5)
+
 class M3ParticleSystem(bpy.types.PropertyGroup):
 
     # name attribute seems to be needed for template_list but is not actually in the m3 file
@@ -689,7 +700,38 @@ class MatrialLayersPanel(bpy.types.Panel):
         else:
             col.label(text="No properties to display")
 
+class CameraPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_cameras"
+    bl_label = "M3 Cameras"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
 
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        col.template_list(scene, "m3_cameras", scene, "m3_camera_index", rows=2)
+
+        col = row.column(align=True)
+        col.operator("m3.cameras_add", icon='ZOOMIN', text="")
+        col.operator("m3.cameras_remove", icon='ZOOMOUT', text="")
+        currentIndex = scene.m3_camera_index
+        if currentIndex >= 0 and currentIndex < len(scene.m3_cameras):
+            camera = scene.m3_cameras[currentIndex]
+            layout.separator()
+            layout.prop(camera, 'name',text="Name")
+            layout.prop(camera, 'fieldOfView',text="Field Of View")
+            layout.prop(camera, 'farClip',text="Far Clip")
+            layout.prop(camera, 'nearClip',text="Near Clip")
+            layout.prop(camera, 'clip2',text="Clip 2")
+            layout.prop(camera, 'focalDepth',text="Focal Depth")
+            layout.prop(camera, 'falloffStart',text="Falloff Start")
+            layout.prop(camera, 'falloffEnd',text="Falloff End")
+            layout.prop(camera, 'depthOfField',text="Depth Of Field")
+
+            
 class ParticleSystemsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_particles"
     bl_label = "M3 Particle Systems"
@@ -1215,6 +1257,51 @@ class M3_ANIMATIONS_OT_remove(bpy.types.Operator):
                 scene.m3_animation_index -= 1
         return{'FINISHED'}
 
+class M3_CAMERAS_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.cameras_add'
+    bl_label       = "Add M3 Camera"
+    bl_description = "Adds a camera description for the export as m3"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        camera = scene.m3_cameras.add()
+        camera.name = self.findUnusedName(scene)
+
+        scene.m3_camera_index = len(scene.m3_cameras)-1
+        return{'FINISHED'}
+
+    def findUnusedName(self, scene):
+        usedNames = set()
+        for camera in scene.m3_cameras:
+            usedNames.add(camera.name)
+        
+        suggestedNames = ["CameraPortrait", "CameraAvatar"]
+        unusedName = None
+        for suggestedName in suggestedNames:
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+                break
+        counter = 1
+        while unusedName == None:
+            suggestedName = "Camera %02d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName
+
+
+class M3_CAMERAS_OT_remove(bpy.types.Operator):
+    bl_idname      = 'm3.cameras_remove'
+    bl_label       = "Remove Camera"
+    bl_description = "Removes the active M3 camera"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_camera_index >= 0:
+                scene.m3_cameras.remove(scene.m3_camera_index)
+                scene.m3_camera_index-= 1
+        return{'FINISHED'}
+
 class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.particle_systems_add'
     bl_label       = "Add Particle System"
@@ -1396,8 +1483,10 @@ def register():
     bpy.types.Scene.m3_terrain_materials = bpy.props.CollectionProperty(type=M3TerrainMaterial)
     bpy.types.Scene.m3_volume_materials = bpy.props.CollectionProperty(type=M3VolumeMaterial)
     bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty(options=set())
+    bpy.types.Scene.m3_cameras = bpy.props.CollectionProperty(type=M3Camera)
+    bpy.types.Scene.m3_camera_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_particle_systems = bpy.props.CollectionProperty(type=M3ParticleSystem)
-    bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(update=handlePartileSystemIndexChanged)
+    bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(options=set(), update=handlePartileSystemIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
