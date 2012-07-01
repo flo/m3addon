@@ -692,7 +692,7 @@
         <structure name="CMP_" version="2" size="28" >
             <description>Composite Material</description>
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
-            <field offset="12" name="unknown" type="uint32" defalut-value="0"/> <!-- See: SM_MarSaraBar_00.m3 -->
+            <field offset="12" name="unknown" type="uint32" default-value="0"/> <!-- See: SM_MarSaraBar_00.m3 -->
             <field offset="16" name="sections" type="Reference" refTo="CMS_V0" />
         </structure>
 
