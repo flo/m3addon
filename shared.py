@@ -288,7 +288,7 @@ def transferCompositeMaterial(transferer):
     transferer.transferString("name")
 
 def transferCompositeMaterialSection(transferer):
-    transferer.transferString("name")
+    transferer.transferAnimatableFloat("alphaFactor")
 
 def transferTerrainMaterial(transferer):
     transferer.transferString("name")
