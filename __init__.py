@@ -89,6 +89,15 @@ def handleTypeOrBoneSuffixChange(self, context):
             bone.name = newBoneName
     self.oldBoneSuffix = self.boneSuffix
 
+def handleCameraNameChange(self, context):
+    scene = context.scene
+    print("name changed")
+    if self.name != self.oldName:
+        bone, armatureObject = findBoneWithArmatureObject(scene, self.oldName)
+        if bone != None:
+            bone.name = self.name
+    self.oldName = self.name
+
 def handleMaterialNameChange(self, context):
     scene = context.scene
     materialName = self.name
@@ -406,7 +415,8 @@ class M3VolumeMaterial(bpy.types.PropertyGroup):
     layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
 
 class M3Camera(bpy.types.PropertyGroup):
-    name = bpy.props.StringProperty(name="name", default="Camera", options=set())
+    name = bpy.props.StringProperty(name="name", default="Camera", update=handleCameraNameChange, options=set())
+    oldName = bpy.props.StringProperty(name="oldName", options=set())
     fieldOfView = bpy.props.FloatProperty(name="fieldOfView", options={"ANIMATABLE"}, default=0.5)
     farClip = bpy.props.FloatProperty(name="farClip", options={"ANIMATABLE"}, default=10.0)
     nearClip = bpy.props.FloatProperty(name="nearClip", options={"ANIMATABLE"}, default=10.0)
