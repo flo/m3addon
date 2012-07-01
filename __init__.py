@@ -166,6 +166,11 @@ def handlePartileSystemIndexChanged(self, context):
     partileSystem = scene.m3_particle_systems[scene.m3_particle_system_index]
     selectOrCreateBoneForPartileSystem(scene, partileSystem)
 
+def handleCameraIndexChanged(self, context):
+    scene = context.scene
+    camera = scene.m3_cameras[scene.m3_camera_index]
+    selectOrCreateBoneForCamera(scene, camera)
+
 def iterateArmatureObjects(scene):
     for obj in scene.objects:
         if obj.type == "ARMATURE":
@@ -186,41 +191,47 @@ def findBoneWithArmatureObject(scene, boneName):
     return (None, None)
 
 def selectOrCreateBoneForPartileSystem(scene, particle_system):
-        boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
-        if bpy.ops.object.mode_set.poll():
-           bpy.ops.object.mode_set(mode='OBJECT')
-        if bpy.ops.object.select_all.poll():
-           bpy.ops.object.select_all(action='DESELECT')
-        bone, armatureObject = findBoneWithArmatureObject(scene, boneName)
-        boneExists = bone != None
-        if boneExists:
-            armature = armatureObject.data
-            armatureObject.select = True
-            scene.objects.active = armatureObject
-            if bpy.ops.object.mode_set.poll():
-                bpy.ops.object.mode_set(mode='POSE')
-        else:
-            armatureObject = findArmatureObjectForNewBone(scene)
-            if armatureObject == None:
-                armature = bpy.data.armatures.new(name="Armature")
-                armatureObject = bpy.data.objects.new("Armature", armature)
-                scene.objects.link(armatureObject)
-            else:
-                armature = armatureObject.data
-            armatureObject.select = True
-            scene.objects.active = armatureObject
-            bpy.ops.object.mode_set(mode='EDIT')
-            editBone = armature.edit_bones.new(boneName)
-            editBone.head = (0, 0, 0)
-            editBone.tail = (1, 0, 0)
-            bpy.ops.object.mode_set(mode='POSE')
-            bone = armature.bones[boneName]
-        scene.objects.active = armatureObject
+    boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
+    selectOrCreateBone(scene, boneName)
+
+def selectOrCreateBoneForCamera(scene, camera):
+    selectOrCreateBone(scene, camera.name)
+
+def selectOrCreateBone(scene, boneName):
+    if bpy.ops.object.mode_set.poll():
+        bpy.ops.object.mode_set(mode='OBJECT')
+    if bpy.ops.object.select_all.poll():
+        bpy.ops.object.select_all(action='DESELECT')
+    bone, armatureObject = findBoneWithArmatureObject(scene, boneName)
+    boneExists = bone != None
+    if boneExists:
+        armature = armatureObject.data
         armatureObject.select = True
-        for currentBone in armature.bones:
-            currentBone.select = False
-        bone.select = True
-    
+        scene.objects.active = armatureObject
+        if bpy.ops.object.mode_set.poll():
+            bpy.ops.object.mode_set(mode='POSE')
+    else:
+        armatureObject = findArmatureObjectForNewBone(scene)
+        if armatureObject == None:
+            armature = bpy.data.armatures.new(name="Armature")
+            armatureObject = bpy.data.objects.new("Armature", armature)
+            scene.objects.link(armatureObject)
+        else:
+            armature = armatureObject.data
+        armatureObject.select = True
+        scene.objects.active = armatureObject
+        bpy.ops.object.mode_set(mode='EDIT')
+        editBone = armature.edit_bones.new(boneName)
+        editBone.head = (0, 0, 0)
+        editBone.tail = (1, 0, 0)
+        bpy.ops.object.mode_set(mode='POSE')
+        bone = armature.bones[boneName]
+    scene.objects.active = armatureObject
+    armatureObject.select = True
+    for currentBone in armature.bones:
+        currentBone.select = False
+    bone.select = True
+  
 particleTypesWithRadius = ["2", "4"]
 particleTypesWithWidth = ["1", "3"]
 particleTypesWithLength = ["1", "3"]
@@ -1268,6 +1279,8 @@ class M3_CAMERAS_OT_add(bpy.types.Operator):
         camera.name = self.findUnusedName(scene)
 
         scene.m3_camera_index = len(scene.m3_cameras)-1
+        
+        selectOrCreateBoneForCamera(scene, camera)
         return{'FINISHED'}
 
     def findUnusedName(self, scene):
@@ -1484,7 +1497,7 @@ def register():
     bpy.types.Scene.m3_volume_materials = bpy.props.CollectionProperty(type=M3VolumeMaterial)
     bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_cameras = bpy.props.CollectionProperty(type=M3Camera)
-    bpy.types.Scene.m3_camera_index = bpy.props.IntProperty(options=set())
+    bpy.types.Scene.m3_camera_index = bpy.props.IntProperty(options=set(), update=handleCameraIndexChanged)
     bpy.types.Scene.m3_particle_systems = bpy.props.CollectionProperty(type=M3ParticleSystem)
     bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(options=set(), update=handlePartileSystemIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
