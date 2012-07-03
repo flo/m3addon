@@ -705,8 +705,8 @@
         <structure name="VOL_" version="0" size="84" >
             <description>Volume Material</description>
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
-            <field offset="12" name="unknown0" type="uint32" expected-value="0" />
-            <field offset="16" name="unknown1" type="uint32" expected-value="0" />
+            <field offset="12" name="unknown0" type="uint32" default-value="0" /> <!--Mar Sara bar -->
+            <field offset="16" name="unknown1" type="uint32" default-value="0" /> <!--Mar Sara bar -->
             <field offset="20" name="volumeDensity" type="FloatAnimationReference" />
             <field offset="40" name="colorDefiningLayer" type="Reference" refTo="LAYRV22" />
             <field offset="52" name="unknownLayer2" type="Reference" refTo="LAYRV22" />
