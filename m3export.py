@@ -126,11 +126,11 @@ class Exporter:
                 bone.flags = 0
                 bone.setNamedBit("flags", "real", True)
                 bone.location = m3.Vector3AnimationReference()
-                bone.location.header = self.createNullAnimHeader(flags=0, animId=locationAnimId)
+                bone.location.header = self.createNullAnimHeader(animId=locationAnimId, interpolationType=1)
                 bone.rotation = m3.QuaternionAnimationReference()
-                bone.rotation.header = self.createNullAnimHeader(flags=0, animId=rotationAnimId)
+                bone.rotation.header = self.createNullAnimHeader(animId=rotationAnimId, interpolationType=1)
                 bone.scale = m3.Vector3AnimationReference()
-                bone.scale.header = self.createNullAnimHeader(flags=0, animId=scaleAnimId)
+                bone.scale.header = self.createNullAnimHeader(animId=scaleAnimId, interpolationType=1)
                 bone.ar1 = self.createNullUInt32AnimationReference(1)
                 model.bones.append(bone)
 
@@ -234,7 +234,6 @@ class Exporter:
                             m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
                             m3AnimBlock.keys = m3Locs
                             animIdToAnimDataMap[locationAnimId] = m3AnimBlock
-                            bone.location.header.flags = 1
                             bone.location.header.animFlags = shared.animFlagsForAnimatedProperty
 
                         if (len(self.scene.m3_animation_ids) > 0)  or self.quaternionArrayContainsNotOnly(rotations, rotation):
@@ -246,7 +245,6 @@ class Exporter:
                             m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
                             m3AnimBlock.keys = m3Rots
                             animIdToAnimDataMap[rotationAnimId] = m3AnimBlock
-                            bone.rotation.header.flags = 1
                             bone.rotation.header.animFlags = shared.animFlagsForAnimatedProperty
 
                         if (len(self.scene.m3_animation_ids) > 0)  or self.vectorArrayContainsNotOnly(scales, scale):
@@ -258,7 +256,6 @@ class Exporter:
                             m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
                             m3AnimBlock.keys = m3Scas
                             animIdToAnimDataMap[scaleAnimId] = m3AnimBlock
-                            bone.scale.header.flags = 1
                             bone.scale.header.animFlags = shared.animFlagsForAnimatedProperty
                        
                         bone.setNamedBit("flags", "animated", True)
@@ -870,25 +867,25 @@ class Exporter:
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
         shared.transferMaterialLayer(transferer)
         m3Layer.unknown6 = self.createNullUInt32AnimationReference(0)
-        m3Layer.unknown7 = self.createNullVector2AnimationReference(0.0, 0.0, flags=0)
+        m3Layer.unknown7 = self.createNullVector2AnimationReference(0.0, 0.0, interpolationType=0)
         m3Layer.unknown8 = self.createNullUInt16AnimationReference(0)
-        m3Layer.uvOffset = self.createNullVector2AnimationReference(0.0, 0.0, flags=1)
-        m3Layer.uvAngle = self.createNullVector3AnimationReference(0.0, 0.0, 0.0, flags=1, initIsNullValue=False)
-        m3Layer.uvTiling = self.createNullVector2AnimationReference(1.0, 1.0, flags=1)
-        m3Layer.unknown9 = self.createNullUInt32AnimationReference(0, flags=1)
-        m3Layer.unknown10 = self.createNullFloatAnimationReference(1.0, flags=1)
+        m3Layer.uvOffset = self.createNullVector2AnimationReference(0.0, 0.0, interpolationType=1)
+        m3Layer.uvAngle = self.createNullVector3AnimationReference(0.0, 0.0, 0.0, interpolationType=1, initIsNullValue=False)
+        m3Layer.uvTiling = self.createNullVector2AnimationReference(1.0, 1.0, interpolationType=1)
+        m3Layer.unknown9 = self.createNullUInt32AnimationReference(0, interpolationType=1)
+        m3Layer.unknown10 = self.createNullFloatAnimationReference(1.0, interpolationType=1)
         return m3Layer
 
-    def createNullVector2AnimationReference(self, x, y, flags=1):
+    def createNullVector2AnimationReference(self, x, y, interpolationType=1):
         animRef = m3.Vector2AnimationReference()
-        animRef.header = self.createNullAnimHeader(flags=flags)
+        animRef.header = self.createNullAnimHeader(interpolationType=interpolationType)
         animRef.initValue = self.createVector2(x, y)
         animRef.nullValue = self.createVector2(0.0, 0.0)
         return animRef
         
-    def createNullVector3AnimationReference(self, x, y, z, initIsNullValue, flags=1):
+    def createNullVector3AnimationReference(self, x, y, z, initIsNullValue, interpolationType=1):
         animRef = m3.Vector3AnimationReference()
-        animRef.header = self.createNullAnimHeader(flags=flags)
+        animRef.header = self.createNullAnimHeader(interpolationType=interpolationType)
         animRef.initValue = self.createVector3(x, y, z)
         if initIsNullValue:
             animRef.nullValue = self.createVector3(x, y, z)
@@ -898,44 +895,44 @@ class Exporter:
     
     def createNullQuaternionAnimationReference(self, x=0.0, y=0.0, z=0.0, w=1.0):
         animRef = m3.QuaternionAnimationReference()
-        animRef.header = self.createNullAnimHeader()
+        animRef.header = self.createNullAnimHeader(interpolationType=1)
         animRef.initValue = self.createQuaternion(x=x, y=y, z=z, w=w)
         animRef.nullValue = self.createQuaternion(x=x, y=y, z=z, w=w)
         return animRef
         
     def createNullInt16AnimationReference(self, value):
         animRef = m3.Int16AnimationReference()
-        animRef.header = self.createNullAnimHeader()
+        animRef.header = self.createNullAnimHeader(interpolationType=1)
         animRef.initValue = value
         animRef.nullValue = 0
         return animRef
     
     def createNullUInt16AnimationReference(self, value):
         animRef = m3.UInt16AnimationReference()
-        animRef.header = self.createNullAnimHeader()
+        animRef.header = self.createNullAnimHeader(interpolationType=0)
         animRef.initValue = value
         animRef.nullValue = 0
         return animRef  
     
-    def createNullUInt32AnimationReference(self, value, flags=0):
+    def createNullUInt32AnimationReference(self, value, interpolationType=0):
         animRef = m3.UInt32AnimationReference()
-        animRef.header = self.createNullAnimHeader(flags = flags)
+        animRef.header = self.createNullAnimHeader(interpolationType = interpolationType)
         animRef.initValue = value
         animRef.nullValue = 0
         return animRef
         
-    def createNullFloatAnimationReference(self, initValue, nullValue=None, flags=1):
+    def createNullFloatAnimationReference(self, initValue, nullValue=None, interpolationType=1):
         if nullValue == None:
             nullValue = initValue
         animRef = m3.FloatAnimationReference()
-        animRef.header = self.createNullAnimHeader(flags=flags)
+        animRef.header = self.createNullAnimHeader(interpolationType=interpolationType)
         animRef.initValue = initValue
         animRef.nullValue = 0.0
         return animRef
     
-    def createNullAnimHeader(self, flags=0, animId=None):
+    def createNullAnimHeader(self, interpolationType, animId=None):
         animRefHeader = m3.AnimationReferenceHeader()
-        animRefHeader.flags = flags
+        animRefHeader.interpolationType = interpolationType
         animRefHeader.animFlags = 0
         if animId == None:
             animRefHeader.animId = self.createUniqueAnimId()
@@ -967,7 +964,7 @@ class Exporter:
     def createDummyBoundingsAnimation(self, minX=0.0, minY=0.0, minZ=0.0, maxX=0.0, maxY=0.0, maxZ=0.0, radius=0.0):
         boundingsAnimRef = m3.BNDSV0AnimationReference()
         animHeader = m3.AnimationReferenceHeader()
-        animHeader.flags = 0x0
+        animHeader.interpolationType = 0
         animHeader.animFlags = 0x0
         animHeader.animId = self.boundingAnimId # boudings seem to have always this id
         boundingsAnimRef.header = animHeader
@@ -1115,7 +1112,7 @@ class BlenderToM3DataTransferer:
         animPath = self.animPathPrefix + fieldName
         animId = self.exporter.getAnimIdFor(self.objectIdForAnimId, animPath)
         animRef = m3.ColorAnimationReference()
-        animRef.header = self.exporter.createNullAnimHeader(animId=animId)
+        animRef.header = self.exporter.createNullAnimHeader(animId=animId, interpolationType=1)
         m3CurrentColor =  self.exporter.toM3Color(getattr(self.blenderObject, fieldName))
         animRef.initValue = m3CurrentColor
         animRef.nullValue = self.exporter.createColor(0,0,0,0)
@@ -1151,7 +1148,6 @@ class BlenderToM3DataTransferer:
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
                 animIdToAnimDataMap[animId] = m3AnimBlock
-                animRef.header.flags = 1
                 animRef.header.animFlags = shared.animFlagsForAnimatedProperty
         #TODO Optimization: Remove keyframes that can be calculated by interpolation   
 
@@ -1159,7 +1155,7 @@ class BlenderToM3DataTransferer:
         animPath = self.animPathPrefix + fieldName
         animId = self.exporter.getAnimIdFor(self.objectIdForAnimId, animPath)
         animRef = animRefClass()
-        animRef.header = self.exporter.createNullAnimHeader(animId=animId)
+        animRef.header = self.exporter.createNullAnimHeader(animId=animId, interpolationType=1)
         currentValue =  getattr(self.blenderObject, fieldName)
         animRef.initValue = currentValue
         animRef.nullValue = type(currentValue)(0)
@@ -1179,7 +1175,6 @@ class BlenderToM3DataTransferer:
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
                 animIdToAnimDataMap[animId] = m3AnimBlock
-                animRef.header.flags = animRefFlags
                 animRef.header.animFlags = shared.animFlagsForAnimatedProperty
         #TODO Optimization: Remove keyframes that can be calculated by interpolation
         setattr(self.m3Object, fieldName, animRef)
@@ -1206,7 +1201,7 @@ class BlenderToM3DataTransferer:
         animPath = self.animPathPrefix + fieldName
         animId = self.exporter.getAnimIdFor(self.objectIdForAnimId, animPath)
         animRef = m3.Vector3AnimationReference()
-        animRef.header = self.exporter.createNullAnimHeader(animId=animId)
+        animRef.header = self.exporter.createNullAnimHeader(animId=animId, interpolationType=1)
         currentBVector =  getattr(self.blenderObject, fieldName)
         animRef.initValue = self.exporter.createVector3FromBlenderVector(currentBVector)
         animRef.nullValue = self.exporter.createVector3(0.0,0.0,0.0)
@@ -1238,7 +1233,6 @@ class BlenderToM3DataTransferer:
                 
                 animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
                 animIdToAnimDataMap[animId] = m3AnimBlock
-                animRef.header.flags = 1
                 animRef.header.animFlags = shared.animFlagsForAnimatedProperty
         #TODO Optimization: Remove keyframes that can be calculated by interpolation
         

@@ -103,11 +103,12 @@
         <structure name="AnimationReferenceHeader" size="8">
             <description>
                 The header of a reference to an animation entry
-                flags seems to be 0 for int animations and 1 for float animations. flags is also 0 if the animation is missing
-                animflags seems to be 6 if the animation reference is valid and 0 otherwise 
+                
+                interpolationType: 0=constant, 1=linear
+                animFlags seems to be 6 if the animation reference is valid and 0 otherwise 
                 animId seem to be random but unique numbers
             </description>
-            <field name="flags" type="uint16" />
+            <field name="interpolationType" type="uint16" />
             <field name="animFlags" type="uint16" />
             <field name="animId" type="uint32" />
         </structure>
