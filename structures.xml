@@ -676,7 +676,7 @@
                 Displacement Material
             </description>
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
-            <field offset="12" name="unknown0" type="uint32" expected-value="0" />
+            <field offset="12" name="unknown0" type="uint32" default-value="0" />
             <field offset="16" name="strengthFactor" type="FloatAnimationReference" />
             <field offset="36" name="normalLayer" type="Reference" refTo="LAYRV22" />
             <field offset="48" name="strengthLayer" type="Reference" refTo="LAYRV22" />
@@ -716,6 +716,10 @@
             <field offset="80" name="unknown3" type="uint32" expected-value="0x20" />
         </structure>
         
+        <structure name="SCHR" version="0" size="12" >
+            <description>Unknown</description>
+            <field offset="0" name="path" type="Reference" refTo="CHARV0" />
+        </structure>
 
         <structure name="PAR_" version="12" size="1316" >
             <description>Particle System</description>
@@ -826,7 +830,8 @@
             </field>
             <field offset="1192" name="unknown13" size="44"/>
             <field offset="1236" name="ar1" type="FloatAnimationReference" />
-            <field offset="1256" name="unknown14" size="48"/>
+            <field offset="1256" name="unknown14" size="36"/>
+            <field offset="1292" name="usedModel" type="Reference" refTo="SCHRV0"/>
             <field offset="1304" name="copyIndices" type="Reference" refTo="U32_V0" />
         </structure>
         
