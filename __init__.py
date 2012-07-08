@@ -1026,6 +1026,20 @@ class AttachmentPointsPanel(bpy.types.Panel):
                 layout.prop(attachment_point, 'volumeSize2', text="Volume Height")
 
 
+class ExtraBonePropertiesPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_bone_properties"
+    bl_label = "M3 Bone Properties"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "bone"
+    
+    def draw(self, context):
+        layout = self.layout
+        bone = context.bone
+        row = layout.row()
+        col = row.column()
+        layout.prop(bone, 'm3_unapplied_scale', text="Unapplied Scale")
+
 
 
 class M3_MATERIALS_OT_add(bpy.types.Operator):
@@ -1517,6 +1531,8 @@ def register():
     bpy.types.Mesh.m3_material_name = bpy.props.StringProperty(options=set())
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
+    bpy.types.Bone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
+    bpy.types.EditBone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
  
 def unregister():
     bpy.utils.unregister_module(__name__)

@@ -259,9 +259,13 @@ class Exporter:
                             bone.scale.header.animFlags = shared.animFlagsForAnimatedProperty
                        
                         bone.setNamedBit("flags", "animated", True)
-                   
-                        
-                absRestPosMatrixFixed = absRestPosMatrix * shared.rotFixMatrixInverted
+                
+                scaleMatrix = mathutils.Matrix()
+                for i in range(3):
+                    scaleMatrix[i][i] = blenderBone.m3_unapplied_scale[i]
+                absRestPosMatrixScaled = absRestPosMatrix * scaleMatrix
+                absRestPosMatrixFixed = absRestPosMatrixScaled * shared.rotFixMatrixInverted
+                
                 absoluteInverseRestPoseMatrixFixed = absRestPosMatrixFixed.inverted()
 
                 absoluteInverseBoneRestPos = self.createRestPositionFromBlender4x4Matrix(absoluteInverseRestPoseMatrixFixed)

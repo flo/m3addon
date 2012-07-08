@@ -402,7 +402,7 @@ class Importer:
         tails = determineTails(model.bones, heads, boneDirectionVectors, absoluteScales)
         rolls = determineRolls(absoluteBoneRestPositions, heads , tails)
 
-        editBones = self.createEditBones(model.bones, heads, tails, rolls)
+        editBones = self.createEditBones(model.bones, heads, tails, rolls, absoluteScales)
             
         
         relEditBoneMatrices = self.determineRelEditBoneMatrices(model.bones, editBones)
@@ -877,7 +877,7 @@ class Importer:
             relEditBoneMatrices.append(relEditBoneMatrix)
         return relEditBoneMatrices
 
-    def createEditBones(self, m3Bones, heads, tails, rolls):
+    def createEditBones(self, m3Bones, heads, tails, rolls, absoluteScales):
         editBones = []
         index = 0
         for boneEntry in m3Bones:
@@ -888,6 +888,7 @@ class Importer:
             editBone.head = heads[index]
             editBone.tail = tails[index]
             editBone.roll = rolls[index]
+            editBone.m3_unapplied_scale = absoluteScales[index]
             editBones.append(editBone)
             index +=1
         return editBones
