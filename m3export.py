@@ -1197,7 +1197,8 @@ class BlenderToM3DataTransferer:
         animRef.initValue = currentValue
         animRef.nullValue = type(currentValue)(0)
         for animation, action in self.animationActionTuples:
-            frames = self.exporter.getAllFramesOf(animation)
+            frames = list(set(self.exporter.getFramesFor(action, animPath, 0)))
+            frames.sort()
             timeValuesInMS = self.exporter.allFramesToMSValues(frames)
             values = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
             if values != None:
