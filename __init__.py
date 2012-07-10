@@ -329,7 +329,7 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options={"SKIP_SAVE"}, default="Material Layer")
     imagePath = bpy.props.StringProperty(name="image path", default="", options=set())
     unknown11 = bpy.props.IntProperty(name="unknown11", default=-1, options=set())
-    color = bpy.props.FloatVectorProperty(name="color", size=4, subtype="COLOR", options={"ANIMATABLE"})
+    color = bpy.props.FloatVectorProperty(name="color", default=(1.0, 1.0, 1.0, 1.0), size=4, subtype="COLOR", options={"ANIMATABLE"})
     textureWrapX = bpy.props.BoolProperty(options=set(), default=True)
     textureWrapY = bpy.props.BoolProperty(options=set(), default=True)
     colorEnabled = bpy.props.BoolProperty(options=set(), default=False)
