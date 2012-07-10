@@ -1158,7 +1158,7 @@ class BlenderToM3DataTransferer:
             redValues = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
             greenValues = self.exporter.getNoneOrValuesFor(action, animPath, 1, frames)
             blueValues = self.exporter.getNoneOrValuesFor(action, animPath, 2, frames)
-            alphaValues = self.exporter.getNoneOrValuesFor(action, animPath, 2, frames)
+            alphaValues = self.exporter.getNoneOrValuesFor(action, animPath, 3, frames)
             if (redValues != None) or (greenValues != None) or (blueValues != None) or (alphaValues != None):
                 if redValues == None:
                     redValues = len(timeValuesInMS) * [m3CurrentColor.red]
