@@ -1246,7 +1246,11 @@ class BlenderToM3DataTransferer:
         setattr(self.m3Object, fieldName, animRef)
 
         for animation, action in self.animationActionTuples:
-            frames = self.exporter.getAllFramesOf(animation)
+            frames = set()
+            for i in range(3):
+                frames.update(self.exporter.getFramesFor(action, animPath, i))
+            frames = list(frames)
+            frames.sort()
             timeValuesInMS = self.exporter.allFramesToMSValues(frames)
             xValues = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
             yValues = self.exporter.getNoneOrValuesFor(action, animPath, 1, frames)
