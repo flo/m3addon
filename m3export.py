@@ -44,7 +44,8 @@ actionTypeScene = "SCENE"
 actionTypeArmature = "OBJECT"
 
 class Exporter:
-    def exportParticleSystems(self, scene, m3FileName):
+    def export(self, scene, m3FileName):
+        self.isAnimationExport = m3FileName.endswith(".m3a")
         self.generatedAnimIdCounter = 0
         self.scene = scene
         self.boundingAnimId = 0x1f9bd2
@@ -238,7 +239,7 @@ class Exporter:
                         #TODO exported file size optimization: 
                         # import init pose and store it in blend file together with the corresponding animId
                         # Use it then to determine if an attribute really needs to be animated when it is constant
-                        if (len(self.scene.m3_animation_ids) > 0)  or self.vectorArrayContainsNotOnly(locations, location):
+                        if self.isAnimationExport or self.vectorArrayContainsNotOnly(locations, location):
                             locationTimeValuesInMS, locations = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, locations)
                             m3Locs = self.createVector3sFromBlenderVectors(locations)
                             m3AnimBlock = m3.SD3VV0()
@@ -249,7 +250,7 @@ class Exporter:
                             animIdToAnimDataMap[locationAnimId] = m3AnimBlock
                             bone.location.header.animFlags = shared.animFlagsForAnimatedProperty
 
-                        if (len(self.scene.m3_animation_ids) > 0)  or self.quaternionArrayContainsNotOnly(rotations, rotation):
+                        if self.isAnimationExport or self.quaternionArrayContainsNotOnly(rotations, rotation):
                             rotationTimeValuesInMS, rotations = shared.simplifyQuaternionAnimationWithInterpolation(timeValuesInMS, rotations)
                             m3Rots = self.createQuaternionsFromBlenderQuaternions(rotations)
                             m3AnimBlock = m3.SD4QV0()
@@ -260,7 +261,7 @@ class Exporter:
                             animIdToAnimDataMap[rotationAnimId] = m3AnimBlock
                             bone.rotation.header.animFlags = shared.animFlagsForAnimatedProperty
 
-                        if (len(self.scene.m3_animation_ids) > 0)  or self.vectorArrayContainsNotOnly(scales, scale):
+                        if self.isAnimationExport or self.vectorArrayContainsNotOnly(scales, scale):
                             scaleTimeValuesInMS, scales = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, scales)
                             m3Scas = self.createVector3sFromBlenderVectors(scales)
                             m3AnimBlock = m3.SD3VV0()
@@ -1307,7 +1308,7 @@ class BlenderToM3DataTransferer:
         setattr(self.m3Object, fieldName , int(value))
 
         
-def exportParticleSystems(scene, filename):
+def export(scene, filename):
     exporter = Exporter()
     shared.setAnimationWithIndexToCurrentData(scene, scene.m3_animation_index)
-    exporter.exportParticleSystems(scene, filename)
+    exporter.export(scene, filename)

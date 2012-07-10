@@ -1442,7 +1442,7 @@ class M3_OT_quickExport(bpy.types.Operator):
         fileName = scene.m3_export_options.path
         if not "m3export" in locals():
             from . import m3export
-        m3export.exportParticleSystems(scene, fileName)
+        m3export.export(scene, fileName)
         return{'FINISHED'}
 
 class M3_OT_export(bpy.types.Operator, ExportHelper):
@@ -1465,7 +1465,7 @@ class M3_OT_export(bpy.types.Operator, ExportHelper):
         if not "m3export" in locals():
             from . import m3export
 
-        m3export.exportParticleSystems(scene, self.properties.filepath)
+        m3export.export(scene, self.properties.filepath)
         return {'FINISHED'}
             
     def invoke(self, context, event):
