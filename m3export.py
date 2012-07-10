@@ -1153,7 +1153,11 @@ class BlenderToM3DataTransferer:
         
  
         for animation, action in self.animationActionTuples:
-            frames = self.exporter.getAllFramesOf(animation)
+            frames = set()
+            for i in range(4):
+                frames.update(self.exporter.getFramesFor(action, animPath, i))
+            frames = list(frames)
+            frames.sort()
             timeValuesInMS = self.exporter.allFramesToMSValues(frames)
             redValues = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
             greenValues = self.exporter.getNoneOrValuesFor(action, animPath, 1, frames)
