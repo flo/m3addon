@@ -813,7 +813,7 @@ class Exporter:
 
         layerIndex = 0
         for layer, layerFieldName in zip(material.layers, shared.standardMaterialLayerFieldNames):
-            animPathPrefix = materialAnimPathPrefix + ".layers[%s]." % layerIndex
+            animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
             m3Layer = self.createMaterialLayer(layer, animPathPrefix)
             setattr(m3Material, layerFieldName, [m3Layer])
             layerIndex += 1
@@ -830,7 +830,7 @@ class Exporter:
 
         layerIndex = 0
         for layer, layerFieldName in zip(material.layers, shared.displacementMaterialLayerFieldNames):
-            animPathPrefix = materialAnimPathPrefix + ".layers[%s]." % layerIndex
+            animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
             m3Layer = self.createMaterialLayer(layer, animPathPrefix)
             setattr(m3Material, layerFieldName, [m3Layer])
             layerIndex += 1
@@ -859,7 +859,7 @@ class Exporter:
 
         layerIndex = 0
         for layer, layerFieldName in zip(material.layers, shared.terrainMaterialLayerFieldNames):
-            animPathPrefix = materialAnimPathPrefix + ".layers[%s]." % layerIndex
+            animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
             m3Layer = self.createMaterialLayer(layer, animPathPrefix)
             setattr(m3Material, layerFieldName, [m3Layer])
             layerIndex += 1
@@ -873,7 +873,7 @@ class Exporter:
 
         layerIndex = 0
         for layer, layerFieldName in zip(material.layers, shared.volumeMaterialLayerFieldNames):
-            animPathPrefix = materialAnimPathPrefix + ".layers[%s]." % layerIndex
+            animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
             m3Layer = self.createMaterialLayer(layer, animPathPrefix)
             setattr(m3Material, layerFieldName, [m3Layer])
             layerIndex += 1
