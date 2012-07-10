@@ -165,8 +165,21 @@ class Exporter:
         
                 animationActionTuples = self.determineAnimationActionTuplesFor(armatureObject.name, actionTypeArmature)
                 for animation, action in animationActionTuples:
-                    frames = self.getAllFramesOf(animation)
+                    frames = set()
+                    frames.update(self.getFramesFor(action, locationAnimPath, 0))
+                    frames.update(self.getFramesFor(action, locationAnimPath, 1))
+                    frames.update(self.getFramesFor(action, locationAnimPath, 2))
+                    frames.update(self.getFramesFor(action, rotationAnimPath, 0))
+                    frames.update(self.getFramesFor(action, rotationAnimPath, 1))
+                    frames.update(self.getFramesFor(action, rotationAnimPath, 2))
+                    frames.update(self.getFramesFor(action, rotationAnimPath, 3))
+                    frames.update(self.getFramesFor(action, scaleAnimPath, 0))
+                    frames.update(self.getFramesFor(action, scaleAnimPath, 1))
+                    frames.update(self.getFramesFor(action, scaleAnimPath, 2))
+                    frames = list(frames)
+                    frames.sort()
                     timeValuesInMS = self.allFramesToMSValues(frames)
+
                     xLocValues = self.getNoneOrValuesFor(action, locationAnimPath, 0, frames)
                     yLocValues = self.getNoneOrValuesFor(action, locationAnimPath, 1, frames)
                     zLocValues = self.getNoneOrValuesFor(action, locationAnimPath, 2, frames)
@@ -1093,7 +1106,23 @@ class Exporter:
         for frame in frames:
             values.append(curve.evaluate(frame))
         return values
-            
+    
+    def getFramesFor(self, action, animPath, curveArrayIndex):
+        frames = []
+        curve = self.findFCurveWithPathAndIndex(action, animPath, curveArrayIndex)
+        if curve == None:
+            return frames
+        lastInterpolation = "LINEAR"
+        for keyframePoint in curve.keyframe_points:
+            frame = int(round(keyframePoint.co.x))
+            if lastInterpolation != "LINEAR":
+                for f in range(lastFrame, frame):
+                    frames.append(f)
+            frames.append(frame)
+            lastInterpolation = keyframePoint.interpolation
+            lastFrame = frame
+        return frames
+    
     def findFCurveWithPathAndIndex(self, action, animPath, curveArrayIndex):
         for curve in action.fcurves:
             if (curve.data_path == animPath) and (curve.array_index == curveArrayIndex):
