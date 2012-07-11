@@ -701,6 +701,20 @@ class Exporter:
                 raise Exception("The particle system %s uses '%s' as material, but no m3 material with that name exist!" % (particleSystem.name, particleSystem.materialName))
             m3ParticleSystem.materialReferenceIndex = materialReferenceIndex
 
+            for blenderCopyIndex, copy in enumerate(particleSystem.copies):
+                m3Copy = m3.PARCV0()
+                boneName = shared.boneNameForPartileSystemCopy(particleSystem, copy)
+                boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+                if boneIndex == None:
+                    boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+                m3Copy.bone = boneIndex
+                copyAnimPathPrefix = animPathPrefix + "copies[%d]." % blenderCopyIndex
+                transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Copy, blenderObject=copy, animPathPrefix=copyAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+                shared.transferParticleSystemCopy(transferer)
+                copyIndex = len(model.particleCopies)
+                model.particleCopies.append(m3Copy)
+                m3ParticleSystem.copyIndices.append(copyIndex)
+                
     def initAttachmentPoints(self, model):
         scene = self.scene
         for attachmentPointIndex, attachmentPoint in enumerate(scene.m3_attachment_points):

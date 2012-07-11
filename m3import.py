@@ -704,20 +704,33 @@ class Importer:
         currentScene = bpy.context.scene
         print("Loading particle systems")
         index = 0
-        for particlesEntry in self.model.particles:
+        for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
             particle_system = currentScene.m3_particle_systems.add()
-            animPathPrefix = "m3_particle_systems[%s]." % index
-            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=particle_system, m3Object=particlesEntry)
+            animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=particle_system, m3Object=m3ParticleSystem)
             shared.transferParticleSystem(transferer)
-            boneEntry = self.model.bones[particlesEntry.bone]
+            boneEntry = self.model.bones[m3ParticleSystem.bone]
             fullBoneName = boneEntry.name
             if fullBoneName.startswith(shared.star2ParticlePrefix):
                 particle_system.boneSuffix = fullBoneName[len(shared.star2ParticlePrefix):]
             else:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                 particle_system.boneSuffix = fullBoneName
-            particle_system.materialName = self.getNameOfMaterialWithReferenceIndex(particlesEntry.materialReferenceIndex)
-            index += 1
+            particle_system.materialName = self.getNameOfMaterialWithReferenceIndex(m3ParticleSystem.materialReferenceIndex)
+            for blenderCopyIndex, m3CopyIndex in enumerate(m3ParticleSystem.copyIndices):
+                m3Copy = self.model.particleCopies[m3CopyIndex]
+                copy = particle_system.copies.add()
+                copyAnimPathPrefix = animPathPrefix + "copies[%d]." % blenderCopyIndex
+                transferer = M3ToBlenderDataTransferer(self, copyAnimPathPrefix, blenderObject=copy, m3Object=m3Copy)
+                shared.transferParticleSystemCopy(transferer)
+                m3Bone = self.model.bones[m3Copy.bone]
+                fullCopyBoneName = m3Bone.name
+                if fullCopyBoneName.startswith(shared.star2ParticlePrefix):
+                    copy.name = fullCopyBoneName[len(shared.star2ParticlePrefix):]
+                else:
+                    print("Warning: A particle system copy was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
+                    copy.name = fullCopyBoneName
+                
 
 
     def createAttachmentPoints(self):

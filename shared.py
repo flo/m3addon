@@ -67,6 +67,9 @@ def toValidBoneName(name):
 def boneNameForPartileSystem(boneSuffix):
     return toValidBoneName(star2ParticlePrefix + boneSuffix)
 
+def boneNameForPartileSystemCopy(particleSyste, copy):
+    return toValidBoneName(star2ParticlePrefix + copy.name)
+
 def locRotScaleMatrix(location, rotation, scale):
     """ Important: rotation must be a normalized quaternion """
     # to_matrix() only works properly with normalized quaternions.
@@ -252,6 +255,9 @@ def transferParticleSystem(transferer):
     transferer.transferBit("flags", "simulateOnInit")
     transferer.transferBit("flags", "copy")
 
+def transferParticleSystemCopy(transferer):
+    transferer.transferAnimatableFloat("emissionRate")
+    transferer.transferAnimatableInt16("partEmit")
 
 def transferStandardMaterial(transferer):
     transferer.transferString("name")
