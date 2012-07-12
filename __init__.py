@@ -1032,8 +1032,8 @@ class ParticleSystemCopiesPanel(bpy.types.Panel):
             copy = particle_system.copies[copyIndex]
             layout.separator()
             layout.prop(copy, 'name',text="Name")
-            layout.prop(particle_system, 'emissionRate', text="Particles Per Second")
-            layout.prop(particle_system, 'partEmit', text="Part. Emit.")
+            layout.prop(copy, 'emissionRate', text="Particles Per Second")
+            layout.prop(copy, 'partEmit', text="Part. Emit.")
 
 class MaterialSelectionPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_selection"
