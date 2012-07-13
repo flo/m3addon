@@ -158,7 +158,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="float" />
             <field name="nullValue" type="float" />
-            <field name="unknown" type="uint32" expected-value="0" />
+            <field name="unknown" type="uint32" default-value="0" />
         </structure>
         <structure name="ColorAnimationReference" size="20">
             <description>Animatable color</description>
@@ -913,11 +913,98 @@
         
         <structure name="RIB_" version="6" size="748" >
             <description>
-                Unknown
+                Ribbon effect.
+                0 - PlanarBillboarded
+                1 - Planar
+                2 - Cylinder
+                3 - Star Shaped
             </description>
-            <field name="unknown0" size="436" />
+            <field name="boneIndex" type="uint8" />
+            <field name="short1" type="uint8" />
+            <field name="short2" type="uint8" />
+            <field name="short3" type="uint8" />
+            <field name="materialIndex" type="uint32" />
+            <field name="waveLength" type="FloatAnimationReference" />
+            <field name="unknown2" type="float" />
+            <field name="unknown3" type="uint32" />
+            <field name="unknown4" type="float" />
+            <field name="unknown5" type="float" />
+            <field name="unknown6" type="float" />
+            <field name="unknown7" type="float" />
+            <field name="unknown8" type="FloatAnimationReference" />
+            <field name="unknown9" type="FloatAnimationReference" />
+            <field name="unknown10" type="FloatAnimationReference" />
+            <field name="unknown11" type="FloatAnimationReference" />
+            <field name="unknown12" type="FloatAnimationReference" />
+            <field name="unknown13" type="FloatAnimationReference" />
+            <field name="unknown14" type="uint32" />
+            <field name="unknown15" type="uint32" />
+            <field name="unknown16" type="float" />
+            <field name="unknown17" type="float" />
+            <field name="tipOffsetZ" type="float" />
+            <field offset="192" name="endRadius" type="float" /> <!--looks like-->
+            <field name="unknown19" type="float" />
+            <field name="unknown20" type="float" />
+            <field name="unknown21" type="float" />
+            <field name="radiusScale" type="Vector3AnimationReference" /> <!--X=Start, Y=Middle, Z=END-->
+            <field name="unknown23" type="FloatAnimationReference" />
+            <field name="unknown24" type="uint32" />
+            <field name="unknown25" type="uint32" />
+            <field name="unknown26" type="uint32" />
+            <field name="unknown27" type="uint32" />
+            <field name="unknown28" size="20" /> <!-- BGRA color animation; spec modification, maybe -->
+            <field name="unknown29" size="20" /> <!-- BGRA color animation; diffuse modification, maybe -->
+            <field name="unknown30" size="20" /> <!-- BGRA color animation; diffuse modification, maybe -->
+            <field name="intShort5" type="float" />
+            <field name="intShort6" type="float" />
+            <field name="intShort2" type="float" />
+            <field name="intShort1" type="uint16" />
+            <field name="intShort4" type="uint16" />
+            <field name="unknown31" type="uint32" />
+            <field name="unknown32" type="uint32" />
+            <field name="unknown33" type="uint32" />
+            <field name="unknown34" type="uint32" />
+            <field name="unknown35" type="uint32" />
+            <field name="unknown36" type="uint32" />
+            <field name="unknown37" type="uint32" />
+            <field name="unknown38" type="uint32" />
+            <field name="unknown39" type="uint32" />
+            <field offset="392" name="ribbonType" type="uint32" />
+            <field name="unknown40" type="uint32" expected-value="1"/>
+            <field name="ribbonDivisions" type="float" />
+            <field offset="404" name="ribbonSides" type="uint32" />
+            <field name="unknown42" type="uint32" />
+            <field name="ribbonLength" type="FloatAnimationReference" />
+            <field name="filler1" type="float" />
             <field offset="436" name="sribData" type="Reference" refTo="SRIBV0" />
-            <field name="unknown1" size="300" />
+            <field name="unknown45" type="uint32" />
+            <field name="long4" type="uint32" />
+            <field name="long1" type="uint32" />
+            <field name="long2" type="uint32" />
+            <field name="long3" type="uint32" />
+            <field name="ribbonFlags" type="uint32" />
+            <field name="long5" type="uint32" />
+            <field name="long6" type="uint32" />
+            <field name="long7" type="uint32" />
+            <field name="long8" type="uint32" />
+            <field name="long9" type="uint32" />
+            <field name="unknown46" type="FloatAnimationReference" />
+            <field name="unknown47" type="FloatAnimationReference" />
+            <field name="unknown48" type="uint32" />
+            <field name="unknown49" type="FloatAnimationReference" />
+            <field name="unknown50" type="FloatAnimationReference" />
+            <field name="unknown51" type="uint32" />
+            <field name="unknown52" type="FloatAnimationReference" />
+            <field name="unknown53" type="FloatAnimationReference" />
+            <field name="unknown54" type="uint32" />
+            <field name="unknown55" type="FloatAnimationReference" />
+            <field name="unknown56" type="FloatAnimationReference" />
+            <field name="unknown60" type="uint32" />
+            <field name="unknown61" type="FloatAnimationReference" />
+            <field name="unknown62" type="FloatAnimationReference" />
+            <field name="unknown63" type="FloatAnimationReference" />
+            <field name="unknown64" type="FloatAnimationReference" />
+            
         </structure>
 
         <structure name="IKJT" version="0" size="32" >
