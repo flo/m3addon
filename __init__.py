@@ -91,7 +91,6 @@ def handleTypeOrBoneSuffixChange(self, context):
 
 def handleParticleSystemCopyRename(self, context):
     scene = context.scene
-    print("rename", self.name)
     if self.name != self.oldName:
         oldBoneName = shared.boneNameForPartileSystem(self.oldName)
         newBoneName = shared.boneNameForPartileSystem(self.name)
@@ -102,7 +101,6 @@ def handleParticleSystemCopyRename(self, context):
 
 def handleCameraNameChange(self, context):
     scene = context.scene
-    print("name changed")
     if self.name != self.oldName:
         bone, armatureObject = findBoneWithArmatureObject(scene, self.oldName)
         if bone != None:
@@ -169,17 +167,76 @@ def handleAnimationSequenceIndexChange(self, context):
                 elif action.id_root == 'SCENE':
                     newSceneAction = action
         for targetObject in scene.objects:
-            targetObject.animation_data_clear()
             newAction = newObjectNameToActionMap.get(targetObject.name)
+            prepareDefaultValuesForNewAction(scene, targetObject, 'OBJECT', newAction)
+            targetObject.animation_data_clear()
             if newAction != None:
                 targetObject.animation_data_create()
                 targetObject.animation_data.action = newAction
+
+        prepareDefaultValuesForNewAction(scene, scene, 'SCENE', newSceneAction)
         scene.animation_data_clear()
         if newSceneAction != None:
             scene.animation_data_create()
             scene.animation_data.action = newSceneAction
                 
     scene.m3_animation_old_index = newIndex
+
+def prepareDefaultValuesForNewAction(scene, targetObject, actionOwnerType, newAction):
+    oldAnimatedProperties = set()
+    if targetObject.animation_data != None:
+        oldAction = targetObject.animation_data.action
+        if oldAction != None:
+            for curve in oldAction.fcurves:
+                oldAnimatedProperties.add((curve.data_path, curve.array_index))
+    newAnimatedProperties = set()
+    if newAction != None:
+        for curve in newAction.fcurves:
+            newAnimatedProperties.add((curve.data_path, curve.array_index))
+    actionOwnerName = targetObject.name
+    
+    defaultAction = shared.determineDefaultActionFor(scene, actionOwnerName, actionOwnerType)
+    if defaultAction == None:
+        defaultAction = shared.createDefaulValuesAction(scene, actionOwnerName, actionOwnerType)
+    propertiesBecomingAnimated = newAnimatedProperties.difference(oldAnimatedProperties)
+    for prop in propertiesBecomingAnimated:
+        value = getAttribute(targetObject, prop[0],prop[1])
+        curve = None
+        for c in defaultAction.fcurves:
+            if c.data_path == prop[0] and c.array_index == prop[1]:
+                curve = c
+                break
+        if curve == None:
+            curve = defaultAction.fcurves.new(prop[0], prop[1])
+        keyFrame = curve.keyframe_points.insert(0, value)
+        keyFrame.interpolation = "CONSTANT"
+    propertiesBecomingUnanimated = oldAnimatedProperties.difference(newAnimatedProperties)
+    if defaultAction != None:
+        for curve in defaultAction.fcurves:
+            prop = (curve.data_path, curve.array_index)
+            if prop in propertiesBecomingUnanimated:
+                defaultValue = curve.evaluate(0)
+                setAttribute(targetObject, curve.data_path, curve.array_index, defaultValue)
+
+
+def setAttribute(obj, curvePath, curveIndex, value):
+    """Gets the value of an attribute via animation path and index"""
+    resolvedObject = obj.path_resolve(curvePath)
+    if type(resolvedObject) in [float, int]:
+        dotIndex = curvePath.rfind(".")
+        attributeName = curvePath[dotIndex+1:]
+        resolvedObject = obj.path_resolve(curvePath[:dotIndex])
+        setattr(resolvedObject, attributeName, value)
+    else:
+        resolvedObject[curveIndex] = value
+
+def getAttribute(obj, curvePath, curveIndex):
+    """Gets the value of an attribute via animation path and index"""
+    obj = obj.path_resolve(curvePath)
+    if type(obj) in [float, int]:
+        return obj
+    else:
+        return obj[curveIndex]
 
 def handlePartileSystemIndexChanged(self, context):
     scene = context.scene
@@ -1664,6 +1721,8 @@ def register():
     bpy.types.INFO_MT_file_export.append(menu_func_export)
     bpy.types.Bone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
     bpy.types.EditBone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
+    bpy.types.Scene.m3_default_value_action_assignments = bpy.props.CollectionProperty(type=AssignedActionOfM3Animation, options=set())
+
  
 def unregister():
     bpy.utils.unregister_module(__name__)

@@ -143,10 +143,26 @@ class Exporter:
                 else:
                     bone.parent = -1
                     relRestPosMatrix = absRestPosMatrix
-
+                    
                 poseBone = armatureObject.pose.bones[blenderBoneIndex]
-                poseRotationNormalized = poseBone.rotation_quaternion.normalized()
-                poseMatrix = shared.locRotScaleMatrix(poseBone.location, poseRotationNormalized, poseBone.scale)
+                # The current value can't be used if a property is animated
+                # since it might have been changed by the animation
+                # in such a case the default value has to be used
+                # that got stored in a special action
+                poseLocation = poseBone.location
+                for i in range (3):
+                    poseLocation[i] = self.getDefaultValue(armatureObject, 'pose.bones["%s"].location' % boneName, i, poseLocation[i])
+
+                poseRotation = poseBone.rotation_quaternion
+                for i in range (4):
+                    poseRotation[i] = self.getDefaultValue(armatureObject, 'pose.bones["%s"].rotation_quaternion' % boneName, i, poseRotation[i])
+
+                poseScale = poseBone.scale
+                for i in range (3):
+                    poseScale[i] = self.getDefaultValue(armatureObject, 'pose.bones["%s"].scale' % boneName, i, poseScale[i])
+                    
+                poseRotationNormalized = poseRotation.normalized()
+                poseMatrix = shared.locRotScaleMatrix(poseLocation, poseRotationNormalized, poseScale)
                 
                 if blenderBone.parent != None:
                     leftCorrectionMatrix = shared.rotFixMatrix * relRestPosMatrix
@@ -155,15 +171,14 @@ class Exporter:
                 rightCorrectionMatrix = shared.rotFixMatrixInverted
                 m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix
                 
-                location, rotation, scale = m3PoseMatrix.decompose()
-                bone.scale.initValue = self.createVector3FromBlenderVector(scale)
-                bone.scale.nullValue = self.createVector3FromBlenderVector(scale)
-                bone.rotation.initValue = self.createQuaternionFromBlenderQuaternion(rotation)
-                bone.rotation.nullValue = self.createQuaternionFromBlenderQuaternion(rotation)
-                bone.location.initValue = self.createVector3FromBlenderVector(location)
-                bone.location.nullValue = self.createVector3FromBlenderVector(location)                
+                m3SpaceLocation, m3SpaceRotation, m3SpaceScale = m3PoseMatrix.decompose()
+                bone.scale.initValue = self.createVector3FromBlenderVector(m3SpaceScale)
+                bone.scale.nullValue = self.createVector3(0.0, 0.0, 0.0)
+                bone.rotation.initValue = self.createQuaternionFromBlenderQuaternion(m3SpaceRotation)
+                bone.rotation.nullValue = self.createQuaternion(0.0, 0.0, 0.0, 1.0)
+                bone.location.initValue = self.createVector3FromBlenderVector(m3SpaceLocation)
+                bone.location.nullValue = self.createVector3(0.0, 0.0, 0.0)              
 
-        
                 animationActionTuples = self.determineAnimationActionTuplesFor(armatureObject.name, actionTypeArmature)
                 for animation, action in animationActionTuples:
                     frames = set()
@@ -197,28 +212,27 @@ class Exporter:
                     scaAnimated = (xScaValues != None) or (yScaValues != None) or (zScaValues != None)
                     if locAnimated or rotAnimated or scaAnimated:
                         if xLocValues == None:
-                            xLocValues = len(timeValuesInMS) * [location.x]
+                            xLocValues = len(timeValuesInMS) * [poseLocation.x]
                         if yLocValues == None:
-                            yLocValues = len(timeValuesInMS) * [location.y]
+                            yLocValues = len(timeValuesInMS) * [poseLocation.y]
                         if zLocValues == None:
-                            zLocValues = len(timeValuesInMS) * [location.z]
+                            zLocValues = len(timeValuesInMS) * [poseLocation.z]
                                                     
                         if wRotValues == None:
-                            wRotValues = len(timeValuesInMS) * [rotation.w]
+                            wRotValues = len(timeValuesInMS) * [poseRotation.w]
                         if xRotValues == None:
-                            xRotValues = len(timeValuesInMS) * [rotation.x]
+                            xRotValues = len(timeValuesInMS) * [poseRotation.x]
                         if yRotValues == None:
-                            yRotValues = len(timeValuesInMS) * [rotation.y]
+                            yRotValues = len(timeValuesInMS) * [poseRotation.y]
                         if zRotValues == None:
-                            zRotValues = len(timeValuesInMS) * [rotation.z]
+                            zRotValues = len(timeValuesInMS) * [poseRotation.z]
                             
                         if xScaValues == None:
-                            xScaValues = len(timeValuesInMS) * [scale.x]
+                            xScaValues = len(timeValuesInMS) * [poseScale.x]
                         if yScaValues == None:
-                            yScaValues = len(timeValuesInMS) * [scale.y]
+                            yScaValues = len(timeValuesInMS) * [poseScale.y]
                         if zScaValues == None:
-                            zScaValues = len(timeValuesInMS) * [scale.z]
-                            
+                            zScaValues = len(timeValuesInMS) * [poseScale.z]
                         locations = []
                         rotations = []
                         scales = []
@@ -232,14 +246,11 @@ class Exporter:
                             locations.append(loc)
                             rotations.append(rot)
                             scales.append(sca)
-                        
+
                         self.makeQuaternionsInterpolatable(rotations)                                                
                         animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
-
-                        #TODO exported file size optimization: 
-                        # import init pose and store it in blend file together with the corresponding animId
-                        # Use it then to determine if an attribute really needs to be animated when it is constant
-                        if self.isAnimationExport or self.vectorArrayContainsNotOnly(locations, location):
+                        
+                        if self.isAnimationExport or self.vectorArrayContainsNotOnly(locations, m3SpaceLocation):
                             locationTimeValuesInMS, locations = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, locations)
                             m3Locs = self.createVector3sFromBlenderVectors(locations)
                             m3AnimBlock = m3.SD3VV0()
@@ -249,8 +260,9 @@ class Exporter:
                             m3AnimBlock.keys = m3Locs
                             animIdToAnimDataMap[locationAnimId] = m3AnimBlock
                             bone.location.header.animFlags = shared.animFlagsForAnimatedProperty
+                            bone.setNamedBit("flags", "animated", True)
 
-                        if self.isAnimationExport or self.quaternionArrayContainsNotOnly(rotations, rotation):
+                        if self.isAnimationExport or self.quaternionArrayContainsNotOnly(rotations, m3SpaceRotation):
                             rotationTimeValuesInMS, rotations = shared.simplifyQuaternionAnimationWithInterpolation(timeValuesInMS, rotations)
                             m3Rots = self.createQuaternionsFromBlenderQuaternions(rotations)
                             m3AnimBlock = m3.SD4QV0()
@@ -260,8 +272,9 @@ class Exporter:
                             m3AnimBlock.keys = m3Rots
                             animIdToAnimDataMap[rotationAnimId] = m3AnimBlock
                             bone.rotation.header.animFlags = shared.animFlagsForAnimatedProperty
+                            bone.setNamedBit("flags", "animated", True)
 
-                        if self.isAnimationExport or self.vectorArrayContainsNotOnly(scales, scale):
+                        if self.isAnimationExport or self.vectorArrayContainsNotOnly(scales, m3SpaceScale):
                             scaleTimeValuesInMS, scales = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, scales)
                             m3Scas = self.createVector3sFromBlenderVectors(scales)
                             m3AnimBlock = m3.SD3VV0()
@@ -271,8 +284,7 @@ class Exporter:
                             m3AnimBlock.keys = m3Scas
                             animIdToAnimDataMap[scaleAnimId] = m3AnimBlock
                             bone.scale.header.animFlags = shared.animFlagsForAnimatedProperty
-                       
-                        bone.setNamedBit("flags", "animated", True)
+                            bone.setNamedBit("flags", "animated", True)
                 
                 scaleMatrix = mathutils.Matrix()
                 for i in range(3):
@@ -603,7 +615,7 @@ class Exporter:
             m3Sequence = m3.SEQSV1()
             m3Sequence.animStartInMS = self.frameToMS(animation.startFrame)
             m3Sequence.animEndInMS = self.frameToMS(animation.exlusiveEndFrame)
-            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Sequence, blenderObject=animation, animPathPrefix=None, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Sequence, blenderObject=animation, animPathPrefix=None, rootObject=self.scene)
             shared.transferAnimation(transferer)
             m3Sequence.boundingSphere = self.createAlmostEmptyBoundingsWithRadius(2)
             seqIndex = len(model.sequences)
@@ -675,7 +687,7 @@ class Exporter:
                 boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
             m3Camera.boneIndex = boneIndex
             animPathPrefix = "m3_cameras[%s]." % cameraIndex
-            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Camera, blenderObject=camera, animPathPrefix=animPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Camera, blenderObject=camera, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferCamera(transferer)
             model.cameras.append(m3Camera)
 
@@ -690,7 +702,7 @@ class Exporter:
             m3ParticleSystem = m3.PAR_V12()
             m3ParticleSystem.bone = boneIndex
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
-            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ParticleSystem, blenderObject=particleSystem, animPathPrefix=animPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ParticleSystem, blenderObject=particleSystem, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferParticleSystem(transferer)
             m3ParticleSystem.indexPlusHighestIndex = len(scene.m3_particle_systems) -1 + particleSystemIndex
             m3ParticleSystem.ar1 = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
@@ -709,7 +721,7 @@ class Exporter:
                     boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
                 m3Copy.bone = boneIndex
                 copyAnimPathPrefix = animPathPrefix + "copies[%d]." % blenderCopyIndex
-                transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Copy, blenderObject=copy, animPathPrefix=copyAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+                transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Copy, blenderObject=copy, animPathPrefix=copyAnimPathPrefix, rootObject=self.scene)
                 shared.transferParticleSystemCopy(transferer)
                 copyIndex = len(model.particleCopies)
                 model.particleCopies.append(m3Copy)
@@ -823,7 +835,7 @@ class Exporter:
     def createStandardMaterial(self, materialIndex, material):
         m3Material = m3.MAT_V15()
         materialAnimPathPrefix = "m3_standard_materials[%s]." % materialIndex
-        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferStandardMaterial(transferer)
 
         layerIndex = 0
@@ -840,7 +852,7 @@ class Exporter:
     def createDisplacementMaterial(self, materialIndex, material):
         m3Material = m3.DIS_V4()
         materialAnimPathPrefix = "m3_displacement_materials[%s]." % materialIndex
-        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferDisplacementMaterial(transferer)
 
         layerIndex = 0
@@ -854,13 +866,13 @@ class Exporter:
     def createCompositeMaterial(self, materialIndex, material):
         m3Material = m3.CMP_V2()
         materialAnimPathPrefix = "m3_composite_materials[%s]." % materialIndex
-        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferCompositeMaterial(transferer)
         for sectionIndex, section in enumerate(material.sections):
             m3Section = m3.CMS_V0()
             m3Section.materialReferenceIndex = self.materialNameToReferenceIndexMap[section.name]
             sectionAnimPathPrefix = "m3_composite_materials[%s].sections[%s]." % (materialIndex, sectionIndex)
-            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Section, blenderObject=section, animPathPrefix=sectionAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Section, blenderObject=section, animPathPrefix=sectionAnimPathPrefix, rootObject=self.scene)
             shared.transferCompositeMaterialSection(transferer)
             m3Material.sections.append(m3Section)
             
@@ -869,7 +881,7 @@ class Exporter:
     def createTerrainMaterial(self, materialIndex, material):
         m3Material = m3.TER_V0()
         materialAnimPathPrefix = "m3_terrain_materials[%s]." % materialIndex
-        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferTerrainMaterial(transferer)
 
         layerIndex = 0
@@ -883,7 +895,7 @@ class Exporter:
     def createVolumeMaterial(self, materialIndex, material):
         m3Material = m3.VOL_V0()
         materialAnimPathPrefix = "m3_volume_materials[%s]." % materialIndex
-        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferVolumeMaterial(transferer)
 
         layerIndex = 0
@@ -896,7 +908,7 @@ class Exporter:
 
     def createMaterialLayer(self, layer, animPathPrefix):
         m3Layer = m3.LAYRV22()
-        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, actionOwnerName=self.scene.name, actionOwnerType=actionTypeScene)
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, rootObject=self.scene)
         shared.transferMaterialLayer(transferer)
         m3Layer.unknown6 = self.createNullUInt32AnimationReference(0)
         m3Layer.unknown7 = self.createNullVector2AnimationReference(0.0, 0.0, interpolationType=0)
@@ -1084,24 +1096,19 @@ class Exporter:
         matrix.z = self.createVector4(0.0, 0.0, 1.0, 0.0)
         matrix.w = self.createVector4(0.0, 0.0, 0.0, 1.0)
         return matrix
-        
+    
+
     def determineAnimationActionTuplesFor(self, actionOwnerName, actionOwnerType):
         animationActionTuples = []
         scene = self.scene
         for animation in scene.m3_animations:
             for assignedAction in animation.assignedActions:
-                if actionOwnerName == assignedAction.targetName:
-                    actionName = assignedAction.actionName
-                    action = bpy.data.actions.get(actionName)
-                    if action == None:
-                        print("Warning: The action %s was referenced by name but does no longer exist" % assignedAction.actionName)
-                    else:
-                        if action.id_root == actionOwnerType:
-                            animationActionTuples.append((animation, action))
+                action = shared.findActionOfAssignedAction(assignedAction, actionOwnerName, actionOwnerType)
+                if action != None:
+                    animationActionTuples.append((animation, action))
         return animationActionTuples
 
-    
-    
+
     def getAllFramesOf(self, animation):
         # end frame is inclusve in blender
         return range(animation.startFrame, animation.exlusiveEndFrame)
@@ -1143,26 +1150,69 @@ class Exporter:
             if (curve.data_path == animPath) and (curve.array_index == curveArrayIndex):
                 return curve
         return None
+        
+    def getDefaultValue(self, rootObject, path, index, currentValue):
+        if not hasattr(self, "objectToDefaultValuesMap"):
+            self.objectToDefaultValuesMap = {}
+        objectId = id(rootObject)
+        animatedPropertyToDefaultValueMap = self.objectToDefaultValuesMap.get(objectId)
+        
+        if animatedPropertyToDefaultValueMap == None:
+            animatedProperties = set()
+            if rootObject.animation_data != None:
+                currentAction = rootObject.animation_data.action
+                if currentAction != None:
+                    for curve in currentAction.fcurves:
+                        animatedProperties.add((curve.data_path, curve.array_index))
+            rootObjectTypeId = self.typeIdOfObject(rootObject) 
+                
+            defaultAction = shared.determineDefaultActionFor(self.scene, rootObject.name, rootObjectTypeId)
+            animatedPropertyToDefaultValueMap = {}
+            if defaultAction != None and len(animatedProperties) > 0:
+                for curve in defaultAction.fcurves:
+                    prop = (curve.data_path, curve.array_index)
+                    if prop in animatedProperties:
+                        animatedPropertyToDefaultValueMap[prop] = curve.evaluate(0)
+            
+            self.objectToDefaultValuesMap[objectId] = animatedPropertyToDefaultValueMap
+        defaultValue = animatedPropertyToDefaultValueMap.get((path, index))
+        if defaultValue != None:
+            return defaultValue
+        else:
+            return currentValue
+
+    def typeIdOfObject(self, obj):
+        objectType = type(obj)
+        if objectType == bpy.types.Scene:
+            return "SCENE"
+        elif objectType == bpy.types.Object:
+            return "OBJECT"
+        else:
+            raise Exception("Can't determine type id for type %s yet" % objectType)
 
 class BlenderToM3DataTransferer:
-    def __init__(self, exporter, m3Object, blenderObject, animPathPrefix,  actionOwnerName, actionOwnerType):
+    def __init__(self, exporter, m3Object, blenderObject, animPathPrefix,  rootObject):
         self.exporter = exporter
         self.m3Object = m3Object
         self.blenderObject = blenderObject
         self.animPathPrefix = animPathPrefix
-        self.actionOwnerName = actionOwnerName
-        self.actionOwnerType = actionOwnerType
         self.objectIdForAnimId = shared.animObjectIdScene
-        
+        actionOwnerType = self.exporter.typeIdOfObject(rootObject)
+        actionOwnerName = rootObject.name
         self.animationActionTuples = self.exporter.determineAnimationActionTuplesFor(actionOwnerName, actionOwnerType)
+        self.rootObject = rootObject
         
     def transferAnimatableColor(self, fieldName):
         animPath = self.animPathPrefix + fieldName
         animId = self.exporter.getAnimIdFor(self.objectIdForAnimId, animPath)
         animRef = m3.ColorAnimationReference()
         animRef.header = self.exporter.createNullAnimHeader(animId=animId, interpolationType=1)
-        m3CurrentColor =  self.exporter.toM3Color(getattr(self.blenderObject, fieldName))
-        animRef.initValue = m3CurrentColor
+        currentColor = getattr(self.blenderObject, fieldName)
+        defaultColor = mathutils.Vector((0,0,0,0))
+        for i in range(4):  
+            defaultColor[i] = self.exporter.getDefaultValue(self.rootObject, animPath, i, currentColor[i])
+        m3DefaultColor =  self.exporter.toM3Color(defaultColor)
+        animRef.initValue = m3DefaultColor
         animRef.nullValue = self.exporter.createColor(0,0,0,0)
         setattr(self.m3Object, fieldName, animRef)
         
@@ -1180,13 +1230,13 @@ class BlenderToM3DataTransferer:
             alphaValues = self.exporter.getNoneOrValuesFor(action, animPath, 3, frames)
             if (redValues != None) or (greenValues != None) or (blueValues != None) or (alphaValues != None):
                 if redValues == None:
-                    redValues = len(timeValuesInMS) * [m3CurrentColor.red]
+                    redValues = len(timeValuesInMS) * [m3DefaultColor.red]
                 if greenValues == None:
-                    greenValues = len(timeValuesInMS) * [m3CurrentColor.green]
+                    greenValues = len(timeValuesInMS) * [m3DefaultColor.green]
                 if blueValues == None:
-                    blueValues = len(timeValuesInMS) * [m3CurrentColor.blue]
+                    blueValues = len(timeValuesInMS) * [m3DefaultColor.blue]
                 if alphaValues == None:
-                    alphaValues = len(timeValuesInMS) * [m3CurrentColor.alpha]
+                    alphaValues = len(timeValuesInMS) * [m3DefaultColor.alpha]
                 colors = []
                 for (r,g,b,a) in zip(redValues, greenValues, blueValues, alphaValues):
                     color = self.exporter.createColor(r=r, g=g, b=b, a=a)
@@ -1209,8 +1259,10 @@ class BlenderToM3DataTransferer:
         animRef = animRefClass()
         animRef.header = self.exporter.createNullAnimHeader(animId=animId, interpolationType=1)
         currentValue =  getattr(self.blenderObject, fieldName)
-        animRef.initValue = currentValue
-        animRef.nullValue = type(currentValue)(0)
+        defaultValue = convertMethod(self.exporter.getDefaultValue(self.rootObject, animPath, 0, currentValue))
+
+        animRef.initValue = defaultValue
+        animRef.nullValue = type(defaultValue)(0)
         for animation, action in self.animationActionTuples:
             frames = list(set(self.exporter.getFramesFor(action, animPath, 0)))
             frames.sort()
@@ -1256,7 +1308,11 @@ class BlenderToM3DataTransferer:
         animRef = m3.Vector3AnimationReference()
         animRef.header = self.exporter.createNullAnimHeader(animId=animId, interpolationType=1)
         currentBVector =  getattr(self.blenderObject, fieldName)
-        animRef.initValue = self.exporter.createVector3FromBlenderVector(currentBVector)
+        
+        defaultValueX = self.exporter.getDefaultValue(self.rootObject, animPath, 0, currentBVector[0])
+        defaultValueY = self.exporter.getDefaultValue(self.rootObject, animPath, 1, currentBVector[1])
+        defaultValueZ = self.exporter.getDefaultValue(self.rootObject, animPath, 2, currentBVector[2])
+        animRef.initValue = self.exporter.createVector3(defaultValueX,defaultValueY,defaultValueZ)
         animRef.nullValue = self.exporter.createVector3(0.0,0.0,0.0)
         setattr(self.m3Object, fieldName, animRef)
 
