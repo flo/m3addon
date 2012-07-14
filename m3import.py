@@ -538,34 +538,43 @@ class Importer:
 
             self.fix180DegreeRotationsInMapWithKeys(timeToRotationMap, timeEntries)
 
-            group = boneName
-            locXCurve = action.fcurves.new(locationAnimPath, 0, group)
-            locYCurve = action.fcurves.new(locationAnimPath, 1, group)
-            locZCurve = action.fcurves.new(locationAnimPath, 2, group)
-            rotWCurve = action.fcurves.new(rotationAnimPath, 0, group)
-            rotXCurve = action.fcurves.new(rotationAnimPath, 1, group)
-            rotYCurve = action.fcurves.new(rotationAnimPath, 2, group)
-            rotZCurve = action.fcurves.new(rotationAnimPath, 3, group)
-            scaXCurve = action.fcurves.new(scaleAnimPath, 0, group)
-            scaYCurve = action.fcurves.new(scaleAnimPath, 1, group)
-            scaZCurve = action.fcurves.new(scaleAnimPath, 2, group)
-            
-            
+
+            frames = []
             for timeInMS in timeEntries:
-                location = timeToLocationMap.get(timeInMS)
-                rotation = timeToRotationMap.get(timeInMS)
-                scale = timeToScaleMap.get(timeInMS)
-                frame = msToFrame(timeInMS)
-                insertLinearKeyFrame(locXCurve, frame, location.x)
-                insertLinearKeyFrame(locYCurve, frame, location.y)
-                insertLinearKeyFrame(locZCurve, frame, location.z)
-                insertLinearKeyFrame(rotWCurve, frame, rotation.w)
-                insertLinearKeyFrame(rotXCurve, frame, rotation.x)
-                insertLinearKeyFrame(rotYCurve, frame, rotation.y)
-                insertLinearKeyFrame(rotZCurve, frame, rotation.z)
-                insertLinearKeyFrame(scaXCurve, frame, scale.x)
-                insertLinearKeyFrame(scaYCurve, frame, scale.y)
-                insertLinearKeyFrame(scaZCurve, frame, scale.z)
+                frames.append(msToFrame(timeInMS))
+
+            group = boneName
+            if locationAnimId in animIdToTimeValueMap:
+                locXCurve = action.fcurves.new(locationAnimPath, 0, group)
+                locYCurve = action.fcurves.new(locationAnimPath, 1, group)
+                locZCurve = action.fcurves.new(locationAnimPath, 2, group)
+                for timeInMS, frame in zip(timeEntries, frames):
+                    location = timeToLocationMap.get(timeInMS)
+                    insertLinearKeyFrame(locXCurve, frame, location.x)
+                    insertLinearKeyFrame(locYCurve, frame, location.y)
+                    insertLinearKeyFrame(locZCurve, frame, location.z)
+            
+            if rotationAnimId in animIdToTimeValueMap:
+                rotWCurve = action.fcurves.new(rotationAnimPath, 0, group)
+                rotXCurve = action.fcurves.new(rotationAnimPath, 1, group)
+                rotYCurve = action.fcurves.new(rotationAnimPath, 2, group)
+                rotZCurve = action.fcurves.new(rotationAnimPath, 3, group)
+                for timeInMS, frame in zip(timeEntries, frames):
+                    rotation = timeToRotationMap.get(timeInMS)
+                    insertLinearKeyFrame(rotWCurve, frame, rotation.w)
+                    insertLinearKeyFrame(rotXCurve, frame, rotation.x)
+                    insertLinearKeyFrame(rotYCurve, frame, rotation.y)
+                    insertLinearKeyFrame(rotZCurve, frame, rotation.z)
+                
+            if scaleAnimId in animIdToTimeValueMap:
+                scaXCurve = action.fcurves.new(scaleAnimPath, 0, group)
+                scaYCurve = action.fcurves.new(scaleAnimPath, 1, group)
+                scaZCurve = action.fcurves.new(scaleAnimPath, 2, group)
+                for timeInMS, frame in zip(timeEntries, frames):
+                    scale = timeToScaleMap.get(timeInMS)
+                    insertLinearKeyFrame(scaXCurve, frame, scale.x)
+                    insertLinearKeyFrame(scaYCurve, frame, scale.y)
+                    insertLinearKeyFrame(scaZCurve, frame, scale.z)
     
     
     def createStandardMaterials(self, scene):
