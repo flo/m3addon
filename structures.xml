@@ -976,7 +976,7 @@
             <field name="unknown38" type="uint32" />
             <field name="unknown39" type="uint32" />
             <field offset="392" name="ribbonType" type="uint32" />
-            <field name="unknown40" type="uint32" expected-value="1"/>
+            <field name="unknown40" type="uint32" default-value="1"/>
             <field name="ribbonDivisions" type="float" />
             <field offset="404" name="ribbonSides" type="uint32" />
             <field name="unknown42" type="uint32" />
