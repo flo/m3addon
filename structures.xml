@@ -103,11 +103,12 @@
         <structure name="AnimationReferenceHeader" size="8">
             <description>
                 The header of a reference to an animation entry
-                flags seems to be 0 for int animations and 1 for float animations. flags is also 0 if the animation is missing
-                animflags seems to be 6 if the animation reference is valid and 0 otherwise 
+                
+                interpolationType: 0=constant, 1=linear
+                animFlags seems to be 6 if the animation reference is valid and 0 otherwise 
                 animId seem to be random but unique numbers
             </description>
-            <field name="flags" type="uint16" />
+            <field name="interpolationType" type="uint16" />
             <field name="animFlags" type="uint16" />
             <field name="animId" type="uint32" />
         </structure>
@@ -616,8 +617,8 @@
 
         <structure name="MAT_" version="15" size="268">
             <description>Standard Material</description>
-            <field name="name" type="Reference" refTo="CHARV0" />
-            <field name="unknownFlags" type="uint32" default-value="0">
+            <field offset="0" name="name" type="Reference" refTo="CHARV0" />
+            <field offset="12" name="unknownFlags" type="uint32" default-value="0">
                 <bits>
                     <bit mask="0x1" name="unknownFlag0x1" />
                     <bit mask="0x4" name="unknownFlag0x4" />
@@ -625,7 +626,7 @@
                     <bit mask="0x200" name="unknownFlag0x200" />
                 </bits>
             </field>     
-            <field name="flags" type="uint32" default-value="0" >
+            <field offset="16" name="flags" type="uint32" default-value="0" >
                 <bits>
                     <bit mask="0x4" name="unfogged" />
                     <bit mask="0x8" name="twoSided" />
@@ -640,34 +641,34 @@
                     <bit mask="0x4000" name="forParticles"/> <!-- maybe -->
                 </bits>
             </field>
-            <field name="blendMode" type="uint32" />
-            <field name="priority" type="int32" />
-            <field name="unknown1" type="uint32" default-value="0" />
-            <field name="specularity" type="float" />
-            <field name="unknown2" type="uint32" default-value="0" />
-            <field name="cutoutThresh" type="uint32" default-value="0" />
-            <field name="specMult" type="float" default-value="1.0" />
-            <field name="emisMult" type="float" default-value="1.0" />
-            <field name="diffuseLayer" type="Reference" refTo="LAYRV22" />
-            <field name="decalLayer" type="Reference" refTo="LAYRV22" />
-            <field name="specularLayer" type="Reference" refTo="LAYRV22" />
-            <field name="selfIllumLayer" type="Reference" refTo="LAYRV22" />
-            <field name="emissiveLayer" type="Reference" refTo="LAYRV22" />
-            <field name="reflectionLayer" type="Reference" refTo="LAYRV22" />
-            <field name="evioLayer" type="Reference" refTo="LAYRV22" />
-            <field name="evioMaskLayer" type="Reference" refTo="LAYRV22" />
-            <field name="alphaMaskLayer" type="Reference" refTo="LAYRV22" />
-            <field name="bumpLayer" type="Reference" refTo="LAYRV22" />
-            <field name="heightLayer" type="Reference" refTo="LAYRV22" />
-            <field name="layer12" type="Reference" refTo="LAYRV22" />
-            <field name="layer13" type="Reference" refTo="LAYRV22" />
-            <field name="unknown3" type="uint32" default-value="0"/>
-            <field name="layerBlendType" type="uint32" />
-            <field name="emisBlendType" type="uint32" />
+            <field offset="20" name="blendMode" type="uint32" />
+            <field offset="24" name="priority" type="int32" />
+            <field offset="28" name="unknown1" type="uint32" default-value="0" />
+            <field offset="32" name="specularity" type="float" />
+            <field offset="36" name="unknown2" type="uint32" default-value="0" />
+            <field offset="40" name="cutoutThresh" type="uint32" default-value="0" />
+            <field offset="44" name="specMult" type="float" default-value="1.0" />
+            <field offset="48" name="emisMult" type="float" default-value="1.0" />
+            <field offset="52" name="diffuseLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="64" name="decalLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="76" name="specularLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="88" name="selfIllumLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="100" name="emissiveLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="112" name="reflectionLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="124" name="evioLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="136" name="evioMaskLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="148" name="alphaMaskLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="160" name="bumpLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="172" name="heightLayer" type="Reference" refTo="LAYRV22" />
+            <field offset="184" name="layer12" type="Reference" refTo="LAYRV22" />
+            <field offset="196" name="layer13" type="Reference" refTo="LAYRV22" />
+            <field offset="208" name="unknown3" type="uint32" default-value="0"/>
+            <field offset="212" name="layerBlendType" type="uint32" />
+            <field offset="216" name="emisBlendType" type="uint32" />
             <field offset="220" name="emisMode" type="uint32" default-value="2" />
             <field offset="224" name="specType" type="uint32" />
-            <field name="unknownAnimationRef1" type="UInt32AnimationReference" />
-            <field name="unknownAnimationRef2" type="UInt32AnimationReference" />
+            <field offset="228" name="unknownAnimationRef1" type="UInt32AnimationReference" />
+            <field offset="248" name="unknownAnimationRef2" type="UInt32AnimationReference" />
         </structure>
 
         <structure name="DIS_" version="4" size="68" >
@@ -675,7 +676,7 @@
                 Displacement Material
             </description>
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
-            <field offset="12" name="unknown0" type="uint32" expected-value="0" />
+            <field offset="12" name="unknown0" type="uint32" default-value="0" />
             <field offset="16" name="strengthFactor" type="FloatAnimationReference" />
             <field offset="36" name="normalLayer" type="Reference" refTo="LAYRV22" />
             <field offset="48" name="strengthLayer" type="Reference" refTo="LAYRV22" />
@@ -715,6 +716,10 @@
             <field offset="80" name="unknown3" type="uint32" expected-value="0x20" />
         </structure>
         
+        <structure name="SCHR" version="0" size="12" >
+            <description>Unknown</description>
+            <field offset="0" name="path" type="Reference" refTo="CHARV0" />
+        </structure>
 
         <structure name="PAR_" version="12" size="1316" >
             <description>Particle System</description>
@@ -790,7 +795,45 @@
             <field offset="756" name="unknownFloat6" type="float" default-value="1.0" />
             <field offset="760" name="unknown11" size="8"/>
             <field offset="768" name="unknownFloat7" type="float" expected-value="1.0"/>
-            <field offset="772" name="unknown12" size="416"/>
+            <field offset="772" name="unknownAt772" size="4" />
+            <field offset="776" name="unknownAt776" type="AnimationReferenceHeader" />
+            <field offset="784" name="unknownAt784" size="12"/>
+            <field offset="796" name="unknownAt796" type="AnimationReferenceHeader" />
+            <field offset="804" name="unknownAt804" size="16"/>
+            <field offset="820" name="unknownAt820" type="AnimationReferenceHeader" />
+            <field offset="828" name="unknownAt828" size="12"/>
+            <field offset="840" name="unknownAt840" type="AnimationReferenceHeader" />
+            <field offset="848" name="unknownAt848" size="16"/>
+            <field offset="864" name="unknownAt864" type="AnimationReferenceHeader"/>           
+            <field offset="872" name="unknownAt872" size="12" />
+            <field offset="884" name="unknownAt884" type="AnimationReferenceHeader" />
+            <field offset="892" name="unknownAt892" size="16" />
+            <field offset="908" name="unknownAt908" type="AnimationReferenceHeader" />
+            <field offset="916" name="unknownAt916" size="12" />
+            <field offset="928" name="unknownAt928" type="AnimationReferenceHeader" />
+            <field offset="936" name="unknownAt936" size="16" />
+            <field offset="952" name="unknownAt952" type="AnimationReferenceHeader" />
+            <field offset="960" name="unknownAt960" size="12" />
+            <field offset="972" name="unknownAt972" type="AnimationReferenceHeader" />
+            <field offset="980" name="unknownAt980" size="16" />
+            <field offset="996" name="unknownAt996" type="AnimationReferenceHeader" />
+            <field offset="1004" name="unknownAt1004" size="12" />
+            <field offset="1016" name="unknownAt1016" type="AnimationReferenceHeader" />
+            <field offset="1024" name="unknownAt1024" size="16" />
+            <field offset="1040" name="unknownAt1040" type="AnimationReferenceHeader" />
+            <field offset="1048" name="unknownAt1048" size="12" />
+            <field offset="1060" name="unknownAt1060" type="AnimationReferenceHeader" />
+            <field offset="1068" name="unknownAt1068" size="16" />
+            <field offset="1084" name="unknownAt1084" type="AnimationReferenceHeader" />
+            <field offset="1092" name="unknownAt1092" size="12" />
+            <field offset="1104" name="unknownAt1104" type="AnimationReferenceHeader" />
+            <field offset="1112" name="unknownAt1112" size="16" />
+            <field offset="1128" name="unknownAt1128" type="AnimationReferenceHeader"  />
+            <field offset="1136" name="unknownAt1136" size="12" />
+            <field offset="1148" name="unknownAt1148" type="AnimationReferenceHeader" />
+            <field offset="1156" name="unknownAt1156" size="12" />
+            <field offset="1168" name="unknownAt1168" type="AnimationReferenceHeader" />
+            <field offset="1176" name="unknownAt1188" size="12" />
             <field offset="1188" name="flags" type="uint32" default-value="0" >
                 <bits>
                     <bit mask="0x1" name="sort" />
@@ -823,9 +866,17 @@
                     <bit mask="0x8000000" name="copy"/>
                 </bits>
             </field>
-            <field offset="1192" name="unknown13" size="44"/>
-            <field offset="1236" name="ar1" type="FloatAnimationReference" />
-            <field offset="1256" name="unknown14" size="48"/>
+            <field offset="1192" name="unknownAt1192" size="20" />
+            <field offset="1212" name="unknownAt1212" type="uint32" default-value="0" />
+            <field offset="1216" name="unknownAt1216" type="AnimationReferenceHeader"/>
+            <field offset="1224" name="unknownAt1224" size="12"/>
+            <field offset="1236" name="unknownAt1236" type="FloatAnimationReference" />
+            <field offset="1256" name="unknownAt1256" type="int32" default-value="-1" />
+            <field offset="1260" name="unknownAt1260" type="float" default-value="0.0"/>
+            <field offset="1264" name="unknownAt1264" type="FloatAnimationReference"/>
+            <field offset="1284" name="unknownAt1284" type="int32" default-value="-1" />
+            <field offset="1288" name="unknownAt1288" type="int32" default-value="0" />
+            <field offset="1292" name="usedModel" type="Reference" refTo="SCHRV0"/>
             <field offset="1304" name="copyIndices" type="Reference" refTo="U32_V0" />
         </structure>
         
@@ -970,7 +1021,7 @@
             <field name="unknown38" type="uint32" />
             <field name="unknown39" type="uint32" />
             <field offset="392" name="ribbonType" type="uint32" />
-            <field name="unknown40" type="uint32" expected-value="1"/>
+            <field name="unknown40" type="uint32" default-value="1"/>
             <field name="ribbonDivisions" type="float" />
             <field offset="404" name="ribbonSides" type="uint32" />
             <field name="unknown42" type="uint32" />

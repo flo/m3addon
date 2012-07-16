@@ -89,9 +89,18 @@ def handleTypeOrBoneSuffixChange(self, context):
             bone.name = newBoneName
     self.oldBoneSuffix = self.boneSuffix
 
+def handleParticleSystemCopyRename(self, context):
+    scene = context.scene
+    if self.name != self.oldName:
+        oldBoneName = shared.boneNameForPartileSystem(self.oldName)
+        newBoneName = shared.boneNameForPartileSystem(self.name)
+        bone, armatureObject = findBoneWithArmatureObject(scene, oldBoneName)
+        if bone != None:
+            bone.name = newBoneName
+    self.oldName = self.name
+
 def handleCameraNameChange(self, context):
     scene = context.scene
-    print("name changed")
     if self.name != self.oldName:
         bone, armatureObject = findBoneWithArmatureObject(scene, self.oldName)
         if bone != None:
@@ -158,11 +167,14 @@ def handleAnimationSequenceIndexChange(self, context):
                 elif action.id_root == 'SCENE':
                     newSceneAction = action
         for targetObject in scene.objects:
-            targetObject.animation_data_clear()
             newAction = newObjectNameToActionMap.get(targetObject.name)
+            prepareDefaultValuesForNewAction(scene, targetObject, 'OBJECT', newAction)
+            targetObject.animation_data_clear()
             if newAction != None:
                 targetObject.animation_data_create()
                 targetObject.animation_data.action = newAction
+
+        prepareDefaultValuesForNewAction(scene, scene, 'SCENE', newSceneAction)
         scene.animation_data_clear()
         if newSceneAction != None:
             scene.animation_data_create()
@@ -170,10 +182,74 @@ def handleAnimationSequenceIndexChange(self, context):
                 
     scene.m3_animation_old_index = newIndex
 
+def prepareDefaultValuesForNewAction(scene, targetObject, actionOwnerType, newAction):
+    oldAnimatedProperties = set()
+    if targetObject.animation_data != None:
+        oldAction = targetObject.animation_data.action
+        if oldAction != None:
+            for curve in oldAction.fcurves:
+                oldAnimatedProperties.add((curve.data_path, curve.array_index))
+    newAnimatedProperties = set()
+    if newAction != None:
+        for curve in newAction.fcurves:
+            newAnimatedProperties.add((curve.data_path, curve.array_index))
+    actionOwnerName = targetObject.name
+    
+    defaultAction = shared.determineDefaultActionFor(scene, actionOwnerName, actionOwnerType)
+    if defaultAction == None:
+        defaultAction = shared.createDefaulValuesAction(scene, actionOwnerName, actionOwnerType)
+    propertiesBecomingAnimated = newAnimatedProperties.difference(oldAnimatedProperties)
+    for prop in propertiesBecomingAnimated:
+        value = getAttribute(targetObject, prop[0],prop[1])
+        curve = None
+        for c in defaultAction.fcurves:
+            if c.data_path == prop[0] and c.array_index == prop[1]:
+                curve = c
+                break
+        if curve == None:
+            curve = defaultAction.fcurves.new(prop[0], prop[1])
+        keyFrame = curve.keyframe_points.insert(0, value)
+        keyFrame.interpolation = "CONSTANT"
+    propertiesBecomingUnanimated = oldAnimatedProperties.difference(newAnimatedProperties)
+    if defaultAction != None:
+        for curve in defaultAction.fcurves:
+            prop = (curve.data_path, curve.array_index)
+            if prop in propertiesBecomingUnanimated:
+                defaultValue = curve.evaluate(0)
+                setAttribute(targetObject, curve.data_path, curve.array_index, defaultValue)
+
+
+def setAttribute(obj, curvePath, curveIndex, value):
+    """Gets the value of an attribute via animation path and index"""
+    resolvedObject = obj.path_resolve(curvePath)
+    if type(resolvedObject) in [float, int]:
+        dotIndex = curvePath.rfind(".")
+        attributeName = curvePath[dotIndex+1:]
+        resolvedObject = obj.path_resolve(curvePath[:dotIndex])
+        setattr(resolvedObject, attributeName, value)
+    else:
+        resolvedObject[curveIndex] = value
+
+def getAttribute(obj, curvePath, curveIndex):
+    """Gets the value of an attribute via animation path and index"""
+    obj = obj.path_resolve(curvePath)
+    if type(obj) in [float, int]:
+        return obj
+    else:
+        return obj[curveIndex]
+
 def handlePartileSystemIndexChanged(self, context):
     scene = context.scene
-    partileSystem = scene.m3_particle_systems[scene.m3_particle_system_index]
-    selectOrCreateBoneForPartileSystem(scene, partileSystem)
+    particleSystem = scene.m3_particle_systems[scene.m3_particle_system_index]
+    particleSystem.copyIndex = -1
+    selectOrCreateBoneForPartileSystem(scene, particleSystem)
+
+def handlePartileSystemCopyIndexChanged(self, context):
+    scene = context.scene
+    particleSystem = self
+    if particleSystem.copyIndex >= 0 and particleSystem.copyIndex < len(particleSystem.copies):
+        copy = particleSystem.copies[particleSystem.copyIndex]
+        selectOrCreateBoneForPartileSystemCopy(scene, particleSystem, copy)
 
 def handleCameraIndexChanged(self, context):
     scene = context.scene
@@ -201,6 +277,10 @@ def findBoneWithArmatureObject(scene, boneName):
 
 def selectOrCreateBoneForPartileSystem(scene, particle_system):
     boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
+    selectOrCreateBone(scene, boneName)
+
+def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
+    boneName = shared.boneNameForPartileSystemCopy(particle_system, copy)
     selectOrCreateBone(scene, boneName)
 
 def selectOrCreateBoneForCamera(scene, camera):
@@ -329,7 +409,7 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options={"SKIP_SAVE"}, default="Material Layer")
     imagePath = bpy.props.StringProperty(name="image path", default="", options=set())
     unknown11 = bpy.props.IntProperty(name="unknown11", default=-1, options=set())
-    color = bpy.props.FloatVectorProperty(name="color", size=4, subtype="COLOR", options={"ANIMATABLE"})
+    color = bpy.props.FloatVectorProperty(name="color", default=(1.0, 1.0, 1.0, 1.0), size=4, subtype="COLOR", options={"ANIMATABLE"})
     textureWrapX = bpy.props.BoolProperty(options=set(), default=True)
     textureWrapY = bpy.props.BoolProperty(options=set(), default=True)
     colorEnabled = bpy.props.BoolProperty(options=set(), default=False)
@@ -426,13 +506,21 @@ class M3Camera(bpy.types.PropertyGroup):
     falloffEnd = bpy.props.FloatProperty(name="falloffEnd", options={"ANIMATABLE"}, default=2.0)
     depthOfField = bpy.props.FloatProperty(name="depthOfField", options={"ANIMATABLE"}, default=0.5)
 
+class M3ParticleSystemCopy(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(options=set(), update=handleParticleSystemCopyRename)
+    oldName = bpy.props.StringProperty(options=set())
+    emissionRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
+    partEmit = bpy.props.IntProperty(default=0, subtype="UNSIGNED", options={"ANIMATABLE"})
+
+  
+
 class M3ParticleSystem(bpy.types.PropertyGroup):
 
     # name attribute seems to be needed for template_list but is not actually in the m3 file
     # The name gets calculated like this: name = boneSuffix (type)
-    name = bpy.props.StringProperty(options={"SKIP_SAVE"})
+    name = bpy.props.StringProperty(options=set())
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleTypeOrBoneSuffixChange, default="Particle System")
-    oldBoneSuffix = bpy.props.StringProperty(options={"SKIP_SAVE"})
+    oldBoneSuffix = bpy.props.StringProperty(options=set())
     materialName = bpy.props.StringProperty(options=set())
     maxParticles = bpy.props.IntProperty(default=20, subtype="UNSIGNED",options=set())
     emissionSpeed1 = bpy.props.FloatProperty(name="emis. speed 1",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission")
@@ -489,6 +577,8 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     unknownFloat5 = bpy.props.FloatProperty(default=1.0, name="unknownFloat5",options=set())
     unknownFloat6 = bpy.props.FloatProperty(default=1.0, name="unknownFloat6",options=set())
     unknownFloat7 = bpy.props.FloatProperty(default=1.0, name="unknownFloat7",options=set())
+    copies = bpy.props.CollectionProperty(type=M3ParticleSystemCopy)
+    copyIndex = bpy.props.IntProperty(options=set(), update=handlePartileSystemCopyIndexChanged)
     sort = bpy.props.BoolProperty(options=set())
     collideTerrain = bpy.props.BoolProperty(options=set())
     collideObjects = bpy.props.BoolProperty(options=set())
@@ -517,8 +607,8 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     useLocalTime = bpy.props.BoolProperty(options=set())
     simulateOnInit = bpy.props.BoolProperty(options=set())
     copy = bpy.props.BoolProperty(options=set())
-    
-    
+
+  
 class M3AttachmentPoint(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", options=set())
     boneName = bpy.props.StringProperty(name="boneName", options=set())
@@ -970,6 +1060,38 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(particle_system, 'simulateOnInit', text="Simulate On Init")
             layout.prop(particle_system, 'copy', text="Copy")
 
+
+class ParticleSystemCopiesPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_particle_copies"
+    bl_label = "M3 Particle Systems Copies"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        
+        particleSystemIndex = scene.m3_particle_system_index
+        if not(particleSystemIndex >= 0 and particleSystemIndex < len(scene.m3_particle_systems)):
+            layout.label("No particle system has been selected")
+            return
+        particle_system = scene.m3_particle_systems[particleSystemIndex]
+        copyIndex = particle_system.copyIndex            
+        col.template_list(particle_system, "copies", particle_system, "copyIndex", rows=2)
+
+        col = row.column(align=True)
+        col.operator("m3.particle_system_copies_add", icon='ZOOMIN', text="")
+        col.operator("m3.particle_system_copies_remove", icon='ZOOMOUT', text="")
+        if copyIndex >= 0 and copyIndex < len(particle_system.copies):
+            copy = particle_system.copies[copyIndex]
+            layout.separator()
+            layout.prop(copy, 'name',text="Name")
+            layout.prop(copy, 'emissionRate', text="Particles Per Second")
+            layout.prop(copy, 'partEmit', text="Part. Emit.")
+
 class MaterialSelectionPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_selection"
     bl_label = "M3 Material Settings"
@@ -1025,6 +1147,20 @@ class AttachmentPointsPanel(bpy.types.Panel):
             if attachment_point.volumeType in ["0"]:
                 layout.prop(attachment_point, 'volumeSize2', text="Volume Height")
 
+
+class ExtraBonePropertiesPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_bone_properties"
+    bl_label = "M3 Bone Properties"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "bone"
+    
+    def draw(self, context):
+        layout = self.layout
+        bone = context.bone
+        row = layout.row()
+        col = row.column()
+        layout.prop(bone, 'm3_unapplied_scale', text="Unapplied Scale")
 
 
 
@@ -1354,7 +1490,7 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
             if not suggestedName in usedNames:
                 unusedName = suggestedName
             counter += 1
-        return unusedName
+        return unusedName     
 
 class M3_PARTICLE_SYSTEMS_OT_remove(bpy.types.Operator):
     bl_idname      = 'm3.particle_systems_remove'
@@ -1367,6 +1503,72 @@ class M3_PARTICLE_SYSTEMS_OT_remove(bpy.types.Operator):
                 scene.m3_particle_systems.remove(scene.m3_particle_system_index)
                 scene.m3_particle_system_index-= 1
         return{'FINISHED'}
+        
+        
+
+class M3_PARTICLE_SYSTEM_COPIES_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.particle_system_copies_add'
+    bl_label       = "Add Particle System Copy"
+    bl_description = "Adds a particle system copy for the export to the m3 model format"
+
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        particleSystemIndex = scene.m3_particle_system_index
+        return (particleSystemIndex >= 0 and particleSystemIndex < len(scene.m3_particle_systems))
+
+
+    def invoke(self, context, event):
+        scene = context.scene
+        particle_system = scene.m3_particle_systems[scene.m3_particle_system_index]
+        copy = particle_system.copies.add()
+        copy.name = self.findUnusedName(particle_system)
+        if len(scene.m3_material_references) >= 1:
+            particle_system.materialName = scene.m3_material_references[0].name
+
+        handleParticleSystemCopyRename(copy,context)
+        particle_system.copyIndex = len(particle_system.copies)-1
+        
+        selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy)
+        return{'FINISHED'}
+
+    def findUnusedName(self, particle_system):
+        usedNames = set()
+        for copy in particle_system.copies:
+            usedNames.add(copy.name)
+        unusedName = None
+        counter = 1
+        while unusedName == None:
+            suggestedName = "%02d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName
+
+class M3_PARTICLE_SYSTEMS_COPIES_OT_remove(bpy.types.Operator):
+    bl_idname      = 'm3.particle_system_copies_remove'
+    bl_label       = "Remove Particle System Copy"
+    bl_description = "Removes the active copy from the M3 particle system"
+    
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        particleSystemIndex = scene.m3_particle_system_index
+        if not (particleSystemIndex >= 0 and particleSystemIndex < len(scene.m3_particle_systems)):
+            return False
+        particleSystem = scene.m3_particle_systems[particleSystemIndex]
+        copyIndex = particleSystem.copyIndex
+        return (copyIndex >= 0 and copyIndex < len(particleSystem.copies))
+
+    def invoke(self, context, event):
+        scene = context.scene
+        particleSystemIndex = scene.m3_particle_system_index
+        particleSystem = scene.m3_particle_systems[particleSystemIndex]
+        copyIndex = particleSystem.copyIndex
+        particleSystem.copies.remove(particleSystem.copyIndex)
+        particleSystem.copyIndex -= 1
+        return{'FINISHED'}
+        
         
 class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.attachment_points_add'
@@ -1428,7 +1630,7 @@ class M3_OT_quickExport(bpy.types.Operator):
         fileName = scene.m3_export_options.path
         if not "m3export" in locals():
             from . import m3export
-        m3export.exportParticleSystems(scene, fileName)
+        m3export.export(scene, fileName)
         return{'FINISHED'}
 
 class M3_OT_export(bpy.types.Operator, ExportHelper):
@@ -1451,7 +1653,7 @@ class M3_OT_export(bpy.types.Operator, ExportHelper):
         if not "m3export" in locals():
             from . import m3export
 
-        m3export.exportParticleSystems(scene, self.properties.filepath)
+        m3export.export(scene, self.properties.filepath)
         return {'FINISHED'}
             
     def invoke(self, context, event):
@@ -1517,6 +1719,10 @@ def register():
     bpy.types.Mesh.m3_material_name = bpy.props.StringProperty(options=set())
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
+    bpy.types.Bone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
+    bpy.types.EditBone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
+    bpy.types.Scene.m3_default_value_action_assignments = bpy.props.CollectionProperty(type=AssignedActionOfM3Animation, options=set())
+
  
 def unregister():
     bpy.utils.unregister_module(__name__)

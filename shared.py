@@ -67,6 +67,9 @@ def toValidBoneName(name):
 def boneNameForPartileSystem(boneSuffix):
     return toValidBoneName(star2ParticlePrefix + boneSuffix)
 
+def boneNameForPartileSystemCopy(particleSyste, copy):
+    return toValidBoneName(star2ParticlePrefix + copy.name)
+
 def locRotScaleMatrix(location, rotation, scale):
     """ Important: rotation must be a normalized quaternion """
     # to_matrix() only works properly with normalized quaternions.
@@ -171,7 +174,33 @@ def findMeshObjects(scene):
     for currentObject in scene.objects:
         if currentObject.type == 'MESH':
             yield currentObject
+            
+def createDefaulValuesAction(scene, ownerName, actionIdRoot):
+    action = bpy.data.actions.new("DEFAULTS_FOR_" + ownerName)
+    action.id_root = actionIdRoot
+    actionAssignment = scene.m3_default_value_action_assignments.add()
+    actionAssignment.actionName = action.name
+    actionAssignment.targetName = ownerName
+    return action
+    
 
+def findActionOfAssignedAction(assignedAction, actionOwnerName, actionOwnerType):
+    if actionOwnerName == assignedAction.targetName:
+        actionName = assignedAction.actionName
+        action = bpy.data.actions.get(actionName)
+        if action == None:
+            print("Warning: The action %s was referenced by name but does no longer exist" % assignedAction.actionName)
+        else:
+            if action.id_root == actionOwnerType:
+                return action
+    return None
+
+def determineDefaultActionFor(scene, actionOwnerName, actionOwnerType):
+    for assignedAction in scene.m3_default_value_action_assignments:
+        action = findActionOfAssignedAction(assignedAction, actionOwnerName, actionOwnerType)
+        if action != None:
+            return action
+    
 def transferParticleSystem(transferer):
     transferer.transferAnimatableFloat("emissionSpeed1")
     transferer.transferAnimatableFloat("emissionSpeed2")
@@ -252,6 +281,9 @@ def transferParticleSystem(transferer):
     transferer.transferBit("flags", "simulateOnInit")
     transferer.transferBit("flags", "copy")
 
+def transferParticleSystemCopy(transferer):
+    transferer.transferAnimatableFloat("emissionRate")
+    transferer.transferAnimatableInt16("partEmit")
 
 def transferStandardMaterial(transferer):
     transferer.transferString("name")

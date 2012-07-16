@@ -232,7 +232,8 @@ class M3ToBlenderDataTransferer:
         animationHeader = animationReference.header
         animId = animationHeader.animId
         animPath = self.animPathPrefix +  fieldName
-        self.importer.animateFloat(ownerTypeScene, animPath, animId)
+        defaultValue = animationReference.initValue
+        self.importer.animateFloat(ownerTypeScene, animPath, animId, defaultValue)
         
     def transferAnimatableInteger(self, fieldName):
         """ Helper method"""
@@ -241,7 +242,8 @@ class M3ToBlenderDataTransferer:
         animationHeader = animationReference.header
         animId = animationHeader.animId
         animPath = self.animPathPrefix + fieldName
-        self.importer.animateInteger(ownerTypeScene, animPath, animId)
+        defaultValue = animationReference.initValue
+        self.importer.animateInteger(ownerTypeScene, animPath, animId, defaultValue)
 
     def transferAnimatableInt16(self, fieldName):
         self.transferAnimatableInteger(fieldName)
@@ -281,7 +283,8 @@ class M3ToBlenderDataTransferer:
         animationHeader = animationReference.header
         animId = animationHeader.animId
         animPath = self.animPathPrefix + fieldName
-        self.importer.animateVector3(ownerTypeScene, animPath, animId)
+        defaultValue = animationReference.initValue
+        self.importer.animateVector3(ownerTypeScene, animPath, animId, defaultValue)
 
         
     def transferAnimatableColor(self, fieldName):
@@ -290,7 +293,8 @@ class M3ToBlenderDataTransferer:
         animationHeader = animationReference.header
         animId = animationHeader.animId
         animPath = self.animPathPrefix + fieldName
-        self.importer.animateColor(ownerTypeScene, animPath, animId)
+        defaultValue = animationReference.initValue
+        self.importer.animateColor(ownerTypeScene, animPath, animId, defaultValue)
         
     def transferEnum(self, fieldName):
         value = str(getattr(self.m3Object, fieldName))
@@ -315,6 +319,7 @@ class Importer:
         self.armature = bpy.data.armatures.new(name="Armature")
         scene.render.fps = FRAME_RATE
         self.animations = []
+        self.ownerTypeToDefaultValuesActionMap = {}
         self.storeModelId()
         self.createAnimations()
         self.createArmatureObject()
@@ -327,6 +332,7 @@ class Importer:
 
         if len(scene.m3_animations) >= 1:
             scene.m3_animation_old_index = -1
+            scene.m3_animation_index = -1
             scene.m3_animation_index = 0
     
     def addAnimIdData(self, animId, objectId, animPath):
@@ -402,7 +408,7 @@ class Importer:
         tails = determineTails(model.bones, heads, boneDirectionVectors, absoluteScales)
         rolls = determineRolls(absoluteBoneRestPositions, heads , tails)
 
-        editBones = self.createEditBones(model.bones, heads, tails, rolls)
+        editBones = self.createEditBones(model.bones, heads, tails, rolls, absoluteScales)
             
         
         relEditBoneMatrices = self.determineRelEditBoneMatrices(model.bones, editBones)
@@ -436,7 +442,7 @@ class Importer:
             poseBone.rotation_quaternion = rotation
             poseBone.location = location
             
-            self.animateBone(bone, leftCorrectionMatrix, rightCorrectionMatrix)
+            self.animateBone(bone, leftCorrectionMatrix, rightCorrectionMatrix, location, rotation, scale)
             index+=1
     def determineAbsoluteRestPosScales(self, absoluteBoneRestPositions):
         absoluteScales = []
@@ -484,7 +490,7 @@ class Importer:
             timeToRotationMap[timeInMS] = rotation
             timeToScaleMap[timeInMS] = scale
         
-    def animateBone(self, m3Bone, leftCorrectionMatrix, rightCorrectionMatrix):
+    def animateBone(self, m3Bone, leftCorrectionMatrix, rightCorrectionMatrix, defaultLocation, defaultRotation, defaultScale):
         boneName = shared.toValidBoneName(m3Bone.name)
         locationAnimId = m3Bone.location.header.animId
         locationAnimPath = 'pose.bones["%s"].location' % boneName
@@ -533,34 +539,42 @@ class Importer:
             self.fix180DegreeRotationsInMapWithKeys(timeToRotationMap, timeEntries)
 
 
-            group = boneName
-            locXCurve = action.fcurves.new(locationAnimPath, 0, group)
-            locYCurve = action.fcurves.new(locationAnimPath, 1, group)
-            locZCurve = action.fcurves.new(locationAnimPath, 2, group)
-            rotWCurve = action.fcurves.new(rotationAnimPath, 0, group)
-            rotXCurve = action.fcurves.new(rotationAnimPath, 1, group)
-            rotYCurve = action.fcurves.new(rotationAnimPath, 2, group)
-            rotZCurve = action.fcurves.new(rotationAnimPath, 3, group)
-            scaXCurve = action.fcurves.new(scaleAnimPath, 0, group)
-            scaYCurve = action.fcurves.new(scaleAnimPath, 1, group)
-            scaZCurve = action.fcurves.new(scaleAnimPath, 2, group)
-            
-            
+            frames = []
             for timeInMS in timeEntries:
-                location = timeToLocationMap.get(timeInMS)
-                rotation = timeToRotationMap.get(timeInMS)
-                scale = timeToScaleMap.get(timeInMS)
-                frame = msToFrame(timeInMS)
-                insertLinearKeyFrame(locXCurve, frame, location.x)
-                insertLinearKeyFrame(locYCurve, frame, location.y)
-                insertLinearKeyFrame(locZCurve, frame, location.z)
-                insertLinearKeyFrame(rotWCurve, frame, rotation.w)
-                insertLinearKeyFrame(rotXCurve, frame, rotation.x)
-                insertLinearKeyFrame(rotYCurve, frame, rotation.y)
-                insertLinearKeyFrame(rotZCurve, frame, rotation.z)
-                insertLinearKeyFrame(scaXCurve, frame, scale.x)
-                insertLinearKeyFrame(scaYCurve, frame, scale.y)
-                insertLinearKeyFrame(scaZCurve, frame, scale.z)
+                frames.append(msToFrame(timeInMS))
+
+            group = boneName
+            if locationAnimId in animIdToTimeValueMap:
+                locXCurve = action.fcurves.new(locationAnimPath, 0, group)
+                locYCurve = action.fcurves.new(locationAnimPath, 1, group)
+                locZCurve = action.fcurves.new(locationAnimPath, 2, group)
+                for timeInMS, frame in zip(timeEntries, frames):
+                    location = timeToLocationMap.get(timeInMS)
+                    insertLinearKeyFrame(locXCurve, frame, location.x)
+                    insertLinearKeyFrame(locYCurve, frame, location.y)
+                    insertLinearKeyFrame(locZCurve, frame, location.z)
+            
+            if rotationAnimId in animIdToTimeValueMap:
+                rotWCurve = action.fcurves.new(rotationAnimPath, 0, group)
+                rotXCurve = action.fcurves.new(rotationAnimPath, 1, group)
+                rotYCurve = action.fcurves.new(rotationAnimPath, 2, group)
+                rotZCurve = action.fcurves.new(rotationAnimPath, 3, group)
+                for timeInMS, frame in zip(timeEntries, frames):
+                    rotation = timeToRotationMap.get(timeInMS)
+                    insertLinearKeyFrame(rotWCurve, frame, rotation.w)
+                    insertLinearKeyFrame(rotXCurve, frame, rotation.x)
+                    insertLinearKeyFrame(rotYCurve, frame, rotation.y)
+                    insertLinearKeyFrame(rotZCurve, frame, rotation.z)
+                
+            if scaleAnimId in animIdToTimeValueMap:
+                scaXCurve = action.fcurves.new(scaleAnimPath, 0, group)
+                scaYCurve = action.fcurves.new(scaleAnimPath, 1, group)
+                scaZCurve = action.fcurves.new(scaleAnimPath, 2, group)
+                for timeInMS, frame in zip(timeEntries, frames):
+                    scale = timeToScaleMap.get(timeInMS)
+                    insertLinearKeyFrame(scaXCurve, frame, scale.x)
+                    insertLinearKeyFrame(scaYCurve, frame, scale.y)
+                    insertLinearKeyFrame(scaZCurve, frame, scale.z)
     
     
     def createStandardMaterials(self, scene):
@@ -704,20 +718,33 @@ class Importer:
         currentScene = bpy.context.scene
         print("Loading particle systems")
         index = 0
-        for particlesEntry in self.model.particles:
+        for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
             particle_system = currentScene.m3_particle_systems.add()
-            animPathPrefix = "m3_particle_systems[%s]." % index
-            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=particle_system, m3Object=particlesEntry)
+            animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=particle_system, m3Object=m3ParticleSystem)
             shared.transferParticleSystem(transferer)
-            boneEntry = self.model.bones[particlesEntry.bone]
+            boneEntry = self.model.bones[m3ParticleSystem.bone]
             fullBoneName = boneEntry.name
             if fullBoneName.startswith(shared.star2ParticlePrefix):
                 particle_system.boneSuffix = fullBoneName[len(shared.star2ParticlePrefix):]
             else:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                 particle_system.boneSuffix = fullBoneName
-            particle_system.materialName = self.getNameOfMaterialWithReferenceIndex(particlesEntry.materialReferenceIndex)
-            index += 1
+            particle_system.materialName = self.getNameOfMaterialWithReferenceIndex(m3ParticleSystem.materialReferenceIndex)
+            for blenderCopyIndex, m3CopyIndex in enumerate(m3ParticleSystem.copyIndices):
+                m3Copy = self.model.particleCopies[m3CopyIndex]
+                copy = particle_system.copies.add()
+                copyAnimPathPrefix = animPathPrefix + "copies[%d]." % blenderCopyIndex
+                transferer = M3ToBlenderDataTransferer(self, copyAnimPathPrefix, blenderObject=copy, m3Object=m3Copy)
+                shared.transferParticleSystemCopy(transferer)
+                m3Bone = self.model.bones[m3Copy.bone]
+                fullCopyBoneName = m3Bone.name
+                if fullCopyBoneName.startswith(shared.star2ParticlePrefix):
+                    copy.name = fullCopyBoneName[len(shared.star2ParticlePrefix):]
+                else:
+                    print("Warning: A particle system copy was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
+                    copy.name = fullCopyBoneName
+                
 
 
     def createAttachmentPoints(self):
@@ -877,7 +904,7 @@ class Importer:
             relEditBoneMatrices.append(relEditBoneMatrix)
         return relEditBoneMatrices
 
-    def createEditBones(self, m3Bones, heads, tails, rolls):
+    def createEditBones(self, m3Bones, heads, tails, rolls, absoluteScales):
         editBones = []
         index = 0
         for boneEntry in m3Bones:
@@ -888,6 +915,7 @@ class Importer:
             editBone.head = heads[index]
             editBone.tail = tails[index]
             editBone.roll = rolls[index]
+            editBone.m3_unapplied_scale = absoluteScales[index]
             editBones.append(editBone)
             index +=1
         return editBones
@@ -911,9 +939,17 @@ class Importer:
             
             animIdToTimeValueMap[animId] = timeValueMap
         return animIdToTimeValueMap
-
-
-
+        
+    def createOrGetDefaultAction(self, ownerType):
+        action = self.ownerTypeToDefaultValuesActionMap.get(ownerType)
+        if action == None:
+            scene = bpy.context.scene
+            ownerName = self.actionTargetNameForOwnerType(ownerType)
+            actionIdRoot = self.actionIdRootFromOwnerType(ownerType)
+            action = shared.createDefaulValuesAction(scene, ownerName, actionIdRoot)
+            self.ownerTypeToDefaultValuesActionMap[ownerType] = action
+        return action
+        
     def createOrGetActionFor(self, animationData, ownerType):
         ownerTypesToActionMap = animationData.ownerTypeToActionMap
         scene = bpy.context.scene
@@ -921,18 +957,29 @@ class Importer:
         action = ownerTypesToActionMap.get(ownerType)
         if action == None:
             action = bpy.data.actions.new(animation.name + ownerType)
+            action.id_root = self.actionIdRootFromOwnerType(ownerType)
             ownerTypesToActionMap[ownerType] = action
             actionAssignment = animation.assignedActions.add()
             actionAssignment.actionName = action.name
-            if ownerType == ownerTypeArmature:
-                action.id_root = "OBJECT"
-                actionAssignment.targetName = self.armatureObject.name
-            elif ownerType == ownerTypeScene:
-                action.id_root = "SCENE"
-                actionAssignment.targetName = bpy.context.scene.name
-            else:
-                raise Exception("Unhandled case")
+            actionAssignment.targetName = self.actionTargetNameForOwnerType(ownerType)
         return action
+        
+        
+    def actionIdRootFromOwnerType(self,ownerType):
+        if ownerType == ownerTypeArmature:
+            return "OBJECT"
+        elif ownerType == ownerTypeScene:
+            return "SCENE"
+        else:
+            raise Exception("Unhandled case")
+
+    def actionTargetNameForOwnerType(self, ownerType):
+        if ownerType == ownerTypeArmature:
+            return self.armatureObject.name
+        elif ownerType == ownerTypeScene:
+            return bpy.context.scene.name
+        else:
+            raise Exception("Unhandled case")
 
     def createAnimations(self):
         print ("Creating actions(animation sequences)")
@@ -981,23 +1028,40 @@ class Importer:
             if timeValueMap != None:
                 action = self.createOrGetActionFor(animationData, ownerType)
                 yield (action, timeValueMap)
+        
 
-    def animateFloat(self, ownerType, path, animId):
+    def animateFloat(self, ownerType, path, animId, defaultValue):
         #TODO let animateFloat take objectId as argument
+        defaultAction = self.createOrGetDefaultAction(ownerType)
+        curve = defaultAction.fcurves.new(path, 0)
+        insertConstantKeyFrame(curve, 0, defaultValue)
+        
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
             curve = action.fcurves.new(path, 0)
             for frame, value in frameValuePairs(timeValueMap):
                 insertLinearKeyFrame(curve, frame, value)
     
-    def animateInteger(self, ownerType, path, animId):
+    def animateInteger(self, ownerType, path, animId, defaultValue):
+        defaultAction = self.createOrGetDefaultAction(ownerType)
+        curve = defaultAction.fcurves.new(path, 0)
+        insertConstantKeyFrame(curve, 0, defaultValue)
+        
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
             curve = action.fcurves.new(path, 0)
             for frame, value in frameValuePairs(timeValueMap):
                 insertConstantKeyFrame(curve, frame, value)
 
-    def animateVector3(self, ownerType, path, animId):
+    def animateVector3(self, ownerType, path, animId, defaultValue):
+        defaultAction = self.createOrGetDefaultAction(ownerType)
+        xCurve = defaultAction.fcurves.new(path, 0)
+        yCurve = defaultAction.fcurves.new(path, 1)
+        zCurve = defaultAction.fcurves.new(path, 2)
+        insertConstantKeyFrame(xCurve, 0, defaultValue.x) 
+        insertConstantKeyFrame(yCurve, 0, defaultValue.y) 
+        insertConstantKeyFrame(zCurve, 0, defaultValue.z) 
+        
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
             xCurve = action.fcurves.new(path, 0)
@@ -1009,7 +1073,15 @@ class Importer:
                 insertLinearKeyFrame(yCurve, frame, value.y)
                 insertLinearKeyFrame(zCurve, frame, value.z)
 
-    def animateColor(self, ownerType, path, animId):
+
+
+    def animateColor(self, ownerType, path, animId, m3DefaultValue):
+        defaultAction = self.createOrGetDefaultAction(ownerType)
+        defaultValue = toBlenderColorVector(m3DefaultValue)
+        for i in range(4):
+            curve = defaultAction.fcurves.new(path, i)
+            insertConstantKeyFrame(curve, 0, defaultValue[i])
+        
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
             redCurve = action.fcurves.new(path, 0)
@@ -1024,8 +1096,7 @@ class Importer:
                 insertLinearKeyFrame(blueCurve, frame, v[2])
                 insertLinearKeyFrame(alphaCurve, frame, v[3])
 
-
-
+        
 def boneRotMatrix(head, tail, roll):
     """unused: python port of the Blender C Function vec_roll_to_mat3 """
     v = tail - head
