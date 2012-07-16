@@ -705,7 +705,6 @@ class Exporter:
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ParticleSystem, blenderObject=particleSystem, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferParticleSystem(transferer)
             m3ParticleSystem.indexPlusHighestIndex = len(scene.m3_particle_systems) -1 + particleSystemIndex
-            m3ParticleSystem.ar1 = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
             m3ParticleSystem.unknownAt776 = self.createNullAnimHeader(interpolationType=1)
             m3ParticleSystem.unknownAt796 = self.createNullAnimHeader(interpolationType=1)
             m3ParticleSystem.unknownAt820 = self.createNullAnimHeader(interpolationType=1)
@@ -726,7 +725,8 @@ class Exporter:
             m3ParticleSystem.unknownAt1148 = self.createNullAnimHeader(interpolationType=1)
             m3ParticleSystem.unknownAt1168 = self.createNullAnimHeader(interpolationType=1)
             m3ParticleSystem.unknownAt1216 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt1264 = self.createNullAnimHeader(interpolationType=1)
+            m3ParticleSystem.unknownAt1236 = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
+            m3ParticleSystem.unknownAt1264 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
             model.particles.append(m3ParticleSystem)
             
             materialReferenceIndex = self.materialNameToReferenceIndexMap.get(particleSystem.materialName)
