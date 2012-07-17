@@ -998,14 +998,14 @@
             <field name="unknown20" type="float" />
             <field name="unknown21" type="float" />
             <field name="radiusScale" type="Vector3AnimationReference" /> <!--X=Start, Y=Middle, Z=END-->
-            <field name="unknown23" type="FloatAnimationReference" />
+            <field name="twist" type="FloatAnimationReference" />
             <field name="unknown24" type="uint32" />
             <field name="unknown25" type="uint32" />
             <field name="unknown26" type="uint32" />
             <field name="unknown27" type="uint32" />
-            <field name="unknown28" size="20" /> <!-- BGRA color animation; spec modification, maybe -->
-            <field name="unknown29" size="20" /> <!-- BGRA color animation; diffuse modification, maybe -->
-            <field name="unknown30" size="20" /> <!-- BGRA color animation; diffuse modification, maybe -->
+            <field name="unknown28" type="ColorAnimationReference" /> <!-- BGRA color animation; spec modification, maybe -->
+            <field name="unknown29" type="ColorAnimationReference" /> <!-- BGRA color animation; diffuse modification, maybe -->
+            <field name="unknown30" type="ColorAnimationReference" /> <!-- BGRA color animation; diffuse modification, maybe -->
             <field name="intShort5" type="float" />
             <field name="intShort6" type="float" />
             <field name="intShort2" type="float" />
@@ -1038,18 +1038,18 @@
             <field name="long6" type="uint32" />
             <field name="long7" type="uint32" />
             <field name="long8" type="uint32" />
-            <field name="directionSomethingBool" type="uint32" />
-            <field name="directionSomething1" type="FloatAnimationReference" />
-            <field name="directionSomething2" type="FloatAnimationReference" />
-            <field name="amplitudeSomethingBool" type="uint32" />
-            <field name="amplitudeSomething1" type="FloatAnimationReference" />
-            <field name="amplitudeSomething2" type="FloatAnimationReference" />
+            <field name="directionVariationBool" type="uint32" />
+            <field name="directionVariationAmount" type="FloatAnimationReference" />
+            <field name="directionVariationFrequency" type="FloatAnimationReference" />
+            <field name="amplitudeVariationBool" type="uint32" />
+            <field name="amplitudeVariationAmount" type="FloatAnimationReference" />
+            <field name="amplitudeVariationFrequency" type="FloatAnimationReference" />
             <field name="lengthVariationBool" type="uint32" />
-            <field name="lengthVariationValue" type="FloatAnimationReference" />
+            <field name="lengthVariationAmount" type="FloatAnimationReference" />
             <field name="lengthVariationFrequency" type="FloatAnimationReference" />
-            <field name="radiusSomethingBool" type="uint32" />
-            <field name="radiusSomething1" type="FloatAnimationReference" />
-            <field name="radiusSomething2" type="FloatAnimationReference" />
+            <field name="radiusVariationBool" type="uint32" />
+            <field name="radiusVariationAmount" type="FloatAnimationReference" />
+            <field name="radiusVariationFrequency" type="FloatAnimationReference" />
             <field name="unknown60" type="uint32" />
             <field name="unknown61" type="FloatAnimationReference" />
             <field name="unknown62" type="FloatAnimationReference" />
