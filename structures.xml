@@ -447,7 +447,7 @@
             <field offset="40" name="unknown2" type="uint32" expected-value="1"/>
             <field offset="44" name="unknown3" type="uint32" expected-value="1"/>
             <field offset="48" name="unknown4" type="uint32" expected-value="100"/>
-            <field offset="52" name="unknown5" type="uint32" expected-value="0"/>
+            <field offset="52" name="unknown5" type="uint32" default-value="0"/>
             <field offset="56" name="boundingSphere" type="BNDSV0" />
             <field offset="84" name="unknown6" type="uint32" expected-value="0"/>
             <field offset="88" name="unknown7" type="uint32" expected-value="0"/>
