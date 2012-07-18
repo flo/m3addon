@@ -392,7 +392,6 @@ class Importer:
         model = self.model
         print("Creating bone structure in rest position")
 
-
         absoluteBoneRestPositions = determineAbsoluteBoneRestPositions(model)
                     
         bpy.ops.object.mode_set(mode='EDIT')
@@ -420,7 +419,7 @@ class Importer:
     def adjustPoseBones(self, m3Bones, relEditBoneMatrices):
         index = 0
         for bone, relEditBoneMatrix in zip(m3Bones, relEditBoneMatrices):
-            poseBone = self.armatureObject.pose.bones[shared.toValidBoneName(bone.name)]
+            poseBone = self.armatureObject.pose.bones[self.boneNames[index]]
             scale = toBlenderVector3(bone.scale.initValue)
             rotation = toBlenderQuaternion(bone.rotation.initValue)
             location = toBlenderVector3(bone.location.initValue)
@@ -442,7 +441,7 @@ class Importer:
             poseBone.rotation_quaternion = rotation
             poseBone.location = location
             
-            self.animateBone(bone, leftCorrectionMatrix, rightCorrectionMatrix, location, rotation, scale)
+            self.animateBone(index, bone, leftCorrectionMatrix, rightCorrectionMatrix, location, rotation, scale)
             index+=1
     def determineAbsoluteRestPosScales(self, absoluteBoneRestPositions):
         absoluteScales = []
@@ -490,8 +489,8 @@ class Importer:
             timeToRotationMap[timeInMS] = rotation
             timeToScaleMap[timeInMS] = scale
         
-    def animateBone(self, m3Bone, leftCorrectionMatrix, rightCorrectionMatrix, defaultLocation, defaultRotation, defaultScale):
-        boneName = shared.toValidBoneName(m3Bone.name)
+    def animateBone(self, boneIndex, m3Bone, leftCorrectionMatrix, rightCorrectionMatrix, defaultLocation, defaultRotation, defaultScale):
+        boneName = self.boneNames[boneIndex]
         locationAnimId = m3Bone.location.header.animId
         locationAnimPath = 'pose.bones["%s"].location' % boneName
         self.addAnimIdData(locationAnimId, objectId=shared.animObjectIdArmature, animPath=locationAnimPath)
@@ -867,7 +866,7 @@ class Importer:
                 boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
                 vertexGroupLookup = []
                 for boneIndex in boneIndexLookup:
-                    boneName = shared.toValidBoneName(model.bones[boneIndex].name)
+                    boneName = shared.toValidBoneName(self.boneNames[boneIndex])
                     if boneName in meshObject.vertex_groups:
                         vertexGroup = meshObject.vertex_groups[boneName]
                     else:
@@ -904,11 +903,31 @@ class Importer:
             relEditBoneMatrices.append(relEditBoneMatrix)
         return relEditBoneMatrices
 
+
+    def containsToLongNames(nameList):
+        for name in nameList:
+            if len(name) > 31:
+                return True
+        return false
+
+    def determineBoneNameList(self, m3Bones):
+        names = []
+        nameSet = set()
+        for index, m3Bone in enumerate(m3Bones):
+            name = m3Bone.name
+            if len(name) > 31:
+                name = "Bone%06d%s" % (index, name[:21])
+            if name in nameSet:
+                raise Exception("Failed to generate an unique bone name for %s" % name)
+            nameSet.add(name)
+            names.append(name)
+        return names
+
     def createEditBones(self, m3Bones, heads, tails, rolls, absoluteScales):
+        self.boneNames = self.determineBoneNameList(m3Bones)
         editBones = []
-        index = 0
-        for boneEntry in m3Bones:
-            editBone = self.armature.edit_bones.new(shared.toValidBoneName(boneEntry.name))
+        for index, boneEntry in enumerate(m3Bones):
+            editBone = self.armature.edit_bones.new(self.boneNames[index])
             if boneEntry.parent != -1:
                 parentEditBone = editBones[boneEntry.parent]
                 editBone.parent = parentEditBone
@@ -917,7 +936,6 @@ class Importer:
             editBone.roll = rolls[index]
             editBone.m3_unapplied_scale = absoluteScales[index]
             editBones.append(editBone)
-            index +=1
         return editBones
 
     def createAnimIdToKeyFramesMapFor(self, stc):
