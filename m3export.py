@@ -69,12 +69,11 @@ class Exporter:
         self.initMaterials(model)
         self.initCameras(model)
         self.initFuzzyHitTests(model)
+        self.initTighHitTest(model)
         self.initParticles(model)
         self.initAttachmentPoints(model)
         self.prepareAnimationEndEvents()
         self.initWithPreparedAnimationData(model)
-        
-        model.matrix = self.createIdentityMatrix()
         model.uniqueUnknownNumber = self.getAnimIdFor(shared.animObjectIdModel, "")
         return model
     
@@ -692,22 +691,31 @@ class Exporter:
             shared.transferCamera(transferer)
             model.cameras.append(m3Camera)
 
+    def initTighHitTest(self, model):
+        scene = self.scene
+        model.tightHitTest = self.createSSGS(scene.m3_tight_hit_test, fixedName="HitTestTight")
 
     def initFuzzyHitTests(self, model):
         scene = self.scene
-        for index, fuzzyHitTest in enumerate(scene.m3_fuzzy_hit_tests):
-            m3FuzzyHitTest = m3.SSGSV1()
-            boneName = fuzzyHitTest.name
-            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
-            if boneIndex == None:
-                boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
-            m3FuzzyHitTest.boneIndex = boneIndex
-            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3FuzzyHitTest, blenderObject=fuzzyHitTest, animPathPrefix=None, rootObject=self.scene)
-            shared.transferFuzzyHitTest(transferer)
-            matrix = shared.composeMatrix(fuzzyHitTest.offset, fuzzyHitTest.rotationEuler, fuzzyHitTest.scale)
-            m3FuzzyHitTest.matrix = self.createMatrixFromBlenderMatrix(matrix)
-            self.createIdentityMatrix()
+        for fuzzyHitTest in scene.m3_fuzzy_hit_tests:
+            m3FuzzyHitTest = self.createSSGS(fuzzyHitTest)
             model.fuzzyHitTestObjects.append(m3FuzzyHitTest)
+
+    def createSSGS(self, shapeObject, fixedName=None):
+        m3ShapeObject = m3.SSGSV1()
+        if fixedName != None:
+            boneName = fixedName
+        else:
+            boneName = shapeObject.name
+        boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+        if boneIndex == None:
+            boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+        m3ShapeObject.boneIndex = boneIndex
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ShapeObject, blenderObject=shapeObject, animPathPrefix=None, rootObject=self.scene)
+        shared.transferFuzzyHitTest(transferer)
+        matrix = shared.composeMatrix(shapeObject.offset, shapeObject.rotationEuler, shapeObject.scale)
+        m3ShapeObject.matrix = self.createMatrixFromBlenderMatrix(matrix)
+        return m3ShapeObject
 
     def initParticles(self, model):
         scene = self.scene

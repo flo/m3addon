@@ -1183,6 +1183,37 @@ class AttachmentPointsPanel(bpy.types.Panel):
             if attachment_point.volumeType in ["0"]:
                 layout.prop(attachment_point, 'volumeSize2', text="Volume Height")
 
+
+def addUIForShapeProperties(layout, shapeObject):
+    layout.prop(shapeObject, 'shape', text="Shape: ")
+    if shapeObject.shape in ["1", "2"]: 
+        layout.prop(shapeObject, 'size0', text="Radius")
+    elif shapeObject.shape in  ["0"]:
+        layout.prop(shapeObject, 'size0', text="Width")
+    if shapeObject.shape in ["0"]:
+        layout.prop(shapeObject, 'size1', text="Length")
+    elif shapeObject.shape in ["2"]:
+        layout.prop(shapeObject, 'size1', text="Height")
+    if shapeObject.shape in ["0"]:
+        layout.prop(shapeObject, 'size2', text="Height")
+    split = layout.split()
+    col = split.column()
+    sub = col.column(align=True)
+    sub.label(text="Offset")
+    sub.prop(shapeObject, 'offset', index=0, text="X")
+    sub.prop(shapeObject, 'offset', index=1, text="Y")
+    sub.prop(shapeObject, 'offset', index=2, text="Z")
+
+    sub.label(text="Rotation (Euler)")
+    sub.prop(shapeObject, 'rotationEuler', index=0, text="X")
+    sub.prop(shapeObject, 'rotationEuler', index=1, text="Y")
+    sub.prop(shapeObject, 'rotationEuler', index=2, text="Z")
+    
+    sub.label(text="Scale")
+    sub.prop(shapeObject, 'scale', index=0, text="X")
+    sub.prop(shapeObject, 'scale', index=1, text="Y")
+    sub.prop(shapeObject, 'scale', index=2, text="Z")
+
 class FuzzyHitTestPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_fuzzyhittests"
     bl_label = "M3 Fuzzy Hit Tests"
@@ -1206,34 +1237,21 @@ class FuzzyHitTestPanel(bpy.types.Panel):
         if currentIndex >= 0 and currentIndex < len(scene.m3_fuzzy_hit_tests):
             fuzzy_hit_test = scene.m3_fuzzy_hit_tests[currentIndex]
             layout.separator()
-            layout.prop(fuzzy_hit_test, 'shape', text="Shape: ")
-            if fuzzy_hit_test.shape in ["1", "2"]: 
-                layout.prop(fuzzy_hit_test, 'size0', text="Radius")
-            elif fuzzy_hit_test.shape in  ["0"]:
-                layout.prop(fuzzy_hit_test, 'size0', text="Width")
-            if fuzzy_hit_test.shape in ["0"]:
-                layout.prop(fuzzy_hit_test, 'size1', text="Length")
-            elif fuzzy_hit_test.shape in ["2"]:
-                layout.prop(fuzzy_hit_test, 'size1', text="Height")
-            if fuzzy_hit_test.shape in ["0"]:
-                layout.prop(fuzzy_hit_test, 'size2', text="Height")
-        split = layout.split()
-        col = split.column()
-        sub = col.column(align=True)
-        sub.label(text="Offset")
-        sub.prop(fuzzy_hit_test, 'offset', index=0, text="X")
-        sub.prop(fuzzy_hit_test, 'offset', index=1, text="Y")
-        sub.prop(fuzzy_hit_test, 'offset', index=2, text="Z")
+            addUIForShapeProperties(layout, fuzzy_hit_test)
 
-        sub.label(text="Rotation (Euler)")
-        sub.prop(fuzzy_hit_test, 'rotationEuler', index=0, text="X")
-        sub.prop(fuzzy_hit_test, 'rotationEuler', index=1, text="Y")
-        sub.prop(fuzzy_hit_test, 'rotationEuler', index=2, text="Z")
-        
-        sub.label(text="Scale")
-        sub.prop(fuzzy_hit_test, 'scale', index=0, text="X")
-        sub.prop(fuzzy_hit_test, 'scale', index=1, text="Y")
-        sub.prop(fuzzy_hit_test, 'scale', index=2, text="Z")
+class TightHitTestPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_tighthittest"
+    bl_label = "M3 Tight Hit Test"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        addUIForShapeProperties(layout, scene.m3_tight_hit_test)
+
 
 class ExtraBonePropertiesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_bone_properties"
@@ -1849,6 +1867,7 @@ def register():
     bpy.types.Scene.m3_animation_ids = bpy.props.CollectionProperty(type=M3AnimIdData)
     bpy.types.Scene.m3_fuzzy_hit_tests = bpy.props.CollectionProperty(type=M3SimpleGeometricShape)
     bpy.types.Scene.m3_fuzzy_hit_test_index = bpy.props.IntProperty(options=set(), update=handleFuzzyHitTestIndexChanged)
+    bpy.types.Scene.m3_tight_hit_test = bpy.props.PointerProperty(type=M3SimpleGeometricShape)
     bpy.types.Mesh.m3_material_name = bpy.props.StringProperty(options=set())
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
