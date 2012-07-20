@@ -1187,8 +1187,8 @@
             <field name="unknownMaybeRef5" type="Reference" />
             <field offset="552" name="patuData" type="Reference" refTo="PATUV4" />
             <field offset="564" name="trgdData" type="Reference" refTo="TRGDV0" />
-            <field name="absoluteInverseBoneRestPositions" type="Reference" refTo="IREFV0" />
-            <field name="tightHitTest" type="SSGSV1" />
+            <field offset="576" name="absoluteInverseBoneRestPositions" type="Reference" refTo="IREFV0" />
+            <field offset="588" name="tightHitTest" type="SSGSV1" />
             <field offset="696" name="fuzzyHitTestObjects" type="Reference" refTo="SSGSV1" />
             <field offset="708" name="attachmentVolumes" type="Reference" refTo="ATVLV0" />
             <field offset="720" name="attachmentVolumesAddon0" type="Reference" refTo="U16_V0"/>
