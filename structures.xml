@@ -922,7 +922,7 @@
         
         <structure name="SSGS" version="1" size="108" >
             <description>
-                Shape for a hit test that is fuzzy:
+                Describes a super simple geometic shape
                 
                 0 = Cuboid (width=size0, length=size1, height=size2)
                 1 = Sphere (radius=size0)
@@ -1188,19 +1188,7 @@
             <field offset="552" name="patuData" type="Reference" refTo="PATUV4" />
             <field offset="564" name="trgdData" type="Reference" refTo="TRGDV0" />
             <field name="absoluteInverseBoneRestPositions" type="Reference" refTo="IREFV0" />
-            <!-- Always 0, 1 or 2-->
-            <field name="unknown32" type="uint32" default-value="1"/>
-            <field name="unknown34" type="uint32" default-value="0xffff"/>
-            <field name="matrix" type="Matrix44" />
-            <field name="unknown35" type="uint32" expected-value="0" />
-            <field name="unknown36" type="uint32" expected-value="0" />
-            <field name="unknown37" type="uint32" expected-value="0" />
-            <field name="unknown38" type="uint32" expected-value="0" />
-            <field name="unknown39" type="uint32" expected-value="0" />
-            <field name="unknown40" type="uint32" expected-value="0"/>
-            <field name="unknown41" type="float" default-value="0.0" />
-            <field name="unknown42" type="float" default-value="0.0" />
-            <field name="unknown43" type="float" default-value="0.0" />
+            <field name="tightHitTest" type="SSGSV1" />
             <field offset="696" name="fuzzyHitTestObjects" type="Reference" refTo="SSGSV1" />
             <field offset="708" name="attachmentVolumes" type="Reference" refTo="ATVLV0" />
             <field offset="720" name="attachmentVolumesAddon0" type="Reference" refTo="U16_V0"/>
