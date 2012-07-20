@@ -494,7 +494,7 @@
             <field name="unknown4" type="uint8" default-value="1" />
             <field name="rootBoneIndex" type="uint16" />
         </structure>
-
+        
         <structure name="BAT_" version="1" size="14" >
             <description></description>
             <field name="unknown0" type="uint32" expected-value="0" />
@@ -509,7 +509,7 @@
             <field name="unknown0" type="uint32" default-value="0" />
             <field name="boundingsAnimation" type="BNDSV0AnimationReference" />
         </structure>
-
+        
         <structure name="DIV_" version="2" size="52"> <!-- size correct? -->
             <description>Mesh Division</description>
             <field name="faces" type="Reference" refTo="U16_V0" />
@@ -519,13 +519,14 @@
             <!-- m3: 1, m3a: 0 -->
             <field name="unknown" type="uint32" default-value="1" />
         </structure>
-    
+        
         <structure name="ATT_" version="1" size="20">
             <description>Attachment Point</description>
             <field name="unknown" type="int32" expected-value="-1" />
             <field name="name" type="Reference" refTo="CHARV0" />
             <field name="bone" type="uint32" />
         </structure>
+        
         <structure name="LITE" version="7" size="212">
             <description>Light types: 0=directional 1=point 2=spot, hotSpot expressed in radians</description>
             <field name="lightType" type="uint8" />
@@ -548,24 +549,24 @@
             <field name="unknown5" size="8" />
             <field name="hotSpot" type="FloatAnimationReference" />
         </structure>
-
+        
         <structure name="MATM" version="0" size="8">
             <description>A reference to a material of a specified type</description>
             <field name="materialType" type="uint32" default-value="1" />
             <field name="materialIndex" type="uint32" />
         </structure>
-
+        
         <structure name="PATU" version="4" size="152">
             <description>Unknown</description>
             <field name="unknown" size="152" />
         </structure>
-
+        
         <structure name="TRGD" version="0" size="24">
             <description>Unknown</description>
             <field name="unknown0" type="Reference" refTo="U32_V0" />
             <field name="name" type="Reference" refTo="CHARV0" />
         </structure>
-
+        
         <structure name="LAYR" version="22" size="356" >
             <description>Describes a layer of a material</description>
             <field name="unknown0" type="uint32" expected-value="0" />
@@ -614,7 +615,7 @@
             <field name="tintCutout" type="float" default-value="1.0" />
             <field name="unknown15" type="float" default-value="1.0" />
         </structure>
-
+        
         <structure name="MAT_" version="15" size="268">
             <description>Standard Material</description>
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
@@ -670,7 +671,7 @@
             <field offset="228" name="unknownAnimationRef1" type="UInt32AnimationReference" />
             <field offset="248" name="unknownAnimationRef2" type="UInt32AnimationReference" />
         </structure>
-
+        
         <structure name="DIS_" version="4" size="68" >
             <description>
                 Displacement Material
@@ -683,7 +684,7 @@
             <field offset="60" name="flags" type="uint32" default-value="0" />
             <field offset="64" name="priority" type="uint32" />
         </structure>
-
+        
         <structure name="CMS_" version="0" size="24" >
             <description>Composite Material Section</description>
             <field offset="0" name="materialReferenceIndex" type="uint32" />
@@ -702,7 +703,7 @@
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
             <field offset="12" name="layer" type="Reference" refTo="LAYRV22" />
         </structure>
-
+        
         <structure name="VOL_" version="0" size="84" >
             <description>Volume Material</description>
             <field offset="0" name="name" type="Reference" refTo="CHARV0" />
@@ -918,11 +919,11 @@
             <field offset="80" name="phshData" type="Reference" refTo="PHSHV1" />
             <field offset="92" name="unknown1" size="12" />
         </structure>
-
+        
         <structure name="SSGS" version="1" size="108" >
             <description>
                 Shape for a hit test that is fuzzy:
-
+                
                 0 = Cuboid (width=size0, length=size1, height=size2)
                 1 = Sphere (radius=size0)
                 2 = Cylinder? (radius=size0, height=size1)) 
@@ -1021,7 +1022,7 @@
             <field name="unknown28" type="ColorAnimationReference" /> <!-- BGRA color animation; spec modification, maybe -->
             <field name="unknown29" type="ColorAnimationReference" /> <!-- BGRA color animation; diffuse modification, maybe -->
             <field name="unknown30" type="ColorAnimationReference" /> <!-- BGRA color animation; diffuse modification, maybe -->
-            <field name="intShort5" type="float" />
+            <field name="endStretchTEMP" type="float" />
             <field name="intShort6" type="float" />
             <field name="intShort2" type="float" />
             <field name="intShort1" type="uint16" />
@@ -1030,10 +1031,10 @@
             <field name="unknown32" type="uint32" />
             <field name="unknown33" type="uint32" />
             <field name="unknown34" type="uint32" />
-            <field name="unknown35" type="uint32" />
-            <field name="unknown36" type="uint32" />
-            <field name="unknown37" type="uint32" />
-            <field name="unknown38" type="uint32" />
+            <field name="surfaceNoiseAmplitude" type="float" />
+            <field name="surfaceNoiseNumberOfWaves" type="float" />
+            <field name="surfaceNoiseFrequency" type="float" />
+            <field name="surfaceNoiseScale" type="float" />
             <field name="unknown39" type="uint32" />
             <field offset="392" name="ribbonType" type="uint32" />
             <field name="unknown40" type="uint32" default-value="1"/>
