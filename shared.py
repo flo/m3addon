@@ -368,3 +368,8 @@ def transferCamera(transferer):
     transferer.transferAnimatableFloat("falloffEnd")
     transferer.transferAnimatableFloat("depthOfField")
 
+def transferFuzzyHitTest(transferer):
+    transferer.transferEnum("shape")
+    transferer.transferFloat("size0")
+    transferer.transferFloat("size1") 
+    transferer.transferFloat("size2")

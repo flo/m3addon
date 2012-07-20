@@ -68,6 +68,7 @@ class Exporter:
         self.initMesh(model)
         self.initMaterials(model)
         self.initCameras(model)
+        self.initFuzzyHitTests(model)
         self.initParticles(model)
         self.initAttachmentPoints(model)
         self.prepareAnimationEndEvents()
@@ -690,6 +691,20 @@ class Exporter:
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Camera, blenderObject=camera, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferCamera(transferer)
             model.cameras.append(m3Camera)
+
+    def initFuzzyHitTests(self, model):
+        scene = self.scene
+        for index, fuzzyHitTest in enumerate(scene.m3_fuzzy_hit_tests):
+            m3FuzzyHitTest = m3.SSGSV1()
+            boneName = fuzzyHitTest.name
+            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+            if boneIndex == None:
+                boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+            m3FuzzyHitTest.boneIndex = boneIndex
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3FuzzyHitTest, blenderObject=fuzzyHitTest, animPathPrefix=None, rootObject=self.scene)
+            shared.transferFuzzyHitTest(transferer)
+            m3FuzzyHitTest.matrix = self.createIdentityMatrix()
+            model.fuzzyHitTestObjects.append(m3FuzzyHitTest)
 
     def initParticles(self, model):
         scene = self.scene

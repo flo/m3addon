@@ -326,6 +326,7 @@ class Importer:
         self.createBones()
         self.createMaterials()
         self.createCameras()
+        self.createFuzzyHitTests()
         self.createParticleSystems()
         self.createAttachmentPoints()
         self.createMesh()
@@ -710,8 +711,16 @@ class Importer:
             m3Bone = self.model.bones[m3Camera.boneIndex]
             if m3Bone.name != camera.name:
                 raise Exception("Bone of camera '%s' had different name: '%s'" % (camera.name, m3Bone.name))
-            
-            
+
+    def createFuzzyHitTests(self):
+        scene = bpy.context.scene
+        print("Loading fuzzy hit tests")
+        for index, m3FuzzyHitTest in enumerate(self.model.fuzzyHitTestObjects):
+            fuzzyHitTest = scene.m3_fuzzy_hit_tests.add()
+            transferer = M3ToBlenderDataTransferer(self, None, blenderObject=fuzzyHitTest, m3Object=m3FuzzyHitTest)
+            shared.transferFuzzyHitTest(transferer)
+            m3Bone = self.model.bones[m3FuzzyHitTest.boneIndex]
+            fuzzyHitTest.name = m3Bone.name
             
     def createParticleSystems(self):
         currentScene = bpy.context.scene
