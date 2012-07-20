@@ -692,6 +692,7 @@ class Exporter:
             shared.transferCamera(transferer)
             model.cameras.append(m3Camera)
 
+
     def initFuzzyHitTests(self, model):
         scene = self.scene
         for index, fuzzyHitTest in enumerate(scene.m3_fuzzy_hit_tests):
@@ -703,7 +704,9 @@ class Exporter:
             m3FuzzyHitTest.boneIndex = boneIndex
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3FuzzyHitTest, blenderObject=fuzzyHitTest, animPathPrefix=None, rootObject=self.scene)
             shared.transferFuzzyHitTest(transferer)
-            m3FuzzyHitTest.matrix = self.createIdentityMatrix()
+            matrix = shared.composeMatrix(fuzzyHitTest.offset, fuzzyHitTest.rotationEuler, fuzzyHitTest.scale)
+            m3FuzzyHitTest.matrix = self.createMatrixFromBlenderMatrix(matrix)
+            self.createIdentityMatrix()
             model.fuzzyHitTestObjects.append(m3FuzzyHitTest)
 
     def initParticles(self, model):
@@ -815,14 +818,17 @@ class Exporter:
         vec.w = 0
         return vec
 
-    def createRestPositionFromBlender4x4Matrix(self, blenderMatrix):
-        iref = m3.IREFV0()
+    def createMatrixFromBlenderMatrix(self, blenderMatrix):
         matrix = m3.Matrix44()
         matrix.x = self.createVector4FromBlenderVector(blenderMatrix.col[0])
         matrix.y = self.createVector4FromBlenderVector(blenderMatrix.col[1])
         matrix.z = self.createVector4FromBlenderVector(blenderMatrix.col[2])
         matrix.w = self.createVector4FromBlenderVector(blenderMatrix.col[3])
-        iref.matrix = matrix
+        return matrix
+
+    def createRestPositionFromBlender4x4Matrix(self, blenderMatrix):
+        iref = m3.IREFV0()
+        iref.matrix = self.createMatrixFromBlenderMatrix(blenderMatrix)
         return iref
 
     def createIdentityRestPosition(self):

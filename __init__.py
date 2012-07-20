@@ -639,6 +639,9 @@ class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     size0 = bpy.props.FloatProperty(default=1.0, options=set())
     size1 = bpy.props.FloatProperty(default=0.0, options=set())
     size2 = bpy.props.FloatProperty(default=0.0, options=set())
+    offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ")
+    rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION")
+    scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ")
 
 
 
@@ -1214,8 +1217,23 @@ class FuzzyHitTestPanel(bpy.types.Panel):
                 layout.prop(fuzzy_hit_test, 'size1', text="Height")
             if fuzzy_hit_test.shape in ["0"]:
                 layout.prop(fuzzy_hit_test, 'size2', text="Height")
+        split = layout.split()
+        col = split.column()
+        sub = col.column(align=True)
+        sub.label(text="Offset")
+        sub.prop(fuzzy_hit_test, 'offset', index=0, text="X")
+        sub.prop(fuzzy_hit_test, 'offset', index=1, text="Y")
+        sub.prop(fuzzy_hit_test, 'offset', index=2, text="Z")
 
-
+        sub.label(text="Rotation (Euler)")
+        sub.prop(fuzzy_hit_test, 'rotationEuler', index=0, text="X")
+        sub.prop(fuzzy_hit_test, 'rotationEuler', index=1, text="Y")
+        sub.prop(fuzzy_hit_test, 'rotationEuler', index=2, text="Z")
+        
+        sub.label(text="Scale")
+        sub.prop(fuzzy_hit_test, 'scale', index=0, text="X")
+        sub.prop(fuzzy_hit_test, 'scale', index=1, text="Y")
+        sub.prop(fuzzy_hit_test, 'scale', index=2, text="Z")
 
 class ExtraBonePropertiesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_bone_properties"

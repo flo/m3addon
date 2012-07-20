@@ -720,6 +720,11 @@ class Importer:
             transferer = M3ToBlenderDataTransferer(self, None, blenderObject=fuzzyHitTest, m3Object=m3FuzzyHitTest)
             shared.transferFuzzyHitTest(transferer)
             m3Bone = self.model.bones[m3FuzzyHitTest.boneIndex]
+            matrix = toBlenderMatrix(m3FuzzyHitTest.matrix)
+            offset, rotation, scale = matrix.decompose()
+            fuzzyHitTest.offset = offset
+            fuzzyHitTest.rotationEuler = rotation.to_euler("XYZ")
+            fuzzyHitTest.scale = scale
             fuzzyHitTest.name = m3Bone.name
             
     def createParticleSystems(self):

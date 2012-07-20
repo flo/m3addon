@@ -194,7 +194,14 @@ def findActionOfAssignedAction(assignedAction, actionOwnerName, actionOwnerType)
             if action.id_root == actionOwnerType:
                 return action
     return None
-
+    
+def composeMatrix(location, rotation, scale):
+    locMatrix= mathutils.Matrix.Translation(location)
+    rotationMatrix = rotation.to_matrix().to_4x4()
+    scaleMatrix = mathutils.Matrix()
+    for i in range(3):
+        scaleMatrix[i][i] = scale[i]
+    return locMatrix * rotationMatrix * scaleMatrix
 def determineDefaultActionFor(scene, actionOwnerName, actionOwnerType):
     for assignedAction in scene.m3_default_value_action_assignments:
         action = findActionOfAssignedAction(assignedAction, actionOwnerName, actionOwnerType)
