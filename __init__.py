@@ -262,7 +262,7 @@ def handleFuzzyHitTestIndexChanged(self, context):
     if scene.m3_fuzzy_hit_test_index >= 0:
         fuzzyHitTest = scene.m3_fuzzy_hit_tests[scene.m3_fuzzy_hit_test_index]
         print(fuzzyHitTest.name)
-        selectOrCreateBoneForFuzzyHitTest(scene, fuzzyHitTest)
+        selectOrCreateBoneForShapeObject(scene, fuzzyHitTest)
 
 def iterateArmatureObjects(scene):
     for obj in scene.objects:
@@ -294,9 +294,11 @@ def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
 def selectOrCreateBoneForCamera(scene, camera):
     selectOrCreateBone(scene, camera.name)
     
-def selectOrCreateBoneForFuzzyHitTest(scene, fuzzyHitTest):
-    selectOrCreateBone(scene, fuzzyHitTest.name)
+def selectOrCreateBoneForShapeObject(scene, shapeObject):
+    selectOrCreateBone(scene, shapeObject.name)
     
+
+
 
 def selectOrCreateBone(scene, boneName):
     if bpy.ops.object.mode_set.poll():
@@ -634,7 +636,7 @@ class M3AttachmentPoint(bpy.types.PropertyGroup):
     volumeSize2 = bpy.props.FloatProperty(default=0.0, options=set())
 
 class M3SimpleGeometricShape(bpy.types.PropertyGroup):
-    name = bpy.props.StringProperty(name="name", options=set())
+    name = bpy.props.StringProperty(name="name", default="", options=set())
     shape = bpy.props.EnumProperty(default="1", items=fuzzyHitTestShapeList, options=set())
     size0 = bpy.props.FloatProperty(default=1.0, options=set())
     size1 = bpy.props.FloatProperty(default=0.0, options=set())
@@ -1250,7 +1252,17 @@ class TightHitTestPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        addUIForShapeProperties(layout, scene.m3_tight_hit_test)
+        
+        if scene.m3_tight_hit_test.name == "":
+            layout.operator("m3.tight_hit_test_select_or_create_bone", text="Create Bone")
+        else:
+            layout.operator("m3.tight_hit_test_select_or_create_bone", text="Select Bone")
+
+        split = layout.split()
+        row = split.row()
+        sub = row.column(align=False)
+        sub.active = scene.m3_tight_hit_test.name != ""
+        addUIForShapeProperties(sub, scene.m3_tight_hit_test)
 
 
 class ExtraBonePropertiesPanel(bpy.types.Panel):
@@ -1713,6 +1725,19 @@ class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
         return unusedName
 
 
+class M3_TIGHT_HIT_TESTS_OT_selectorcreatebone(bpy.types.Operator):
+    bl_idname      = 'm3.tight_hit_test_select_or_create_bone'
+    bl_label       = "Select or create the HitTestFuzzy bone"
+    bl_description = "Adds a shape for the fuzzy hit test"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        tightHitTest = scene.m3_tight_hit_test
+        tightHitTest.name = shared.tightHitTestBoneName
+        selectOrCreateBoneForShapeObject(scene, tightHitTest)
+        return{'FINISHED'}
+
+
 class M3_FUZZY_HIT_TESTS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.fuzzy_hit_tests_add'
     bl_label       = "Add Fuzzy Hit Test Shape"
@@ -1725,7 +1750,7 @@ class M3_FUZZY_HIT_TESTS_OT_add(bpy.types.Operator):
 
         scene.m3_fuzzy_hit_test_index = len(scene.m3_fuzzy_hit_tests)-1
         
-        selectOrCreateBoneForFuzzyHitTest(scene, m3_fuzzy_hit_test)
+        selectOrCreateBoneForShapeObject(scene, m3_fuzzy_hit_test)
         return{'FINISHED'}
         
     def findUnusedName(self, scene):

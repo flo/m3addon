@@ -46,6 +46,8 @@ compositeMaterialTypeIndex = 3
 terrainMaterialTypeIndex = 4
 volumeMaterialTypeIndex = 5
 
+tightHitTestBoneName = "HitTestTight"
+
 rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
                                  (-1, 0, 0, 0),
                                  ( 0, 0, 1, 0),

@@ -693,7 +693,7 @@ class Exporter:
 
     def initTighHitTest(self, model):
         scene = self.scene
-        model.tightHitTest = self.createSSGS(scene.m3_tight_hit_test, fixedName="HitTestTight")
+        model.tightHitTest = self.createSSGS(scene.m3_tight_hit_test, fixedName=shared.tightHitTestBoneName)
 
     def initFuzzyHitTests(self, model):
         scene = self.scene
@@ -707,9 +707,7 @@ class Exporter:
             boneName = fixedName
         else:
             boneName = shapeObject.name
-        boneIndex = self.boneNameToBoneIndexMap.get(boneName)
-        if boneIndex == None:
-            boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+        boneIndex = self.boneNameToBoneIndexMap.get(boneName, -1)
         m3ShapeObject.boneIndex = boneIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ShapeObject, blenderObject=shapeObject, animPathPrefix=None, rootObject=self.scene)
         shared.transferFuzzyHitTest(transferer)

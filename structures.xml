@@ -928,18 +928,19 @@
                 1 = Sphere (radius=size0)
                 2 = Cylinder? (radius=size0, height=size1)) 
             </description>
-            <field name="shape" type="uint32" />
-            <field name="boneIndex" type="uint32" />
-            <field name="matrix" type="Matrix44" />
-            <field name="uknownAt72" type="uint32" expected-value="0" />
-            <field name="uknownAt76" type="uint32" expected-value="0" />
-            <field name="uknownAt80" type="uint32" expected-value="0" />
-            <field name="uknownAt84" type="uint32" expected-value="0" />
-            <field name="uknownAt88" type="uint32" expected-value="0" />
-            <field name="uknownAt92" type="uint32" expected-value="0" />
-            <field name="size0" type="float" />
-            <field name="size1" type="float" />
-            <field name="size2" type="float" />
+            <field offset="0" name="shape" type="uint32" />
+            <field offset="4" name="boneIndex" type="int16" /><!-- can be -1 -->
+            <field offset="6" name="uknownAt6" type="uint16" expected-value="0" />
+            <field offset="8" name="matrix" type="Matrix44" />
+            <field offset="72" name="uknownAt72" type="uint32" expected-value="0" />
+            <field offset="76" name="uknownAt76" type="uint32" expected-value="0" />
+            <field offset="80" name="uknownAt80" type="uint32" expected-value="0" />
+            <field offset="84" name="uknownAt84" type="uint32" expected-value="0" />
+            <field offset="88" name="uknownAt88" type="uint32" expected-value="0" />
+            <field offset="92" name="uknownAt92" type="uint32" expected-value="0" />
+            <field offset="96" name="size0" type="float" />
+            <field offset="100" name="size1" type="float" />
+            <field offset="104" name="size2" type="float" />
         </structure>
 
         <structure name="ATVL" version="0" size="116" >

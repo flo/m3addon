@@ -720,13 +720,14 @@ class Importer:
     def intShapeObject(self, blenderShapeObject, m3ShapeObject):
         transferer = M3ToBlenderDataTransferer(self, None, blenderObject=blenderShapeObject, m3Object=m3ShapeObject)
         shared.transferFuzzyHitTest(transferer)
-        m3Bone = self.model.bones[m3ShapeObject.boneIndex]
         matrix = toBlenderMatrix(m3ShapeObject.matrix)
         offset, rotation, scale = matrix.decompose()
         blenderShapeObject.offset = offset
         blenderShapeObject.rotationEuler = rotation.to_euler("XYZ")
         blenderShapeObject.scale = scale
-        blenderShapeObject.name = m3Bone.name
+        if m3ShapeObject.boneIndex != -1:
+            m3Bone = self.model.bones[m3ShapeObject.boneIndex]
+            blenderShapeObject.name = m3Bone.name
 
     def initTightHitTest(self):
         print("Loading tight hit test shape")
