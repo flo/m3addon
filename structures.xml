@@ -1009,7 +1009,7 @@
             <field name="unknown16" type="float" />
             <field name="unknown17" type="float" />
             <field name="tipOffsetZ" type="float" />
-            <field offset="192" name="endRadius" type="float" /> <!--middle point position-->
+            <field offset="192" name="centerBias" type="float" /> <!--middle point position-->
             <field name="unknown19" type="float" />
             <field name="unknown20" type="float" />
             <field name="unknown21" type="float" />
