@@ -987,27 +987,27 @@
                 3 - Star Shaped
             </description>
             <field name="boneIndex" type="uint8" />
-            <field name="short1" type="uint8" />
-            <field name="short2" type="uint8" />
-            <field name="short3" type="uint8" />
+            <field name="short1" type="uint8" expected-value="0"/>
+            <field name="short2" type="uint8" expected-value="0"/>
+            <field name="short3" type="uint8" expected-value="0"/>
             <field name="materialIndex" type="uint32" />
             <field name="waveLength" type="FloatAnimationReference" />
-            <field name="unknown2" type="float" />
+            <field name="unknown2" type="float" expected-value="0"/>
             <field name="unknown3" type="uint32" />
-            <field name="unknown4" type="float" />
-            <field name="unknown5" type="float" />
-            <field name="unknown6" type="float" />
-            <field name="unknown7" type="float" />
+            <field name="unknown4" type="float" expected-value="0"/>
+            <field name="unknown5" type="float" expected-value="0"/>
+            <field name="unknown6" type="float" expected-value="0"/>
+            <field name="unknown7" type="float" expected-value="0"/>
             <field name="unknown8" type="FloatAnimationReference" />
             <field name="unknown9" type="FloatAnimationReference" />
             <field name="unknown10" type="FloatAnimationReference" />
             <field name="unknown11" type="FloatAnimationReference" />
             <field name="unknown12" type="FloatAnimationReference" />
             <field name="unknown13" type="FloatAnimationReference" />
-            <field name="unknown14" type="uint32" />
-            <field name="unknown15" type="uint32" />
-            <field name="unknown16" type="float" />
-            <field name="unknown17" type="float" />
+            <field name="unknown14" type="uint32" expected-value="0"/>
+            <field name="unknown15" type="uint32" expected-value="0" />
+            <field name="unknown16" type="float" expected-value="0"/>
+            <field name="unknown17" type="float" expected-value="0"/>
             <field name="tipOffsetZ" type="float" />
             <field offset="192" name="centerBias" type="float" /> <!--middle point position-->
             <field name="unknown19" type="float" />
@@ -1015,45 +1015,45 @@
             <field name="unknown21" type="float" />
             <field name="radiusScale" type="Vector3AnimationReference" /> <!--X=Start, Y=Middle, Z=END-->
             <field name="twist" type="FloatAnimationReference" />
-            <field name="unknown24" type="uint32" />
-            <field name="unknown25" type="uint32" />
-            <field name="unknown26" type="uint32" />
-            <field name="unknown27" type="uint32" />
-            <field name="unknown28" type="ColorAnimationReference" /> <!-- BGRA color animation; spec modification, maybe -->
-            <field name="unknown29" type="ColorAnimationReference" /> <!-- BGRA color animation; diffuse modification, maybe -->
-            <field name="unknown30" type="ColorAnimationReference" /> <!-- BGRA color animation; diffuse modification, maybe -->
-            <field name="endStretchTEMP" type="float" />
+            <field name="unknown24" type="uint32" expected-value="0"/>
+            <field name="unknown25" type="uint32" expected-value="0"/>
+            <field name="unknown26" type="uint32" expected-value="0"/>
+            <field name="unknown27" type="uint32" expected-value="0"/>
+            <field name="baseColoring" type="ColorAnimationReference" />
+            <field name="centerColoring" type="ColorAnimationReference" />
+            <field name="tipColoring" type="ColorAnimationReference" />
+            <field name="stretchAmount" type="float" />
             <field name="intShort6" type="float" />
-            <field name="intShort2" type="float" />
-            <field name="intShort1" type="uint16" />
-            <field name="intShort4" type="uint16" />
-            <field name="unknown31" type="uint32" />
-            <field name="unknown32" type="uint32" />
-            <field name="unknown33" type="uint32" />
-            <field name="unknown34" type="uint32" />
+            <field name="stretchLimit" type="float" />
+            <field name="intShort1" type="uint16" expected-value="0"/>
+            <field name="intShort4" type="uint16" expected-value="0"/>
+            <field name="unknown31" type="uint32" expected-value="0"/>
+            <field name="unknown32" type="uint32" default-value="1"/> <!-- gateway0-->
+            <field name="unknown33" type="uint32" default-value="0"/> <!--overseer2-->
+            <field name="unknown34" type="uint32" default-value="0"/> <!--overseer2-->
             <field name="surfaceNoiseAmplitude" type="float" />
             <field name="surfaceNoiseNumberOfWaves" type="float" />
             <field name="surfaceNoiseFrequency" type="float" />
             <field name="surfaceNoiseScale" type="float" />
-            <field name="unknown39" type="uint32" />
+            <field name="unknown39" type="uint32" /> <!--corruptor3, corruption battlecruiser5-->
             <field offset="392" name="ribbonType" type="uint32" />
             <field name="unknown40" type="uint32" default-value="1"/>
             <field name="ribbonDivisions" type="float" />
             <field offset="404" name="ribbonSides" type="uint32" />
             <field name="unknown42" type="uint32" />
             <field name="ribbonLength" type="FloatAnimationReference" />
-            <field name="filler1" type="float" />
+            <field name="filler1" type="float" expected-value="0"/>
             <field offset="436" name="sribData" type="Reference" refTo="SRIBV0" />
             <field name="unknown45" type="uint32" />
             <field name="long4" type="uint32" />
-            <field name="long1" type="uint32" />
-            <field name="long2" type="uint32" />
-            <field name="long3" type="uint32" />
+            <field name="long1" type="uint32" default-value="1"/>
+            <field name="long2" type="uint32" expected-value="0"/>
+            <field name="long3" type="uint32" expected-value="0"/>
             <field name="ribbonFlags" type="uint32" />
-            <field name="long5" type="uint32" />
-            <field name="long6" type="uint32" />
-            <field name="long7" type="uint32" />
-            <field name="long8" type="uint32" />
+            <field name="long5" type="uint32" expected-value="0"/>
+            <field name="long6" type="uint32" expected-value="0"/>
+            <field name="long7" type="uint32" default-value="2"/>
+            <field name="long8" type="uint32" default-value="0"/> <!--hydralisk death 2-->
             <field name="directionVariationBool" type="uint32" />
             <field name="directionVariationAmount" type="FloatAnimationReference" />
             <field name="directionVariationFrequency" type="FloatAnimationReference" />
@@ -1066,7 +1066,7 @@
             <field name="radiusVariationBool" type="uint32" />
             <field name="radiusVariationAmount" type="FloatAnimationReference" />
             <field name="radiusVariationFrequency" type="FloatAnimationReference" />
-            <field name="unknown60" type="uint32" />
+            <field name="unknown60" type="uint32" expected-value="0"/>
             <field name="unknown61" type="FloatAnimationReference" />
             <field name="unknown62" type="FloatAnimationReference" />
             <field name="unknown63" type="FloatAnimationReference" />
