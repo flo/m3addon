@@ -68,12 +68,12 @@ class Exporter:
         self.initMesh(model)
         self.initMaterials(model)
         self.initCameras(model)
+        self.initFuzzyHitTests(model)
+        self.initTighHitTest(model)
         self.initParticles(model)
         self.initAttachmentPoints(model)
         self.prepareAnimationEndEvents()
         self.initWithPreparedAnimationData(model)
-        
-        model.matrix = self.createIdentityMatrix()
         model.uniqueUnknownNumber = self.getAnimIdFor(shared.animObjectIdModel, "")
         return model
     
@@ -691,6 +691,30 @@ class Exporter:
             shared.transferCamera(transferer)
             model.cameras.append(m3Camera)
 
+    def initTighHitTest(self, model):
+        scene = self.scene
+        model.tightHitTest = self.createSSGS(scene.m3_tight_hit_test, fixedName=shared.tightHitTestBoneName)
+
+    def initFuzzyHitTests(self, model):
+        scene = self.scene
+        for fuzzyHitTest in scene.m3_fuzzy_hit_tests:
+            m3FuzzyHitTest = self.createSSGS(fuzzyHitTest)
+            model.fuzzyHitTestObjects.append(m3FuzzyHitTest)
+
+    def createSSGS(self, shapeObject, fixedName=None):
+        m3ShapeObject = m3.SSGSV1()
+        if fixedName != None:
+            boneName = fixedName
+        else:
+            boneName = shapeObject.name
+        boneIndex = self.boneNameToBoneIndexMap.get(boneName, -1)
+        m3ShapeObject.boneIndex = boneIndex
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ShapeObject, blenderObject=shapeObject, animPathPrefix=None, rootObject=self.scene)
+        shared.transferFuzzyHitTest(transferer)
+        matrix = shared.composeMatrix(shapeObject.offset, shapeObject.rotationEuler, shapeObject.scale)
+        m3ShapeObject.matrix = self.createMatrixFromBlenderMatrix(matrix)
+        return m3ShapeObject
+
     def initParticles(self, model):
         scene = self.scene
         for particleSystemIndex, particleSystem in enumerate(scene.m3_particle_systems):
@@ -800,14 +824,17 @@ class Exporter:
         vec.w = 0
         return vec
 
-    def createRestPositionFromBlender4x4Matrix(self, blenderMatrix):
-        iref = m3.IREFV0()
+    def createMatrixFromBlenderMatrix(self, blenderMatrix):
         matrix = m3.Matrix44()
         matrix.x = self.createVector4FromBlenderVector(blenderMatrix.col[0])
         matrix.y = self.createVector4FromBlenderVector(blenderMatrix.col[1])
         matrix.z = self.createVector4FromBlenderVector(blenderMatrix.col[2])
         matrix.w = self.createVector4FromBlenderVector(blenderMatrix.col[3])
-        iref.matrix = matrix
+        return matrix
+
+    def createRestPositionFromBlender4x4Matrix(self, blenderMatrix):
+        iref = m3.IREFV0()
+        iref.matrix = self.createMatrixFromBlenderMatrix(blenderMatrix)
         return iref
 
     def createIdentityRestPosition(self):

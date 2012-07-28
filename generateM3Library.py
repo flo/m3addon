@@ -424,6 +424,9 @@ class ReferenceFeatureAdder(Visitor):
             object.introduceIndexReferences(indexMaker)
 """
     simpleFuctionsTemplate = """
+    def resolveReferences(self, sections):
+        pass
+
     @staticmethod
     def introduceIndexReferencesForOneOrMore(object, indexMaker):
         pass #nothing to do
@@ -434,8 +437,12 @@ class ReferenceFeatureAdder(Visitor):
 """
     introduceReferencesTemplate = """\
         indexReference = indexMaker.getIndexReferenceTo(self.%(fieldName)s, %(referenceClass)s, %(refTo)s)
-        %(refTo)s.introduceIndexReferencesForOneOrMore(self.%(fieldName)s,  indexMaker)
+        %(refTo)s.introduceIndexReferencesForOneOrMore(self.%(fieldName)s, indexMaker)
         self.%(fieldName)s = indexReference
+"""
+
+    introduceReferencesForFieldTemplate = """\
+        %(fieldType)s.introduceIndexReferencesForOneOrMore(self.%(fieldName)s, indexMaker) 
 """
 
     introduceReferencesForNoneTemplate = """\
@@ -462,7 +469,9 @@ class ReferenceFeatureAdder(Visitor):
                 template = ReferenceFeatureAdder.introduceReferencesTemplate
             self.introduceReferencesAssigments += template % {"fieldName": fieldName, "referenceClass": fieldType, "refTo":refTo}
             self.resolveAssigments += "        self.%(fieldName)s = resolveRef(self.%(fieldName)s,sections,%(refTo)s,\"%(fullName)s.%(fieldName)s\")\n" % {"fieldName": fieldName, "fullName":fullName, "refTo": refTo}
-            
+        elif fieldType in knownStructs:
+            self.introduceReferencesAssigments += ReferenceFeatureAdder.introduceReferencesForFieldTemplate % {"fieldName": fieldName, "fieldType": fieldType}
+            self.resolveAssigments += "        self.%(fieldName)s.resolveReferences(sections)\n" % {"fieldName": fieldName}
     def visitClassEnd(self, generalDataMap, classDataMap):
         if (self.introduceReferencesAssigments) == "" and (self.resolveAssigments == ""):
             text = ReferenceFeatureAdder.simpleFuctionsTemplate

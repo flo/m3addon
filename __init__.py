@@ -253,8 +253,16 @@ def handlePartileSystemCopyIndexChanged(self, context):
 
 def handleCameraIndexChanged(self, context):
     scene = context.scene
-    camera = scene.m3_cameras[scene.m3_camera_index]
-    selectOrCreateBoneForCamera(scene, camera)
+    if scene.m3_camera_index >= 0:
+        camera = scene.m3_cameras[scene.m3_camera_index]
+        selectOrCreateBoneForCamera(scene, camera)
+
+def handleFuzzyHitTestIndexChanged(self, context):
+    scene = context.scene
+    if scene.m3_fuzzy_hit_test_index >= 0:
+        fuzzyHitTest = scene.m3_fuzzy_hit_tests[scene.m3_fuzzy_hit_test_index]
+        print(fuzzyHitTest.name)
+        selectOrCreateBoneForShapeObject(scene, fuzzyHitTest)
 
 def iterateArmatureObjects(scene):
     for obj in scene.objects:
@@ -285,6 +293,12 @@ def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
 
 def selectOrCreateBoneForCamera(scene, camera):
     selectOrCreateBone(scene, camera.name)
+    
+def selectOrCreateBoneForShapeObject(scene, shapeObject):
+    selectOrCreateBone(scene, shapeObject.name)
+    
+
+
 
 def selectOrCreateBone(scene, boneName):
     if bpy.ops.object.mode_set.poll():
@@ -354,8 +368,12 @@ attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment 
                             ("2", 'Cylinder', 'Volume with the shape of a cylinder with the given radius and height'),
                             ("3", 'Unknown 3', 'Unknown Volume with id 3'),
                             ("4", 'Unknown 4', 'Unknown Volume with id 4')
-                           ] 
-    
+                           ]
+                           
+fuzzyHitTestShapeList = [("0", 'Cuboid', "A cuboid with the given width, length and height"),
+                         ("1", 'Sphere', "A sphere with the given radius"),
+                         ("2", 'Cylinder', 'A cylinder with the given radius and height'),
+                        ]
 matDefaultSettingsList = [("MESH", "Mesh Standard Material", "A material for meshes"), 
                         ("PARTICLE", 'Particle Standard Material', "Material for particle systems"),
                         ("DISPLACEMENT", "Displacement Material", "Moves the colors of the background to other locations"),
@@ -617,6 +635,18 @@ class M3AttachmentPoint(bpy.types.PropertyGroup):
     volumeSize1 = bpy.props.FloatProperty(default=0.0, options=set())
     volumeSize2 = bpy.props.FloatProperty(default=0.0, options=set())
 
+class M3SimpleGeometricShape(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="name", default="", options=set())
+    shape = bpy.props.EnumProperty(default="1", items=fuzzyHitTestShapeList, options=set())
+    size0 = bpy.props.FloatProperty(default=1.0, options=set())
+    size1 = bpy.props.FloatProperty(default=0.0, options=set())
+    size2 = bpy.props.FloatProperty(default=0.0, options=set())
+    offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ")
+    rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION")
+    scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ")
+
+
+
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
 
@@ -640,6 +670,7 @@ class AnimationSequencesPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -669,6 +700,7 @@ class MaterialReferencesPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -687,6 +719,7 @@ class MaterialPropertiesPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -762,6 +795,7 @@ class MatrialLayersPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
     
     def draw(self, context):
         layout = self.layout
@@ -817,6 +851,7 @@ class CameraPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -849,6 +884,7 @@ class ParticleSystemsPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -1067,6 +1103,7 @@ class ParticleSystemCopiesPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -1117,6 +1154,7 @@ class AttachmentPointsPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
     
     def draw(self, context):
         layout = self.layout
@@ -1146,6 +1184,85 @@ class AttachmentPointsPanel(bpy.types.Panel):
                 layout.prop(attachment_point, 'volumeSize1', text="Volume Height")
             if attachment_point.volumeType in ["0"]:
                 layout.prop(attachment_point, 'volumeSize2', text="Volume Height")
+
+
+def addUIForShapeProperties(layout, shapeObject):
+    layout.prop(shapeObject, 'shape', text="Shape: ")
+    if shapeObject.shape in ["1", "2"]: 
+        layout.prop(shapeObject, 'size0', text="Radius")
+    elif shapeObject.shape in  ["0"]:
+        layout.prop(shapeObject, 'size0', text="Width")
+    if shapeObject.shape in ["0"]:
+        layout.prop(shapeObject, 'size1', text="Length")
+    elif shapeObject.shape in ["2"]:
+        layout.prop(shapeObject, 'size1', text="Height")
+    if shapeObject.shape in ["0"]:
+        layout.prop(shapeObject, 'size2', text="Height")
+    split = layout.split()
+    col = split.column()
+    sub = col.column(align=True)
+    sub.label(text="Offset")
+    sub.prop(shapeObject, 'offset', index=0, text="X")
+    sub.prop(shapeObject, 'offset', index=1, text="Y")
+    sub.prop(shapeObject, 'offset', index=2, text="Z")
+
+    sub.label(text="Rotation (Euler)")
+    sub.prop(shapeObject, 'rotationEuler', index=0, text="X")
+    sub.prop(shapeObject, 'rotationEuler', index=1, text="Y")
+    sub.prop(shapeObject, 'rotationEuler', index=2, text="Z")
+    
+    sub.label(text="Scale")
+    sub.prop(shapeObject, 'scale', index=0, text="X")
+    sub.prop(shapeObject, 'scale', index=1, text="Y")
+    sub.prop(shapeObject, 'scale', index=2, text="Z")
+
+class FuzzyHitTestPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_fuzzyhittests"
+    bl_label = "M3 Fuzzy Hit Tests"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        col.template_list(scene, "m3_fuzzy_hit_tests", scene, "m3_fuzzy_hit_test_index", rows=2)
+
+        col = row.column(align=True)
+        col.operator("m3.fuzzy_hit_tests_add", icon='ZOOMIN', text="")
+        col.operator("m3.fuzzy_hit_tests_remove", icon='ZOOMOUT', text="")
+
+        currentIndex = scene.m3_fuzzy_hit_test_index
+        if currentIndex >= 0 and currentIndex < len(scene.m3_fuzzy_hit_tests):
+            fuzzy_hit_test = scene.m3_fuzzy_hit_tests[currentIndex]
+            layout.separator()
+            addUIForShapeProperties(layout, fuzzy_hit_test)
+
+class TightHitTestPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_tighthittest"
+    bl_label = "M3 Tight Hit Test"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        
+        if scene.m3_tight_hit_test.name == "":
+            layout.operator("m3.tight_hit_test_select_or_create_bone", text="Create Bone")
+        else:
+            layout.operator("m3.tight_hit_test_select_or_create_bone", text="Select Bone")
+
+        split = layout.split()
+        row = split.row()
+        sub = row.column(align=False)
+        sub.active = scene.m3_tight_hit_test.name != ""
+        addUIForShapeProperties(sub, scene.m3_tight_hit_test)
 
 
 class ExtraBonePropertiesPanel(bpy.types.Panel):
@@ -1606,6 +1723,63 @@ class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
                 unusedName = suggestedName
             counter += 1
         return unusedName
+
+
+class M3_TIGHT_HIT_TESTS_OT_selectorcreatebone(bpy.types.Operator):
+    bl_idname      = 'm3.tight_hit_test_select_or_create_bone'
+    bl_label       = "Select or create the HitTestFuzzy bone"
+    bl_description = "Adds a shape for the fuzzy hit test"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        tightHitTest = scene.m3_tight_hit_test
+        tightHitTest.name = shared.tightHitTestBoneName
+        selectOrCreateBoneForShapeObject(scene, tightHitTest)
+        return{'FINISHED'}
+
+
+class M3_FUZZY_HIT_TESTS_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.fuzzy_hit_tests_add'
+    bl_label       = "Add Fuzzy Hit Test Shape"
+    bl_description = "Adds a shape for the fuzzy hit test"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        m3_fuzzy_hit_test = scene.m3_fuzzy_hit_tests.add()
+        m3_fuzzy_hit_test.name = self.findUnusedName(scene)
+
+        scene.m3_fuzzy_hit_test_index = len(scene.m3_fuzzy_hit_tests)-1
+        
+        selectOrCreateBoneForShapeObject(scene, m3_fuzzy_hit_test)
+        return{'FINISHED'}
+        
+    def findUnusedName(self, scene):
+        usedNames = set()
+        for m3_fuzzy_hit_test in scene.m3_fuzzy_hit_tests:
+            usedNames.add(m3_fuzzy_hit_test.name)
+        unusedName = None
+        bestName = "HitTestFuzzy"
+        if not bestName in usedNames:
+            unusedName = bestName
+        counter = 1
+        while unusedName == None:
+            suggestedName = bestName + ("%02d" % counter)
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName
+
+class M3_FUZZY_HIT_TESTS_OT_remove(bpy.types.Operator):
+    bl_idname      = 'm3.fuzzy_hit_tests_remove'
+    bl_label       = "Remove Fuzzy Hit Test Shape"
+    bl_description = "Removes a fuzzy hit test shape"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_fuzzy_hit_test_index >= 0:
+                scene.m3_fuzzy_hit_tests.remove(scene.m3_fuzzy_hit_test_index)
+                scene.m3_fuzzy_hit_test_index-= 1
+        return{'FINISHED'}
         
 
 class M3_ATTACHMENT_POINTS_OT_remove(bpy.types.Operator):
@@ -1716,6 +1890,9 @@ def register():
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
     bpy.types.Scene.m3_animation_ids = bpy.props.CollectionProperty(type=M3AnimIdData)
+    bpy.types.Scene.m3_fuzzy_hit_tests = bpy.props.CollectionProperty(type=M3SimpleGeometricShape)
+    bpy.types.Scene.m3_fuzzy_hit_test_index = bpy.props.IntProperty(options=set(), update=handleFuzzyHitTestIndexChanged)
+    bpy.types.Scene.m3_tight_hit_test = bpy.props.PointerProperty(type=M3SimpleGeometricShape)
     bpy.types.Mesh.m3_material_name = bpy.props.StringProperty(options=set())
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)

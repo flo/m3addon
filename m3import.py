@@ -326,6 +326,8 @@ class Importer:
         self.createBones()
         self.createMaterials()
         self.createCameras()
+        self.createFuzzyHitTests()
+        self.initTightHitTest()
         self.createParticleSystems()
         self.createAttachmentPoints()
         self.createMesh()
@@ -710,8 +712,34 @@ class Importer:
             m3Bone = self.model.bones[m3Camera.boneIndex]
             if m3Bone.name != camera.name:
                 raise Exception("Bone of camera '%s' had different name: '%s'" % (camera.name, m3Bone.name))
-            
-            
+
+
+    def createTightHitTest(self):
+        print("Loading the tight hit test object")
+
+    def intShapeObject(self, blenderShapeObject, m3ShapeObject):
+        transferer = M3ToBlenderDataTransferer(self, None, blenderObject=blenderShapeObject, m3Object=m3ShapeObject)
+        shared.transferFuzzyHitTest(transferer)
+        matrix = toBlenderMatrix(m3ShapeObject.matrix)
+        offset, rotation, scale = matrix.decompose()
+        blenderShapeObject.offset = offset
+        blenderShapeObject.rotationEuler = rotation.to_euler("XYZ")
+        blenderShapeObject.scale = scale
+        if m3ShapeObject.boneIndex != -1:
+            m3Bone = self.model.bones[m3ShapeObject.boneIndex]
+            blenderShapeObject.name = m3Bone.name
+
+    def initTightHitTest(self):
+        print("Loading tight hit test shape")
+        scene = bpy.context.scene
+        self.intShapeObject(scene.m3_tight_hit_test, self.model.tightHitTest)
+
+    def createFuzzyHitTests(self):
+        scene = bpy.context.scene
+        print("Loading fuzzy hit tests")
+        for index, m3FuzzyHitTest in enumerate(self.model.fuzzyHitTestObjects):
+            fuzzyHitTest = scene.m3_fuzzy_hit_tests.add()
+            self.intShapeObject(fuzzyHitTest, m3FuzzyHitTest)
             
     def createParticleSystems(self):
         currentScene = bpy.context.scene
