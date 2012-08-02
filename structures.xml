@@ -544,10 +544,14 @@
             <field name="unknown3" size="8" />
             <field name="lightColor" type="Vector3AnimationReference" />
             <field name="lightIntensity" type="FloatAnimationReference" />
-            <field name="unknown4" size="108" />
-            <field name="range" type="float" />
-            <field name="unknown5" size="8" />
+            <field name="unknown4" type="FloatAnimationReference" />
+            <field name="unknown5" size="16" />
+            <field name="unknown6" type="FloatAnimationReference" />
+            <field name="decayStart" type="FloatAnimationReference" />
+            <field name="unknown7" type="uint32" />
+            <field name="unknown8" type="FloatAnimationReference" />
             <field name="hotSpot" type="FloatAnimationReference" />
+            <field name="falloff" type="FloatAnimationReference" />
         </structure>
         
         <structure name="MATM" version="0" size="8">
