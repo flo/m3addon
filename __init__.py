@@ -433,6 +433,9 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     colorEnabled = bpy.props.BoolProperty(options=set(), default=False)
     uvSource = bpy.props.EnumProperty(items=uvSourceList, options=set(), default="0")
     brightMult = bpy.props.FloatProperty(name="bright. mult.",options={"ANIMATABLE"}, default=1.0)
+    uvOffset = bpy.props.FloatVectorProperty(name="uv offset", default=(0.0, 0.0), size=2, subtype="XYZ", options={"ANIMATABLE"})
+    uvAngle = bpy.props.FloatVectorProperty(name="uv offset", default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
+    uvTiling = bpy.props.FloatVectorProperty(name="uv tiling", default=(1.0, 1.0), size=2, subtype="XYZ", options={"ANIMATABLE"})
     midtoneOffset = bpy.props.FloatProperty(name="midtone offset", options={"ANIMATABLE"}, description="Can be used to make dark areas even darker so that only the bright regions remain")
     brightness = bpy.props.FloatProperty(name="brightness", options={"ANIMATABLE"}, default=1.0)
     alphaAsTeamColor = bpy.props.BoolProperty(options=set())
@@ -834,6 +837,29 @@ class MatrialLayersPanel(bpy.types.Panel):
                     sub = row.column(align=True)
                     sub.active = layer.colorEnabled
                     sub.prop(layer, 'color', text="")
+                    
+                                        
+                    split = layout.split()
+                    col = split.column()
+                    sub = col.column(align=True)
+                    sub.label(text="UV Offset:")
+                    sub.prop(layer, "uvOffset", text="X", index=0)
+                    sub.prop(layer, "uvOffset", text="Y", index=1)
+
+                    split = layout.split()
+                    col = split.column()
+                    sub = col.column(align=True)
+                    sub.label(text="UV Angle:")
+                    sub.prop(layer, "uvAngle", text="X", index=0)
+                    sub.prop(layer, "uvAngle", text="Y", index=1)
+                    sub.prop(layer, "uvAngle", text="Z", index=2)
+
+                    split = layout.split()
+                    col = split.column()
+                    sub = col.column(align=True)
+                    sub.label(text="UV Tiling:")
+                    sub.prop(layer, "uvTiling", text="X", index=0)
+                    sub.prop(layer, "uvTiling", text="Y", index=1)
                     
                     split = layout.split()
                     col = split.column()

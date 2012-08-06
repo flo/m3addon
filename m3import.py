@@ -46,6 +46,9 @@ def toBlenderQuaternion(m3Quaternion):
 def toBlenderVector3(m3Vector3):
     return mathutils.Vector((m3Vector3.x, m3Vector3.y, m3Vector3.z))
 
+def toBlenderVector2(m3Vector2):
+    return mathutils.Vector((m3Vector2.x, m3Vector2.y))
+
 def toBlenderColorVector(m3Color):
     return mathutils.Vector((m3Color.red /255.0, m3Color.green /255.0, m3Color.blue /255.0, m3Color.alpha /255.0))
 
@@ -285,6 +288,15 @@ class M3ToBlenderDataTransferer:
         animPath = self.animPathPrefix + fieldName
         defaultValue = animationReference.initValue
         self.importer.animateVector3(ownerTypeScene, animPath, animId, defaultValue)
+
+    def transferAnimatableVector2(self, fieldName):
+        animationReference = getattr(self.m3Object, fieldName)
+        setattr(self.blenderObject, fieldName, toBlenderVector2(animationReference.initValue))
+        animationHeader = animationReference.header
+        animId = animationHeader.animId
+        animPath = self.animPathPrefix + fieldName
+        defaultValue = animationReference.initValue
+        self.importer.animateVector2(ownerTypeScene, animPath, animId, defaultValue)
 
         
     def transferAnimatableColor(self, fieldName):
@@ -1119,7 +1131,21 @@ class Importer:
                 insertLinearKeyFrame(yCurve, frame, value.y)
                 insertLinearKeyFrame(zCurve, frame, value.z)
 
-
+    def animateVector2(self, ownerType, path, animId, defaultValue):
+        defaultAction = self.createOrGetDefaultAction(ownerType)
+        xCurve = defaultAction.fcurves.new(path, 0)
+        yCurve = defaultAction.fcurves.new(path, 1)
+        insertConstantKeyFrame(xCurve, 0, defaultValue.x) 
+        insertConstantKeyFrame(yCurve, 0, defaultValue.y) 
+        
+        self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
+        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
+            xCurve = action.fcurves.new(path, 0)
+            yCurve = action.fcurves.new(path, 1)
+            
+            for frame, value in frameValuePairs(timeValueMap):
+                insertLinearKeyFrame(xCurve, frame, value.x)
+                insertLinearKeyFrame(yCurve, frame, value.y)
 
     def animateColor(self, ownerType, path, animId, m3DefaultValue):
         defaultAction = self.createOrGetDefaultAction(ownerType)

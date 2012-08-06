@@ -961,9 +961,6 @@ class Exporter:
         m3Layer.unknown6 = self.createNullUInt32AnimationReference(0)
         m3Layer.unknown7 = self.createNullVector2AnimationReference(0.0, 0.0, interpolationType=0)
         m3Layer.unknown8 = self.createNullUInt16AnimationReference(0)
-        m3Layer.uvOffset = self.createNullVector2AnimationReference(0.0, 0.0, interpolationType=1)
-        m3Layer.uvAngle = self.createNullVector3AnimationReference(0.0, 0.0, 0.0, interpolationType=1, initIsNullValue=False)
-        m3Layer.uvTiling = self.createNullVector2AnimationReference(1.0, 1.0, interpolationType=1)
         m3Layer.unknown9 = self.createNullUInt32AnimationReference(0, interpolationType=1)
         m3Layer.unknown10 = self.createNullFloatAnimationReference(1.0, interpolationType=1)
         return m3Layer
@@ -1396,6 +1393,53 @@ class BlenderToM3DataTransferer:
                 animIdToAnimDataMap[animId] = m3AnimBlock
                 animRef.header.animFlags = shared.animFlagsForAnimatedProperty
         #TODO Optimization: Remove keyframes that can be calculated by interpolation
+        
+        
+    
+    def transferAnimatableVector2(self, fieldName):
+        animPath = self.animPathPrefix + fieldName
+        animId = self.exporter.getAnimIdFor(self.objectIdForAnimId, animPath)
+        animRef = m3.Vector2AnimationReference()
+        animRef.header = self.exporter.createNullAnimHeader(animId=animId, interpolationType=1)
+        currentBVector =  getattr(self.blenderObject, fieldName)
+        
+        defaultValueX = self.exporter.getDefaultValue(self.rootObject, animPath, 0, currentBVector[0])
+        defaultValueY = self.exporter.getDefaultValue(self.rootObject, animPath, 1, currentBVector[1])
+        animRef.initValue = self.exporter.createVector2(defaultValueX, defaultValueY)
+        animRef.nullValue = self.exporter.createVector2(0.0, 0.0)
+        setattr(self.m3Object, fieldName, animRef)
+
+        for animation, action in self.animationActionTuples:
+            frames = set()
+            for i in range(2):
+                frames.update(self.exporter.getFramesFor(action, animPath, i))
+            frames = list(frames)
+            frames.sort()
+            timeValuesInMS = self.exporter.allFramesToMSValues(frames)
+            xValues = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
+            yValues = self.exporter.getNoneOrValuesFor(action, animPath, 1, frames)
+            if (xValues != None) or (yValues != None):
+                if xValues == None:
+                    xValues = len(timeValuesInMS) * [currentBVector.x]
+                if yValues == None:
+                    yValues = len(timeValuesInMS) * [currentBVector.y]
+
+                vectors = []
+                for (x,y) in zip(xValues, yValues):
+                    vec = self.exporter.createVector2(x,y)
+                    vectors.append(vec)
+                
+                m3AnimBlock = m3.SD2VV0()
+                m3AnimBlock.frames = timeValuesInMS
+                m3AnimBlock.flags = 0
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.exlusiveEndFrame)
+                m3AnimBlock.keys = vectors
+                
+                animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
+                animIdToAnimDataMap[animId] = m3AnimBlock
+                animRef.header.animFlags = shared.animFlagsForAnimatedProperty
+        #TODO Optimization: Remove keyframes that can be calculated by interpolation
+        
         
     def transferInt(self, fieldName):
         value = getattr(self.blenderObject, fieldName)
