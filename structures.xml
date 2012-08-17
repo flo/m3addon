@@ -755,12 +755,17 @@
             <field offset="320" name="unknownColor1" type="ColorAnimationReference" />
             <field offset="340" name="slowdown" type="float" />
             <field offset="344" name="unknownFloat2a" type="float" default-value="0.0" />
-            <field offset="348" name="unknownFloat2b" type="float" default-value="1.0"/>
+            <field offset="348" name="unknownFloat2b" type="float" default-value="1.0"/> <!-- external force strength?-->
             <field offset="352" name="unknownFloat2c" type="float" default-value="1.0"/>
             <field offset="356" name="unknown4" type="float" default-value="0.0" />
             <field offset="360" name="trailingEnabled" type="uint32" />
-            <field offset="364" name="unknown5" type="uint32" default-value="0" />
-            <field offset="368" name="unknown6" type="uint32" default-value="0" />
+            <field offset="364" name="forceFlags" type="uint32" default-value="0" >
+                <bits>
+                    <bit mask="0x4000" name="influencedByForces"/>
+                </bits>
+            </field>
+            <!-- forceFlagsCopy seems to have the same value as forceFlags -->
+            <field offset="368" name="forceFlagsCopy" type="uint32" default-value="0" />
             <field offset="372" name="unknownFloat3a" type="float" default-value="0.0" />
             <field offset="376" name="unknownFloat3b" type="float" default-value="0.0" />
             <field offset="380" name="unknownFloat3c" type="float" default-value="0.0" />
@@ -796,8 +801,15 @@
             <field offset="720" name="unknownFloat4" type="float" default-value="0.0" />
             <field offset="724" name="unknownFloat5" type="float" default-value="1.0"/>
             <field offset="728" name="unknown9" type="int32" default-value="-1" />
-            <field offset="732" name="unknown10" size="24"/>
-            <field offset="756" name="unknownFloat6" type="float" default-value="1.0" />
+            <field offset="732" name="unknownAt732" size="20"/>
+            <!-- particleType: 
+            0,2,3,4,5=Square Billbords ?
+            1= Speed Scaled and Rotated Billbords influenced by lengthWidhtRatio 
+            6 = Rectangular Billbords (see lengthWidthRatio)
+            7 = Quads with speed as normal
+            -->
+            <field offset="752" name="particleType" type="uint32"/>
+            <field offset="756" name="lengthWidthRatio" type="float" default-value="1.0" />
             <field offset="760" name="unknown11" size="8"/>
             <field offset="768" name="unknownFloat7" type="float" expected-value="1.0"/>
             <field offset="772" name="unknownAt772" size="4" />
@@ -871,7 +883,8 @@
                     <bit mask="0x8000000" name="copy"/>
                 </bits>
             </field>
-            <field offset="1192" name="unknownAt1192" size="20" />
+            <field offset="1192" name="unknownAt1192" size="16" />
+            <field offset="1208" name="unknownAt1202" type="uint32" default-value="0" />
             <field offset="1212" name="unknownAt1212" type="uint32" default-value="0" />
             <field offset="1216" name="unknownAt1216" type="AnimationReferenceHeader"/>
             <field offset="1224" name="unknownAt1224" size="12"/>

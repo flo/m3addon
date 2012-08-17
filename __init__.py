@@ -74,7 +74,7 @@ def availableMaterials(self, context):
 def handleTypeOrBoneSuffixChange(self, context):
     scene = context.scene
     typeName = "Unknown"
-    for typeId, name, description in particleTypeList:
+    for typeId, name, description in emissionAreaTypeList:
         if typeId == self.emissionAreaType:
             typeName = name
     
@@ -335,16 +335,26 @@ def selectOrCreateBone(scene, boneName):
         currentBone.select = False
     bone.select = True
   
-particleTypesWithRadius = ["2", "4"]
-particleTypesWithWidth = ["1", "3"]
-particleTypesWithLength = ["1", "3"]
-particleTypesWithHeight = ["3", "4"]
-particleTypeList =  [("0", "Point", "Particles spawn at a certain point"), 
+emissionAreaTypesWithRadius = ["2", "4"]
+emissionAreaTypesWithWidth = ["1", "3"]
+emissionAreaTypesWithLength = ["1", "3"]
+emissionAreaTypesWithHeight = ["3", "4"]
+emissionAreaTypeList =  [("0", "Point", "Particles spawn at a certain point"), 
                         ("1", 'Plane', "Particles spawn in a rectangle"), 
                         ("2", 'Sphere', 'Particles spawn in a sphere'),
                         ("3", 'Cuboid', 'Particles spawn in a cuboid'),
                         ("4", 'Cylinder', 'Particles spawn in a cylinder')
                         ]
+
+particleTypeList = [("0", "Square Billbords", "Quads always rotated towards camera (id 0)"), 
+                    ("1", "Speed Scaled and Rotated Billbords", "Particles are rectangles scaled which get scaled by speed by a configurable amounth"),
+                    ("2", "Square Billbords 2?", "Unknown 2"),
+                    ("3", "Square Billbords 3?", "Unknown 3"),
+                    ("4", "Square Billbords 4?", "Unknown 4"),
+                    ("5", "Square Billbords 5?", "Unknown 5"),
+                    ("6", "Rectangular Billbords", "Rectangles which can have a length != witdh which are rotated towards the camera"),
+                    ("7", "Quads with speed as normal", "Particles are quads which have their normals aligned to the speed vector of the particle")
+                    ]
 
 uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole image UVs for particles"),
                  ("1", "UV Layer 2", "Second UV layer which can be used for decals"),
@@ -570,7 +580,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     unknownFloat2c = bpy.props.FloatProperty(default=2.0, name="unknownFloat2c",options=set())
     trailingEnabled = bpy.props.BoolProperty(default=True, options=set(), description="If trailing is enabled then particles don't follow the particle emitter")
     emissionRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
-    emissionAreaType = bpy.props.EnumProperty(default="2", items=particleTypeList, update=handleTypeOrBoneSuffixChange, options=set())
+    emissionAreaType = bpy.props.EnumProperty(default="2", items=emissionAreaTypeList, update=handleTypeOrBoneSuffixChange, options=set())
     emissionAreaSize = bpy.props.FloatVectorProperty(default=(0.1, 0.1, 0.1), name="emis. area size", size=3, subtype="XYZ", options={"ANIMATABLE"})
     tailUnk1 = bpy.props.FloatVectorProperty(default=(0.05, 0.05, 0.05), name="tail unk.", size=3, subtype="XYZ", options={"ANIMATABLE"})
     emissionAreaRadius = bpy.props.FloatProperty(default=2.0, name="emis. area radius", options={"ANIMATABLE"})
@@ -598,6 +608,8 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     unknownFloat5 = bpy.props.FloatProperty(default=1.0, name="unknownFloat5",options=set())
     unknownFloat6 = bpy.props.FloatProperty(default=1.0, name="unknownFloat6",options=set())
     unknownFloat7 = bpy.props.FloatProperty(default=1.0, name="unknownFloat7",options=set())
+    particleType = bpy.props.EnumProperty(default="0", items=particleTypeList, options=set())
+    lengthWidthRatio = bpy.props.FloatProperty(default=1.0, name="lengthWidthRatio",options=set())
     copies = bpy.props.CollectionProperty(type=M3ParticleSystemCopy)
     copyIndex = bpy.props.IntProperty(options=set(), update=handlePartileSystemCopyIndexChanged)
     sort = bpy.props.BoolProperty(options=set())
@@ -934,16 +946,16 @@ class ParticleSystemsPanel(bpy.types.Panel):
             col = col.row().column(align=True)
             col.prop(particle_system, 'emissionAreaType', text="")
             sub = col.row()
-            sub.active = particle_system.emissionAreaType in particleTypesWithLength
+            sub.active = particle_system.emissionAreaType in emissionAreaTypesWithLength
             sub.prop(particle_system, 'emissionAreaSize', index=0, text="Length")
             sub =  col.row()
-            sub.active = particle_system.emissionAreaType in particleTypesWithWidth
+            sub.active = particle_system.emissionAreaType in emissionAreaTypesWithWidth
             sub.prop(particle_system, 'emissionAreaSize', index=1, text="Width")
             sub = col.row()
-            sub.active = particle_system.emissionAreaType in particleTypesWithHeight
+            sub.active = particle_system.emissionAreaType in emissionAreaTypesWithHeight
             sub.prop(particle_system, 'emissionAreaSize', index=2, text="Height")
             sub = col.row()
-            sub.active = particle_system.emissionAreaType in particleTypesWithRadius
+            sub.active = particle_system.emissionAreaType in emissionAreaTypesWithRadius
             sub.prop(particle_system, 'emissionAreaRadius',text="Radius")
             
             split = layout.split()
@@ -1087,7 +1099,14 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(particle_system, 'tailUnk1', text="Tail Unk1")
             layout.prop(particle_system, 'spreadUnk', text="Spread Unk")
             layout.prop(particle_system, 'partEmit', text="Part. Emit.")
-
+            
+            split = layout.split()
+            col = split.column()
+            col.prop(particle_system, 'particleType', text="Particle Type")
+            sub = col.column(align=True)
+            sub.active = particle_system.particleType in ["1", "6"]
+            sub.prop(particle_system, 'lengthWidthRatio', text="Length/Width Ratio")
+            
             layout.prop(particle_system, "unknownFloat4", text="Unknown Float 4")
             layout.prop(particle_system, "unknownFloat5", text="Unknown Float 5")
             layout.prop(particle_system, "unknownFloat6", text="Unknown Float 6")

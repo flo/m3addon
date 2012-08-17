@@ -69,7 +69,7 @@ def toValidBoneName(name):
 def boneNameForPartileSystem(boneSuffix):
     return toValidBoneName(star2ParticlePrefix + boneSuffix)
 
-def boneNameForPartileSystemCopy(particleSyste, copy):
+def boneNameForPartileSystemCopy(star2ParticlePrefix, copy):
     return toValidBoneName(star2ParticlePrefix + copy.name)
 
 def locRotScaleMatrix(location, rotation, scale):
@@ -262,6 +262,8 @@ def transferParticleSystem(transferer):
     transferer.transferInt("numberOfRows")
     transferer.transferFloat("columnWidth")
     transferer.transferFloat("rowHeight")
+    transferer.transferEnum("particleType")
+    transferer.transferFloat("lengthWidthRatio")
     transferer.transferBit("flags", "sort")
     transferer.transferBit("flags", "collideTerrain")
     transferer.transferBit("flags", "collideObjects")
