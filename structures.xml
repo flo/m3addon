@@ -914,17 +914,18 @@
         
         <structure  name="FOR_" version="1" size="104">
             <description>
-                Unknown
+                Force that effects particles of certain particle systems
             </description>
             <field offset="0" name="forceType" type="uint32" />
-            <field offset="4" name="unknown" size="8" />
+            <field offset="4" name="unknownAt4" type="uint32" expected-value="0" />
+            <field offset="8" name="unknownAt8" type="uint32" expected-value="0" />
             <field offset="12" name="boneIndex" type="uint32" />
-            <field offset="16" name="unknown1" size="4" />
+            <field offset="16" name="unknownAt16" type="uint32" />
             <field offset="20" name="maybeFlags" type="uint32"/>
             <field offset="24" name="forceStrength" type="FloatAnimationReference" />
             <field offset="44" name="forceRange" type="FloatAnimationReference" />
-            <field offset="64" name="unknown4" type="FloatAnimationReference" />
-            <field offset="84" name="unknown5" type="FloatAnimationReference" />
+            <field offset="64" name="unknownAt64" type="FloatAnimationReference" />
+            <field offset="84" name="unknownAt84" type="FloatAnimationReference" />
         </structure>
 
         <structure name="PHSH" version="1" size="132" >
