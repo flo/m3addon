@@ -1197,9 +1197,9 @@
             <field name="crepData" type="Reference" />
             <field offset="396" name="particles" type="Reference" refTo="PAR_V12" />
             <field offset="408" name="particleCopies" type="Reference" refTo="PARCV0" />
-            <field offset="420" name="ribData" type="Reference" refTo="RIB_V6" />
+            <field offset="420" name="ribbons" type="Reference" refTo="RIB_V6" />
             <field offset="432" name="projData" type="Reference" refTo="PROJV4" />
-            <field offset="444" name="forData" type="Reference" refTo="FOR_V1" />
+            <field offset="444" name="forces" type="Reference" refTo="FOR_V1" />
             <field offset="456" name="wrpData" type="Reference" />
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
             <field name="unknownMaybeRef1" type="Reference" />
