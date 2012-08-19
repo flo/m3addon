@@ -479,7 +479,7 @@
         </structure>
         
         <structure name="REGN" version="3" size="36" >
-            <description>a kind of submesh</description>
+            <description>A region of a mesh</description>
             <field name="unknown0" type="uint32" expected-value="0" />
             <field name="unknown1" type="uint32" expected-value="0" />
             <field name="firstVertexIndex" type="uint32"/>
@@ -490,7 +490,7 @@
             <field name="firstBoneLookupIndex" type="uint16" />
             <field name="numberOfBoneLookupIndices" type="uint16" />
             <field name="unknown2" type="uint16" expected-value="0" />
-            <field name="unknown3" type="uint8" default-value="1" />
+            <field name="numberOfBoneWeightPairsPerVertex" type="uint8" />
             <field name="unknown4" type="uint8" default-value="1" />
             <field name="rootBoneIndex" type="uint16" />
         </structure>

@@ -372,6 +372,7 @@ class Exporter:
             regionVertices = []
             vertexDataTupleToIndexMap = {}
             nextVertexIndex = 0
+            numberOfBoneWeightPairsPerVertex = 0
             for blenderFace in mesh.tessfaces:
                 faceRelativeVertexIndexAndBlenderVertexIndexTuples = []
                 if len(blenderFace.vertices) == 3 or len(blenderFace.vertices) == 4:
@@ -415,6 +416,9 @@ class Exporter:
                                 setattr(m3Vertex, "boneWeight%d" % boneWeightSlot, boneWeight)
                                 setattr(m3Vertex, "boneLookupIndex%d" % boneWeightSlot, boneLookupIndex)
                                 boneWeightSlot += 1
+                    
+                    if boneWeightSlot > numberOfBoneWeightPairsPerVertex:
+                        numberOfBoneWeightPairsPerVertex = boneWeightSlot
                     isStaticVertex = (boneWeightSlot == 0)
                     if isStaticVertex:                    
                         staticMeshBoneIndex = self.boneNameToBoneIndexMap.get(staticMeshBoneName)
@@ -480,6 +484,7 @@ class Exporter:
             region.firstBoneLookupIndex = firstBoneLookupIndex
             region.numberOfBoneLookupIndices = len(boneNameToBoneLookupIndexMap)
             region.rootBoneIndex = model.boneLookup[firstBoneLookupIndex]
+            region.numberOfBoneWeightPairsPerVertex = numberOfBoneWeightPairsPerVertex
             division.regions.append(region)
             
             m3Object = m3.BAT_V1()
