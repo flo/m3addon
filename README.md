@@ -14,6 +14,7 @@ Currently the following content can be exported and imported:
       * terrain materials
       * volume materials
   * M3 particle systems
+  * M3 forces
   * M3 attachment points and volumes
   * M3 cameras
 

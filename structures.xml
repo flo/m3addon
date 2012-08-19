@@ -759,13 +759,9 @@
             <field offset="352" name="unknownFloat2c" type="float" default-value="1.0"/>
             <field offset="356" name="unknown4" type="float" default-value="0.0" />
             <field offset="360" name="trailingEnabled" type="uint32" />
-            <field offset="364" name="forceFlags" type="uint32" default-value="0" >
-                <bits>
-                    <bit mask="0x4000" name="influencedByForces"/>
-                </bits>
-            </field>
-            <!-- forceFlagsCopy seems to have the same value as forceFlags -->
-            <field offset="368" name="forceFlagsCopy" type="uint32" default-value="0" />
+            <field offset="364" name="forceChannels" type="uint32" default-value="0" />
+            <!-- forceChannelsCopy seems to have the same value as forceChannels -->
+            <field offset="368" name="forceChannelsCopy" type="uint32" default-value="0" />
             <field offset="372" name="unknownFloat3a" type="float" default-value="0.0" />
             <field offset="376" name="unknownFloat3b" type="float" default-value="0.0" />
             <field offset="380" name="unknownFloat3c" type="float" default-value="0.0" />
@@ -920,8 +916,8 @@
             <field offset="4" name="unknownAt4" type="uint32" expected-value="0" />
             <field offset="8" name="unknownAt8" type="uint32" expected-value="0" />
             <field offset="12" name="boneIndex" type="uint32" />
-            <field offset="16" name="unknownAt16" type="uint32" />
-            <field offset="20" name="maybeFlags" type="uint32"/>
+            <field offset="16" name="unknownAt16" type="uint32" default-value="0" />
+            <field offset="20" name="forceChannels" type="uint32"/>
             <field offset="24" name="forceStrength" type="FloatAnimationReference" />
             <field offset="44" name="forceRange" type="FloatAnimationReference" />
             <field offset="64" name="unknownAt64" type="FloatAnimationReference" />

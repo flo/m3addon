@@ -89,6 +89,25 @@ def handleTypeOrBoneSuffixChange(self, context):
             bone.name = newBoneName
     self.oldBoneSuffix = self.boneSuffix
 
+def handleForceTypeOrBoneSuffixChange(self, context):
+    scene = context.scene
+    typeName = "Unknown"
+    for typeId, name, description in forceTypeList:
+        if typeId == self.forceType:
+            typeName = name
+    
+    boneSuffix = self.boneSuffix
+    self.name = "%s (%s)" % (boneSuffix, typeName)
+
+    if self.boneSuffix != self.oldBoneSuffix:
+        oldBoneName = shared.boneNameForForce(self.oldBoneSuffix)
+        newBoneName = shared.boneNameForForce(self.boneSuffix)
+        bone, armatureObject = findBoneWithArmatureObject(scene, oldBoneName)
+        if bone != None:
+            bone.name = newBoneName
+    self.oldBoneSuffix = self.boneSuffix
+        
+        
 def handleParticleSystemCopyRename(self, context):
     scene = context.scene
     if self.name != self.oldName:
@@ -244,6 +263,11 @@ def handlePartileSystemIndexChanged(self, context):
     particleSystem.copyIndex = -1
     selectOrCreateBoneForPartileSystem(scene, particleSystem)
 
+def handleForceIndexChanged(self, context):
+    scene = context.scene
+    force = scene.m3_forces[scene.m3_force_index]
+    selectOrCreateBoneForForce(scene, force)
+    
 def handlePartileSystemCopyIndexChanged(self, context):
     scene = context.scene
     particleSystem = self
@@ -289,6 +313,10 @@ def selectOrCreateBoneForPartileSystem(scene, particle_system):
 
 def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
     boneName = shared.boneNameForPartileSystemCopy(particle_system, copy)
+    selectOrCreateBone(scene, boneName)
+    
+def selectOrCreateBoneForForce(scene, force):
+    boneName = shared.boneNameForForce(force.boneSuffix)
     selectOrCreateBone(scene, boneName)
 
 def selectOrCreateBoneForCamera(scene, camera):
@@ -355,7 +383,11 @@ particleTypeList = [("0", "Square Billbords", "Quads always rotated towards came
                     ("6", "Rectangular Billbords", "Rectangles which can have a length != witdh which are rotated towards the camera"),
                     ("7", "Quads with speed as normal", "Particles are quads which have their normals aligned to the speed vector of the particle")
                     ]
-
+forceTypeList = [("0", "Directional", "The particles get accelerated into one direction"), 
+                    ("1", "Radial", "Particles get accelerated ayway from the force source"),
+                    ("2", "Unknown", "Unknown"),
+                    ("3", "Rotary", "The particles rotate in a circle around a center")
+                   ]
 uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole image UVs for particles"),
                  ("1", "UV Layer 2", "Second UV layer which can be used for decals"),
                  ("2", "UV Layer 2", "Third UV layer"),
@@ -610,6 +642,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     unknownFloat7 = bpy.props.FloatProperty(default=1.0, name="unknownFloat7",options=set())
     particleType = bpy.props.EnumProperty(default="0", items=particleTypeList, options=set())
     lengthWidthRatio = bpy.props.FloatProperty(default=1.0, name="lengthWidthRatio",options=set())
+    forceChannels = bpy.props.BoolVectorProperty(default=tuple(32*[False]), size=32, subtype="LAYER", options=set(), description="If a force shares a force channel with a particle system then it affects it")
     copies = bpy.props.CollectionProperty(type=M3ParticleSystemCopy)
     copyIndex = bpy.props.IntProperty(options=set(), update=handlePartileSystemCopyIndexChanged)
     sort = bpy.props.BoolProperty(options=set())
@@ -641,7 +674,19 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     simulateOnInit = bpy.props.BoolProperty(options=set())
     copy = bpy.props.BoolProperty(options=set())
 
-  
+class M3Force(bpy.types.PropertyGroup):
+    # name attribute seems to be needed for template_list but is not actually in the m3 file
+    # The name gets calculated like this: name = boneSuffix (type)
+    name = bpy.props.StringProperty(options=set())
+    boneSuffix = bpy.props.StringProperty(options=set(), update=handleForceTypeOrBoneSuffixChange, default="Particle System")
+    oldBoneSuffix = bpy.props.StringProperty(options=set())
+    forceType = bpy.props.EnumProperty(default="0", items=forceTypeList, update=handleForceTypeOrBoneSuffixChange, options=set())
+    forceChannels = bpy.props.BoolVectorProperty(default=tuple(32*[False]), size=32, subtype="LAYER", options=set(), description="If a force shares a force channel with a particle system then it affects it")
+    forceStrength = bpy.props.FloatProperty(default=1.0, name="forceStrength", options={"ANIMATABLE"})
+    forceRange = bpy.props.FloatProperty(default=1.0, name="forceRange", options={"ANIMATABLE"})
+    unknownAt64 = bpy.props.FloatProperty(default=0.05, name="unknownAt64", options={"ANIMATABLE"})
+    unknownAt84 = bpy.props.FloatProperty(default=0.05, name="unknownAt84", options={"ANIMATABLE"})
+
 class M3AttachmentPoint(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", options=set())
     boneName = bpy.props.StringProperty(name="boneName", options=set())
@@ -1099,7 +1144,8 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(particle_system, 'tailUnk1', text="Tail Unk1")
             layout.prop(particle_system, 'spreadUnk', text="Spread Unk")
             layout.prop(particle_system, 'partEmit', text="Part. Emit.")
-            
+
+
             split = layout.split()
             col = split.column()
             col.prop(particle_system, 'particleType', text="Particle Type")
@@ -1107,6 +1153,8 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.active = particle_system.particleType in ["1", "6"]
             sub.prop(particle_system, 'lengthWidthRatio', text="Length/Width Ratio")
             
+            layout.prop(particle_system, 'forceChannels', text="Force Channels")
+
             layout.prop(particle_system, "unknownFloat4", text="Unknown Float 4")
             layout.prop(particle_system, "unknownFloat5", text="Unknown Float 5")
             layout.prop(particle_system, "unknownFloat6", text="Unknown Float 6")
@@ -1140,6 +1188,39 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(particle_system, 'useLocalTime', text="Use Local Time")
             layout.prop(particle_system, 'simulateOnInit', text="Simulate On Init")
             layout.prop(particle_system, 'copy', text="Copy")
+
+
+
+class ParticleSystemsPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_forces"
+    bl_label = "M3 Forces"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        col.template_list(scene, "m3_forces", scene, "m3_force_index", rows=2)
+
+        col = row.column(align=True)
+        col.operator("m3.forces_add", icon='ZOOMIN', text="")
+        col.operator("m3.forces_remove", icon='ZOOMOUT', text="")
+        currentIndex = scene.m3_force_index
+        if currentIndex >= 0 and currentIndex < len(scene.m3_forces):
+            force = scene.m3_forces[currentIndex]
+            layout.separator()
+            layout.prop(force, 'boneSuffix', text="Name")
+            layout.prop(force, "forceType", text="Type")
+            layout.prop(force, "forceChannels", text="Channels")
+            layout.prop(force, "forceStrength", text="Strength")
+            layout.prop(force, "forceRange", text="Range")
+            layout.prop(force, "unknownAt64", text="Unknown 1")
+            layout.prop(force, "unknownAt84", text="Unknown 2")
+            
 
 
 class ParticleSystemCopiesPanel(bpy.types.Panel):
@@ -1644,7 +1725,7 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
     def findUnusedName(self, scene):
         usedNames = set()
         for particle_system in scene.m3_particle_systems:
-            usedNames.add(particle_system.name)
+            usedNames.add(particle_system.boneSuffix)
         unusedName = None
         counter = 1
         while unusedName == None:
@@ -1730,8 +1811,49 @@ class M3_PARTICLE_SYSTEMS_COPIES_OT_remove(bpy.types.Operator):
         particleSystem.copies.remove(particleSystem.copyIndex)
         particleSystem.copyIndex -= 1
         return{'FINISHED'}
+
+class M3_FORCES_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.forces_add'
+    bl_label       = "Add Force"
+    bl_description = "Adds a particle system force for the export to the m3 model format"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        force = scene.m3_forces.add()
+        force.boneSuffix = self.findUnusedName(scene)
+
+        handleForceTypeOrBoneSuffixChange(force, context)
+        scene.m3_force_index = len(scene.m3_forces)-1
         
+        selectOrCreateBoneForForce(scene, force)
+        return{'FINISHED'}
+
+    def findUnusedName(self, scene):
+        usedNames = set()
+        for force in scene.m3_forces:
+            usedNames.add(force.boneSuffix)
+        unusedName = None
+        counter = 1
+        while unusedName == None:
+            suggestedName = "%02d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName 
+
+class M3_FORCES_OT_remove(bpy.types.Operator):
+    bl_idname      = 'm3.forces_remove'
+    bl_label       = "Remove M3 Force"
+    bl_description = "Removes the active M3 particle system force"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_force_index >= 0:
+                scene.m3_forces.remove(scene.m3_force_index)
+                scene.m3_force_index-= 1
+        return{'FINISHED'}
         
+
 class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.attachment_points_add'
     bl_label       = "Add Attachment Point"
@@ -1931,6 +2053,8 @@ def register():
     bpy.types.Scene.m3_camera_index = bpy.props.IntProperty(options=set(), update=handleCameraIndexChanged)
     bpy.types.Scene.m3_particle_systems = bpy.props.CollectionProperty(type=M3ParticleSystem)
     bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(options=set(), update=handlePartileSystemIndexChanged)
+    bpy.types.Scene.m3_forces = bpy.props.CollectionProperty(type=M3Force)
+    bpy.types.Scene.m3_force_index = bpy.props.IntProperty(options=set(), update=handleForceIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)

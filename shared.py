@@ -57,6 +57,7 @@ rotFixMatrixInverted = rotFixMatrix.transposed()
 animFlagsForAnimatedProperty = 6
 
 star2ParticlePrefix = "Star2Part"
+star2ForcePrefix = "Star2Force"
 animObjectIdModel = "MODEL"
 animObjectIdArmature = "ARMATURE"
 animObjectIdScene = "SCENE"
@@ -68,8 +69,11 @@ def toValidBoneName(name):
 
 def boneNameForPartileSystem(boneSuffix):
     return toValidBoneName(star2ParticlePrefix + boneSuffix)
+    
+def boneNameForForce(boneSuffix):
+    return toValidBoneName(star2ForcePrefix + boneSuffix)
 
-def boneNameForPartileSystemCopy(star2ParticlePrefix, copy):
+def boneNameForPartileSystemCopy(particleSystem, copy):
     return toValidBoneName(star2ParticlePrefix + copy.name)
 
 def locRotScaleMatrix(location, rotation, scale):
@@ -264,6 +268,7 @@ def transferParticleSystem(transferer):
     transferer.transferFloat("rowHeight")
     transferer.transferEnum("particleType")
     transferer.transferFloat("lengthWidthRatio")
+    transferer.transfer32Bits("forceChannels")
     transferer.transferBit("flags", "sort")
     transferer.transferBit("flags", "collideTerrain")
     transferer.transferBit("flags", "collideObjects")
@@ -295,6 +300,14 @@ def transferParticleSystem(transferer):
 def transferParticleSystemCopy(transferer):
     transferer.transferAnimatableFloat("emissionRate")
     transferer.transferAnimatableInt16("partEmit")
+    
+def transferForce(transferer):
+    transferer.transferEnum("forceType")
+    transferer.transfer32Bits("forceChannels")
+    transferer.transferAnimatableFloat("forceStrength")
+    transferer.transferAnimatableFloat("forceRange")
+    transferer.transferAnimatableFloat("unknownAt64")
+    transferer.transferAnimatableFloat("unknownAt84")
 
 def transferStandardMaterial(transferer):
     transferer.transferString("name")

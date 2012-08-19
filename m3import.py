@@ -279,6 +279,12 @@ class M3ToBlenderDataTransferer:
     def transferBit(self, m3FieldName, bitName):
         setattr(self.blenderObject, bitName, self.m3Object.getNamedBit(m3FieldName, bitName))
 
+    def transfer32Bits(self, fieldName):
+        integerValue = getattr(self.m3Object, fieldName)
+        vector = getattr(self.blenderObject, fieldName)
+        for bitIndex in range(0, 32):
+            mask = 1 << bitIndex 
+            vector[bitIndex] = (mask & integerValue) > 0   
     
     def transferAnimatableVector3(self, fieldName):
         animationReference = getattr(self.m3Object, fieldName)
@@ -341,6 +347,7 @@ class Importer:
         self.createFuzzyHitTests()
         self.initTightHitTest()
         self.createParticleSystems()
+        self.createForces()
         self.createAttachmentPoints()
         self.createMesh()
 
@@ -770,6 +777,9 @@ class Importer:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                 particle_system.boneSuffix = fullBoneName
             particle_system.materialName = self.getNameOfMaterialWithReferenceIndex(m3ParticleSystem.materialReferenceIndex)
+            if m3ParticleSystem.forceChannelsCopy != m3ParticleSystem.forceChannels:
+                raise Exception("Unexpected model content: forceChannels != forceChannelsCopy")
+
             for blenderCopyIndex, m3CopyIndex in enumerate(m3ParticleSystem.copyIndices):
                 m3Copy = self.model.particleCopies[m3CopyIndex]
                 copy = particle_system.copies.add()
@@ -784,7 +794,22 @@ class Importer:
                     print("Warning: A particle system copy was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                     copy.name = fullCopyBoneName
                 
-
+    def createForces(self):
+        currentScene = bpy.context.scene
+        print("Loading forces")
+        index = 0
+        for forceIndex, m3Force in enumerate(self.model.forces):
+            force = currentScene.m3_forces.add()
+            animPathPrefix = "m3_forces[%s]." % forceIndex
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=force, m3Object=m3Force)
+            shared.transferForce(transferer)
+            boneEntry = self.model.bones[m3Force.boneIndex]
+            fullBoneName = boneEntry.name
+            if fullBoneName.startswith(shared.star2ForcePrefix):
+                force.boneSuffix = fullBoneName[len(shared.star2ForcePrefix):]
+            else:
+                print("Warning: A force was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ForcePrefix))
+                force.boneSuffix = fullBoneName
 
     def createAttachmentPoints(self):
         print("Loading attachment points and volumes")

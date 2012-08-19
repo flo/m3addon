@@ -71,6 +71,7 @@ class Exporter:
         self.initFuzzyHitTests(model)
         self.initTighHitTest(model)
         self.initParticles(model)
+        self.initForces(model)
         self.initAttachmentPoints(model)
         self.prepareAnimationEndEvents()
         self.initWithPreparedAnimationData(model)
@@ -762,6 +763,7 @@ class Exporter:
             if materialReferenceIndex == None:
                 raise Exception("The particle system %s uses '%s' as material, but no m3 material with that name exist!" % (particleSystem.name, particleSystem.materialName))
             m3ParticleSystem.materialReferenceIndex = materialReferenceIndex
+            m3ParticleSystem.forceChannelsCopy = m3ParticleSystem.forceChannels
 
             for blenderCopyIndex, copy in enumerate(particleSystem.copies):
                 m3Copy = m3.PARCV0()
@@ -776,7 +778,23 @@ class Exporter:
                 copyIndex = len(model.particleCopies)
                 model.particleCopies.append(m3Copy)
                 m3ParticleSystem.copyIndices.append(copyIndex)
-                
+    
+    def initForces(self, model):
+        scene = self.scene
+        for forceIndex, force in enumerate(scene.m3_forces):
+            boneSuffix = force.boneSuffix
+            boneName = shared.boneNameForForce(boneSuffix)
+            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+            if boneIndex == None:
+                boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+            m3Force = m3.FOR_V1()
+            m3Force.boneIndex = boneIndex
+            animPathPrefix = "m3_forces[%s]." % forceIndex
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Force, blenderObject=force, animPathPrefix=animPathPrefix, rootObject=self.scene)
+            shared.transferForce(transferer)
+            model.forces.append(m3Force)
+
+    
     def initAttachmentPoints(self, model):
         scene = self.scene
         for attachmentPointIndex, attachmentPoint in enumerate(scene.m3_attachment_points):
@@ -1461,6 +1479,15 @@ class BlenderToM3DataTransferer:
     def transferBit(self, m3FieldName, bitName):
         booleanValue = getattr(self.blenderObject, bitName)
         self.m3Object.setNamedBit(m3FieldName, bitName, booleanValue)
+
+    def transfer32Bits(self, fieldName):
+        vector = getattr(self.blenderObject, fieldName)
+        integerValue = 0
+        for bitIndex in range(0, 32):
+            if vector[bitIndex]:
+                mask = 1 << bitIndex
+                integerValue |= mask
+        setattr(self.m3Object, fieldName, integerValue)
 
     def transferFloat(self, fieldName):
         value = getattr(self.blenderObject, fieldName)
