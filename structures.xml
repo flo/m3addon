@@ -914,7 +914,7 @@
             </description>
             <field offset="0" name="forceType" type="uint32" />
             <field offset="4" name="unknownAt4" type="uint32" expected-value="0" />
-            <field offset="8" name="unknownAt8" type="uint32" expected-value="0" />
+            <field offset="8" name="unknownAt8" type="uint32" default-value="0" />
             <field offset="12" name="boneIndex" type="uint32" />
             <field offset="16" name="unknownAt16" type="uint32" default-value="0" />
             <field offset="20" name="forceChannels" type="uint32"/>
