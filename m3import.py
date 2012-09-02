@@ -778,7 +778,7 @@ class Importer:
                 particle_system.boneSuffix = fullBoneName
             particle_system.materialName = self.getNameOfMaterialWithReferenceIndex(m3ParticleSystem.materialReferenceIndex)
             if m3ParticleSystem.forceChannelsCopy != m3ParticleSystem.forceChannels:
-                raise Exception("Unexpected model content: forceChannels != forceChannelsCopy")
+                print("Warning: Unexpected model content: forceChannels != forceChannelsCopy")
 
             for blenderCopyIndex, m3CopyIndex in enumerate(m3ParticleSystem.copyIndices):
                 m3Copy = self.model.particleCopies[m3CopyIndex]
