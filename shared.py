@@ -384,6 +384,9 @@ def transferAnimation(transferer):
     transferer.transferBit("flags", "alwaysGlobal")
     transferer.transferBit("flags", "globalInPreviewer")
     
+def transferSTC(transferer):
+    transferer.transfer32Bits("unknownAt12")
+
 def transferCamera(transferer):
     transferer.transferString("name")
     transferer.transferAnimatableFloat("fieldOfView")

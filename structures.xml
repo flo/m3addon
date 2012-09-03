@@ -422,26 +422,26 @@
                 0x65bd3215 which referes to sdev[0] which has a name called "Evt_SeqEnd"
                 Strangly it gets from no where referenced and is always the same id
                 </description>
-            <field name="name" type="Reference"  refTo="CHARV0" />
-            <field name="d1" type="uint32" default-value="0" />
-            <field name="seqIndex" type="uint16"/>
-            <field name="stgIndex" type="uint16"/>
-            <field name="animIds" type="Reference" refTo="U32_V0" />
-            <field name="animRefs" type="Reference" refTo="U32_V0"/>
-            <field name="d2" type="uint32" expected-value="0" />
-            <field name="sdev" type="Reference" refTo="SDEVV0" />
-            <field name="sd2v" type="Reference" refTo="SD2VV0" />
-            <field name="sd3v" type="Reference" refTo="SD3VV0" />
-            <field name="sd4q" type="Reference" refTo="SD4QV0" />
-            <field name="sdcc" type="Reference" refTo="SDCCV0" />
-            <field name="sdr3" type="Reference" refTo="SDR3V0" />
-            <field name="unknownRef8" type="Reference" />
-            <field name="sds6" type="Reference" refTo="SDS6V0" />
-            <field name="sdu6" type="Reference" refTo="SDU6V0" />
-            <field name="unknownRef11" type="Reference" />
-            <field name="unknownRef12" type="Reference" />
-            <field name="sdfg" type="Reference" refTo="SDFGV0" />
-            <field name="sdmb" type="Reference" refTo="SDMBV0" />
+            <field offset="0" name="name" type="Reference"  refTo="CHARV0" />
+            <field offset="12" name="unknownAt12" type="uint32" default-value="0" />
+            <field offset="16" name="seqIndex" type="uint16"/>
+            <field offset="18" name="stgIndex" type="uint16"/>
+            <field offset="20" name="animIds" type="Reference" refTo="U32_V0" />
+            <field offset="32" name="animRefs" type="Reference" refTo="U32_V0"/>
+            <field offset="44" name="unknownAt44" type="uint32" expected-value="0" />
+            <field offset="48" name="sdev" type="Reference" refTo="SDEVV0" />
+            <field offset="60" name="sd2v" type="Reference" refTo="SD2VV0" />
+            <field offset="72" name="sd3v" type="Reference" refTo="SD3VV0" />
+            <field offset="84" name="sd4q" type="Reference" refTo="SD4QV0" />
+            <field offset="96" name="sdcc" type="Reference" refTo="SDCCV0" />
+            <field offset="108" name="sdr3" type="Reference" refTo="SDR3V0" />
+            <field offset="120" name="unknownRef8" type="Reference" />
+            <field offset="132" name="sds6" type="Reference" refTo="SDS6V0" />
+            <field offset="144" name="sdu6" type="Reference" refTo="SDU6V0" />
+            <field offset="156" name="unknownRef11" type="Reference" />
+            <field offset="168" name="unknownRef12" type="Reference" />
+            <field offset="180" name="sdfg" type="Reference" refTo="SDFGV0" />
+            <field offset="192" name="sdmb" type="Reference" refTo="SDMBV0" />
         </structure>
 
         <structure name="SEQS" version="1" size="96" >

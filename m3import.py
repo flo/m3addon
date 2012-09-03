@@ -1088,17 +1088,31 @@ class Importer:
             ownerTypeToActionMap = {}
             for stcIndex in stg.stcIndices:
                 stc = model.sequenceTransformationCollections[stcIndex]
+                transformationCollection = animation.transformationCollections.add()
+                transformationCollectionName = stc.name
+                stcPrefix = sequence.name + "_"
+                if transformationCollectionName.startswith(stcPrefix):
+                    transformationCollectionName = transformationCollectionName[len(stcPrefix):]
+                
+                transformationCollection.name = transformationCollectionName
 
+                transferer = M3ToBlenderDataTransferer(self, None, blenderObject=transformationCollection, m3Object=stc)
+                shared.transferSTC(transferer)
+                                
                 animIdToTimeValueMapForSTC = self.createAnimIdToKeyFramesMapFor(stc)
                 for animId, timeValueMap in animIdToTimeValueMapForSTC.items():
                     if animId in animIdToTimeValueMap:
                         raise Exception("Same animid %s got animated by different STC" % animId)
                     animIdToTimeValueMap[animId] = timeValueMap
+                    animIdObject = transformationCollection.animIds.add()
+                    animIdObject.animIdMinus2147483648 = animId - 2147483648
                     
                 # stc.seqIndex seems to be wrong:
                 #sequence = model.sequences[stc.seqIndex]
                 if len(stc.animIds) != len(stc.animRefs):
                     raise Exception("len(stc.animids) != len(stc.animrefs)")
+
+                
                 
             self.animations.append(AnimationData(animIdToTimeValueMap, ownerTypeToActionMap, sequenceIndex))
 
