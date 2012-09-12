@@ -613,6 +613,7 @@ class Exporter:
     
     def initWithPreparedAnimationData(self, model):
         scene = self.scene
+        self.animIdListToSTSIndexMap = {} 
         for animation in scene.m3_animations:
             animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
             animIds = list(animIdToAnimDataMap.keys())
@@ -624,30 +625,81 @@ class Exporter:
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Sequence, blenderObject=animation, animPathPrefix=None, rootObject=self.scene)
             shared.transferAnimation(transferer)
             m3Sequence.boundingSphere = self.createAlmostEmptyBoundingsWithRadius(2)
-            seqIndex = len(model.sequences)
             model.sequences.append(m3Sequence)
+            
             
             m3SequenceTransformationGroup = m3.STG_V0()
             m3SequenceTransformationGroup.name = animation.name
-            stcIndex = len(model.sequenceTransformationCollections)
-            m3SequenceTransformationGroup.stcIndices = [stcIndex]
-            stgIndex = len(model.sequenceTransformationGroups)
             model.sequenceTransformationGroups.append(m3SequenceTransformationGroup)
-            
-            m3SequenceTransformationCollection = m3.STC_V4()
-            m3SequenceTransformationCollection.name = animation.name + "_full"
-            m3SequenceTransformationCollection.seqIndex = seqIndex
-            m3SequenceTransformationCollection.stgIndex = stgIndex
-            m3SequenceTransformationCollection.animIds = list(animIds)
-            for animId in animIds:
-                animData = animIdToAnimDataMap[animId]
-                self.addAnimDataToTransformCollection(animData, m3SequenceTransformationCollection)
-            model.sequenceTransformationCollections.append(m3SequenceTransformationCollection)
 
+            stgIndex = len(model.sequenceTransformationGroups)
+            
+            remainingIds = set(animIds)
+            
+            fullSTCIndex = None
+            for stcIndex, stc in enumerate(animation.transformationCollections):
+                # no check for duplicate names is necessary:
+                # there are models with duplicate names
+                
+                if stc.name == "full":
+                    fullSTCIndex = stcIndex
+                
+                animIdsOfSTC = list()
+                
+                for animIdEntry in stc.animIds:
+                    animId = animIdEntry.animIdMinus2147483648 + 2147483648
+                    if animId in remainingIds:
+                        remainingIds.remove(animId)
+                        animIdsOfSTC.append(animId)
+                        
+                animIdsOfSTC.sort()
+                
+                stcIndex = len(model.sequenceTransformationCollections)
+                m3SequenceTransformationGroup.stcIndices.append(stcIndex)
+                m3STC = m3.STC_V4()
+                m3STC.name = animation.name + "_" + stc.name
+                m3STC.animIds = animIdsOfSTC
+                m3STC.stsIndex = self.getSTSIndexFor(model, m3STC.animIds)
+                m3STC.stsIndexCopy = m3STC.stsIndex
+                model.sequenceTransformationCollections.append(m3STC)
+            
+                transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3STC, blenderObject=stc, animPathPrefix=None, rootObject=self.scene)
+                shared.transferSTC(transferer)
+            
+                for animId in m3STC.animIds:
+                    animData = animIdToAnimDataMap[animId]
+                    self.addAnimDataToTransformCollection(animData, m3STC)
+
+            if fullSTCIndex == None:
+                stcIndex = len(model.sequenceTransformationCollections)
+                fullSTCIndex= stcIndex
+                m3SequenceTransformationGroup.stcIndices.append(stcIndex)
+                m3STC = m3.STC_V4()
+                m3STC.name = animation.name + "_" + "full"
+                m3STC.animIds = list(remainingIds)
+                m3STC.stsIndex = self.getSTSIndexFor(model, m3STC.animIds)
+                m3STC.stsIndexCopy = m3STC.stsIndex
+                m3STC.unknownAt12 = 0
+                model.sequenceTransformationCollections.append(m3STC)
+
+                for animId in m3STC.animIds:
+                    animData = animIdToAnimDataMap[animId]
+                    self.addAnimDataToTransformCollection(animData, m3STC)
+
+            
+    def getSTSIndexFor(self, model, animIds):
+        animIdsSorted = list(animIds)
+        animIdsSorted.sort()
+        animIdsTuple = tuple(animIdsSorted)
+        stsIndex = self.animIdListToSTSIndexMap.get(animIdsTuple)
+        if stsIndex == None:
+            stsIndex = len(model.sts)
             m3STS = m3.STS_V0()
             m3STS.animIds = list(animIds)
             model.sts.append(m3STS)
-    
+            self.animIdListToSTSIndexMap[animIdsTuple] = stsIndex
+        return stsIndex
+        
     def addAnimDataToTransformCollection(self, animData, m3SequenceTransformationCollection):
         animDataType = type(animData)
         if animDataType == m3.SDEVV0:

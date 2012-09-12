@@ -424,8 +424,8 @@
                 </description>
             <field offset="0" name="name" type="Reference"  refTo="CHARV0" />
             <field offset="12" name="unknownAt12" type="uint32" default-value="0" />
-            <field offset="16" name="seqIndex" type="uint16"/>
-            <field offset="18" name="stgIndex" type="uint16"/>
+            <field offset="16" name="stsIndex" type="uint16"/>
+            <field offset="18" name="stsIndexCopy" type="uint16"/>
             <field offset="20" name="animIds" type="Reference" refTo="U32_V0" />
             <field offset="32" name="animRefs" type="Reference" refTo="U32_V0"/>
             <field offset="44" name="unknownAt44" type="uint32" expected-value="0" />
