@@ -786,16 +786,20 @@ class AnimationSequenceTransformationCollectionsPanel(bpy.types.Panel):
             col.template_list(animation, "transformationCollections", animation, "transformationCollectionIndex", rows=2)
             
             col = row.column(align=True)
-            #col.operator("m3.animation_transformation_collection_add", icon='ZOOMIN', text="")
-            #col.operator("m3.animation_transformation_collection_add", icon='ZOOMOUT', text="")
+            col.operator("m3.stc_add", icon='ZOOMIN', text="")
+            col.operator("m3.stc_remove", icon='ZOOMOUT', text="")
             index = animation.transformationCollectionIndex
             if index >= 0 and index < len(animation.transformationCollections):
                 transformationCollection = animation.transformationCollections[index]
                 layout.separator()
                 layout.prop(transformationCollection, 'name', text="Name")
                 layout.prop(transformationCollection, 'unknownAt12', text="Unknown")
-                layout.operator("m3.stc_select", text="Select")
-            
+                row = layout.row()
+                col = row.column()
+                col.operator("m3.stc_select", text="Select FCurves")
+                col = row.column()
+                col.operator("m3.stc_assign", text="Assign FCurves")
+     
 class MaterialReferencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_references"
     bl_label = "M3 Materials"
@@ -1697,6 +1701,56 @@ class M3_ANIMATIONS_OT_remove(bpy.types.Operator):
                 scene.m3_animations.remove(scene.m3_animation_index)
                 scene.m3_animation_old_index = -1
                 scene.m3_animation_index -= 1
+        return{'FINISHED'}
+
+class M3_ANIMATIONS_OT_STC_add(bpy.types.Operator):
+    bl_idname      = 'm3.stc_add'
+    bl_label       = "Add STC to animation"
+    bl_description = "Adds a new sequence transformation collection to the active animation sequence"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_animation_index >= 0:
+            animation = scene.m3_animations[scene.m3_animation_index]
+            stcIndex = len(animation.transformationCollections)
+            stc = animation.transformationCollections.add()
+            stc.name = self.findUnusedName(animation.transformationCollections)
+            animation.transformationCollectionIndex = stcIndex
+
+        return{'FINISHED'}
+        
+    def findUnusedName(self, existingSTCs):
+        usedNames = set()
+        for stc in existingSTCs:
+            usedNames.add(stc.name)
+        suggestedNames = ["full"]
+        unusedName = None
+        for suggestedName in suggestedNames:
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+                break
+        counter = 2
+        while unusedName == None:
+            suggestedName = "%02d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName
+        
+class M3_ANIMATIONS_OT_STC_remove(bpy.types.Operator):
+    bl_idname      = 'm3.stc_remove'
+    bl_label       = "Remove STC from animation"
+    bl_description = "Removes the active STC from animation sequence"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_animation_index >= 0:
+            animation = scene.m3_animations[scene.m3_animation_index]
+            stcIndex = animation.transformationCollectionIndex
+            if stcIndex >= 0 and stcIndex < len(animation.transformationCollections):
+                animation.transformationCollections.remove(stcIndex)
+                animation.transformationCollectionIndex -= 1
+
         return{'FINISHED'}
 
 class M3_ANIMATIONS_OT_STC_select(bpy.types.Operator):
