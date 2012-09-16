@@ -257,6 +257,23 @@
             <field name="uv1" type="Vector2As2int16" />
             <field name="tangent" type="Vector4As4uint8" />
         </structure>
+        <structure name="VertexFormat0x186027d" size="40" >
+            <description>Vertex with two UV coordinates and one unknown</description>
+            <field name="position" type="VEC3V0" />
+            <field name="boneWeight0" type="uint8" default-value="0" />
+            <field name="boneWeight1" type="uint8" default-value="0" />
+            <field name="boneWeight2" type="uint8" default-value="0" />
+            <field name="boneWeight3" type="uint8" default-value="0" />
+            <field name="boneLookupIndex0" type="uint8" default-value="0" />
+            <field name="boneLookupIndex1" type="uint8" default-value="0" />
+            <field name="boneLookupIndex2" type="uint8" default-value="0" />
+            <field name="boneLookupIndex3" type="uint8" default-value="0" />
+            <field name="normal" type="Vector4As4uint8" />
+            <field name="unknown" type="uint32" expected-value="0xffffffff"/>
+            <field name="uv0" type="Vector2As2int16" />
+            <field name="uv1" type="Vector2As2int16" />
+            <field name="tangent" type="Vector4As4uint8" />
+        </structure>
         <structure name="VertexFormat0x18e007d" size="40" >
             <description>Vertex with three UV coordinates</description>
             <field name="position" type="VEC3V0" />
