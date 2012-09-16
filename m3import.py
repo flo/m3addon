@@ -982,6 +982,8 @@ class Importer:
             name = m3Bone.name
             if len(name) > 31:
                 name = "Bone%06d%s" % (index, name[:21])
+            if len(name) == 0:
+                name = "Bone%06d" % len(names)
             if name in nameSet:
                 raise Exception("Failed to generate an unique bone name for %s" % name)
             nameSet.add(name)
