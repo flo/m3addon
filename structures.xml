@@ -683,7 +683,7 @@
             <field offset="24" name="priority" type="int32" />
             <field offset="28" name="unknown1" type="uint32" default-value="0" />
             <field offset="32" name="specularity" type="float" />
-            <field offset="36" name="unknown2" type="uint32" default-value="0" />
+            <field offset="36" name="unknown2" type="float" default-value="0.0" />
             <field offset="40" name="cutoutThresh" type="uint32" default-value="0" />
             <field offset="44" name="specMult" type="float" default-value="1.0" />
             <field offset="48" name="emisMult" type="float" default-value="1.0" />
