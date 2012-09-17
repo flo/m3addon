@@ -374,6 +374,7 @@ class Exporter:
             vertexDataTupleToIndexMap = {}
             nextVertexIndex = 0
             numberOfBoneWeightPairsPerVertex = 0
+            staticMeshBoneLookupIndex = None
             for blenderFace in mesh.tessfaces:
                 faceRelativeVertexIndexAndBlenderVertexIndexTuples = []
                 if len(blenderFace.vertices) == 3 or len(blenderFace.vertices) == 4:
@@ -426,10 +427,11 @@ class Exporter:
                         if staticMeshBoneIndex == None:
                             staticMeshBoneIndex = self.addBoneWithRestPosAndReturnIndex(model, staticMeshBoneName,  realBone=True)
                             model.bones[staticMeshBoneIndex].setNamedBit("flags", "skinned", True)
+                        if staticMeshBoneLookupIndex == None:
                             self.boneNameToBoneIndexMap[staticMeshBoneName] = staticMeshBoneIndex
-                        staticMeshLookupIndex = len(model.boneLookup)
-                        model.boneLookup.append(staticMeshBoneIndex)
-                        boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshLookupIndex
+                            staticMeshBoneLookupIndex = len(model.boneLookup)
+                            model.boneLookup.append(staticMeshBoneIndex)
+                            boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshBoneLookupIndex
                         m3Vertex.boneWeight0 = 255
                         m3Vertex.boneLookupIndex0 = staticMeshBoneIndex
                     for uvLayerIndex in range(0,uvCoordinatesPerVertex):
