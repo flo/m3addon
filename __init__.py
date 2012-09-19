@@ -1821,7 +1821,76 @@ class M3_ANIMATIONS_OT_STC_select(bpy.types.Operator):
                         
                     
         return{'FINISHED'}
+
+
+    
+class M3_ANIMATIONS_OT_STC_assign(bpy.types.Operator):
+    bl_idname      = 'm3.stc_assign'
+    bl_label       = "Assign FCurves to STC"
+    bl_description = "Assigns all selected FCurves to the active STC"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_animation_index < 0:
+            return {'FINISHED'}
+
+        # 1. Find out which animids exist and which properties use them
+        objectIdPathTupleToAnimIdMap = {}
+        usedAnimIds = set()
+        for animIdData in scene.m3_animation_ids:
+            objectId = animIdData.objectId
+            animPath = animIdData.animPath
+            animId = animIdData.animIdMinus2147483648 + 2147483648
+            objectIdPathTupleToAnimIdMap[objectId, animPath] = animId
+            usedAnimIds.add(animId)
         
+        # 2. Find or create an animid for each selected animated property
+        selectedAnimIds = set()
+        for objectIdPathTuple in set(self.getSelectedObjectIdAnimationPathTuplesOfCurrentActions(scene)):
+            animId = objectIdPathTupleToAnimIdMap.get(objectIdPathTuple)
+            if animId == None:
+                animId =  shared.getRandomAnimIdNotIn(usedAnimIds)
+                animIdData = scene.m3_animation_ids.add()
+                animIdData.objectId = objectIdPathTuple[0]
+                animIdData.animPath = objectIdPathTuple[1]
+                usedAnimIds.add(animId)
+                animIdData.animIdMinus2147483648 = animId - 2147483648
+            selectedAnimIds.add(animId)
+    
+        # 3. Assign them 
+        animation = scene.m3_animations[scene.m3_animation_index]
+        selectedSTCIndex = animation.transformationCollectionIndex
+        for stcIndex, stc in enumerate(animation.transformationCollections):
+            if stcIndex == selectedSTCIndex:
+                stc.animIds.clear()
+                for animId in selectedAnimIds:
+                    animIdObject = stc.animIds.add()
+                    animIdObject.animIdMinus2147483648 = animId - 2147483648
+            else:
+                pass #TODO remove the animids
+                
+        
+
+        return{'FINISHED'}
+           
+                
+    def getSelectedAnimationPaths(self, objectWithAnimData):
+        if objectWithAnimData.animation_data != None:
+            action = objectWithAnimData.animation_data.action
+            if action != None:
+                for fcurve in action.fcurves:
+                    if fcurve.select:
+                        animPath = fcurve.data_path
+                        yield animPath
+
+    def getSelectedObjectIdAnimationPathTuplesOfCurrentActions(self, scene):
+        for obj in bpy.data.objects:
+            if obj.type == "ARMATURE":
+                for animPath in self.getSelectedAnimationPaths(obj):
+                    yield (shared.animObjectIdArmature, animPath)
+        for animPath in self.getSelectedAnimationPaths(scene):          
+            yield (shared.animObjectIdScene, animPath)
+            
 class M3_CAMERAS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.cameras_add'
     bl_label       = "Add M3 Camera"

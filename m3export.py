@@ -90,11 +90,8 @@ class Exporter:
     def getAnimIdFor(self, objectId, animPath):
         result = self.animIdMap.get((objectId, animPath))
         if result == None:
-            maxValue = 0x0fffffff
-            unusedAnimId = random.randint(1, maxValue)
-            while unusedAnimId in self.usedAnimIds:
-                unusedAnimId = random.randint(1, maxValue)
-            result = unusedAnimId
+            result = shared.getRandomAnimIdNotIn(self.usedAnimIds)
+            self.usedAnimIds.add(result)
             self.animIdMap[objectId, animPath] = result
         return result
     
