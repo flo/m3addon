@@ -398,6 +398,7 @@ class Exporter:
                     m3Vertex.position = self.blenderToM3Vector(blenderVertex.co)
                     
                     boneWeightSlot = 0
+                    totalWeight = 0
                     for gIndex, g in enumerate(blenderVertex.groups):
                         vertexGroupIndex = g.group
                         vertexGroup = meshObject.vertex_groups[vertexGroupIndex]
@@ -411,12 +412,16 @@ class Exporter:
                             bone = model.bones[boneIndex]
                             bone.setNamedBit("flags", "skinned", True)
                             boneWeight = round(g.weight * 255)
+                            totalWeight += boneWeight
                             if boneWeight != 0:
                                 if boneWeightSlot == 4:
                                     raise Exception("The m3 format supports at maximum 4 bone weights per vertex")
                                 setattr(m3Vertex, "boneWeight%d" % boneWeightSlot, boneWeight)
                                 setattr(m3Vertex, "boneLookupIndex%d" % boneWeightSlot, boneLookupIndex)
                                 boneWeightSlot += 1
+                                      
+                    if totalWeight != 255:
+                        m3Vertex.boneWeight0 += (255 - totalWeight)                        
                     
                     if boneWeightSlot > numberOfBoneWeightPairsPerVertex:
                         numberOfBoneWeightPairsPerVertex = boneWeightSlot
