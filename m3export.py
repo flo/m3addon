@@ -317,22 +317,24 @@ class Exporter:
             self.materialNameToReferenceIndexMap[materialReference.name] = materialReferenceIndex
         
     def initMesh(self, model):
-        meshObjects = list(shared.findMeshObjects(self.scene))
+        nonEmptyMeshObjects = []
+        uvCoordinatesPerVertex = 1 # Never saw a m3 model with at least 1 UV layer
+        for meshObject in shared.findMeshObjects(self.scene):
+            mesh = meshObject.data
+            mesh.update(calc_tessface=True)
+            if len(mesh.tessfaces) > 0:
+                nonEmptyMeshObjects.append(meshObject)
+            uvCoordinatesPerVertex = max(uvCoordinatesPerVertex, len(mesh.tessface_uv_textures))
+
         
-        model.setNamedBit("flags", "hasMesh", len(meshObjects) > 0)
+        model.setNamedBit("flags", "hasMesh", len(nonEmptyMeshObjects) > 0)
         model.boundings = self.createAlmostEmptyBoundingsWithRadius(2.0)
-            
-        if len(meshObjects) == 0:
+        
+        if len(nonEmptyMeshObjects) == 0:
             model.numberOfBonesToCheckForSkin = 0
             model.divisions = [self.createEmptyDivision()]
             return
         
-        uvCoordinatesPerVertex = 1 # Never saw a m3 model with at least 1 UV layer
-        for meshObject in meshObjects:
-            mesh = meshObject.data
-            mesh.update(calc_tessface=True)
-            uvCoordinatesPerVertex = max(uvCoordinatesPerVertex, len(mesh.tessface_uv_textures))
-
         if uvCoordinatesPerVertex == 1:
             model.vFlags = 0x182007d  
         elif uvCoordinatesPerVertex == 2:
@@ -348,9 +350,8 @@ class Exporter:
         division = m3.DIV_V2()
         model.divisions.append(division)
         m3Vertices = []
-        for meshIndex, meshObject in enumerate(meshObjects):   
+        for meshIndex, meshObject in enumerate(nonEmptyMeshObjects):   
             mesh = meshObject.data
-            
             firstBoneLookupIndex = len(model.boneLookup)
             staticMeshBoneName = "StaticMesh"
             boneNameToBoneLookupIndexMap = {}
