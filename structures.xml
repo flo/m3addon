@@ -660,6 +660,7 @@
                     <bit mask="0x800" name="splatUVfix"/>
                     <bit mask="0x1000" name="softBlending"/>
                     <bit mask="0x4000" name="forParticles"/> <!-- maybe -->
+                    <bit mask="0x80000" name="darkNormalMapping" />
                 </bits>
             </field>
             <field offset="20" name="blendMode" type="uint32" />

@@ -518,6 +518,7 @@ class M3StandardMaterial(bpy.types.PropertyGroup):
     splatUVfix = bpy.props.BoolProperty(options=set(), default=False)
     softBlending = bpy.props.BoolProperty(options=set(), default=False)
     forParticles = bpy.props.BoolProperty(options=set(), default=False)
+    darkNormalMapping = bpy.props.BoolProperty(options=set(), default=False)
     unknownFlag0x1 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=False)
     unknownFlag0x4 = bpy.props.BoolProperty(options=set(), description="Makes mesh materials turn black but should be set for particle systems", default=False)
     unknownFlag0x8 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=False)
@@ -817,6 +818,7 @@ class MaterialPropertiesPanel(bpy.types.Panel):
                 layout.prop(material, 'splatUVfix', text="Splat UV Fix")
                 layout.prop(material, 'softBlending', text="Soft Blending")
                 layout.prop(material, 'forParticles', text="For Particles (?)")
+                layout.prop(material, 'darkNormalMapping', text="Dark Normal Mapping")
             elif materialType == shared.displacementMaterialTypeIndex:
                 material = scene.m3_displacement_materials[materialIndex]
                 layout.prop(material, 'name', text="Name")

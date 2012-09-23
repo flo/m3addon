@@ -322,6 +322,7 @@ def transferStandardMaterial(transferer):
     transferer.transferBit("flags", "splatUVfix")
     transferer.transferBit("flags", "softBlending")
     transferer.transferBit("flags", "forParticles")
+    transferer.transferBit("flags", "darkNormalMapping")
     transferer.transferBit("unknownFlags", "unknownFlag0x1")
     transferer.transferBit("unknownFlags", "unknownFlag0x4")
     transferer.transferBit("unknownFlags", "unknownFlag0x8")
