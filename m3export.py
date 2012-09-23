@@ -330,6 +330,7 @@ class Exporter:
         uvCoordinatesPerVertex = 1 # Never saw a m3 model with at least 1 UV layer
         for meshObject in meshObjects:
             mesh = meshObject.data
+            mesh.update(calc_tessface=True)
             uvCoordinatesPerVertex = max(uvCoordinatesPerVertex, len(mesh.tessface_uv_textures))
 
         if uvCoordinatesPerVertex == 1:
@@ -366,7 +367,6 @@ class Exporter:
             else:
                 raise Exception("Mesh must have no modifiers except single one for the armature")
                 
-            mesh.update(calc_tessface=True)
             firstFaceVertexIndexIndex = len(division.faces)
             firstVertexIndexIndex = len(m3Vertices)
             regionFaceVertexIndices = []
