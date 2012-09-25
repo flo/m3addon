@@ -61,6 +61,7 @@ star2ForcePrefix = "Star2Force"
 animObjectIdModel = "MODEL"
 animObjectIdArmature = "ARMATURE"
 animObjectIdScene = "SCENE"
+lightPrefixMap = {"1": "Star2Omni", "2": "Star2Spot"}
 
 
 def toValidBoneName(name):
@@ -73,6 +74,13 @@ def boneNameForPartileSystem(boneSuffix):
 def boneNameForForce(boneSuffix):
     return toValidBoneName(star2ForcePrefix + boneSuffix)
 
+def boneNameForLight(boneSuffix, lightType):
+    lightPrefix = lightPrefixMap.get(lightType)
+    if lightPrefix == None:
+        raise Exception("No prefix is known for light %s" % lightType)
+    else:
+        return toValidBoneName(lightPrefix + boneSuffix)
+        
 def boneNameForPartileSystemCopy(particleSystem, copy):
     return toValidBoneName(star2ParticlePrefix + copy.name)
 
@@ -401,3 +409,21 @@ def transferFuzzyHitTest(transferer):
     transferer.transferFloat("size0")
     transferer.transferFloat("size1") 
     transferer.transferFloat("size2")
+
+def transferLight(transferer):
+    transferer.transferEnum("lightType")
+    transferer.transferAnimatableVector3("lightColor")
+    transferer.transferBit("flags", "shadowCast")
+    transferer.transferBit("flags", "modelReflection")
+    transferer.transferBit("flags", "unknownFlag0x04")
+    transferer.transferBit("flags", "turnOn")
+    #transferer.transferInt("unknown3")
+    #transferer.transferInt("unknown4")
+    transferer.transferAnimatableFloat("lightIntensity")
+    transferer.transferAnimatableFloat("unknown5")
+    transferer.transferAnimatableFloat("unknown7")
+    transferer.transferAnimatableFloat("decayStart")
+    transferer.transferInt("unknown8")
+    transferer.transferAnimatableFloat("unknown9")
+    transferer.transferAnimatableFloat("hotSpot")
+    transferer.transferAnimatableFloat("falloff")

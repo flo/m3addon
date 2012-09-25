@@ -72,6 +72,7 @@ class Exporter:
         self.initTighHitTest(model)
         self.initParticles(model)
         self.initForces(model)
+        self.initLights(model)
         self.initAttachmentPoints(model)
         self.prepareAnimationEndEvents()
         self.initWithPreparedAnimationData(model)
@@ -799,6 +800,22 @@ class Exporter:
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Force, blenderObject=force, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferForce(transferer)
             model.forces.append(m3Force)
+            
+    def initLights(self, model):
+        scene = self.scene
+        for lightIndex, light in enumerate(scene.m3_lights):
+            boneSuffix = light.boneSuffix
+            lightPrefix =  light.lightType
+            boneName = shared.boneNameForLight(boneSuffix, lightPrefix)
+            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+            if boneIndex == None:
+                boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+            m3Light = m3.LITEV7()
+            m3Light.boneIndex = boneIndex
+            animPathPrefix = "m3_lights[%s]." % lightIndex
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Light, blenderObject=light, animPathPrefix=animPathPrefix, rootObject=self.scene)
+            shared.transferLight(transferer)
+            model.lights.append(m3Light)
 
     
     def initAttachmentPoints(self, model):

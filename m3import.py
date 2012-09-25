@@ -348,6 +348,7 @@ class Importer:
         self.initTightHitTest()
         self.createParticleSystems()
         self.createForces()
+        self.createLights()
         self.createAttachmentPoints()
         self.createMesh()
 
@@ -810,6 +811,24 @@ class Importer:
             else:
                 print("Warning: A force was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ForcePrefix))
                 force.boneSuffix = fullBoneName
+                
+    def createLights(self):
+        currentScene = bpy.context.scene
+        print("Loading lights")
+        index = 0
+        for lightIndex, m3Light in enumerate(self.model.lights):
+            light = currentScene.m3_lights.add()
+            animPathPrefix = "m3_lights[%s]." % lightIndex
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=light, m3Object=m3Light)
+            shared.transferLight(transferer)
+            boneEntry = self.model.bones[m3Light.boneIndex]
+            fullBoneName = boneEntry.name
+            lightPrefix =  shared.lightPrefixMap.get(str(m3Light.lightType))
+            if fullBoneName.startswith(lightPrefix):
+                light.boneSuffix = fullBoneName[len(lightPrefix):]
+            else:
+                print("Warning: A light was bound to bone %s which does not start with %s" %(fullBoneName, lightPrefix))
+                light.boneSuffix = fullBoneName
 
     def createAttachmentPoints(self):
         print("Loading attachment points and volumes")

@@ -106,6 +106,25 @@ def handleForceTypeOrBoneSuffixChange(self, context):
         if bone != None:
             bone.name = newBoneName
     self.oldBoneSuffix = self.boneSuffix
+    
+def handleLightTypeOrBoneSuffixChange(self, context):
+    scene = context.scene
+    typeName = "Unknown"
+    for typeId, name, description in lightTypeList:
+        if typeId == self.lightType:
+            typeName = name
+    
+    self.name = "%s (%s)" % (self.boneSuffix, typeName)
+
+    if self.boneSuffix != self.oldBoneSuffix or self.lightType != self.oldLightType:
+        oldBoneName = shared.boneNameForLight(self.oldBoneSuffix, self.oldLightType)
+        newBoneName = shared.boneNameForLight(self.boneSuffix, self.lightType)
+        bone, armatureObject = findBoneWithArmatureObject(scene, oldBoneName)
+        if bone != None:
+            bone.name = newBoneName
+            
+    self.oldBoneSuffix = self.boneSuffix
+    self.oldLightType = self.lightType
         
         
 def handleParticleSystemCopyRename(self, context):
@@ -268,6 +287,11 @@ def handleForceIndexChanged(self, context):
     force = scene.m3_forces[scene.m3_force_index]
     selectOrCreateBoneForForce(scene, force)
     
+def handleLightIndexChanged(self, context):
+    scene = context.scene
+    light = scene.m3_lights[scene.m3_light_index]
+    selectOrCreateBoneForLight(scene, light)
+    
 def handlePartileSystemCopyIndexChanged(self, context):
     scene = context.scene
     particleSystem = self
@@ -317,6 +341,10 @@ def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
     
 def selectOrCreateBoneForForce(scene, force):
     boneName = shared.boneNameForForce(force.boneSuffix)
+    selectOrCreateBone(scene, boneName)
+    
+def selectOrCreateBoneForLight(scene, light):
+    boneName = shared.boneNameForLight(light.boneSuffix, light.lightType)
     selectOrCreateBone(scene, boneName)
 
 def selectOrCreateBoneForCamera(scene, camera):
@@ -443,6 +471,11 @@ matLayerAndEmisBlendModeList = [("0", "Mod", "no description yet"),
 matSpecularTypeList = [("0", "RGB", "no description yet"), 
                         ("1", 'Alpha Only', "no description yet")
                         ]
+
+lightTypeList = [("0", "Directional", ""),
+                 ("1", "Point", "Light are generated around a point"),
+                 ("2", "Spot", "")
+                 ]
 class M3AnimIdData(bpy.types.PropertyGroup):
     # animId is actually an unsigned integer but blender can store only signed ones
     # thats why the number range needs to be moved into the negative for storage
@@ -710,6 +743,32 @@ class M3SimpleGeometricShape(bpy.types.PropertyGroup):
 
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
+
+class M3Light(bpy.types.PropertyGroup):
+    # name attribute seems to be needed for template_list but is not actually in the m3 file
+    # The name gets calculated like this: name = boneSuffix (type)
+    name = bpy.props.StringProperty(name="name", default="", options=set())
+    lightType = bpy.props.EnumProperty(default="1", items=lightTypeList, options=set(), update=handleLightTypeOrBoneSuffixChange)
+    oldLightType = bpy.props.EnumProperty(default="1", items=lightTypeList, options=set())
+    boneSuffix = bpy.props.StringProperty(options=set(), update=handleLightTypeOrBoneSuffixChange, default="Particle System")
+    oldBoneSuffix = bpy.props.StringProperty(options=set())
+    shadowCast = bpy.props.BoolProperty(options=set())
+    modelReflection = bpy.props.BoolProperty(options=set())
+    unknownFlag0x04 = bpy.props.BoolProperty(options=set())
+    turnOn = bpy.props.BoolProperty(options=set())
+    lightColor = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="COLOR", options={"ANIMATABLE"})
+    #unknown3 = bpy.props.IntProperty(default=0, subtype="UNSIGNED", options={"ANIMATABLE"})
+    #unknown4 = bpy.props.IntProperty(default=0, subtype="UNSIGNED", options={"ANIMATABLE"})
+    lightIntensity = bpy.props.FloatProperty(default=1.0, name="Light Intensity", options={"ANIMATABLE"})
+    unknown5 = bpy.props.FloatProperty(default=0.0, name="Unknonw 5", options={"ANIMATABLE"})
+    unknown7 = bpy.props.FloatProperty(default=0.0, name="Unknonw 7", options={"ANIMATABLE"})
+    decayStart = bpy.props.FloatProperty(default=0.0, name="Decay Start", options={"ANIMATABLE"})
+    unknown8 = bpy.props.IntProperty(default=0, subtype="UNSIGNED", options={"ANIMATABLE"})
+    unknown9 = bpy.props.FloatProperty(default=0.0, name="Unknonw 9", options={"ANIMATABLE"})
+    hotSpot = bpy.props.FloatProperty(default=1.0, name="Hot Spot", options={"ANIMATABLE"})
+    falloff = bpy.props.FloatProperty(default=1.0, name="Fall Off", options={"ANIMATABLE"})
+    
+    
 
 class ExportPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_quickExport"
@@ -1193,7 +1252,7 @@ class ParticleSystemsPanel(bpy.types.Panel):
 
 
 
-class ParticleSystemsPanel(bpy.types.Panel):
+class ForcePanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_forces"
     bl_label = "M3 Forces"
     bl_space_type = 'PROPERTIES'
@@ -1222,9 +1281,47 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(force, "forceRange", text="Range")
             layout.prop(force, "unknownAt64", text="Unknown 1")
             layout.prop(force, "unknownAt84", text="Unknown 2")
+       
+       
+class LightPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_lights"
+    bl_label = "M3 Lights"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        col.template_list(scene, "m3_lights", scene, "m3_light_index", rows=2)
+
+        col = row.column(align=True)
+        col.operator("m3.lights_add", icon='ZOOMIN', text="")
+        col.operator("m3.lights_remove", icon='ZOOMOUT', text="")
+        currentIndex = scene.m3_light_index
+        if currentIndex >= 0 and currentIndex < len(scene.m3_lights):
+            force = scene.m3_lights[currentIndex]
+            layout.separator()
+            layout.prop(force, 'boneSuffix', text="Name")
+            layout.prop(force, "lightType", text="Light Type")
+            layout.prop(force, "shadowCast", text="Shadow Cast")
+            layout.prop(force, "modelReflection", text="Model Reflection")
+            layout.prop(force, "unknownFlag0x04", text="Unknown2")
+            layout.prop(force, "turnOn", text="Turn On")
+            layout.prop(force, "lightColor", text="Light Color")
+            layout.prop(force, "lightIntensity", text="Light Intensity")
+            layout.prop(force, "unknown5", text="Unknown 5")
+            layout.prop(force, "unknown7", text="Unknown 7")
+            layout.prop(force, "decayStart", text="Decay Start")
+            layout.prop(force, "unknown8", text="Unknown 8")
+            layout.prop(force, "unknown9", text="Unknown 9")
+            layout.prop(force, "hotSpot", text="Hot Spot")
+            layout.prop(force, "falloff", text="Fall Off")
+
             
-
-
 class ParticleSystemCopiesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_particle_copies"
     bl_label = "M3 Particle Systems Copies"
@@ -1855,6 +1952,48 @@ class M3_FORCES_OT_remove(bpy.types.Operator):
                 scene.m3_force_index-= 1
         return{'FINISHED'}
         
+        
+class M3_LIGHTS_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.lights_add'
+    bl_label       = "Add Light"
+    bl_description = "Adds a particle system light for the export to the m3 model format"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        light = scene.m3_lights.add()
+        light.boneSuffix = self.findUnusedName(scene)
+
+        handleLightTypeOrBoneSuffixChange(light, context)
+        scene.m3_light_index = len(scene.m3_lights)-1
+        
+        selectOrCreateBoneForLight(scene, light)
+        return{'FINISHED'}
+
+    def findUnusedName(self, scene):
+        usedNames = set()
+        for light in scene.m3_lights:
+            usedNames.add(light.boneSuffix)
+        unusedName = None
+        counter = 1
+        while unusedName == None:
+            suggestedName = "%02d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName 
+
+class M3_LIGHTS_OT_remove(bpy.types.Operator):
+    bl_idname      = 'm3.lights_remove'
+    bl_label       = "Remove M3 Light"
+    bl_description = "Removes the active M3 particle system light"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_light_index >= 0:
+                scene.m3_lights.remove(scene.m3_light_index)
+                scene.m3_light_index-= 1
+        return{'FINISHED'}
+        
 
 class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.attachment_points_add'
@@ -2057,6 +2196,8 @@ def register():
     bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(options=set(), update=handlePartileSystemIndexChanged)
     bpy.types.Scene.m3_forces = bpy.props.CollectionProperty(type=M3Force)
     bpy.types.Scene.m3_force_index = bpy.props.IntProperty(options=set(), update=handleForceIndexChanged)
+    bpy.types.Scene.m3_lights = bpy.props.CollectionProperty(type=M3Light)
+    bpy.types.Scene.m3_light_index = bpy.props.IntProperty(options=set(), update=handleLightIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
@@ -2070,6 +2211,7 @@ def register():
     bpy.types.Bone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
     bpy.types.EditBone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
     bpy.types.Scene.m3_default_value_action_assignments = bpy.props.CollectionProperty(type=AssignedActionOfM3Animation, options=set())
+    
 
  
 def unregister():
