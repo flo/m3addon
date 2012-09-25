@@ -755,7 +755,7 @@ class M3Light(bpy.types.PropertyGroup):
     shadowCast = bpy.props.BoolProperty(options=set())
     modelReflection = bpy.props.BoolProperty(options=set())
     unknownFlag0x04 = bpy.props.BoolProperty(options=set())
-    turnOn = bpy.props.BoolProperty(options=set())
+    turnOn = bpy.props.BoolProperty(default=True,options=set())
     lightColor = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="COLOR", options={"ANIMATABLE"})
     #unknown3 = bpy.props.IntProperty(default=0, subtype="UNSIGNED", options={"ANIMATABLE"})
     #unknown4 = bpy.props.IntProperty(default=0, subtype="UNSIGNED", options={"ANIMATABLE"})
