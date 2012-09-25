@@ -763,7 +763,7 @@ class M3Light(bpy.types.PropertyGroup):
     unknown5 = bpy.props.FloatProperty(default=0.0, name="Unknonw 5", options={"ANIMATABLE"})
     unknown7 = bpy.props.FloatProperty(default=0.0, name="Unknonw 7", options={"ANIMATABLE"})
     decayStart = bpy.props.FloatProperty(default=0.0, name="Decay Start", options={"ANIMATABLE"})
-    unknown8 = bpy.props.IntProperty(default=0, subtype="UNSIGNED", options={"ANIMATABLE"})
+    unknown8 = bpy.props.FloatProperty(default=0.0,  name="Unknown 8", options=set())
     unknown9 = bpy.props.FloatProperty(default=0.0, name="Unknonw 9", options={"ANIMATABLE"})
     hotSpot = bpy.props.FloatProperty(default=1.0, name="Hot Spot", options={"ANIMATABLE"})
     falloff = bpy.props.FloatProperty(default=1.0, name="Fall Off", options={"ANIMATABLE"})

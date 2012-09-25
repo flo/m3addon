@@ -423,7 +423,7 @@ def transferLight(transferer):
     transferer.transferAnimatableFloat("unknown5")
     transferer.transferAnimatableFloat("unknown7")
     transferer.transferAnimatableFloat("decayStart")
-    transferer.transferInt("unknown8")
+    transferer.transferFloat("unknown8")
     transferer.transferAnimatableFloat("unknown9")
     transferer.transferAnimatableFloat("hotSpot")
     transferer.transferAnimatableFloat("falloff")
