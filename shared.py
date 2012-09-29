@@ -21,6 +21,7 @@
 
 import bpy
 import mathutils
+import random
 
 standardMaterialLayerFieldNames = ["diffuseLayer", "decalLayer", "specularLayer", "selfIllumLayer",
     "emissiveLayer", "reflectionLayer", "evioLayer", "evioMaskLayer", "alphaMaskLayer", 
@@ -221,6 +222,13 @@ def determineDefaultActionFor(scene, actionOwnerName, actionOwnerType):
         action = findActionOfAssignedAction(assignedAction, actionOwnerName, actionOwnerType)
         if action != None:
             return action
+            
+def getRandomAnimIdNotIn(animIdSet):
+    maxValue = 0x0fffffff
+    unusedAnimId = random.randint(1, maxValue)
+    while unusedAnimId in animIdSet:
+        unusedAnimId = random.randint(1, maxValue)
+    return unusedAnimId
     
 def transferParticleSystem(transferer):
     transferer.transferAnimatableFloat("emissionSpeed1")
@@ -393,6 +401,9 @@ def transferAnimation(transferer):
     transferer.transferBit("flags", "alwaysGlobal")
     transferer.transferBit("flags", "globalInPreviewer")
     
+def transferSTC(transferer):
+    transferer.transferBoolean("runsConcurrent")
+
 def transferCamera(transferer):
     transferer.transferString("name")
     transferer.transferAnimatableFloat("fieldOfView")

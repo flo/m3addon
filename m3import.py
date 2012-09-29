@@ -338,6 +338,7 @@ class Importer:
         scene.render.fps = FRAME_RATE
         self.animations = []
         self.ownerTypeToDefaultValuesActionMap = {}
+        self.animIdToObjectIdAnimPathMap = {}
         self.storeModelId()
         self.createAnimations()
         self.createArmatureObject()
@@ -351,13 +352,17 @@ class Importer:
         self.createLights()
         self.createAttachmentPoints()
         self.createMesh()
-
+        # init stcs of animations at last
+        # when all animation properties are known
+        self.initSTCsOfAnimations()
+        
         if len(scene.m3_animations) >= 1:
             scene.m3_animation_old_index = -1
             scene.m3_animation_index = -1
             scene.m3_animation_index = 0
     
     def addAnimIdData(self, animId, objectId, animPath):
+        self.animIdToObjectIdAnimPathMap[animId] = (objectId, animPath)
         animIdData = self.scene.m3_animation_ids.add()
         animIdData.animIdMinus2147483648 = animId - 2147483648
         animIdData.animPath = animPath
@@ -1094,6 +1099,8 @@ class Importer:
         if len(model.sequenceTransformationGroups) != numberOfSequences:
             raise Exception("The model has not the same amounth of stg elements as it has sequences")
 
+
+        self.sequenceNameAndSTCIndexToAnimIdSet = {}
         for sequenceIndex in range(numberOfSequences):
             sequence = model.sequences[sequenceIndex]
             stg = model.sequenceTransformationGroups[sequenceIndex]
@@ -1107,24 +1114,77 @@ class Importer:
             
             animIdToTimeValueMap = {}
             ownerTypeToActionMap = {}
-            for stcIndex in stg.stcIndices:
-                stc = model.sequenceTransformationCollections[stcIndex]
+            for m3STCIndex in stg.stcIndices:
+                stc = model.sequenceTransformationCollections[m3STCIndex]
+                animationSTCIndex = transformationCollection = len(animation.transformationCollections)
+                transformationCollection = animation.transformationCollections.add()
+                transformationCollectionName = stc.name
+                stcPrefix = sequence.name + "_"
+                if transformationCollectionName.startswith(stcPrefix):
+                    transformationCollectionName = transformationCollectionName[len(stcPrefix):]
+                
+                transformationCollection.name = transformationCollectionName
 
+                transferer = M3ToBlenderDataTransferer(self, None, blenderObject=transformationCollection, m3Object=stc)
+                shared.transferSTC(transferer)
+                animIdsOfSTC = set()     
                 animIdToTimeValueMapForSTC = self.createAnimIdToKeyFramesMapFor(stc)
                 for animId, timeValueMap in animIdToTimeValueMapForSTC.items():
                     if animId in animIdToTimeValueMap:
                         raise Exception("Same animid %s got animated by different STC" % animId)
                     animIdToTimeValueMap[animId] = timeValueMap
-                    
+                    animIdsOfSTC.add(animId)
+
+                self.sequenceNameAndSTCIndexToAnimIdSet[sequence.name, animationSTCIndex] = animIdsOfSTC
+
                 # stc.seqIndex seems to be wrong:
                 #sequence = model.sequences[stc.seqIndex]
                 if len(stc.animIds) != len(stc.animRefs):
                     raise Exception("len(stc.animids) != len(stc.animrefs)")
-                
+
             self.animations.append(AnimationData(animIdToTimeValueMap, ownerTypeToActionMap, sequenceIndex))
 
 
-
+    def initSTCsOfAnimations(self):
+        unsupportedAnimIds = set()
+        for sequenceNameAndSTCIndex, animIds in self.sequenceNameAndSTCIndexToAnimIdSet.items():
+            sequenceName, stcIndex = sequenceNameAndSTCIndex
+            stc = self.scene.m3_animations[sequenceName].transformationCollections[stcIndex]
+            for animId in animIds:
+                objectIdanimPathTuple = self.animIdToObjectIdAnimPathMap.get(animId)
+                if objectIdanimPathTuple != None:
+                    animatedProperty = stc.animatedProperties.add()
+                    animatedProperty.objectId = objectIdanimPathTuple[0]
+                    animatedProperty.animPath = objectIdanimPathTuple[1]
+                else:
+                    unsupportedAnimIds.add(animId)
+        animationEndEventAnimId = 0x65bd3215
+        unsupportedAnimIds.remove(animationEndEventAnimId)
+        
+        if len(unsupportedAnimIds) > 0:
+            animIdToPathMap = {}
+            self.addAnimIdPathToMap("model", self.model, animIdToPathMap)
+            for unsupportedAnimId in unsupportedAnimIds:
+                path = animIdToPathMap.get(unsupportedAnimId, "<unknown path>")
+                print("Warning: Ignoring unsupported animated property with animId %s and path %s" %(hex(unsupportedAnimId), path))
+                
+    def addAnimIdPathToMap(self, path, m3Object, animIdToPathMap):
+        if hasattr(m3Object, "header") and type(m3Object.header) == m3.AnimationReferenceHeader: 
+            header = m3Object.header
+            if header.animFlags == shared.animFlagsForAnimatedProperty:
+                animIdToPathMap[header.animId] = path
+        if hasattr(type(m3Object),"fields"):
+            for fieldName in m3Object.fields:
+                fieldValue = getattr(m3Object,fieldName)
+                if fieldValue == None:
+                    pass
+                elif fieldValue.__class__ == list:
+                    for entryIndex, entry in enumerate(fieldValue):
+                        entryPath = "%s.%s[%d]" % (path, fieldName, entryIndex )
+                        self.addAnimIdPathToMap(entryPath, entry, animIdToPathMap)
+                else:
+                    fieldPath = path + "." + fieldName
+                    self.addAnimIdPathToMap(fieldPath, fieldValue, animIdToPathMap)
 
     def actionAndTimeValueMapPairsFor(self, ownerType, animId):
         for animationData in self.animations:

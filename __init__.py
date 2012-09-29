@@ -483,15 +483,27 @@ class M3AnimIdData(bpy.types.PropertyGroup):
     animPath = bpy.props.StringProperty(name="animPath", options=set())
     objectId =  bpy.props.StringProperty(name="objectId", options=set())
 
+class M3AnimatedPropertyReference(bpy.types.PropertyGroup):
+    animPath = bpy.props.StringProperty(name="animPath", options=set())
+    objectId =  bpy.props.StringProperty(name="objectId", options=set())
+    
 class AssignedActionOfM3Animation(bpy.types.PropertyGroup):
     targetName = bpy.props.StringProperty(name="targetName", options=set())
     actionName = bpy.props.StringProperty(name="actionName", options=set())
+
+class M3TransformationCollection(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="name", default="all", options=set())
+    animatedProperties = bpy.props.CollectionProperty(type=M3AnimatedPropertyReference, options=set())
+    runsConcurrent = bpy.props.BoolProperty(default=True, options=set())
+
     
 class M3Animation(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Stand", options=set())
     startFrame = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
     exlusiveEndFrame = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
     assignedActions = bpy.props.CollectionProperty(type=AssignedActionOfM3Animation, options=set())
+    transformationCollections = bpy.props.CollectionProperty(type=M3TransformationCollection, options=set())
+    transformationCollectionIndex = bpy.props.IntProperty(default=0, options=set())
     movementSpeed = bpy.props.FloatProperty(name="mov. speed", options=set())
     frequency = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
     notLooping = bpy.props.BoolProperty(options=set())
@@ -813,7 +825,40 @@ class AnimationSequencesPanel(bpy.types.Panel):
             layout.prop(animation, 'alwaysGlobal', text="Always Global")
             layout.prop(animation, 'globalInPreviewer', text="Global In Previewer")
 
+class AnimationSequenceTransformationCollectionsPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_STCs"
+    bl_label = "M3 Animation STCs"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
 
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        animationIndex = scene.m3_animation_index
+        if animationIndex >= 0 and animationIndex < len(scene.m3_animations):
+            animation = scene.m3_animations[animationIndex]
+
+            col.template_list(animation, "transformationCollections", animation, "transformationCollectionIndex", rows=2)
+            
+            col = row.column(align=True)
+            col.operator("m3.stc_add", icon='ZOOMIN', text="")
+            col.operator("m3.stc_remove", icon='ZOOMOUT', text="")
+            index = animation.transformationCollectionIndex
+            if index >= 0 and index < len(animation.transformationCollections):
+                transformationCollection = animation.transformationCollections[index]
+                layout.separator()
+                layout.prop(transformationCollection, 'name', text="Name")
+                layout.prop(transformationCollection, 'runsConcurrent', text="Runs Concurrent")
+                row = layout.row()
+                col = row.column()
+                col.operator("m3.stc_select", text="Select FCurves")
+                col = row.column()
+                col.operator("m3.stc_assign", text="Assign FCurves")
+     
 class MaterialReferencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_references"
     bl_label = "M3 Materials"
@@ -1756,6 +1801,179 @@ class M3_ANIMATIONS_OT_remove(bpy.types.Operator):
                 scene.m3_animation_index -= 1
         return{'FINISHED'}
 
+class M3_ANIMATIONS_OT_STC_add(bpy.types.Operator):
+    bl_idname      = 'm3.stc_add'
+    bl_label       = "Add STC to animation"
+    bl_description = "Adds a new sequence transformation collection to the active animation sequence"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_animation_index >= 0:
+            animation = scene.m3_animations[scene.m3_animation_index]
+            stcIndex = len(animation.transformationCollections)
+            stc = animation.transformationCollections.add()
+            stc.name = self.findUnusedName(animation.transformationCollections)
+            animation.transformationCollectionIndex = stcIndex
+
+        return{'FINISHED'}
+        
+    def findUnusedName(self, existingSTCs):
+        usedNames = set()
+        for stc in existingSTCs:
+            usedNames.add(stc.name)
+        suggestedNames = ["full"]
+        unusedName = None
+        for suggestedName in suggestedNames:
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+                break
+        counter = 2
+        while unusedName == None:
+            suggestedName = "%02d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName
+        
+class M3_ANIMATIONS_OT_STC_remove(bpy.types.Operator):
+    bl_idname      = 'm3.stc_remove'
+    bl_label       = "Remove STC from animation"
+    bl_description = "Removes the active STC from animation sequence"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_animation_index >= 0:
+            animation = scene.m3_animations[scene.m3_animation_index]
+            stcIndex = animation.transformationCollectionIndex
+            if stcIndex >= 0 and stcIndex < len(animation.transformationCollections):
+                animation.transformationCollections.remove(stcIndex)
+                animation.transformationCollectionIndex -= 1
+
+        return{'FINISHED'}
+
+class M3_ANIMATIONS_OT_STC_select(bpy.types.Operator):
+    bl_idname      = 'm3.stc_select'
+    bl_label       = "Select all FCurves of the active STC"
+    bl_description = "Selects all FCURVES of the active sequence transformation collection"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        boneNameToAnimPathMap = {}
+        armatureAnimPaths = set()
+        sceneAnimPaths = set()
+        stc = None
+        if scene.m3_animation_index >= 0:
+            animation = scene.m3_animations[scene.m3_animation_index]
+            stcIndex = animation.transformationCollectionIndex
+            if stcIndex >= 0 and stcIndex < len(animation.transformationCollections):
+                stc = animation.transformationCollections[stcIndex]
+        if stc != None:
+            for animatedProperty in stc.animatedProperties:
+                animPath = animatedProperty.animPath
+                objectId = animatedProperty.objectId
+                if objectId == shared.animObjectIdArmature:
+                    # select bone and fcurve?
+                    armatureAnimPaths.add(animPath)
+                    prefix = 'pose.bones["'
+                    end = animPath.find('"]')
+                    if animPath.startswith(prefix) and end != -1:
+                        boneName = animPath[len(prefix):end]
+                        animPathsOfBone = boneNameToAnimPathMap.get(boneName)
+                        if animPathsOfBone == None:
+                            animPathsOfBone = set()
+                            boneNameToAnimPathMap[boneName] = animPathsOfBone
+                        animPathsOfBone.add(animPath)
+                    else:
+                        print("Error: Failed to show animPath " + animPath)
+                elif objectId == shared.animObjectIdScene :
+                    sceneAnimPaths.add(animPath)
+                        
+        for obj in bpy.data.objects:
+            if obj.type == "ARMATURE":
+                armature = obj.data
+                selectObject = False
+                for bone in armature.bones:
+                    if bone.name in boneNameToAnimPathMap:
+                        bone.select = True
+                        selectObject = True
+                    else:
+                        bone.select = False
+                # Select object at the end, otherwise Blender 2.63a
+                # does not notice bone selection even if object is already selected
+                obj.select = selectObject
+            if obj.animation_data != None:
+                action = obj.animation_data.action
+                if action != None:
+                    for fcurve in action.fcurves:
+                        fcurve.select = fcurve.data_path in armatureAnimPaths
+                        
+        if scene.animation_data != None:
+            action = scene.animation_data.action
+            if action != None:
+                for fcurve in action.fcurves:
+                    fcurve.select = fcurve.data_path in sceneAnimPaths
+                        
+                    
+        return{'FINISHED'}
+
+
+    
+class M3_ANIMATIONS_OT_STC_assign(bpy.types.Operator):
+    bl_idname      = 'm3.stc_assign'
+    bl_label       = "Assign FCurves to STC"
+    bl_description = "Assigns all selected FCurves to the active STC"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_animation_index < 0:
+            return {'FINISHED'}
+        
+        selectedAnimatedProperties = set(self.getSelectedObjectIdAnimationPathTuplesOfCurrentActions(scene))
+
+        animation = scene.m3_animations[scene.m3_animation_index]
+        selectedSTCIndex = animation.transformationCollectionIndex
+        
+        for stcIndex, stc in enumerate(animation.transformationCollections):
+            if stcIndex == selectedSTCIndex:
+                stc.animatedProperties.clear()
+                for objectId, animPath in selectedAnimatedProperties:
+                    animatedProperty = stc.animatedProperties.add()
+                    animatedProperty.objectId = objectId
+                    animatedProperty.animPath = animPath
+            else:
+                #Remove selected properties from the other STCs:
+                animatedProperties = set()
+                for animatedProperty in stc.animatedProperties:
+                    objectId = animatedProperty.objectId
+                    animPath = animatedProperty.animPath
+                    animatedProperties.add((objectId, animPath))
+                animatedProperties = animatedProperties - selectedAnimatedProperties
+                stc.animatedProperties.clear()
+                for objectId, animPath in animatedProperties:
+                    animatedProperty = stc.animatedProperties.add()
+                    animatedProperty.objectId = objectId
+                    animatedProperty.animPath = animPath                
+
+        return{'FINISHED'}
+           
+                
+    def getSelectedAnimationPaths(self, objectWithAnimData):
+        if objectWithAnimData.animation_data != None:
+            action = objectWithAnimData.animation_data.action
+            if action != None:
+                for fcurve in action.fcurves:
+                    if fcurve.select:
+                        animPath = fcurve.data_path
+                        yield animPath
+
+    def getSelectedObjectIdAnimationPathTuplesOfCurrentActions(self, scene):
+        for obj in bpy.data.objects:
+            if obj.type == "ARMATURE":
+                for animPath in self.getSelectedAnimationPaths(obj):
+                    yield (shared.animObjectIdArmature, animPath)
+        for animPath in self.getSelectedAnimationPaths(scene):          
+            yield (shared.animObjectIdScene, animPath)
+            
 class M3_CAMERAS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.cameras_add'
     bl_label       = "Add M3 Camera"
@@ -2212,7 +2430,7 @@ def register():
     bpy.types.Bone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
     bpy.types.EditBone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
     bpy.types.Scene.m3_default_value_action_assignments = bpy.props.CollectionProperty(type=AssignedActionOfM3Animation, options=set())
-    
+
 
  
 def unregister():
