@@ -79,20 +79,23 @@ class Exporter:
         return model
     
     def prepareAnimIdMaps(self):
-        self.animIdMap = {}
+        self.objectIdAnimPathToAnimIdMap = {}
+        self.animIdToObjectIdAnimPathMap = {}
         self.usedAnimIds = {self.boundingAnimId}
 
         for animIdData in self.scene.m3_animation_ids:
             animId = animIdData.animIdMinus2147483648 + 2147483648 
-            self.animIdMap[animIdData.objectId, animIdData.animPath] = animId
+            self.objectIdAnimPathToAnimIdMap[animIdData.objectId, animIdData.animPath] = animId
+            self.animIdToObjectIdAnimPathMap[animId] = (animIdData.objectId, animIdData.animPath)
             self.usedAnimIds.add(animId)
     
     def getAnimIdFor(self, objectId, animPath):
-        result = self.animIdMap.get((objectId, animPath))
+        result = self.objectIdAnimPathToAnimIdMap.get((objectId, animPath))
         if result == None:
             result = shared.getRandomAnimIdNotIn(self.usedAnimIds)
             self.usedAnimIds.add(result)
-            self.animIdMap[objectId, animPath] = result
+            self.objectIdAnimPathToAnimIdMap[objectId, animPath] = result
+            self.animIdToObjectIdAnimPathMap[result] = (objectId, animPath)
         return result
     
     def createUniqueAnimId(self):
@@ -644,8 +647,10 @@ class Exporter:
                 
                 animIdsOfSTC = list()
                 
-                for animIdEntry in stc.animIds:
-                    animId = animIdEntry.animIdMinus2147483648 + 2147483648
+                for animatedProperty in stc.animatedProperties: 
+                    objectId = animatedProperty.objectId
+                    animPath = animatedProperty.animPath
+                    animId = self.getAnimIdFor(objectId, animPath)
                     if animId in remainingIds:
                         remainingIds.remove(animId)
                         animIdsOfSTC.append(animId)

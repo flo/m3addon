@@ -450,10 +450,9 @@ class M3AnimIdData(bpy.types.PropertyGroup):
     animPath = bpy.props.StringProperty(name="animPath", options=set())
     objectId =  bpy.props.StringProperty(name="objectId", options=set())
 
-class M3AnimId(bpy.types.PropertyGroup):
-    # animId is actually an unsigned integer but blender can store only signed ones
-    # thats why the number range needs to be moved into the negative for storage
-    animIdMinus2147483648 = bpy.props.IntProperty(name="animId", options=set())
+class M3AnimatedPropertyReference(bpy.types.PropertyGroup):
+    animPath = bpy.props.StringProperty(name="animPath", options=set())
+    objectId =  bpy.props.StringProperty(name="objectId", options=set())
     
 class AssignedActionOfM3Animation(bpy.types.PropertyGroup):
     targetName = bpy.props.StringProperty(name="targetName", options=set())
@@ -461,7 +460,7 @@ class AssignedActionOfM3Animation(bpy.types.PropertyGroup):
 
 class M3TransformationCollection(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="all", options=set())
-    animIds = bpy.props.CollectionProperty(type=M3AnimId, options=set())
+    animatedProperties = bpy.props.CollectionProperty(type=M3AnimatedPropertyReference, options=set())
     unknownAt12 = bpy.props.BoolVectorProperty(default=tuple(32*[False]), size=32, subtype="LAYER", options=set())
 
     
@@ -1760,23 +1759,19 @@ class M3_ANIMATIONS_OT_STC_select(bpy.types.Operator):
     
     def invoke(self, context, event):
         scene = context.scene
-        animIdsMinus2147483648ToSelect = set()
+        boneNameToAnimPathMap = {}
+        armatureAnimPaths = set()
+        sceneAnimPaths = set()
+        stc = None
         if scene.m3_animation_index >= 0:
             animation = scene.m3_animations[scene.m3_animation_index]
             stcIndex = animation.transformationCollectionIndex
             if stcIndex >= 0 and stcIndex < len(animation.transformationCollections):
                 stc = animation.transformationCollections[stcIndex]
-                for animIdObject in stc.animIds:
-                    animIdMinus2147483648 = animIdObject.animIdMinus2147483648 
-                    animIdsMinus2147483648ToSelect.add(animIdMinus2147483648)
-        
-        boneNameToAnimPathMap = {}
-        armatureAnimPaths = set()
-        sceneAnimPaths = set()
-        for animIdData in scene.m3_animation_ids:
-            if animIdData.animIdMinus2147483648 in animIdsMinus2147483648ToSelect:
-                animPath = animIdData.animPath
-                objectId = animIdData.objectId
+        if stc != None:
+            for animatedProperty in stc.animatedProperties:
+                animPath = animatedProperty.animPath
+                objectId = animatedProperty.objectId
                 if objectId == shared.animObjectIdArmature:
                     # select bone and fcurve?
                     armatureAnimPaths.add(animPath)
@@ -1833,43 +1828,32 @@ class M3_ANIMATIONS_OT_STC_assign(bpy.types.Operator):
         scene = context.scene
         if scene.m3_animation_index < 0:
             return {'FINISHED'}
-
-        # 1. Find out which animids exist and which properties use them
-        objectIdPathTupleToAnimIdMap = {}
-        usedAnimIds = set()
-        for animIdData in scene.m3_animation_ids:
-            objectId = animIdData.objectId
-            animPath = animIdData.animPath
-            animId = animIdData.animIdMinus2147483648 + 2147483648
-            objectIdPathTupleToAnimIdMap[objectId, animPath] = animId
-            usedAnimIds.add(animId)
         
-        # 2. Find or create an animid for each selected animated property
-        selectedAnimIds = set()
-        for objectIdPathTuple in set(self.getSelectedObjectIdAnimationPathTuplesOfCurrentActions(scene)):
-            animId = objectIdPathTupleToAnimIdMap.get(objectIdPathTuple)
-            if animId == None:
-                animId =  shared.getRandomAnimIdNotIn(usedAnimIds)
-                animIdData = scene.m3_animation_ids.add()
-                animIdData.objectId = objectIdPathTuple[0]
-                animIdData.animPath = objectIdPathTuple[1]
-                usedAnimIds.add(animId)
-                animIdData.animIdMinus2147483648 = animId - 2147483648
-            selectedAnimIds.add(animId)
-    
-        # 3. Assign them 
+        selectedAnimatedProperties = set(self.getSelectedObjectIdAnimationPathTuplesOfCurrentActions(scene))
+
         animation = scene.m3_animations[scene.m3_animation_index]
         selectedSTCIndex = animation.transformationCollectionIndex
+        
         for stcIndex, stc in enumerate(animation.transformationCollections):
             if stcIndex == selectedSTCIndex:
-                stc.animIds.clear()
-                for animId in selectedAnimIds:
-                    animIdObject = stc.animIds.add()
-                    animIdObject.animIdMinus2147483648 = animId - 2147483648
+                stc.animatedProperties.clear()
+                for objectId, animPath in selectedAnimatedProperties:
+                    animatedProperty = stc.animatedProperties.add()
+                    animatedProperty.objectId = objectId
+                    animatedProperty.animPath = animPath
             else:
-                pass #TODO remove the animids
-                
-        
+                #Remove selected properties from the other STCs:
+                animatedProperties = set()
+                for animatedProperty in stc.animatedProperties:
+                    objectId = animatedProperty.objectId
+                    animPath = animatedProperty.animPath
+                    animatedProperties.add((objectId, animPath))
+                animatedProperties = animatedProperties - selectedAnimatedProperties
+                stc.animatedProperties.clear()
+                for objectId, animPath in animatedProperties:
+                    animatedProperty = stc.animatedProperties.add()
+                    animatedProperty.objectId = objectId
+                    animatedProperty.animPath = animPath                
 
         return{'FINISHED'}
            
