@@ -2135,6 +2135,7 @@ class M3_OT_export(bpy.types.Operator, ExportHelper):
         if not "m3export" in locals():
             from . import m3export
 
+        scene.m3_export_options.path = self.properties.filepath
         m3export.export(scene, self.properties.filepath)
         return {'FINISHED'}
             
