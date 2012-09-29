@@ -393,7 +393,7 @@ def transferAnimation(transferer):
     transferer.transferBit("flags", "globalInPreviewer")
     
 def transferSTC(transferer):
-    transferer.transfer32Bits("unknownAt12")
+    transferer.transferBoolean("runsConcurrent")
 
 def transferCamera(transferer):
     transferer.transferString("name")

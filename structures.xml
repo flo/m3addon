@@ -440,7 +440,8 @@
                 Strangly it gets from no where referenced and is always the same id
                 </description>
             <field offset="0" name="name" type="Reference"  refTo="CHARV0" />
-            <field offset="12" name="unknownAt12" type="uint32" default-value="0" />
+            <field offset="12" name="runsConcurrent" type="uint16" default-value="0" />
+            <field offset="14" name="unknownAt14" type="uint16" default-value="0" />
             <field offset="16" name="stsIndex" type="uint16"/>
             <field offset="18" name="stsIndexCopy" type="uint16"/>
             <field offset="20" name="animIds" type="Reference" refTo="U32_V0" />

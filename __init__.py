@@ -461,7 +461,7 @@ class AssignedActionOfM3Animation(bpy.types.PropertyGroup):
 class M3TransformationCollection(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="all", options=set())
     animatedProperties = bpy.props.CollectionProperty(type=M3AnimatedPropertyReference, options=set())
-    unknownAt12 = bpy.props.BoolVectorProperty(default=tuple(32*[False]), size=32, subtype="LAYER", options=set())
+    runsConcurrent = bpy.props.BoolProperty(default=True, options=set())
 
     
 class M3Animation(bpy.types.PropertyGroup):
@@ -792,7 +792,7 @@ class AnimationSequenceTransformationCollectionsPanel(bpy.types.Panel):
                 transformationCollection = animation.transformationCollections[index]
                 layout.separator()
                 layout.prop(transformationCollection, 'name', text="Name")
-                layout.prop(transformationCollection, 'unknownAt12', text="Unknown")
+                layout.prop(transformationCollection, 'runsConcurrent', text="Runs Concurrent")
                 row = layout.row()
                 col = row.column()
                 col.operator("m3.stc_select", text="Select FCurves")
