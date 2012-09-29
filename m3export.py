@@ -81,13 +81,11 @@ class Exporter:
     
     def prepareAnimIdMaps(self):
         self.objectIdAnimPathToAnimIdMap = {}
-        self.animIdToObjectIdAnimPathMap = {}
         self.usedAnimIds = {self.boundingAnimId}
 
         for animIdData in self.scene.m3_animation_ids:
             animId = animIdData.animIdMinus2147483648 + 2147483648 
             self.objectIdAnimPathToAnimIdMap[animIdData.objectId, animIdData.animPath] = animId
-            self.animIdToObjectIdAnimPathMap[animId] = (animIdData.objectId, animIdData.animPath)
             self.usedAnimIds.add(animId)
     
     def getAnimIdFor(self, objectId, animPath):
@@ -96,7 +94,6 @@ class Exporter:
             result = shared.getRandomAnimIdNotIn(self.usedAnimIds)
             self.usedAnimIds.add(result)
             self.objectIdAnimPathToAnimIdMap[objectId, animPath] = result
-            self.animIdToObjectIdAnimPathMap[result] = (objectId, animPath)
         return result
     
     def createUniqueAnimId(self):
