@@ -566,10 +566,19 @@ class Exporter:
         
     def createM3UVVector(self, x, y):
         m3UV = m3.Vector2As2int16()
-        m3UV.x = round(x * 2048) 
-        m3UV.y = round((1 - y) * 2048) 
+        m3UV.x = self.clampToInt16(round(x * 2048))
+        m3UV.y = self.clampToInt16(round((1 - y) * 2048))
         return m3UV
-        
+    
+    def clampToInt16(self, value):
+        minInt16 = (-(1<<15))
+        maxInt16 = ((1<<15)-1)
+        if value < minInt16:
+            return minInt16
+        if value > maxInt16:
+            return maxInt16
+        return value
+
     def convertBlenderToM3UVCoordinates(self, blenderUV):
         return self.createM3UVVector(blenderUV.x, blenderUV.y)
     
