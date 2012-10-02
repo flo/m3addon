@@ -995,10 +995,10 @@ class GetFieldTypeInfoMethodAdder(Visitor):
         generalDataMap["out"].write(methodText)
 
 class ValidateMethodAdder(Visitor):
-    intRefToMinValue = {"I16_V0":(-(2<<15)), "U16_V0":0, "I32_V0":(-(2<<31)), "U32_V0":0}
-    intRefToMaxValue = {"I16_V0":((2<<15)-1), "U16_V0":((2<<16)-1), "I32_V0":((2<<31)-1), "U32_V0":((2<<32)-1)}
-    intTypeToMinValue = {"int16":(-(2<<15)), "uint16":0, "int32":(-(2<<31)), "uint32":0, "int8":-(2<<7), "uint8": 0}
-    intTypeToMaxValue = {"int16":((2<<15)-1), "uint16":((2<<16)-1), "int32":((2<<31)-1), "uint32":((2<<32)-1), "int8":((2<<7)-1), "uint8": ((2<<8)-1)}
+    intRefToMinValue = {"I16_V0":(-(1<<15)), "U16_V0":0, "I32_V0":(-(1<31)), "U32_V0":0}
+    intRefToMaxValue = {"I16_V0":((1<<15)-1), "U16_V0":((1<<16)-1), "I32_V0":((1<<31)-1), "U32_V0":((1<<32)-1)}
+    intTypeToMinValue = {"int16":(-(1<<15)), "uint16":0, "int32":(-(1<<31)), "uint32":0, "int8":-(1<<7), "uint8": 0}
+    intTypeToMaxValue = {"int16":((1<<15)-1), "uint16":((1<<16)-1), "int32":((1<<31)-1), "uint32":((1<<32)-1), "int8":((1<<7)-1), "uint8": ((1<<8)-1)}
 
     defaultTemplate="""
     @staticmethod
