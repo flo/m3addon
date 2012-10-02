@@ -997,6 +997,9 @@ class GetFieldTypeInfoMethodAdder(Visitor):
 class ValidateMethodAdder(Visitor):
     intRefToMinValue = {"I16_V0":(-(2<<15)), "U16_V0":0, "I32_V0":(-(2<<31)), "U32_V0":0}
     intRefToMaxValue = {"I16_V0":((2<<15)-1), "U16_V0":((2<<16)-1), "I32_V0":((2<<31)-1), "U32_V0":((2<<32)-1)}
+    intTypeToMinValue = {"int16":(-(2<<15)), "uint16":0, "int32":(-(2<<31)), "uint32":0, "int8":-(2<<7), "uint8": 0}
+    intTypeToMaxValue = {"int16":((2<<15)-1), "uint16":((2<<16)-1), "int32":((2<<31)-1), "uint32":((2<<32)-1), "int8":((2<<7)-1), "uint8": ((2<<8)-1)}
+
     defaultTemplate="""
     @staticmethod
     def validateInstance(instance, id):
@@ -1013,6 +1016,9 @@ class ValidateMethodAdder(Visitor):
     validateIntTemplate = """
         if (type(instance.%(fieldName)s) != int):
             raise Exception("%%s is not an int" %% (fieldId))
+        if (instance.%(fieldName)s < %(minValue)d) or (instance.%(fieldName)s > %(maxValue)d):
+            raise Exception("%%s has value %%d which is not in range [%(minValue)d, %(maxValue)d]"  %% (fieldId, instance.%(fieldName)s))
+
 """
     validateFloatTemplate = """
         if (type(instance.%(fieldName)s) != float):
@@ -1075,8 +1081,9 @@ class ValidateMethodAdder(Visitor):
         if fieldType == "tag":
             self.statements += ValidateMethodAdder.validateTagTemplate % {"fieldName":fieldName}
         elif fieldType in ("int32", "int16", "int8", "uint8","uint16", "uint32"):
-            # TODO check integer size
-            self.statements += ValidateMethodAdder.validateIntTemplate % {"fieldName":fieldName}
+            minValue = ValidateMethodAdder.intTypeToMinValue[fieldType]
+            maxValue = ValidateMethodAdder.intTypeToMaxValue[fieldType]
+            self.statements += ValidateMethodAdder.validateIntTemplate % {"fieldName":fieldName, "minValue":minValue, "maxValue":maxValue}
         elif fieldType == "float":
             self.statements += ValidateMethodAdder.validateFloatTemplate % {"fieldName":fieldName}
         elif fieldType == "Reference" or fieldType == "SmallReference":
