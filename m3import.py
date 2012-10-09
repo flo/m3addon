@@ -386,7 +386,7 @@ class Importer:
         self.animIdToLongAnimIdMap[animId] = longAnimId
         animIdData = self.scene.m3_animation_ids.add()
         animIdData.animIdMinus2147483648 = animId - 2147483648
-        animIdData.animPath = longAnimId
+        animIdData.longAnimId = longAnimId
         
     def storeModelId(self):
         self.addAnimIdData(self.model.uniqueUnknownNumber, objectId=(shared.animObjectIdModel), animPath="")
