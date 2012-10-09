@@ -696,7 +696,6 @@ class Exporter:
                 m3SequenceTransformationGroup.stcIndices.append(stcIndex)
                 fullM3STC = m3.STC_V4()
                 fullM3STC.name = animation.name + "_" + "full"
-                fullM3STC.unknownAt12 = 0
                 model.sequenceTransformationCollections.append(fullM3STC)
                 
             fullM3STC.animIds.extend(remainingIds)
