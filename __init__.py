@@ -480,8 +480,7 @@ class M3AnimIdData(bpy.types.PropertyGroup):
     # animId is actually an unsigned integer but blender can store only signed ones
     # thats why the number range needs to be moved into the negative for storage
     animIdMinus2147483648 = bpy.props.IntProperty(name="animId", options=set())
-    animPath = bpy.props.StringProperty(name="animPath", options=set())
-    objectId =  bpy.props.StringProperty(name="objectId", options=set())
+    longAnimId = bpy.props.StringProperty(name="longAnimId", options=set())
 
 class M3AnimatedPropertyReference(bpy.types.PropertyGroup):
     longAnimId = bpy.props.StringProperty(name="longAnimId", options=set())

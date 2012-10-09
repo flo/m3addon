@@ -85,7 +85,7 @@ class Exporter:
 
         for animIdData in self.scene.m3_animation_ids:
             animId = animIdData.animIdMinus2147483648 + 2147483648 
-            longAnimId = shared.getLongAnimIdOf(animIdData.objectId, animIdData.animPath)
+            longAnimId = animIdData.longAnimId
             self.longAnimIdToAnimIdMap[longAnimId] = animId
             self.usedAnimIds.add(animId)
     
