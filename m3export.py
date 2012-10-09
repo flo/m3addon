@@ -1521,10 +1521,10 @@ class BlenderToM3DataTransferer:
         animPathMinBorder = self.animPathPrefix + "minBorder"
         animPathMaxBorder = self.animPathPrefix +  "maxBorder"
         animPathRadius = self.animPathPrefix + "radius"
-        animId = self.exporter.boundingAnimId
 
-        animRef = m3.BNDSV0AnimationReference()
-        animRef.header = self.exporter.createNullAnimHeader(animId=animId, interpolationType=1)
+        # assume animation ref does already exist:
+        animRef = self.m3Object
+        animId = animRef.header.animId
         boundings =  self.blenderObject
         
         
@@ -1536,8 +1536,8 @@ class BlenderToM3DataTransferer:
             defaultMaxBorder[i] = self.exporter.getDefaultValue(self.rootObject, animPathMaxBorder, i, boundings.maxBorder[i])
         defaultRadius = self.exporter.getDefaultValue(self.rootObject, animPathRadius, 0, boundings.radius)
         m3DefaultBoundings = m3.BNDSV0()
-        m3DefaultBoundings.minBorder = defaultMinBorder
-        m3DefaultBoundings.maxBorder = defaultMaxBorder
+        m3DefaultBoundings.minBorder = self.exporter.createVector3FromBlenderVector(defaultMinBorder)
+        m3DefaultBoundings.maxBorder = self.exporter.createVector3FromBlenderVector(defaultMaxBorder)
         m3DefaultBoundings.radius = defaultRadius
         animRef.initValue = m3DefaultBoundings
         animRef.nullValue = self.exporter.createBoundings()
