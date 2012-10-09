@@ -217,12 +217,17 @@ def composeMatrix(location, rotation, scale):
     for i in range(3):
         scaleMatrix[i][i] = scale[i]
     return locMatrix * rotationMatrix * scaleMatrix
+
 def determineDefaultActionFor(scene, actionOwnerName, actionOwnerType):
     for assignedAction in scene.m3_default_value_action_assignments:
         action = findActionOfAssignedAction(assignedAction, actionOwnerName, actionOwnerType)
         if action != None:
             return action
             
+def getLongAnimIdOf(objectId, animPath):
+    return objectId + animPath;
+
+
 def getRandomAnimIdNotIn(animIdSet):
     maxValue = 0x0fffffff
     unusedAnimId = random.randint(1, maxValue)

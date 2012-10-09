@@ -338,7 +338,7 @@ class Importer:
         scene.render.fps = FRAME_RATE
         self.animations = []
         self.ownerTypeToDefaultValuesActionMap = {}
-        self.animIdToObjectIdAnimPathMap = {}
+        self.animIdToLongAnimIdMap = {}
         self.storeModelId()
         self.createAnimations()
         self.createArmatureObject()
@@ -362,7 +362,7 @@ class Importer:
             scene.m3_animation_index = 0
     
     def addAnimIdData(self, animId, objectId, animPath):
-        self.animIdToObjectIdAnimPathMap[animId] = (objectId, animPath)
+        self.animIdToLongAnimIdMap[animId] = shared.getLongAnimIdOf(objectId, animPath)
         animIdData = self.scene.m3_animation_ids.add()
         animIdData.animIdMinus2147483648 = animId - 2147483648
         animIdData.animPath = animPath
@@ -1151,11 +1151,10 @@ class Importer:
             sequenceName, stcIndex = sequenceNameAndSTCIndex
             stc = self.scene.m3_animations[sequenceName].transformationCollections[stcIndex]
             for animId in animIds:
-                objectIdanimPathTuple = self.animIdToObjectIdAnimPathMap.get(animId)
-                if objectIdanimPathTuple != None:
+                longAnimId = self.animIdToLongAnimIdMap.get(animId)
+                if longAnimId != None:
                     animatedProperty = stc.animatedProperties.add()
-                    animatedProperty.objectId = objectIdanimPathTuple[0]
-                    animatedProperty.animPath = objectIdanimPathTuple[1]
+                    animatedProperty.longAnimId = longAnimId
                 else:
                     unsupportedAnimIds.add(animId)
         animationEndEventAnimId = 0x65bd3215

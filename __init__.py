@@ -484,8 +484,7 @@ class M3AnimIdData(bpy.types.PropertyGroup):
     objectId =  bpy.props.StringProperty(name="objectId", options=set())
 
 class M3AnimatedPropertyReference(bpy.types.PropertyGroup):
-    animPath = bpy.props.StringProperty(name="animPath", options=set())
-    objectId =  bpy.props.StringProperty(name="objectId", options=set())
+    longAnimId = bpy.props.StringProperty(name="longAnimId", options=set())
     
 class AssignedActionOfM3Animation(bpy.types.PropertyGroup):
     targetName = bpy.props.StringProperty(name="targetName", options=set())
@@ -1857,10 +1856,9 @@ class M3_ANIMATIONS_OT_STC_select(bpy.types.Operator):
     bl_description = "Selects all FCURVES of the active sequence transformation collection"
     
     def invoke(self, context, event):
-        scene = context.scene
-        boneNameToAnimPathMap = {}
-        armatureAnimPaths = set()
-        sceneAnimPaths = set()
+        scene = context.scene        
+        longAnimIds = set()
+        
         stc = None
         if scene.m3_animation_index >= 0:
             animation = scene.m3_animations[scene.m3_animation_index]
@@ -1869,31 +1867,21 @@ class M3_ANIMATIONS_OT_STC_select(bpy.types.Operator):
                 stc = animation.transformationCollections[stcIndex]
         if stc != None:
             for animatedProperty in stc.animatedProperties:
-                animPath = animatedProperty.animPath
-                objectId = animatedProperty.objectId
-                if objectId == shared.animObjectIdArmature:
-                    # select bone and fcurve?
-                    armatureAnimPaths.add(animPath)
-                    prefix = 'pose.bones["'
-                    end = animPath.find('"]')
-                    if animPath.startswith(prefix) and end != -1:
-                        boneName = animPath[len(prefix):end]
-                        animPathsOfBone = boneNameToAnimPathMap.get(boneName)
-                        if animPathsOfBone == None:
-                            animPathsOfBone = set()
-                            boneNameToAnimPathMap[boneName] = animPathsOfBone
-                        animPathsOfBone.add(animPath)
-                    else:
-                        print("Error: Failed to show animPath " + animPath)
-                elif objectId == shared.animObjectIdScene :
-                    sceneAnimPaths.add(animPath)
+                longAnimId = animatedProperty.longAnimId
+                longAnimIds.add(longAnimId)
                         
         for obj in bpy.data.objects:
             if obj.type == "ARMATURE":
                 armature = obj.data
                 selectObject = False
                 for bone in armature.bones:
-                    if bone.name in boneNameToAnimPathMap:
+                    animPathPrefix = 'pose.bones["' + bone.name + '"].'
+                    objectId = shared.animObjectIdArmature
+                    boneLongAnimIds = set()
+                    rotLongAnimId = shared.getLongAnimIdOf(objectId, animPathPrefix + "rotation_quaternion")
+                    locLongAnimId = shared.getLongAnimIdOf(objectId, animPathPrefix + "location")
+                    scaleLongAnimId = shared.getLongAnimIdOf(objectId, animPathPrefix + "scale")
+                    if (rotLongAnimId in longAnimIds) or (locLongAnimId in longAnimIds) or (scaleLongAnimId in longAnimIds):
                         bone.select = True
                         selectObject = True
                     else:
@@ -1901,17 +1889,23 @@ class M3_ANIMATIONS_OT_STC_select(bpy.types.Operator):
                 # Select object at the end, otherwise Blender 2.63a
                 # does not notice bone selection even if object is already selected
                 obj.select = selectObject
-            if obj.animation_data != None:
-                action = obj.animation_data.action
-                if action != None:
-                    for fcurve in action.fcurves:
-                        fcurve.select = fcurve.data_path in armatureAnimPaths
+                if obj.animation_data != None:
+                    action = obj.animation_data.action
+                    if action != None:
+                        for fcurve in action.fcurves:
+                            animPath = fcurve.data_path
+                            objectId = shared.animObjectIdArmature
+                            longAnimId = shared.getLongAnimIdOf(objectId, animPath)
+                            fcurve.select = longAnimId in longAnimIds
                         
         if scene.animation_data != None:
             action = scene.animation_data.action
             if action != None:
                 for fcurve in action.fcurves:
-                    fcurve.select = fcurve.data_path in sceneAnimPaths
+                    animPath = fcurve.data_path
+                    objectId = shared.animObjectIdScene
+                    longAnimId = shared.getLongAnimIdOf(objectId, animPath)
+                    fcurve.select = longAnimId in longAnimIds
                         
                     
         return{'FINISHED'}
@@ -1928,7 +1922,7 @@ class M3_ANIMATIONS_OT_STC_assign(bpy.types.Operator):
         if scene.m3_animation_index < 0:
             return {'FINISHED'}
         
-        selectedAnimatedProperties = set(self.getSelectedObjectIdAnimationPathTuplesOfCurrentActions(scene))
+        selectedLongAnimIds = set(self.getSelectedLongAnimIdsOfCurrentActions(scene))
 
         animation = scene.m3_animations[scene.m3_animation_index]
         selectedSTCIndex = animation.transformationCollectionIndex
@@ -1936,23 +1930,19 @@ class M3_ANIMATIONS_OT_STC_assign(bpy.types.Operator):
         for stcIndex, stc in enumerate(animation.transformationCollections):
             if stcIndex == selectedSTCIndex:
                 stc.animatedProperties.clear()
-                for objectId, animPath in selectedAnimatedProperties:
+                for longAnimId in selectedLongAnimIds:
                     animatedProperty = stc.animatedProperties.add()
-                    animatedProperty.objectId = objectId
-                    animatedProperty.animPath = animPath
+                    animatedProperty.longAnimId = longAnimId
             else:
                 #Remove selected properties from the other STCs:
-                animatedProperties = set()
+                longAnimIds = set()
                 for animatedProperty in stc.animatedProperties:
-                    objectId = animatedProperty.objectId
-                    animPath = animatedProperty.animPath
-                    animatedProperties.add((objectId, animPath))
-                animatedProperties = animatedProperties - selectedAnimatedProperties
+                    longAnimIds.add(longAnimIds.longAnimId)
+                longAnimIds = longAnimIds - selectedLongAnimIds
                 stc.animatedProperties.clear()
-                for objectId, animPath in animatedProperties:
+                for longAnimId in longAnimIds:
                     animatedProperty = stc.animatedProperties.add()
-                    animatedProperty.objectId = objectId
-                    animatedProperty.animPath = animPath                
+                    animatedProperty.longAnimId = longAnimId
 
         return{'FINISHED'}
            
@@ -1966,13 +1956,13 @@ class M3_ANIMATIONS_OT_STC_assign(bpy.types.Operator):
                         animPath = fcurve.data_path
                         yield animPath
 
-    def getSelectedObjectIdAnimationPathTuplesOfCurrentActions(self, scene):
+    def getSelectedLongAnimIdsOfCurrentActions(self, scene):
         for obj in bpy.data.objects:
             if obj.type == "ARMATURE":
                 for animPath in self.getSelectedAnimationPaths(obj):
-                    yield (shared.animObjectIdArmature, animPath)
+                    yield shared.getLongAnimIdOf(shared.animObjectIdArmature, animPath)
         for animPath in self.getSelectedAnimationPaths(scene):          
-            yield (shared.animObjectIdScene, animPath)
+            yield shared.getLongAnimIdOf(shared.animObjectIdScene, animPath)
             
 class M3_CAMERAS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.cameras_add'

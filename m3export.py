@@ -80,21 +80,26 @@ class Exporter:
         return model
     
     def prepareAnimIdMaps(self):
-        self.objectIdAnimPathToAnimIdMap = {}
+        self.longAnimIdToAnimIdMap = {}
         self.usedAnimIds = {self.boundingAnimId}
 
         for animIdData in self.scene.m3_animation_ids:
             animId = animIdData.animIdMinus2147483648 + 2147483648 
-            self.objectIdAnimPathToAnimIdMap[animIdData.objectId, animIdData.animPath] = animId
+            longAnimId = shared.getLongAnimIdOf(animIdData.objectId, animIdData.animPath)
+            self.longAnimIdToAnimIdMap[longAnimId] = animId
             self.usedAnimIds.add(animId)
     
+    def getAnimIdForLongAnimId(self, longAnimId):
+        animId = self.longAnimIdToAnimIdMap.get(longAnimId)
+        if animId == None:
+            animId = shared.getRandomAnimIdNotIn(self.usedAnimIds)
+            self.usedAnimIds.add(animId)
+            self.longAnimIdToAnimIdMap[longAnimId] = animId
+        return animId
+    
     def getAnimIdFor(self, objectId, animPath):
-        result = self.objectIdAnimPathToAnimIdMap.get((objectId, animPath))
-        if result == None:
-            result = shared.getRandomAnimIdNotIn(self.usedAnimIds)
-            self.usedAnimIds.add(result)
-            self.objectIdAnimPathToAnimIdMap[objectId, animPath] = result
-        return result
+        longAnimId = shared.getLongAnimIdOf(objectId, animPath)
+        return self.getAnimIdForLongAnimId(longAnimId)
     
     def createUniqueAnimId(self):
         self.generatedAnimIdCounter += 1 # increase first since we don't want to use 0 as animation id
@@ -661,9 +666,8 @@ class Exporter:
                 animIdsOfSTC = list()
                 
                 for animatedProperty in stc.animatedProperties: 
-                    objectId = animatedProperty.objectId
-                    animPath = animatedProperty.animPath
-                    animId = self.getAnimIdFor(objectId, animPath)
+                    longAnimId = animatedProperty.longAnimId
+                    animId = self.getAnimIdForLongAnimId(longAnimId)
                     if animId in remainingIds:
                         remainingIds.remove(animId)
                         animIdsOfSTC.append(animId)
