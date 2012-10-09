@@ -1521,8 +1521,7 @@ class BlenderToM3DataTransferer:
         animPathMinBorder = self.animPathPrefix + "minBorder"
         animPathMaxBorder = self.animPathPrefix +  "maxBorder"
         animPathRadius = self.animPathPrefix + "radius"
-        # any animation path can be used for obtaining the animId:
-        animId = self.exporter.getAnimIdFor(self.objectIdForAnimId, animPathMinBorder)
+        animId = self.exporter.boundingAnimId
 
         animRef = m3.BNDSV0AnimationReference()
         animRef.header = self.exporter.createNullAnimHeader(animId=animId, interpolationType=1)
