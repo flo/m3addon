@@ -73,6 +73,7 @@ class Exporter:
         self.initParticles(model)
         self.initForces(model)
         self.initLights(model)
+        self.initBoundings(model)
         self.initAttachmentPoints(model)
         self.prepareAnimationEndEvents()
         self.initWithPreparedAnimationData(model)
@@ -751,6 +752,10 @@ class Exporter:
             sds6Index = len(m3SequenceTransformationCollection.sds6)
             m3SequenceTransformationCollection.sds6.append(animData)
             animRef = 0x70000 + sds6Index
+        elif animDataType == m3.SDMBV0:
+            sdmbIndex = len(m3SequenceTransformationCollection.sdmb)
+            m3SequenceTransformationCollection.sdmb.append(animData)
+            animRef = 0xc0000 + sdmbIndex
         else:
             raise Exception("Can't handle animation data of type %s yet" % animDataType)
         m3SequenceTransformationCollection.animRefs.append(animRef)
@@ -882,6 +887,13 @@ class Exporter:
             shared.transferLight(transferer)
             model.lights.append(m3Light)
 
+    def initBoundings(self, model):
+        scene = self.scene
+        animPathPrefix = "m3_boundings."
+        m3Boundings = model.divisions[0].msec[0].boundingsAnimation
+        boundingsObject = scene.m3_boundings
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Boundings, blenderObject=boundingsObject, animPathPrefix=animPathPrefix, rootObject=self.scene)
+        shared.transferBoundings(transferer)
     
     def initAttachmentPoints(self, model):
         scene = self.scene
@@ -1174,16 +1186,16 @@ class Exporter:
     
     def createBoundings(self, minX=0.0, minY=0.0, minZ=0.0, maxX=0.0, maxY=0.0, maxZ=0.0, radius=0.0):
         boundings = m3.BNDSV0()
-        boundings.min = self.createVector3(minX, minY, minZ)
-        boundings.max = self.createVector3(maxX, maxY, maxZ)
+        boundings.minBorder = self.createVector3(minX, minY, minZ)
+        boundings.maxBorder = self.createVector3(maxX, maxY, maxZ)
         boundings.radius = radius
         return boundings
         
     def createAlmostEmptyBoundingsWithRadius(self, r):
         boundings = m3.BNDSV0()
-        boundings.min = self.createVector3(0.0,0.0,0.0)
+        boundings.minBorder = self.createVector3(0.0,0.0,0.0)
         epsilon = 9.5367431640625e-07
-        boundings.max = self.createVector3(epsilon, epsilon, epsilon)
+        boundings.maxBorder = self.createVector3(epsilon, epsilon, epsilon)
         boundings.radius = float(r)
         return boundings
 
@@ -1484,7 +1496,7 @@ class BlenderToM3DataTransferer:
             zValues = self.exporter.getNoneOrValuesFor(action, animPath, 2, frames)
             if (xValues != None) or (yValues != None) or (zValues != None):
                 if xValues == None:
-                    xValues = len(timeValuesInMS) * [currentBVector.x]
+                    xValues = len(timeValuesInMS) * [currentBVector.x] # TODO should be defaultValueX
                 if yValues == None:
                     yValues = len(timeValuesInMS) * [currentBVector.y]
                 if zValues == None:
@@ -1505,8 +1517,93 @@ class BlenderToM3DataTransferer:
                 animRef.header.animFlags = shared.animFlagsForAnimatedProperty
         #TODO Optimization: Remove keyframes that can be calculated by interpolation
         
+    def transferAnimatableBoundings(self):
+        animPathMinBorder = self.animPathPrefix + "minBorder"
+        animPathMaxBorder = self.animPathPrefix +  "maxBorder"
+        animPathRadius = self.animPathPrefix + "radius"
+        # any animation path can be used for obtaining the animId:
+        animId = self.exporter.getAnimIdFor(self.objectIdForAnimId, animPathMinBorder)
+
+        animRef = m3.BNDSV0AnimationReference()
+        animRef.header = self.exporter.createNullAnimHeader(animId=animId, interpolationType=1)
+        boundings =  self.blenderObject
         
-    
+        
+        defaultMinBorder = mathutils.Vector((0, 0, 0))
+        for i in range(3):
+            defaultMinBorder[i] = self.exporter.getDefaultValue(self.rootObject, animPathMinBorder, i, boundings.minBorder[i])
+        defaultMaxBorder = mathutils.Vector((0, 0, 0))
+        for i in range(3):
+            defaultMaxBorder[i] = self.exporter.getDefaultValue(self.rootObject, animPathMaxBorder, i, boundings.maxBorder[i])
+        defaultRadius = self.exporter.getDefaultValue(self.rootObject, animPathRadius, 0, boundings.radius)
+        m3DefaultBoundings = m3.BNDSV0()
+        m3DefaultBoundings.minBorder = defaultMinBorder
+        m3DefaultBoundings.maxBorder = defaultMaxBorder
+        m3DefaultBoundings.radius = defaultRadius
+        animRef.initValue = m3DefaultBoundings
+        animRef.nullValue = self.exporter.createBoundings()
+        for animation, action in self.animationActionTuples:
+            frames = set()
+            for i in range(3):
+                frames.update(self.exporter.getFramesFor(action, animPathMinBorder, i))
+            for i in range(3):
+                frames.update(self.exporter.getFramesFor(action, animPathMaxBorder, i))
+            frames.update(self.exporter.getFramesFor(action, animPathRadius, i))
+            frames = list(frames)
+            frames.sort()
+            timeValuesInMS = self.exporter.allFramesToMSValues(frames)
+            
+            
+            minBorderXValues = self.exporter.getNoneOrValuesFor(action, animPathMinBorder, 0, frames)
+            minBorderYValues = self.exporter.getNoneOrValuesFor(action, animPathMinBorder, 1, frames)
+            minBorderZValues = self.exporter.getNoneOrValuesFor(action, animPathMinBorder, 2, frames)
+            maxBorderXValues = self.exporter.getNoneOrValuesFor(action, animPathMaxBorder, 0, frames)
+            maxBorderYValues = self.exporter.getNoneOrValuesFor(action, animPathMaxBorder, 1, frames)
+            maxBorderZValues = self.exporter.getNoneOrValuesFor(action, animPathMaxBorder, 2, frames)
+            radiusValues = self.exporter.getNoneOrValuesFor(action, animPathRadius, 0, frames)
+            
+            isAnimated = False
+            isAnimated |= (minBorderXValues != None)
+            isAnimated |= (minBorderYValues != None)
+            isAnimated |= (minBorderZValues != None)
+            isAnimated |= (maxBorderXValues != None)
+            isAnimated |= (maxBorderYValues != None)
+            isAnimated |= (maxBorderZValues != None)
+            isAnimated |= (radiusValues != None)
+            if isAnimated:
+                if minBorderXValues == None:
+                    minBorderXValues = len(timeValuesInMS) * [defaultMinBorder.x]
+                if minBorderYValues == None:
+                    minBorderYValues = len(timeValuesInMS) * [defaultMinBorder.y]
+                if minBorderZValues == None:
+                    minBorderZValues = len(timeValuesInMS) * [defaultMinBorder.z]
+                if maxBorderXValues == None:
+                    maxBorderXValues = len(timeValuesInMS) * [defaultMaxBorder.x]
+                if maxBorderYValues == None:
+                    maxBorderYValues = len(timeValuesInMS) * [defaultMaxBorder.y]
+                if maxBorderZValues == None:
+                    maxBorderZValues = len(timeValuesInMS) * [defaultMaxBorder.z]
+                if radiusValues == None:
+                    radiusValues = len(timeValuesInMS) * [defaultRadius]
+                boundingsList = []
+                for (minX, minY, minZ, maxX, maxY, maxZ, radius) in zip(minBorderXValues, minBorderYValues, minBorderZValues, maxBorderXValues, maxBorderYValues, maxBorderZValues, radiusValues):
+                    b = m3.BNDSV0()
+                    b.minBorder = self.exporter.createVector3(minX, minY, minZ)
+                    b.maxBorder = self.exporter.createVector3(maxX, maxY, maxZ)
+                    b.radius =radius
+                    boundingsList.append(b)
+                
+                m3AnimBlock = m3.SDMBV0()
+                m3AnimBlock.frames = timeValuesInMS
+                m3AnimBlock.flags = 0
+                m3AnimBlock.fend = self.exporter.frameToMS(animation.exlusiveEndFrame)
+                m3AnimBlock.keys = boundingsList
+                
+                animIdToAnimDataMap = self.exporter.nameToAnimIdToAnimDataMap[animation.name]
+                animIdToAnimDataMap[animId] = m3AnimBlock
+                animRef.header.animFlags = shared.animFlagsForAnimatedProperty
+        
+
     def transferAnimatableVector2(self, fieldName):
         animPath = self.animPathPrefix + fieldName
         animId = self.exporter.getAnimIdFor(self.objectIdForAnimId, animPath)

@@ -95,8 +95,8 @@
                 Describes the rough shape of an object.
                 Center of bounding sphere =  (extend0 + extend1)/2
             </description>
-            <field name="min" type="VEC3V0" />
-            <field name="max" type="VEC3V0" />
+            <field name="minBorder" type="VEC3V0" />
+            <field name="maxBorder" type="VEC3V0" />
             <!-- bounding_sphere_center = (extend0 + extend1)/2-->
             <field name="radius" type="float" />
         </structure>

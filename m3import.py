@@ -314,6 +314,25 @@ class M3ToBlenderDataTransferer:
         defaultValue = animationReference.initValue
         self.importer.animateColor(ownerTypeScene, animPath, animId, defaultValue)
         
+        
+    def transferAnimatableBoundings(self):
+        animationReference = self.m3Object
+        animationHeader = animationReference.header
+        animId = animationHeader.animId
+        boundingsObject = self.blenderObject
+        animPathMinBorder = self.animPathPrefix + "minBorder"
+        animPathMaxBorder = self.animPathPrefix +  "maxBorder"
+        animPathRadius = self.animPathPrefix + "radius"
+        m3InitValue = animationReference.initValue
+        boundingsObject.minBorder = toBlenderVector3(m3InitValue.minBorder)
+        boundingsObject.maxBorder = toBlenderVector3(m3InitValue.maxBorder)
+        boundingsObject.radius = m3InitValue.radius
+        minBorderDefault = toBlenderVector3(m3InitValue.minBorder)
+        maxBorderDefault = toBlenderVector3(m3InitValue.maxBorder)
+        radiusDefault = m3InitValue.radius
+        self.importer.animateBoundings(ownerTypeScene, animPathMinBorder, animPathMaxBorder, animPathRadius, animId, minBorderDefault, maxBorderDefault, radiusDefault)
+
+
     def transferEnum(self, fieldName):
         value = str(getattr(self.m3Object, fieldName))
         setattr(self.blenderObject, fieldName, value)
@@ -352,6 +371,7 @@ class Importer:
         self.createLights()
         self.createAttachmentPoints()
         self.createMesh()
+        self.createBoundings()
         # init stcs of animations at last
         # when all animation properties are known
         self.initSTCsOfAnimations()
@@ -367,7 +387,7 @@ class Importer:
         animIdData = self.scene.m3_animation_ids.add()
         animIdData.animIdMinus2147483648 = animId - 2147483648
         animIdData.animPath = longAnimId
-    
+        
     def storeModelId(self):
         self.addAnimIdData(self.model.uniqueUnknownNumber, objectId=(shared.animObjectIdModel), animPath="")
 
@@ -739,9 +759,6 @@ class Importer:
                 raise Exception("Bone of camera '%s' had different name: '%s'" % (camera.name, m3Bone.name))
 
 
-    def createTightHitTest(self):
-        print("Loading the tight hit test object")
-
     def intShapeObject(self, blenderShapeObject, m3ShapeObject):
         transferer = M3ToBlenderDataTransferer(self, None, blenderObject=blenderShapeObject, m3Object=m3ShapeObject)
         shared.transferFuzzyHitTest(transferer)
@@ -765,7 +782,18 @@ class Importer:
         for index, m3FuzzyHitTest in enumerate(self.model.fuzzyHitTestObjects):
             fuzzyHitTest = scene.m3_fuzzy_hit_tests.add()
             self.intShapeObject(fuzzyHitTest, m3FuzzyHitTest)
-            
+    
+    def createBoundings(self):
+        scene = bpy.context.scene
+        if len(self.model.divisions) != 1 or len(self.model.divisions[0].msec) != 1:
+            raise Exception("Unsupported Model type: Model has more then one division or msec per division")
+        m3Boundings = self.model.divisions[0].msec[0].boundingsAnimation
+        boundingsObject = scene.m3_boundings
+        animPathPrefix = "m3_boundings."
+        transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=boundingsObject, m3Object=m3Boundings)
+        shared.transferBoundings(transferer)
+
+    
     def createParticleSystems(self):
         currentScene = bpy.context.scene
         print("Loading particle systems")
@@ -1236,6 +1264,9 @@ class Importer:
                 insertLinearKeyFrame(yCurve, frame, value.y)
                 insertLinearKeyFrame(zCurve, frame, value.z)
 
+
+
+
     def animateVector2(self, ownerType, path, animId, defaultValue):
         defaultAction = self.createOrGetDefaultAction(ownerType)
         xCurve = defaultAction.fcurves.new(path, 0)
@@ -1272,8 +1303,41 @@ class Importer:
                 insertLinearKeyFrame(greenCurve, frame, v[1])
                 insertLinearKeyFrame(blueCurve, frame, v[2])
                 insertLinearKeyFrame(alphaCurve, frame, v[3])
+                
+    def animateBoundings(self, ownerType, animPathMinBorder, animPathMaxBorder, animPathRadius, animId, minBorderDefault, maxBorderDefault, radiusDefault):
+        #Store default values in an action:
+        defaultAction = self.createOrGetDefaultAction(ownerType)
+        for i in range(3):
+            curve = defaultAction.fcurves.new(animPathMinBorder, i)
+            insertConstantKeyFrame(curve, 0, minBorderDefault[i])
+        for i in range(3):
+            curve = defaultAction.fcurves.new(animPathMaxBorder, i)
+            insertConstantKeyFrame(curve, 0, maxBorderDefault[i])
+        curve = defaultAction.fcurves.new(animPathRadius, 0)
+        insertConstantKeyFrame(curve, 0, radiusDefault)
 
-        
+        #Which path we pass to addAnimIdData does not matter,
+        # since they all would result in the same longAnimId (see getLongAnimIdOf):
+        self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=animPathMinBorder)
+        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
+            minXCurve = action.fcurves.new(animPathMinBorder, 0)
+            minYCurve = action.fcurves.new(animPathMinBorder, 1)
+            minZCurve = action.fcurves.new(animPathMinBorder, 2)
+            maxXCurve = action.fcurves.new(animPathMaxBorder, 0)
+            maxYCurve = action.fcurves.new(animPathMaxBorder, 1)
+            maxZCurve = action.fcurves.new(animPathMaxBorder, 2)
+            radiusCurve = action.fcurves.new(animPathRadius, 0)
+            
+            for frame, value in frameValuePairs(timeValueMap):
+                insertLinearKeyFrame(minXCurve, frame, value.minBorder.x)
+                insertLinearKeyFrame(minYCurve, frame, value.minBorder.y)
+                insertLinearKeyFrame(minZCurve, frame, value.minBorder.z)
+                insertLinearKeyFrame(maxXCurve, frame, value.maxBorder.x)
+                insertLinearKeyFrame(maxYCurve, frame, value.maxBorder.y)
+                insertLinearKeyFrame(maxZCurve, frame, value.maxBorder.z)
+                insertLinearKeyFrame(radiusCurve, frame, value.radius)
+                
+   
 def boneRotMatrix(head, tail, roll):
     """unused: python port of the Blender C Function vec_roll_to_mat3 """
     v = tail - head

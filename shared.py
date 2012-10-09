@@ -225,6 +225,8 @@ def determineDefaultActionFor(scene, actionOwnerName, actionOwnerType):
             return action
             
 def getLongAnimIdOf(objectId, animPath):
+    if objectId == animObjectIdScene and animPath.startswith("m3_boundings"):
+        return objectId + "m3_boundings"
     return objectId + animPath;
 
 
@@ -443,3 +445,7 @@ def transferLight(transferer):
     transferer.transferAnimatableFloat("unknown9")
     transferer.transferAnimatableFloat("hotSpot")
     transferer.transferAnimatableFloat("falloff")
+
+def transferBoundings(transferer):
+    transferer.transferAnimatableBoundings()
+
