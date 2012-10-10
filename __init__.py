@@ -278,17 +278,23 @@ def getAttribute(obj, curvePath, curveIndex):
 
 def handlePartileSystemIndexChanged(self, context):
     scene = context.scene
+    if scene.m3_particle_system_index == -1:
+        return
     particleSystem = scene.m3_particle_systems[scene.m3_particle_system_index]
     particleSystem.copyIndex = -1
     selectOrCreateBoneForPartileSystem(scene, particleSystem)
 
 def handleForceIndexChanged(self, context):
     scene = context.scene
+    if scene.m3_force_index == -1:
+        return
     force = scene.m3_forces[scene.m3_force_index]
     selectOrCreateBoneForForce(scene, force)
     
 def handleLightIndexChanged(self, context):
     scene = context.scene
+    if scene.m3_light_index == -1:
+        return
     light = scene.m3_lights[scene.m3_light_index]
     selectOrCreateBoneForLight(scene, light)
     
@@ -301,16 +307,17 @@ def handlePartileSystemCopyIndexChanged(self, context):
 
 def handleCameraIndexChanged(self, context):
     scene = context.scene
-    if scene.m3_camera_index >= 0:
-        camera = scene.m3_cameras[scene.m3_camera_index]
-        selectOrCreateBoneForCamera(scene, camera)
+    if scene.m3_camera_index == -1:
+        return
+    camera = scene.m3_cameras[scene.m3_camera_index]
+    selectOrCreateBoneForCamera(scene, camera)
 
 def handleFuzzyHitTestIndexChanged(self, context):
     scene = context.scene
-    if scene.m3_fuzzy_hit_test_index >= 0:
-        fuzzyHitTest = scene.m3_fuzzy_hit_tests[scene.m3_fuzzy_hit_test_index]
-        print(fuzzyHitTest.name)
-        selectOrCreateBoneForShapeObject(scene, fuzzyHitTest)
+    if scene.m3_fuzzy_hit_test_index == -1:
+        return
+    fuzzyHitTest = scene.m3_fuzzy_hit_tests[scene.m3_fuzzy_hit_test_index]
+    selectOrCreateBoneForShapeObject(scene, fuzzyHitTest)
 
 def iterateArmatureObjects(scene):
     for obj in scene.objects:
