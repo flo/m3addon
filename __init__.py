@@ -2261,7 +2261,7 @@ class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
         usedNames = set()
         for attachment_point in scene.m3_attachment_points:
             usedNames.add(attachment_point.name)
-        suggestedNames = ["Ref_Center", "Ref_Origin", "Ref_Overhead", "Ref_Target"]
+        suggestedNames = {"Ref_Center", "Ref_Origin", "Ref_Overhead", "Ref_Target"}
 
         for boneName in boneNameSet():
             if boneName.startswith("Ref_"):
