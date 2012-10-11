@@ -975,7 +975,18 @@
             <description></description>
             <field offset="0" name="unknown0" size="80" />
             <field offset="80" name="phshData" type="Reference" refTo="PHSHV1" />
-            <field offset="92" name="unknown1" size="12" />
+			<field offset="92" name="flags" type="uint32">
+				<bits>
+					<bit mask="0x1" name="collidable" />
+					<bit mask="0x2" name="walkable" />
+					<bit mask="0x4" name="stackable" />
+					<bit mask="0x8" name="simulate on collision" />
+					<bit mask="0x10" name="ignore local bodies" />
+					<bit mask="0x20" name="always exists" />
+					<bit mask="0x80" name="do not simulate" />
+				</bits>
+			</field>
+			<field offset="96" name="unknownAt96" size="8" />
         </structure>
         
         <structure name="SSGS" version="1" size="108" >
