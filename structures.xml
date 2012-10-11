@@ -960,16 +960,36 @@
             <field offset="84" name="unknownAt84" type="FloatAnimationReference" />
         </structure>
 
-        <structure name="PHSH" version="1" size="132" >
-            <description></description>
-            <field offset="0" name="unknown0" size="72" />
-            <field offset="72" name="unknown1" type="SmallReference" refTo="VEC3V0" />
-            <field offset="80" name="unknown2" size="16" />
-            <field offset="96" name="unknown4" type="SmallReference" refTo="U16_V0" />
-            <field offset="104" name="unknown5" size="4" />
-            <field offset="108" name="unknown6" type="SmallReference" refTo="VEC4V0" />
-            <field offset="116" name="unknown7" size="16" />
-        </structure>
+		<structure name="PHSH" version="1" size="132" >
+			<description>Physics shape data</description>
+			<field offset="0" name="unknownAt0" type="float" />
+			<field offset="4" name="unknownAt4" size="16" />
+			<field offset="20" name="unknownAt20" type="float" />
+			<field offset="24" name="unknownAt24" size="16" />
+			<field offset="40" name="unknownAt40" type="float" />
+			<field offset="44" name="unknownAt44" size="16" />
+			<field offset="60" name="unknownAt60" type="float" />
+			<field offset="64" name="unknownAt64" size="4" />
+			<!-- Shape Type:
+				0 = box
+				1 = sphere
+				2 = capsule
+				3 = cylinder
+				4 = convex hull
+				5 = mesh
+				6+ = invalid
+			-->
+			<field offset="68" name="shapeType" type="uint8" />
+			<field offset="69" name="unknownAt69" size="3" />
+			<field offset="72" name="vertices" type="SmallReference" refTo="VEC3V0" />
+			<field offset="80" name="unknownAt80" size="4" />
+			<field offset="84" name="unknownAt84" size="8" />
+			<field offset="92" name="unknownAt92" size="4" />
+			<field offset="96" name="faces" type="SmallReference" refTo="U16_V0" />
+			<field offset="104" name="unknownAt104" size="4" />
+			<field offset="108" name="unknownAt108" type="SmallReference" refTo="VEC4V0" />
+			<field offset="116" name="unknownAt116" size="16" />
+		</structure>
         
         <structure name="PHRB" version="2" size="104" >
             <description></description>
