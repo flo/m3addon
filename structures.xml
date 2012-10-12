@@ -960,95 +960,95 @@
             <field offset="84" name="unknownAt84" type="FloatAnimationReference" />
         </structure>
 
-		<structure name="PHSH" version="1" size="132" >
-			<description>Physics shape data</description>
-			<field offset="0" name="unknownAt0" type="float" />
-			<field offset="4" name="unknownAt4" size="16" />
-			<field offset="20" name="unknownAt20" type="float" />
-			<field offset="24" name="unknownAt24" size="16" />
-			<field offset="40" name="unknownAt40" type="float" />
-			<field offset="44" name="unknownAt44" size="16" />
-			<field offset="60" name="unknownAt60" type="float" />
-			<field offset="64" name="unknownAt64" size="4" />
-			<!-- Shape Type:
-				0 = box
-				1 = sphere
-				2 = capsule
-				3 = cylinder
-				4 = convex hull
-				5 = mesh
-				6+ = invalid
-			-->
-			<field offset="68" name="shapeType" type="uint8" />
-			<field offset="69" name="unknownAt69" size="3" />
-			<field offset="72" name="vertices" type="SmallReference" refTo="VEC3V0" />
-			<field offset="80" name="unknownAt80" size="4" />
-			<field offset="84" name="unknownAt84" size="8" />
-			<field offset="92" name="unknownAt92" size="4" />
-			<field offset="96" name="faces" type="SmallReference" refTo="U16_V0" />
-			<field offset="104" name="unknownAt104" size="4" />
-			<field offset="108" name="unknownAt108" type="SmallReference" refTo="VEC4V0" />
-			<field offset="116" name="unknownAt116" size="16" />
-		</structure>
+        <structure name="PHSH" version="1" size="132" >
+            <description>Physics shape data</description>
+            <field offset="0" name="unknownAt0" type="float" />
+            <field offset="4" name="unknownAt4" size="16" />
+            <field offset="20" name="unknownAt20" type="float" />
+            <field offset="24" name="unknownAt24" size="16" />
+            <field offset="40" name="unknownAt40" type="float" />
+            <field offset="44" name="unknownAt44" size="16" />
+            <field offset="60" name="unknownAt60" type="float" />
+            <field offset="64" name="unknownAt64" size="4" />
+            <!-- Shape Type:
+                0 = box
+                1 = sphere
+                2 = capsule
+                3 = cylinder
+                4 = convex hull
+                5 = mesh
+                6+ = invalid
+            -->
+            <field offset="68" name="shapeType" type="uint8" />
+            <field offset="69" name="unknownAt69" size="3" />
+            <field offset="72" name="vertices" type="SmallReference" refTo="VEC3V0" />
+            <field offset="80" name="unknownAt80" size="4" />
+            <field offset="84" name="unknownAt84" size="8" />
+            <field offset="92" name="unknownAt92" size="4" />
+            <field offset="96" name="faces" type="SmallReference" refTo="U16_V0" />
+            <field offset="104" name="unknownAt104" size="4" />
+            <field offset="108" name="unknownAt108" type="SmallReference" refTo="VEC4V0" />
+            <field offset="116" name="unknownAt116" size="16" />
+        </structure>
         
         <structure name="PHRB" version="2" size="104" >
             <description></description>
-			<field offset="0" name="unknownAt0" size="8" />
-			<field offset="8" name="unknownAt8" size="4" /> <!-- 0xcdcc4c3f Same for all models? -->
-			<field offset="12" name="unknownAt12" size="12" />
-			<field offset="24" name="unknownAt24" size="4" />
-			<field offset="28" name="unknownAt28" size="12" />
-			<field offset="40" name="unknownAt40" size="4" />
-			<field offset="44" name="unknownAt44" size="12" />
-			<field offset="56" name="unknownAt56" size="4" />
-			<field offset="60" name="boneLookup" type="uint16" />
-			<field offset="62" name="boneLookupUnused" type="uint16" /> <!-- Matches boneLookup, but doesn't seem to be used? -->
-			<field offset="64" name="unknownAt64" size="16" />
+            <field offset="0" name="unknownAt0" size="8" />
+            <field offset="8" name="unknownAt8" size="4" /> <!-- 0xcdcc4c3f Same for all models? -->
+            <field offset="12" name="unknownAt12" size="12" />
+            <field offset="24" name="unknownAt24" size="4" />
+            <field offset="28" name="unknownAt28" size="12" />
+            <field offset="40" name="unknownAt40" size="4" />
+            <field offset="44" name="unknownAt44" size="12" />
+            <field offset="56" name="unknownAt56" size="4" />
+            <field offset="60" name="boneLookup" type="uint16" />
+            <field offset="62" name="boneLookupUnused" type="uint16" /> <!-- Matches boneLookup, but doesn't seem to be used? -->
+            <field offset="64" name="unknownAt64" size="16" />
             <field offset="80" name="phshData" type="Reference" refTo="PHSHV1" />
-			<field offset="92" name="flags" type="uint32">
-				<bits>
-					<bit mask="0x1" name="collidable" />
-					<bit mask="0x2" name="walkable" />
-					<bit mask="0x4" name="stackable" />
-					<bit mask="0x8" name="simulate on collision" />
-					<bit mask="0x10" name="ignore local bodies" />
-					<bit mask="0x20" name="always exists" />
-					<bit mask="0x80" name="do not simulate" />
-				</bits>
-			</field>
-			<field offset="96" name="localForces" type="uint16">
-				<bits>
-					<bit mask="0x1" name="1" />
-					<bit mask="0x2" name="2" />
-					<bit mask="0x4" name="3" />
-					<bit mask="0x8" name="4" />
-					<bit mask="0x10" name="5" />
-					<bit mask="0x20" name="6" />
-					<bit mask="0x40" name="7" />
-					<bit mask="0x80" name="8" />
-					<bit mask="0x100" name="9" />
-					<bit mask="0x200" name="10" />
-					<bit mask="0x400" name="11" />
-					<bit mask="0x800" name="12" />
-					<bit mask="0x1000" name="13" />
-					<bit mask="0x2000" name="14" />
-					<bit mask="0x4000" name="15" />
-					<bit mask="0x8000" name="16" />
-				</bits>
-			</field>
-			<field offset="98" name="worldForces" type="uint16">
-				<bits>
-					<bit mask="0x1" name="wind" />
-					<bit mask="0x2" name="explosion" />
-					<bit mask="0x4" name="energy" />
-					<bit mask="0x8" name="blood" />
-					<bit mask="0x10" name="magnetic" />
-					<bit mask="0x20" name="grass" />
-					<bit mask="0x40" name="brush" />
-					<bit mask="0x80" name="trees" />
-				</bits>
-			</field>
-			<field offset="100" name="priority" type="uint32" />
+            <field offset="92" name="flags" type="uint32">
+                <bits>
+                    <bit mask="0x1" name="collidable" />
+                    <bit mask="0x2" name="walkable" />
+                    <bit mask="0x4" name="stackable" />
+                    <bit mask="0x8" name="simulate on collision" />
+                    <bit mask="0x10" name="ignore local bodies" />
+                    <bit mask="0x20" name="always exists" />
+                    <bit mask="0x80" name="do not simulate" />
+                </bits>
+            </field>
+            <field offset="96" name="localForces" type="uint16">
+                <bits>
+                    <bit mask="0x1" name="1" />
+                    <bit mask="0x2" name="2" />
+                    <bit mask="0x4" name="3" />
+                    <bit mask="0x8" name="4" />
+                    <bit mask="0x10" name="5" />
+                    <bit mask="0x20" name="6" />
+                    <bit mask="0x40" name="7" />
+                    <bit mask="0x80" name="8" />
+                    <bit mask="0x100" name="9" />
+                    <bit mask="0x200" name="10" />
+                    <bit mask="0x400" name="11" />
+                    <bit mask="0x800" name="12" />
+                    <bit mask="0x1000" name="13" />
+                    <bit mask="0x2000" name="14" />
+                    <bit mask="0x4000" name="15" />
+                    <bit mask="0x8000" name="16" />
+                </bits>
+            </field>
+            <field offset="98" name="worldForces" type="uint16">
+                <bits>
+                    <bit mask="0x1" name="wind" />
+                    <bit mask="0x2" name="explosion" />
+                    <bit mask="0x4" name="energy" />
+                    <bit mask="0x8" name="blood" />
+                    <bit mask="0x10" name="magnetic" />
+                    <bit mask="0x20" name="grass" />
+                    <bit mask="0x40" name="brush" />
+                    <bit mask="0x80" name="trees" />
+                </bits>
+            </field>
+            <field offset="100" name="priority" type="uint32" />
         </structure>
         
         <structure name="SSGS" version="1" size="108" >
