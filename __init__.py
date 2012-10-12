@@ -106,6 +106,20 @@ def handleForceTypeOrBoneSuffixChange(self, context):
         if bone != None:
             bone.name = newBoneName
     self.oldBoneSuffix = self.boneSuffix
+
+def handleRigidBodyBoneSuffixChange(self, context):
+    scene = context.scene
+    
+    self.name = "%s" % (self.boneSuffix)
+    
+    if self.boneSuffix != self.oldBoneSuffix:
+        oldBoneName = shared.boneNameForRigidBody(self.oldBoneSuffix)
+        newBoneName = shared.boneNameForRigidBody(self.boneSuffix)
+        bone, armatureObject = findBoneWithArmatureObject(scene, oldBoneName)
+        if bone != None:
+            bone.name = newBoneName
+    
+    self.oldBoneSuffix = self.boneSuffix
     
 def handleLightTypeOrBoneSuffixChange(self, context):
     scene = context.scene
@@ -291,6 +305,13 @@ def handleForceIndexChanged(self, context):
     force = scene.m3_forces[scene.m3_force_index]
     selectOrCreateBoneForForce(scene, force)
     
+def handleRigidBodyIndexChanged(self, context):
+    scene = context.scene
+    if scene.m3_rigid_body_index == -1:
+        return
+    rigid_body = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+    selectOrCreateBoneForRigidBody(scene, rigid_body)
+
 def handleLightIndexChanged(self, context):
     scene = context.scene
     if scene.m3_light_index == -1:
@@ -348,6 +369,10 @@ def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
     
 def selectOrCreateBoneForForce(scene, force):
     boneName = shared.boneNameForForce(force.boneSuffix)
+    selectOrCreateBone(scene, boneName)
+
+def selectOrCreateBoneForRigidBody(scene, rigid_body):
+    boneName = shared.boneNameForRigidBody(rigid_body.boneSuffix)
     selectOrCreateBone(scene, boneName)
     
 def selectOrCreateBoneForLight(scene, light):
@@ -742,6 +767,12 @@ class M3Force(bpy.types.PropertyGroup):
     forceRange = bpy.props.FloatProperty(default=1.0, name="forceRange", options={"ANIMATABLE"})
     unknownAt64 = bpy.props.FloatProperty(default=0.05, name="unknownAt64", options={"ANIMATABLE"})
     unknownAt84 = bpy.props.FloatProperty(default=0.05, name="unknownAt84", options={"ANIMATABLE"})
+
+class M3RigidBody(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(options=set())
+    boneSuffix = bpy.props.StringProperty(options=set(), update=handleRigidBodyBoneSuffixChange, default="Rigid Body")
+    oldBoneSuffix = bpy.props.StringProperty(options=set())
+    # TODO properties here...
 
 class M3AttachmentPoint(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", options=set())
@@ -1336,8 +1367,32 @@ class ForcePanel(bpy.types.Panel):
             layout.prop(force, "forceRange", text="Range")
             layout.prop(force, "unknownAt64", text="Unknown 1")
             layout.prop(force, "unknownAt84", text="Unknown 2")
-       
-       
+
+class RigidBodyPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_rigid_bodies"
+    bl_label = "M3 Rigid Bodies"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        col.template_list(scene, "m3_rigid_bodies", scene, "m3_rigid_body_index", rows=2)
+        
+        col = row.column(align=True)
+        col.operator("m3.rigid_bodies_add", icon='ZOOMIN', text="")
+        col.operator("m3.rigid_bodies_remove", icon='ZOOMOUT', text="")
+        currentIndex = scene.m3_rigid_body_index
+        if currentIndex >= 0 and currentIndex < len(scene.m3_rigid_bodies):
+            rigid_body = scene.m3_rigid_bodies[currentIndex]
+            layout.separator()
+            layout.prop(rigid_body, 'boneSuffix', text="Name")
+            # TODO: rigid body options here...
+
 class LightPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_lights"
     bl_label = "M3 Lights"
@@ -2198,8 +2253,49 @@ class M3_FORCES_OT_remove(bpy.types.Operator):
                 scene.m3_forces.remove(scene.m3_force_index)
                 scene.m3_force_index-= 1
         return{'FINISHED'}
+
+class M3_RIGID_BODIES_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.rigid_bodies_add'
+    bl_label       = "Add Rigid Body"
+    bl_description = "Adds a rigid body for export to the m3 model format"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        rigid_body = scene.m3_rigid_bodies.add()
+        rigid_body.boneSuffix = self.findUnusedName(scene)
         
+        handleRigidBodyBoneSuffixChange(rigid_body, context)
+        scene.m3_rigid_body_index = len(scene.m3_rigid_bodies)-1
         
+        selectOrCreateBoneForRigidBody(scene, rigid_body)
+        return{'FINISHED'}
+    
+    def findUnusedName(self, scene):
+        usedNames = set()
+        for rigid_body in scene.m3_rigid_bodies:
+            usedNames.add(rigid_body.boneSuffix)
+        unusedName = None
+        counter = 1
+        while unusedName == None:
+            suggestedName = "%d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName
+
+class M3_RIGID_BODIES_OT_remove(bpy.types.Operator):
+    bl_idname = 'm3.rigid_bodies_remove'
+    bl_label = "Remove M3 Rigid Body"
+    bl_description = "Removes the active M3 rigid body (and the M3 Physics Shapes it contains)"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_rigid_body_index >= 0:
+            scene.m3_rigid_bodies.remove(scene.m3_rigid_body_index)
+            scene.m3_rigid_body_index -= 1
+            # TODO: remove shapes here...?
+            return {'FINISHED'}
+
 class M3_LIGHTS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.lights_add'
     bl_label       = "Add Light"
@@ -2444,6 +2540,8 @@ def register():
     bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(options=set(), update=handlePartileSystemIndexChanged)
     bpy.types.Scene.m3_forces = bpy.props.CollectionProperty(type=M3Force)
     bpy.types.Scene.m3_force_index = bpy.props.IntProperty(options=set(), update=handleForceIndexChanged)
+    bpy.types.Scene.m3_rigid_bodies = bpy.props.CollectionProperty(type=M3RigidBody)
+    bpy.types.Scene.m3_rigid_body_index = bpy.props.IntProperty(options=set(), update=handleRigidBodyIndexChanged)
     bpy.types.Scene.m3_lights = bpy.props.CollectionProperty(type=M3Light)
     bpy.types.Scene.m3_light_index = bpy.props.IntProperty(options=set(), update=handleLightIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
