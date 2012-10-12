@@ -962,13 +962,7 @@
 
         <structure name="PHSH" version="1" size="132" >
             <description>Physics shape data</description>
-            <field offset="0" name="unknownAt0" type="float" />
-            <field offset="4" name="unknownAt4" size="16" />
-            <field offset="20" name="unknownAt20" type="float" />
-            <field offset="24" name="unknownAt24" size="16" />
-            <field offset="40" name="unknownAt40" type="float" />
-            <field offset="44" name="unknownAt44" size="16" />
-            <field offset="60" name="unknownAt60" type="float" />
+            <field offset="0" name="transform" type="Matrix44" />
             <field offset="64" name="unknownAt64" size="4" />
             <!-- Shape Type:
                 0 = box
@@ -987,20 +981,31 @@
             <field offset="92" name="unknownAt92" size="4" />
             <field offset="96" name="faces" type="SmallReference" refTo="U16_V0" />
             <field offset="104" name="unknownAt104" size="4" />
-            <field offset="108" name="unknownAt108" type="SmallReference" refTo="VEC4V0" />
-            <field offset="116" name="unknownAt116" size="16" />
+            <!-- Bounding planes used for convex hull shapes? (may include extra radius value?) -->
+            <field offset="108" name="planeEquations" type="SmallReference" refTo="VEC4V0" />
+            <field offset="116" name="unknownAt116" size="4" />
+            <field offset="120" name="size0" type="float" /> <!-- box x-size / capsule radius (/ cylinder radius / sphere radius?) -->
+            <field offset="124" name="size1" type="float" /> <!-- box y-size / capsule length (/ cylinder length?) -->
+            <field offset="128" name="size2" type="float" /> <!-- box z-size -->
         </structure>
         
         <structure name="PHRB" version="2" size="104" >
             <description></description>
-            <field offset="0" name="unknownAt0" size="8" />
-            <field offset="8" name="unknownAt8" size="4" /> <!-- 0xcdcc4c3f Same for all models? -->
-            <field offset="12" name="unknownAt12" size="12" />
-            <field offset="24" name="unknownAt24" size="4" />
-            <field offset="28" name="unknownAt28" size="12" />
-            <field offset="40" name="unknownAt40" size="4" />
-            <field offset="44" name="unknownAt44" size="12" />
-            <field offset="56" name="unknownAt56" size="4" />
+            <field offset="0" name="unknownAt0" type="float" />
+            <field offset="4" name="unknownAt4" type="float" />
+            <field offset="8" name="unknownAt8" type="float" /> <!-- 0.8 in all models? -->
+            <field offset="12" name="unknownAt12" type="float" />
+            <field offset="16" name="unknownAt16" type="float" />
+            <field offset="20" name="unknownAt20" type="float" />
+            <field offset="24" name="unknownAt24" type="float" />
+            <field offset="28" name="unknownAt28" type="float" />
+            <field offset="32" name="unknownAt32" type="float" />
+            <field offset="36" name="unknownAt36" type="float" />
+            <field offset="40" name="unknownAt40" type="float" />
+            <field offset="44" name="unknownAt44" type="float" />
+            <field offset="48" name="unknownAt48" type="float" />
+            <field offset="52" name="unknownAt52" type="float" />
+            <field offset="56" name="unknownAt56" type="float" />
             <field offset="60" name="boneLookup" type="uint16" />
             <field offset="62" name="boneLookupUnused" type="uint16" /> <!-- Matches boneLookup, but doesn't seem to be used? -->
             <field offset="64" name="unknownAt64" size="16" />
