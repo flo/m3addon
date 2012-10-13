@@ -990,7 +990,7 @@
         </structure>
         
         <structure name="PHRB" version="2" size="104" >
-            <description></description>
+            <description>Rigged Body</description>
             <field offset="0" name="unknownAt0" type="float" />
             <field offset="4" name="unknownAt4" type="float" />
             <field offset="8" name="unknownAt8" type="float" /> <!-- 0.8 in all models? -->
@@ -1009,7 +1009,7 @@
             <field offset="60" name="boneLookup" type="uint16" />
             <field offset="62" name="boneLookupUnused" type="uint16" /> <!-- Matches boneLookup, but doesn't seem to be used? -->
             <field offset="64" name="unknownAt64" size="16" />
-            <field offset="80" name="phshData" type="Reference" refTo="PHSHV1" />
+            <field offset="80" name="shapes" type="Reference" refTo="PHSHV1" />
             <field offset="92" name="flags" type="uint32">
                 <bits>
                     <bit mask="0x1" name="collidable" />
@@ -1314,7 +1314,7 @@
             <field offset="456" name="wrpData" type="Reference" />
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
             <field name="unknownMaybeRef1" type="Reference" />
-            <field offset="480" name="phrbData" type="Reference" refTo="PHRBV2"/>
+            <field offset="480" name="riggedBodies" type="Reference" refTo="PHRBV2"/>
             <!-- it grew in size between version from 3x2 to 3x3 which indicates a reference-->
             <field name="unknownMaybeRef2" type="Reference" />
             <field name="unknownMaybeRef3" type="Reference" />
