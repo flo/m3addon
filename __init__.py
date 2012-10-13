@@ -1390,11 +1390,42 @@ class RigidBodyPanel(bpy.types.Panel):
         currentIndex = scene.m3_rigid_body_index
         if currentIndex >= 0 and currentIndex < len(scene.m3_rigid_bodies):
             rigid_body = scene.m3_rigid_bodies[currentIndex]
+            #TODO: improve layout
             layout.separator()
             layout.prop(rigid_body, 'name', text="Name")
             # TODO: is there a "bone selection" type list-box we could use?
             layout.prop(rigid_body, 'boneName', text="Bone")
-            # TODO: rigid body options here...
+            
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Collision Flags:")
+            sub.prop(rigid_body, 'collidable', text="Collidable")
+            sub.prop(rigid_body, 'walkable', text="Walkable")
+            sub.prop(rigid_body, 'stackable', text="Stackable")
+            sub.prop(rigid_body, 'simulateOnCollision', text="Simulate On Collision")
+            sub.prop(rigid_body, 'ignoreLocalBodies', text="Ignore Local Bodies")
+            sub.prop(rigid_body, 'alwaysExists', text="Always Exists")
+            sub.prop(rigid_body, 'doNotSimulate', text="Do Not Simulate")
+            
+            layout.prop(rigid_body, 'localForces', text="Local Forces")
+            
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="World Forces:")
+            sub.prop(rigid_body, 'wind', text="Wind")
+            sub.prop(rigid_body, 'explosion', text="Explosion")
+            sub.prop(rigid_body, 'energy', text="Energy")
+            sub.prop(rigid_body, 'blood', text="Blood")
+            sub.prop(rigid_body, 'magnetic', text="Magnetic")
+            sub.prop(rigid_body, 'grass', text="Grass")
+            sub.prop(rigid_body, 'brush', text="Brush")
+            sub.prop(rigid_body, 'trees', text="Trees")
+            
+            split = layout.split()
+            sub = split.column()
+            sub.prop(rigid_body, 'priority', text="Priority")
 
 class LightPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_lights"
