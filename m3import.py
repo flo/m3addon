@@ -368,6 +368,7 @@ class Importer:
         self.initTightHitTest()
         self.createParticleSystems()
         self.createForces()
+        self.createRigidBodies()
         self.createLights()
         self.createAttachmentPoints()
         self.createMesh()
@@ -844,7 +845,24 @@ class Importer:
             else:
                 print("Warning: A force was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ForcePrefix))
                 force.boneSuffix = fullBoneName
-                
+    
+    def createRigidBodies(self):
+        currentScene = bpy.context.scene
+        print("Loading rigid bodies")
+        index = 0
+        for rigidBodyIndex, m3RigidBody in enumerate(self.model.rigidBodies):
+            rigid_body = currentScene.m3_rigid_bodies.add()
+            animPathPrefix = "m3_rigid_bodies[%s]." % rigidBodyIndex
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=rigid_body, m3Object=m3RigidBody)
+            shared.transferRigidBody(transferer)
+            boneEntry = self.model.bones[m3RigidBody.boneIndex]
+            fullBoneName = boneEntry.name
+            if fullBoneName.startswith(shared.star2RigidBodyPrefix):
+                rigid_body.boneSuffix = fullBoneName[len(shared.star2RigidBodyPrefix):]
+            else:
+                # no warning as bones don't necessarily start with the prefix
+                rigid_body.boneSuffix = fullBoneName
+    
     def createLights(self):
         currentScene = bpy.context.scene
         print("Loading lights")

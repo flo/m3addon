@@ -72,6 +72,7 @@ class Exporter:
         self.initTighHitTest(model)
         self.initParticles(model)
         self.initForces(model)
+        self.initRigidBodies(model)
         self.initLights(model)
         self.initBoundings(model)
         self.initAttachmentPoints(model)
@@ -870,7 +871,22 @@ class Exporter:
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Force, blenderObject=force, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferForce(transferer)
             model.forces.append(m3Force)
-            
+    
+    def initRigidBodies(self, model):
+        scene = self.scene
+        for rigidBodyIndex, rigidBody in enumerate(scene.m3_rigid_bodies):
+            boneSuffix = rigidBody.boneSuffix
+            boneName = shared.boneNameForRigidBody(boneSuffix)
+            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+            if boneIndex == None:
+                boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+            m3RigidBody = m3.PHRBV2()
+            m3RigidBody.boneIndex = boneIndex
+            animPathPrefix = "m3_rigid_bodies[%s]." % rigidBodyIndex
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3RigidBody, blenderObject=rigidBody, animPathPrefix=animPathPrefix, rootObject=self.scene)
+            shared.transferRigidBody(transferer)
+            model.rigidBodies.append(m3RigidBody)
+    
     def initLights(self, model):
         scene = self.scene
         for lightIndex, light in enumerate(scene.m3_lights):
