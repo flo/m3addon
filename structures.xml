@@ -973,7 +973,9 @@
                 5 = mesh
                 6+ = invalid
             -->
-            <field offset="68" name="shapeType" type="uint16" />
+            <field offset="68" name="shapeType" type="uint8" />
+            <!-- Is not always 0. It's propably the unintialized part of shapeType: -->
+            <field offset="69" name="unknownAt69" type="uint8" default-value="0" />
             <field offset="70" name="unknownAt70" type="uint16" default-value="0" />
             <field offset="72" name="vertices" type="SmallReference" refTo="VEC3V0" />
             <!-- Belongs to the previous reference and seems not be get properly initialized with 0: -->
