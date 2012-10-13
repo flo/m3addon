@@ -938,7 +938,9 @@ class Importer:
                 vertexPositions = []
                 nextNewVertexIndex = 0
                 oldVertexIndexToNewVertexIndexMap = {}
+                newVertexIndexToOldVertexIndexMap = {}
                 vertexIdTupleToNewIndexMap = {}
+                
                 for vertexIndex in regionVertexIndices:
                     m3Vertex = m3Vertices[vertexIndex]
                     v = m3Vertex
@@ -951,6 +953,7 @@ class Importer:
                         vertexPositions.append(position)
                         vertexIdTupleToNewIndexMap[idTuple] = newIndex
                     oldVertexIndexToNewVertexIndexMap[vertexIndex] = newIndex
+                    newVertexIndexToOldVertexIndexMap[newIndex] = vertexIndex
                 
                 # since vertices got merged, the indices of the faces aren't correct anymore.
                 # the old face indices however are still later required to figure out
@@ -968,15 +971,23 @@ class Importer:
 
                 mesh.tessfaces.add(len(facesWithNewIndices))
                 mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(facesWithNewIndices))
-
+                
+                def getUVsFor(newVertexIndex, vertexUVAttribute):
+                    oldVertexIndex = newVertexIndexToOldVertexIndexMap[newVertexIndex]
+                    return toBlenderUVCoordinate(getattr(m3Vertices[oldVertexIndex],vertexUVAttribute))
+                
                 for vertexUVAttribute in ["uv0", "uv1", "uv2", "uv3"]:
                     if vertexUVAttribute in vertexClass.fieldToTypeInfoMap: 
                         uvLayer = mesh.tessface_uv_textures.new()
-                        for faceIndex, face in enumerate(facesWithOldIndices):
+                        for faceIndex in range(len(facesWithNewIndices)):
+                            tessFace = mesh.tessfaces[faceIndex]
                             faceUV = uvLayer.data[faceIndex]
-                            faceUV.uv1 = toBlenderUVCoordinate(getattr(m3Vertices[face[0]],vertexUVAttribute))
-                            faceUV.uv2 = toBlenderUVCoordinate(getattr(m3Vertices[face[1]],vertexUVAttribute))
-                            faceUV.uv3 = toBlenderUVCoordinate(getattr(m3Vertices[face[2]],vertexUVAttribute))
+                            # It's necessary to take vertex indices from tessface
+                            # Since the vertex indices may get reordered within a triangle
+                            faceUV.uv1 = getUVsFor(tessFace.vertices[0], vertexUVAttribute)
+                            faceUV.uv2 = getUVsFor(tessFace.vertices[1], vertexUVAttribute)
+                            faceUV.uv3 = getUVsFor(tessFace.vertices[2], vertexUVAttribute)
+
 
                 mesh.update(calc_edges=True)
                 
