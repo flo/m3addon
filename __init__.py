@@ -772,6 +772,7 @@ class M3RigidBody(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleRigidBodyBoneSuffixChange, default="Rigid Body")
     oldBoneSuffix = bpy.props.StringProperty(options=set())
+    unknownAt0 = bpy.props.FloatProperty(default=5.0, name="unknownAt0", options=set())
     # TODO properties here...
 
 class M3AttachmentPoint(bpy.types.PropertyGroup):

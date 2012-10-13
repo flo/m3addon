@@ -991,26 +991,26 @@
         
         <structure name="PHRB" version="2" size="104" >
             <description></description>
-            <field offset="0" name="unknownAt0" type="float" />
-            <field offset="4" name="unknownAt4" type="float" />
-            <field offset="8" name="unknownAt8" type="float" /> <!-- 0.8 in all models? -->
-            <field offset="12" name="unknownAt12" type="float" />
-            <field offset="16" name="unknownAt16" type="float" />
-            <field offset="20" name="unknownAt20" type="float" />
-            <field offset="24" name="unknownAt24" type="float" />
-            <field offset="28" name="unknownAt28" type="float" />
-            <field offset="32" name="unknownAt32" type="float" />
-            <field offset="36" name="unknownAt36" type="float" />
-            <field offset="40" name="unknownAt40" type="float" />
-            <field offset="44" name="unknownAt44" type="float" />
-            <field offset="48" name="unknownAt48" type="float" />
-            <field offset="52" name="unknownAt52" type="float" />
-            <field offset="56" name="unknownAt56" type="float" />
+            <field offset="0" name="unknownAt0" type="float" default-value="5.0" />
+            <field offset="4" name="unknownAt4" type="float" default-value="4.0" />
+            <field offset="8" name="unknownAt8" type="float" default-value="0.8" /> <!-- 0.8 in all models? -->
+            <field offset="12" name="unknownAt12" type="float" default-value="0.0" />
+            <field offset="16" name="unknownAt16" type="float" default-value="0.0" />
+            <field offset="20" name="unknownAt20" type="float" default-value="0.0" />
+            <field offset="24" name="unknownAt24" type="float" default-value="0.0" />
+            <field offset="28" name="unknownAt28" type="float" default-value="0.0" />
+            <field offset="32" name="unknownAt32" type="float" default-value="0.0" />
+            <field offset="36" name="unknownAt36" type="float" default-value="0.0" />
+            <field offset="40" name="unknownAt40" type="float" default-value="0.0" />
+            <field offset="44" name="unknownAt44" type="float" default-value="0.0" />
+            <field offset="48" name="unknownAt48" type="float" default-value="0.0" />
+            <field offset="52" name="unknownAt52" type="float" default-value="0.0" />
+            <field offset="56" name="unknownAt56" type="float" default-value="0.0" />
             <field offset="60" name="boneIndex" type="uint16" />
-            <field offset="62" name="boneIndexUnused" type="uint16" /> <!-- Matches boneLookup, but doesn't seem to be used? -->
-            <field offset="64" name="unknownAt64" size="16" />
+            <field offset="62" name="boneIndexUnused" type="uint16" default-value="0x0" /> <!-- Matches boneLookup, but doesn't seem to be used? -->
+            <field offset="64" name="unknownAt64" size="16" default-value="0x0" />
             <field offset="80" name="phshData" type="Reference" refTo="PHSHV1" />
-            <field offset="92" name="flags" type="uint32">
+            <field offset="92" name="flags" type="uint32" default-value="0x1">
                 <bits>
                     <bit mask="0x1" name="collidable" />
                     <bit mask="0x2" name="walkable" />
@@ -1021,7 +1021,7 @@
                     <bit mask="0x80" name="do not simulate" />
                 </bits>
             </field>
-            <field offset="96" name="localForces" type="uint16">
+            <field offset="96" name="localForces" type="uint16" default-value="0x0">
                 <bits>
                     <bit mask="0x1" name="1" />
                     <bit mask="0x2" name="2" />
@@ -1041,7 +1041,7 @@
                     <bit mask="0x8000" name="16" />
                 </bits>
             </field>
-            <field offset="98" name="worldForces" type="uint16">
+            <field offset="98" name="worldForces" type="uint16" default-value="0x0">
                 <bits>
                     <bit mask="0x1" name="wind" />
                     <bit mask="0x2" name="explosion" />
@@ -1053,7 +1053,7 @@
                     <bit mask="0x80" name="trees" />
                 </bits>
             </field>
-            <field offset="100" name="priority" type="uint32" />
+            <field offset="100" name="priority" type="uint32" default-value="0" />
         </structure>
         
         <structure name="SSGS" version="1" size="108" >
