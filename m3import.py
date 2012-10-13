@@ -856,12 +856,8 @@ class Importer:
             transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=rigid_body, m3Object=m3RigidBody)
             shared.transferRigidBody(transferer)
             boneEntry = self.model.bones[m3RigidBody.boneIndex]
-            fullBoneName = boneEntry.name
-            if fullBoneName.startswith(shared.star2RigidBodyPrefix):
-                rigid_body.boneSuffix = fullBoneName[len(shared.star2RigidBodyPrefix):]
-            else:
-                # no warning as bones don't necessarily start with the prefix
-                rigid_body.boneSuffix = fullBoneName
+            rigid_body.name = boneEntry.name
+            rigid_body.boneName = boneEntry.name
     
     def createLights(self):
         currentScene = bpy.context.scene

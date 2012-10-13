@@ -59,7 +59,6 @@ animFlagsForAnimatedProperty = 6
 
 star2ParticlePrefix = "Star2Part"
 star2ForcePrefix = "Star2Force"
-star2RigidBodyPrefix = "Havok "
 animObjectIdModel = "MODEL"
 animObjectIdArmature = "ARMATURE"
 animObjectIdScene = "SCENE"
@@ -75,9 +74,6 @@ def boneNameForPartileSystem(boneSuffix):
     
 def boneNameForForce(boneSuffix):
     return toValidBoneName(star2ForcePrefix + boneSuffix)
-
-def boneNameForRigidBody(boneSuffix):
-    return toValidBoneName(star2RigidBodyPrefix + boneSuffix)
 
 def boneNameForLight(boneSuffix, lightType):
     lightPrefix = lightPrefixMap.get(lightType)

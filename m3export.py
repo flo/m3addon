@@ -875,8 +875,7 @@ class Exporter:
     def initRigidBodies(self, model):
         scene = self.scene
         for rigidBodyIndex, rigidBody in enumerate(scene.m3_rigid_bodies):
-            boneSuffix = rigidBody.boneSuffix
-            boneName = shared.boneNameForRigidBody(boneSuffix)
+            boneName = rigidBody.boneName
             boneIndex = self.boneNameToBoneIndexMap.get(boneName)
             if boneIndex == None:
                 boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
