@@ -336,6 +336,10 @@ def transferForce(transferer):
     transferer.transferAnimatableFloat("unknownAt64")
     transferer.transferAnimatableFloat("unknownAt84")
 
+def transferRigidBody(transferer):
+    transferer.transferFloat("unknownAt0")
+    # TODO: transfer properties here...
+
 def transferStandardMaterial(transferer):
     transferer.transferString("name")
     transferer.transferBit("flags", "unfogged")
