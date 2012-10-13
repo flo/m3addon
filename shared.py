@@ -334,7 +334,27 @@ def transferForce(transferer):
 
 def transferRigidBody(transferer):
     transferer.transferFloat("unknownAt0")
-    # TODO: transfer properties here...
+    transferer.transferFloat("unknownAt4")
+    transferer.transferFloat("unknownAt8")
+    # skip other unknown values for now
+    # TODO: shape data?
+    transferer.transferBit("flags", "collidable")
+    transferer.transferBit("flags", "walkable")
+    transferer.transferBit("flags", "stackable")
+    transferer.transferBit("flags", "simulateOnCollision")
+    transferer.transferBit("flags", "ignoreLocalBodies")
+    transferer.transferBit("flags", "alwaysExists")
+    transferer.transferBit("flags", "doNotSimulate")
+    transferer.transfer16Bits("localForces")
+    transferer.transferBit("worldForces", "wind")
+    transferer.transferBit("worldForces", "explosion")
+    transferer.transferBit("worldForces", "energy")
+    transferer.transferBit("worldForces", "blood")
+    transferer.transferBit("worldForces", "magnetic")
+    transferer.transferBit("worldForces", "grass")
+    transferer.transferBit("worldForces", "brush")
+    transferer.transferBit("worldForces", "trees")
+    transferer.transferInt("priority")
 
 def transferStandardMaterial(transferer):
     transferer.transferString("name")

@@ -1022,10 +1022,10 @@
                     <bit mask="0x1" name="collidable" />
                     <bit mask="0x2" name="walkable" />
                     <bit mask="0x4" name="stackable" />
-                    <bit mask="0x8" name="simulate on collision" />
-                    <bit mask="0x10" name="ignore local bodies" />
-                    <bit mask="0x20" name="always exists" />
-                    <bit mask="0x80" name="do not simulate" />
+                    <bit mask="0x8" name="simulateOnCollision" />
+                    <bit mask="0x10" name="ignoreLocalBodies" />
+                    <bit mask="0x20" name="alwaysExists" />
+                    <bit mask="0x80" name="doNotSimulate" />
                 </bits>
             </field>
             <field offset="96" name="localForces" type="uint16" default-value="0x0">

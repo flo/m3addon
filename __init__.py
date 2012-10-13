@@ -754,7 +754,26 @@ class M3RigidBody(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
     boneName = bpy.props.StringProperty(name="boneName", options=set())
     unknownAt0 = bpy.props.FloatProperty(default=5.0, name="unknownAt0", options=set())
-    # TODO properties here...
+    unknownAt4 = bpy.props.FloatProperty(default=4.0, name="unknownAt4", options=set())
+    unknownAt8 = bpy.props.FloatProperty(default=0.8, name="unknownAt8", options=set())
+    # skip other unknown values for now
+    collidable = bpy.props.BoolProperty(default=True, options=set())
+    walkable = bpy.props.BoolProperty(default=False, options=set())
+    stackable = bpy.props.BoolProperty(default=False, options=set())
+    simulateOnCollision = bpy.props.BoolProperty(default=False, options=set())
+    ignoreLocalBodies = bpy.props.BoolProperty(default=False, options=set())
+    alwaysExists = bpy.props.BoolProperty(default=False, options=set())
+    doNotSimulate = bpy.props.BoolProperty(default=False, options=set())
+    localForces = bpy.props.BoolVectorProperty(default=tuple(16*[False]), size=16, subtype="LAYER", options=set())
+    wind = bpy.props.BoolProperty(default=False, options=set())
+    explosion = bpy.props.BoolProperty(default=False, options=set())
+    energy = bpy.props.BoolProperty(default=False, options=set())
+    blood = bpy.props.BoolProperty(default=False, options=set())
+    magnetic = bpy.props.BoolProperty(default=False, options=set())
+    grass = bpy.props.BoolProperty(default=False, options=set())
+    brush = bpy.props.BoolProperty(default=False, options=set())
+    trees = bpy.props.BoolProperty(default=False, options=set())
+    priority = bpy.props.IntProperty(default=0, options=set())
 
 class M3AttachmentPoint(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", options=set())

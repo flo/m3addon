@@ -1679,6 +1679,15 @@ class BlenderToM3DataTransferer:
         booleanValue = getattr(self.blenderObject, bitName)
         self.m3Object.setNamedBit(m3FieldName, bitName, booleanValue)
 
+    def transfer16Bits(self, fieldName):
+        vector = getattr(self.blenderObject, fieldName)
+        integerValue = 0
+        for bitIndex in range(0, 16):
+            if vector[bitIndex]:
+                mask = 1 << bitIndex
+                integerValue |= mask
+        setattr(self.m3Object, fieldName, integerValue)
+    
     def transfer32Bits(self, fieldName):
         vector = getattr(self.blenderObject, fieldName)
         integerValue = 0

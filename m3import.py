@@ -278,7 +278,14 @@ class M3ToBlenderDataTransferer:
             
     def transferBit(self, m3FieldName, bitName):
         setattr(self.blenderObject, bitName, self.m3Object.getNamedBit(m3FieldName, bitName))
-
+    
+    def transfer16Bits(self, fieldName):
+        integerValue = getattr(self.m3Object, fieldName)
+        vector = getattr(self.blenderObject, fieldName)
+        for bitIndex in range(0, 16):
+            mask = 1 << bitIndex
+            vector[bitIndex] = (mask & integerValue) > 0
+    
     def transfer32Bits(self, fieldName):
         integerValue = getattr(self.m3Object, fieldName)
         vector = getattr(self.blenderObject, fieldName)
