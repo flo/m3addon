@@ -1390,11 +1390,17 @@ class RigidBodyPanel(bpy.types.Panel):
         currentIndex = scene.m3_rigid_body_index
         if currentIndex >= 0 and currentIndex < len(scene.m3_rigid_bodies):
             rigid_body = scene.m3_rigid_bodies[currentIndex]
-            #TODO: improve layout
+            
             layout.separator()
             layout.prop(rigid_body, 'name', text="Name")
-            # TODO: is there a "bone selection" type list-box we could use?
             layout.prop(rigid_body, 'boneName', text="Bone")
+            
+            # TODO: Bone selection from list would be ideal.
+            # This is almost correct, but bpy.data contains deleted items too. :(
+            #if bpy.data.armatures:
+            #    sub.prop_search(rigid_body, 'armatureName', bpy.data, "armatures", text="Armature")    
+            #    if rigid_body.armatureName and bpy.data.armatures[rigid_body.armatureName]:
+            #        sub.prop_search(rigid_body, 'boneName', bpy.data.armatures[rigid_body.armatureName], "bones", text="Bone")
             
             split = layout.split()
             col = split.column()
@@ -1423,9 +1429,7 @@ class RigidBodyPanel(bpy.types.Panel):
             sub.prop(rigid_body, 'brush', text="Brush")
             sub.prop(rigid_body, 'trees', text="Trees")
             
-            split = layout.split()
-            sub = split.column()
-            sub.prop(rigid_body, 'priority', text="Priority")
+            layout.prop(rigid_body, 'priority', text="Priority")
 
 class LightPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_lights"
