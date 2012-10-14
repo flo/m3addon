@@ -1358,27 +1358,27 @@ class LightPanel(bpy.types.Panel):
         col.operator("m3.lights_remove", icon='ZOOMOUT', text="")
         currentIndex = scene.m3_light_index
         if currentIndex >= 0 and currentIndex < len(scene.m3_lights):
-            force = scene.m3_lights[currentIndex]
+            light = scene.m3_lights[currentIndex]
             layout.separator()
-            layout.prop(force, 'boneSuffix', text="Name")
-            layout.prop(force, "lightType", text="Light Type")
-            layout.prop(force, "shadowCast", text="Shadow Cast")
-            layout.prop(force, "modelReflection", text="Model Reflection")
-            layout.prop(force, "unknownFlag0x04", text="Unknown2")
-            layout.prop(force, "turnOn", text="Turn On")
+            layout.prop(light, 'boneSuffix', text="Name")
+            layout.prop(light, "lightType", text="Light Type")
+            layout.prop(light, "shadowCast", text="Shadow Cast")
+            layout.prop(light, "modelReflection", text="Model Reflection")
+            layout.prop(light, "unknownFlag0x04", text="Unknown2")
+            layout.prop(light, "turnOn", text="Turn On")
             split = layout.split()
             col = split.column()
             col.label(text="Attenuation:");
             sub = col.row(align=True)
-            sub.prop(force, "attenuationNear", text="Near")
-            sub.prop(force, "attenuationFar", text="Far")
-            layout.prop(force, "lightColor", text="Light Color")
-            layout.prop(force, "lightIntensity", text="Light Intensity")
-            layout.prop(force, "unknown5", text="Unknown 5")
-            layout.prop(force, "unknown7", text="Unknown 7")
-            layout.prop(force, "unknown8", text="Unknown 8")
-            layout.prop(force, "hotSpot", text="Hot Spot")
-            layout.prop(force, "falloff", text="Fall Off")
+            sub.prop(light, "attenuationNear", text="Near")
+            sub.prop(light, "attenuationFar", text="Far")
+            layout.prop(light, "lightColor", text="Light Color")
+            layout.prop(light, "lightIntensity", text="Light Intensity")
+            layout.prop(light, "unknown5", text="Unknown 5")
+            layout.prop(light, "unknown7", text="Unknown 7")
+            layout.prop(light, "unknown8", text="Unknown 8")
+            layout.prop(light, "hotSpot", text="Hot Spot")
+            layout.prop(light, "falloff", text="Fall Off")
 
             
 class ParticleSystemCopiesPanel(bpy.types.Panel):
