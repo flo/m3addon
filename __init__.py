@@ -290,13 +290,6 @@ def handleForceIndexChanged(self, context):
         return
     force = scene.m3_forces[scene.m3_force_index]
     selectOrCreateBoneForForce(scene, force)
-    
-def handleRigidBodyIndexChanged(self, context):
-    scene = context.scene
-    if scene.m3_rigid_body_index == -1:
-        return
-    rigid_body = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
-    selectOrCreateBoneForRigidBody(scene, rigid_body)
 
 def handleLightIndexChanged(self, context):
     scene = context.scene
