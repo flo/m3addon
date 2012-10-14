@@ -484,6 +484,11 @@ class ReferenceFeatureAdder(Visitor):
         
 
 class ExpectedAndDefaultConstantsDeterminer(Visitor):
+    def toHexConstant(self, hexString):
+        hexString = hexString[2:]
+        byteValues = bytes([int(hexString[x:x+2], 16) for x in range(0, len(hexString),2)])
+        return str(byteValues)
+        
     def visitFieldStart(self, generalDataMap, classDataMap, fieldDataMap):
         fieldName = fieldDataMap["fieldName"]
         fieldType = fieldDataMap["typeString"]
@@ -538,7 +543,18 @@ class ExpectedAndDefaultConstantsDeterminer(Visitor):
         elif fieldType == None:
             fieldSize = fieldDataMap["fieldSize"]
             defaultValueConstant = "bytes(%d)" % fieldSize
+            if expectedValueString != None:
+                if not expectedValueString.startswith("0x"):
+                    raise Exception('The expected-value "%s" of field %s does not start with 0x' % (hexString, fieldName) )
+                expectedValueConstant = self.toHexConstant(expectedValueString)
+                defaultValueConstant = expectedValueConstant
+            
+            if defaultValueString != None:
+                if not defaultValueString.startswith("0x"):
+                    raise Exception('The expected-value "%s" of field %s does not start with 0x' % (hexString, fieldName) )
 
+                defaultValueConstant = self.toHexConstant(expectedValueString)
+            
         fieldDataMap["expectedValueConstant"] = expectedValueConstant
         fieldDataMap["defaultValueConstant"] = defaultValueConstant
 
@@ -595,6 +611,9 @@ class CreateInstancesFeatureAdder(Visitor):
         self.packedAttributes = ""
         self.defaultValueAssignments = ""
 
+    def escapeStr(self, value):
+        return value.replace("\\","\\\\").replace("'","\\'")
+
     def visitFieldStart(self, generalDataMap, classDataMap, fieldDataMap):
         fieldName = fieldDataMap["fieldName"]
         fieldType = fieldDataMap["typeString"]
@@ -613,7 +632,7 @@ class CreateInstancesFeatureAdder(Visitor):
 
         if expectedValueConstant != None:
             fullName = classDataMap["fullName"]
-            self.assignments += ('            if self.%(fieldName)s != %(expectedValue)s:\n             raise Exception("%(fullName)s.%(fieldName)s has value %%s instead of the expected value %(expectedValue)s" %% self.%(fieldName)s)\n' % {"fullName":fullName, "fieldName":fieldName, "expectedValue":expectedValueConstant })
+            self.assignments += ('            if self.%(fieldName)s != %(expectedValue)s:\n             raise Exception("%(fullName)s.%(fieldName)s has value %%s instead of the expected value %(expectedValueEscaped)s" %% self.%(fieldName)s)\n' % {"fullName":fullName, "fieldName":fieldName, "expectedValue":expectedValueConstant, "expectedValueEscaped":self.escapeStr(expectedValueConstant) })
 
         if (defaultValueConstant != None) or (expectedValueConstant != None):
             if defaultValueConstant == None:
