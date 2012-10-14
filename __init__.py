@@ -743,6 +743,10 @@ class M3Force(bpy.types.PropertyGroup):
     unknownAt64 = bpy.props.FloatProperty(default=0.05, name="unknownAt64", options={"ANIMATABLE"})
     unknownAt84 = bpy.props.FloatProperty(default=0.05, name="unknownAt84", options={"ANIMATABLE"})
 
+class M3PhysicsShape(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(options=set())
+    # TODO: properties go here...
+
 class M3RigidBody(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
     boneName = bpy.props.StringProperty(name="boneName", options=set())
@@ -750,6 +754,8 @@ class M3RigidBody(bpy.types.PropertyGroup):
     unknownAt4 = bpy.props.FloatProperty(default=4.0, name="unknownAt4", options=set())
     unknownAt8 = bpy.props.FloatProperty(default=0.8, name="unknownAt8", options=set())
     # skip other unknown values for now
+    physicsShapes = bpy.props.CollectionProperty(type=M3PhysicsShape)
+    physicsShapeIndex = bpy.props.IntProperty(options=set())
     collidable = bpy.props.BoolProperty(default=True, options=set())
     walkable = bpy.props.BoolProperty(default=False, options=set())
     stackable = bpy.props.BoolProperty(default=False, options=set())
@@ -1380,49 +1386,87 @@ class RigidBodyPanel(bpy.types.Panel):
         col = row.column(align=True)
         col.operator("m3.rigid_bodies_add", icon='ZOOMIN', text="")
         col.operator("m3.rigid_bodies_remove", icon='ZOOMOUT', text="")
+        
         currentIndex = scene.m3_rigid_body_index
-        if currentIndex >= 0 and currentIndex < len(scene.m3_rigid_bodies):
-            rigid_body = scene.m3_rigid_bodies[currentIndex]
-            
-            layout.separator()
-            layout.prop(rigid_body, 'name', text="Name")
-            layout.prop(rigid_body, 'boneName', text="Bone")
-            
-            # TODO: Bone selection from list would be ideal.
-            # This is almost correct, but bpy.data contains deleted items too. :(
-            #if bpy.data.armatures:
-            #    sub.prop_search(rigid_body, 'armatureName', bpy.data, "armatures", text="Armature")    
-            #    if rigid_body.armatureName and bpy.data.armatures[rigid_body.armatureName]:
-            #        sub.prop_search(rigid_body, 'boneName', bpy.data.armatures[rigid_body.armatureName], "bones", text="Bone")
-            
-            split = layout.split()
-            col = split.column()
-            sub = col.column(align=True)
-            sub.label(text="Collision Flags:")
-            sub.prop(rigid_body, 'collidable', text="Collidable")
-            sub.prop(rigid_body, 'walkable', text="Walkable")
-            sub.prop(rigid_body, 'stackable', text="Stackable")
-            sub.prop(rigid_body, 'simulateOnCollision', text="Simulate On Collision")
-            sub.prop(rigid_body, 'ignoreLocalBodies', text="Ignore Local Bodies")
-            sub.prop(rigid_body, 'alwaysExists', text="Always Exists")
-            sub.prop(rigid_body, 'doNotSimulate', text="Do Not Simulate")
-            
-            layout.prop(rigid_body, 'localForces', text="Local Forces")
-            
-            split = layout.split()
-            col = split.column()
-            sub = col.column(align=True)
-            sub.label(text="World Forces:")
-            sub.prop(rigid_body, 'wind', text="Wind")
-            sub.prop(rigid_body, 'explosion', text="Explosion")
-            sub.prop(rigid_body, 'energy', text="Energy")
-            sub.prop(rigid_body, 'blood', text="Blood")
-            sub.prop(rigid_body, 'magnetic', text="Magnetic")
-            sub.prop(rigid_body, 'grass', text="Grass")
-            sub.prop(rigid_body, 'brush', text="Brush")
-            sub.prop(rigid_body, 'trees', text="Trees")
-            
-            layout.prop(rigid_body, 'priority', text="Priority")
+        if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
+            return
+        rigid_body = scene.m3_rigid_bodies[currentIndex]
+        
+        layout.separator()
+        layout.prop(rigid_body, 'name', text="Name")
+        layout.prop(rigid_body, 'boneName', text="Bone")
+        
+        # TODO: Bone selection from list would be ideal.
+        # This is almost correct, but bpy.data contains deleted items too. :(
+        #if bpy.data.armatures:
+        #    sub.prop_search(rigid_body, 'armatureName', bpy.data, "armatures", text="Armature")    
+        #    if rigid_body.armatureName and bpy.data.armatures[rigid_body.armatureName]:
+        #        sub.prop_search(rigid_body, 'boneName', bpy.data.armatures[rigid_body.armatureName], "bones", text="Bone")
+        
+        split = layout.split()
+        col = split.column()
+        sub = col.column(align=True)
+        sub.label(text="Collision Flags:")
+        sub.prop(rigid_body, 'collidable', text="Collidable")
+        sub.prop(rigid_body, 'walkable', text="Walkable")
+        sub.prop(rigid_body, 'stackable', text="Stackable")
+        sub.prop(rigid_body, 'simulateOnCollision', text="Simulate On Collision")
+        sub.prop(rigid_body, 'ignoreLocalBodies', text="Ignore Local Bodies")
+        sub.prop(rigid_body, 'alwaysExists', text="Always Exists")
+        sub.prop(rigid_body, 'doNotSimulate', text="Do Not Simulate")
+        
+        layout.prop(rigid_body, 'localForces', text="Local Forces")
+        
+        split = layout.split()
+        col = split.column()
+        sub = col.column(align=True)
+        sub.label(text="World Forces:")
+        sub.prop(rigid_body, 'wind', text="Wind")
+        sub.prop(rigid_body, 'explosion', text="Explosion")
+        sub.prop(rigid_body, 'energy', text="Energy")
+        sub.prop(rigid_body, 'blood', text="Blood")
+        sub.prop(rigid_body, 'magnetic', text="Magnetic")
+        sub.prop(rigid_body, 'grass', text="Grass")
+        sub.prop(rigid_body, 'brush', text="Brush")
+        sub.prop(rigid_body, 'trees', text="Trees")
+        
+        layout.prop(rigid_body, 'priority', text="Priority")
+
+class PhyscisShapePanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_physics_shapes"
+    bl_label = "M3 Physics Shapes"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        
+        currentIndex = scene.m3_rigid_body_index
+        if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
+            layout.label("No rigid body has been selected")
+            return
+        rigid_body = scene.m3_rigid_bodies[currentIndex]
+        
+        col.template_list(rigid_body, "physicsShapes", rigid_body, "physicsShapeIndex", rows = 2)
+        
+        col = row.column(align=True)
+        col.operator("m3.physics_shapes_add", icon='ZOOMIN', text="")
+        col.operator("m3.physics_shapes_remove", icon='ZOOMOUT', text="")
+        
+        currentIndex = rigid_body.physicsShapeIndex
+        if not 0 <= currentIndex < len(rigid_body.physicsShapes):
+            return
+        physics_shape = rigid_body.physicsShapes[currentIndex]
+        
+        layout.separator()
+        layout.prop(physics_shape, 'name', text="Name")
+        
+        # TODO: properties UI here...
 
 class LightPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_lights"
@@ -2320,10 +2364,67 @@ class M3_RIGID_BODIES_OT_remove(bpy.types.Operator):
     
     def invoke(self, context, event):
         scene = context.scene
-        if scene.m3_rigid_body_index >= 0:
-            scene.m3_rigid_bodies.remove(scene.m3_rigid_body_index)
-            scene.m3_rigid_body_index -= 1
-            # TODO: remove shapes here...?
+        
+        currentIndex = scene.m3_rigid_body_index
+        if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
+            return {'CANCELLED'}
+        
+        scene.m3_rigid_bodies.remove(currentIndex)
+        scene.m3_rigid_body_index -= 1
+        
+        return {'FINISHED'}
+
+class M3_PHYSICS_SHAPES_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.physics_shapes_add'
+    bl_label       = "Add Physics Shape"
+    bl_description = "Adds an M3 physics shape to the active M3 rigid body"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        
+        currentIndex = scene.m3_rigid_body_index
+        if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
+            return {'CANCELLED'}
+        rigid_body = scene.m3_rigid_bodies[currentIndex]
+        
+        physics_shape = rigid_body.physicsShapes.add()
+        physics_shape.name = self.findUnusedName(rigid_body)
+        
+        rigid_body.physicsShapeIndex = len(rigid_body.physicsShapes)-1
+        return {'FINISHED'}
+    
+    def findUnusedName(self, rigid_body):
+        usedNames = set()
+        for physics_shape in rigid_body.physicsShapes:
+            usedNames.add(physics_shape.name)
+        unusedName = None
+        counter = 1
+        while unusedName == None:
+            suggestedName = "%d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName
+
+class M3_PHYSICS_SHAPES_OT_remove(bpy.types.Operator):
+    bl_idname = 'm3.physics_shapes_remove'
+    bl_label = "Remove M3 Physics Shape"
+    bl_description = "Removes the active M3 physics shape"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        
+        currentIndex = scene.m3_rigid_body_index
+        if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
+            return {'CANCELLED'}
+        rigid_body = scene.m3_rigid_bodies[currentIndex]
+        
+        currentIndex = rigid_body.physicsShapeIndex
+        if not 0 <= currentIndex < len(rigid_body.physicsShapes):
+            return {'CANCELLED'}
+        
+        rigid_body.physicsShapes.remove(currentIndex)
+        rigid_body.physicsShapeIndex -= 1
         return {'FINISHED'}
 
 class M3_LIGHTS_OT_add(bpy.types.Operator):
