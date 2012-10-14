@@ -1197,8 +1197,11 @@ class Importer:
                 else:
                     unsupportedAnimIds.add(animId)
         animationEndEventAnimId = 0x65bd3215
-        unsupportedAnimIds.remove(animationEndEventAnimId)
-        
+        if animationEndEventAnimId in unsupportedAnimIds:
+            unsupportedAnimIds.remove(animationEndEventAnimId)
+        else:
+            print("Warning: Model contained no animation with animId %d which are usually used for marking the end of an animation" % animationEndEventAnimId )
+
         if len(unsupportedAnimIds) > 0:
             animIdToPathMap = {}
             self.addAnimIdPathToMap("model", self.model, animIdToPathMap)
