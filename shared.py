@@ -440,9 +440,9 @@ def transferLight(transferer):
     transferer.transferAnimatableFloat("lightIntensity")
     transferer.transferAnimatableFloat("unknown5")
     transferer.transferAnimatableFloat("unknown7")
-    transferer.transferAnimatableFloat("decayStart")
+    transferer.transferAnimatableFloat("attenuationFar")
     transferer.transferFloat("unknown8")
-    transferer.transferAnimatableFloat("unknown9")
+    transferer.transferAnimatableFloat("attenuationNear")
     transferer.transferAnimatableFloat("hotSpot")
     transferer.transferAnimatableFloat("falloff")
 
