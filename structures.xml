@@ -563,11 +563,11 @@
         
         <structure name="LITE" version="7" size="212">
             <description>Light types: 0=directional 1=point 2=spot, hotSpot expressed in radians</description>
-            <field name="lightType" type="uint8" />
-            <field name="unknown1" size="1" />
-            <field name="boneIndex" type="uint8" />
-            <field name="unknown2" size="1" />
-            <field name="flags" type="uint32" default-value="0x08">
+            <field offset="0" name="lightType" type="uint8" />
+            <field offset="1" name="unknownAt1" type="uint8" expected-value="0" />
+            <field offset="2" name="boneIndex" type="uint8" />
+            <field offset="3" name="unknownAt3" type="uint8" expected-value="0" />
+            <field offset="4" name="flags" type="uint32" default-value="0x08">
                 <bits>
                     <bit mask="0x1" name="shadowCast" />
                     <bit mask="0x2" name="modelReflection" />
@@ -575,18 +575,18 @@
                     <bit mask="0x8" name="turnOn" />
                 </bits>
             </field>
-            <field name="unknown3" size="4"/>
-            <field name="unknown4" size="4" />
-            <field name="lightColor" type="Vector3AnimationReference" />
-            <field name="lightIntensity" type="FloatAnimationReference" />
-            <field name="unknown5" type="FloatAnimationReference" />
-            <field name="unknown6" size="16" />
-            <field name="unknown7" type="FloatAnimationReference" />
-            <field name="attenuationFar" type="FloatAnimationReference" />
-            <field name="unknown8" type="float" />
-            <field name="attenuationNear" type="FloatAnimationReference" />
-            <field name="hotSpot" type="FloatAnimationReference" />
-            <field name="falloff" type="FloatAnimationReference" />
+            <field offset="8" name="unknownAt8" type="uint32" />
+            <field offset="12" name="unknownAt12" size="4" expected-value="0xffffffff" />
+            <field offset="16" name="lightColor" type="Vector3AnimationReference" />
+            <field offset="52" name="lightIntensity" type="FloatAnimationReference" />
+            <field offset="72" name="unknownAt72" type="FloatAnimationReference" />
+            <field offset="92" name="unknownAt92" size="16" expected-value="0x00000000000000000000000000000000" />
+            <field offset="108" name="unknownAt108" type="FloatAnimationReference" />
+            <field offset="128" name="attenuationFar" type="FloatAnimationReference" />
+            <field offset="148" name="unknownAt148" type="float" />
+            <field offset="152" name="attenuationNear" type="FloatAnimationReference" />
+            <field offset="172" name="hotSpot" type="FloatAnimationReference" />
+            <field offset="192" name="falloff" type="FloatAnimationReference" />
         </structure>
         
         <structure name="MATM" version="0" size="8">
