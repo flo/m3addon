@@ -565,8 +565,7 @@
             <description>Light types: 0=directional 1=point 2=spot, hotSpot expressed in radians</description>
             <field offset="0" name="lightType" type="uint8" />
             <field offset="1" name="unknownAt1" type="uint8" expected-value="0" />
-            <field offset="2" name="boneIndex" type="uint8" />
-            <field offset="3" name="unknownAt3" type="uint8" expected-value="0" />
+            <field offset="2" name="boneIndex" type="uint16" />
             <field offset="4" name="flags" type="uint32" default-value="0x08">
                 <bits>
                     <bit mask="0x1" name="shadowCast" />
