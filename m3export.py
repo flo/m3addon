@@ -884,6 +884,16 @@ class Exporter:
             animPathPrefix = "m3_rigid_bodies[%s]." % rigidBodyIndex
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3RigidBody, blenderObject=rigidBody, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferRigidBody(transferer)
+            
+            for physicsShapeIndex, physicsShape in enumerate(rigidBody.physicsShapes):
+                m3PhysicsShape = m3.PHSHV1()
+                animPathPrefix = "m3_physics_shapes[%s]." % physicsShapeIndex
+                transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3PhysicsShape, blenderObject=physicsShape, animPathPrefix=animPathPrefix, rootObject=self.scene)
+                shared.transferPhysicsShape(transferer)
+                matrix = shared.composeMatrix(physicsShape.offset, physicsShape.rotationEuler, physicsShape.scale)
+                m3PhysicsShape.matrix = self.createMatrixFromBlenderMatrix(matrix)
+                m3RigidBody.physicsShapes.append(m3PhysicsShape)
+            
             model.rigidBodies.append(m3RigidBody)
     
     def initLights(self, model):

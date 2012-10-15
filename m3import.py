@@ -805,7 +805,6 @@ class Importer:
     def createParticleSystems(self):
         currentScene = bpy.context.scene
         print("Loading particle systems")
-        index = 0
         for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
             particle_system = currentScene.m3_particle_systems.add()
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
@@ -839,7 +838,6 @@ class Importer:
     def createForces(self):
         currentScene = bpy.context.scene
         print("Loading forces")
-        index = 0
         for forceIndex, m3Force in enumerate(self.model.forces):
             force = currentScene.m3_forces.add()
             animPathPrefix = "m3_forces[%s]." % forceIndex
@@ -856,7 +854,6 @@ class Importer:
     def createRigidBodies(self):
         currentScene = bpy.context.scene
         print("Loading rigid bodies")
-        index = 0
         for rigidBodyIndex, m3RigidBody in enumerate(self.model.rigidBodies):
             rigid_body = currentScene.m3_rigid_bodies.add()
             animPathPrefix = "m3_rigid_bodies[%s]." % rigidBodyIndex
@@ -865,11 +862,22 @@ class Importer:
             boneEntry = self.model.bones[m3RigidBody.boneIndex]
             rigid_body.name = boneEntry.name
             rigid_body.boneName = boneEntry.name
+            
+            for physicsShapeIndex, m3PhysicsShape in enumerate(m3RigidBody.physicsShapes):
+                physics_shape = rigid_body.physicsShapes.add()
+                animPathPrefix = "m3_physics_shapes[%s]." % physicsShapeIndex
+                transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=physics_shape, m3Object=m3PhysicsShape)
+                shared.transferPhysicsShape(transferer)
+                physics_shape.name = "%d" % (physicsShapeIndex + 1)
+                matrix = toBlenderMatrix(m3PhysicsShape.matrix)
+                offset, rotation, scale = matrix.decompose()
+                physics_shape.offset = offset
+                physics_shape.rotationEuler = rotation.to_euler("XYZ")
+                physics_shape.scale = scale
     
     def createLights(self):
         currentScene = bpy.context.scene
         print("Loading lights")
-        index = 0
         for lightIndex, m3Light in enumerate(self.model.lights):
             light = currentScene.m3_lights.add()
             animPathPrefix = "m3_lights[%s]." % lightIndex

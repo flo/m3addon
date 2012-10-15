@@ -745,6 +745,11 @@ class M3Force(bpy.types.PropertyGroup):
 
 class M3PhysicsShape(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
+    # TODO: Take matrix values from representative blender object?
+    offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ")
+    rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION")
+    scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ")
+    shapeType = bpy.props.IntProperty(options=set())
     # TODO: properties go here...
 
 class M3RigidBody(bpy.types.PropertyGroup):

@@ -337,7 +337,6 @@ def transferRigidBody(transferer):
     transferer.transferFloat("unknownAt4")
     transferer.transferFloat("unknownAt8")
     # skip other unknown values for now
-    # TODO: shape data?
     transferer.transferBit("flags", "collidable")
     transferer.transferBit("flags", "walkable")
     transferer.transferBit("flags", "stackable")
@@ -355,6 +354,10 @@ def transferRigidBody(transferer):
     transferer.transferBit("worldForces", "brush")
     transferer.transferBit("worldForces", "trees")
     transferer.transferInt("priority")
+
+def transferPhysicsShape(transferer):
+    transferer.transferInt("shapeType")
+    # TODO: transfer data here...
 
 def transferStandardMaterial(transferer):
     transferer.transferString("name")
