@@ -356,8 +356,11 @@ def transferRigidBody(transferer):
     transferer.transferInt("priority")
 
 def transferPhysicsShape(transferer):
-    transferer.transferInt("shapeType")
-    # TODO: transfer data here...
+    transferer.transferEnum("shapeType")
+    # skip unknown values for now
+    transferer.transferFloat("size0")
+    transferer.transferFloat("size1")
+    transferer.transferFloat("size2")
 
 def transferStandardMaterial(transferer):
     transferer.transferString("name")

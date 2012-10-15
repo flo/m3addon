@@ -418,11 +418,21 @@ particleTypeList = [("0", "Square Billbords", "Quads always rotated towards came
                     ("6", "Rectangular Billbords", "Rectangles which can have a length != witdh which are rotated towards the camera"),
                     ("7", "Quads with speed as normal", "Particles are quads which have their normals aligned to the speed vector of the particle")
                     ]
+
 forceTypeList = [("0", "Directional", "The particles get accelerated into one direction"), 
                     ("1", "Radial", "Particles get accelerated ayway from the force source"),
                     ("2", "Unknown", "Unknown"),
                     ("3", "Rotary", "The particles rotate in a circle around a center")
                    ]
+
+physicsShapeTypeList = [("0", "Box", "Box shape with the given width, length and height"),
+                        ("1", "Sphere", "Sphere shape with the given radius"),
+                        ("2", "Capsule", "Capsule shape with the given radius and length"),
+                        ("3", "Cylinder", "Cylinder with the given radius and length"),
+                        ("4", "Convex Hull", "Convex hull created from the attached mesh"),
+                        ("5", "Mesh", "Mesh shape created from the attached mesh"),
+                        ]
+
 uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole image UVs for particles"),
                  ("1", "UV Layer 2", "Second UV layer which can be used for decals"),
                  ("2", "UV Layer 2", "Third UV layer"),
@@ -749,8 +759,11 @@ class M3PhysicsShape(bpy.types.PropertyGroup):
     offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ")
     rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION")
     scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ")
-    shapeType = bpy.props.IntProperty(options=set())
-    # TODO: properties go here...
+    shapeType = bpy.props.EnumProperty(default="0", items=physicsShapeTypeList, options=set())
+    # TODO: convex hull properties...
+    size0 = bpy.props.FloatProperty(default=1.0, name="size0", options=set())
+    size1 = bpy.props.FloatProperty(default=1.0, name="size1", options=set())
+    size2 = bpy.props.FloatProperty(default=1.0, name="size2", options=set())
 
 class M3RigidBody(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
@@ -1470,8 +1483,42 @@ class PhyscisShapePanel(bpy.types.Panel):
         
         layout.separator()
         layout.prop(physics_shape, 'name', text="Name")
+        layout.prop(physics_shape, 'shapeType', text="Shape")
         
-        # TODO: properties UI here...
+        if not physics_shape.shapeType in ["4", "5"]:
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Dimensions")
+            if physics_shape.shapeType in ["0"]: #box
+                sub.prop(physics_shape, "size0", text="Width")
+                sub.prop(physics_shape, "size1", text="Height")
+                sub.prop(physics_shape, "size2", text="Length")
+            elif physics_shape.shapeType in ["1"]: #sphere
+                sub.prop(physics_shape, "size0", text="Radius")
+            elif physics_shape.shapeType in ["2"]: #capsule
+                sub.prop(physics_shape, "size0", text="Radius")
+                sub.prop(physics_shape, "size1", text="Length")
+            elif physics_shape.shapeType in ["3"]: #cylinder
+                sub.prop(physics_shape, "size0", text="Radius")
+                sub.prop(physics_shape, "size1", text="Length")
+        
+        # TODO: remove this when we have an object representation
+        split = layout.split()
+        col = split.column()
+        sub = col.column(align=True)
+        sub.label(text="Offset")
+        sub.prop(physics_shape, 'offset', index=0, text="X")
+        sub.prop(physics_shape, 'offset', index=1, text="Y")
+        sub.prop(physics_shape, 'offset', index=2, text="Z")
+        sub.label(text="Rotation (Euler)")
+        sub.prop(physics_shape, 'rotationEuler', index=0, text="X")
+        sub.prop(physics_shape, 'rotationEuler', index=1, text="Y")
+        sub.prop(physics_shape, 'rotationEuler', index=2, text="Z")
+        sub.label(text="Scale")
+        sub.prop(physics_shape, 'scale', index=0, text="X")
+        sub.prop(physics_shape, 'scale', index=1, text="Y")
+        sub.prop(physics_shape, 'scale', index=2, text="Z")
 
 class LightPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_lights"
