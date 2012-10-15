@@ -1362,8 +1362,15 @@ class LightPanel(bpy.types.Panel):
             layout.prop(light, "lightType", text="Light Type")
             layout.prop(light, "lightColor", text="Light Color")
             layout.prop(light, "lightIntensity", text="Light Intensity")
-            layout.prop(light, "specColor", text="Specular Color")
-            layout.prop(light, "specIntensity", text="Specular Intensity")
+            
+            split = layout.split()
+            col = split.column()
+            col.prop(light, "specular", text="Use Specular")
+            sub = col.column(align=True)
+            sub.active = light.specular
+            sub.prop(light, "specColor", text="")
+            sub.prop(light, "specIntensity", text="Specular Intensity")
+            
             split = layout.split()
             col = split.column()
             col.label(text="Attenuation:");
@@ -1374,7 +1381,6 @@ class LightPanel(bpy.types.Panel):
             layout.prop(light, "hotSpot", text="Hot Spot")
             layout.prop(light, "falloff", text="Fall Off")
             layout.prop(light, "shadowCast", text="Shadow Cast")
-            layout.prop(light, "specular", text="Use Specular")
             layout.prop(light, "unknownFlag0x04", text="Unknown Flag 0x04")
             layout.prop(light, "turnOn", text="Turn On")
             layout.prop(light, "unknownAt8", text="unknownAt8")
