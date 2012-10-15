@@ -570,7 +570,7 @@
             <field offset="4" name="flags" type="uint32" default-value="0x08">
                 <bits>
                     <bit mask="0x1" name="shadowCast" />
-                    <bit mask="0x2" name="modelReflection" />
+                    <bit mask="0x2" name="specular" />
                     <bit mask="0x4" name="unknownFlag0x04" />
                     <bit mask="0x8" name="turnOn" />
                 </bits>
@@ -579,9 +579,8 @@
             <field offset="12" name="unknownAt12" size="4" expected-value="0xffffffff" />
             <field offset="16" name="lightColor" type="Vector3AnimationReference" />
             <field offset="52" name="lightIntensity" type="FloatAnimationReference" />
-            <field offset="72" name="unknownAt72" type="FloatAnimationReference" />
-            <field offset="92" name="unknownAt92" size="16" expected-value="0x00000000000000000000000000000000" />
-            <field offset="108" name="unknownAt108" type="FloatAnimationReference" />
+            <field offset="72" name="specColor" type="Vector3AnimationReference" />
+            <field offset="108" name="specIntensity" type="FloatAnimationReference" />
             <field offset="128" name="attenuationFar" type="FloatAnimationReference" />
             <field offset="148" name="unknownAt148" type="float" />
             <field offset="152" name="attenuationNear" type="FloatAnimationReference" />
