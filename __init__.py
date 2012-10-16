@@ -44,7 +44,8 @@ import bpy
 
 from bpy.props import StringProperty
 from bpy_extras.io_utils import ExportHelper, ImportHelper
-
+from bpy_extras import io_utils
+import mathutils
 
 def boneNameSet():
     boneNames = set()
@@ -333,9 +334,9 @@ def findArmatureObjectForNewBone(scene):
 def findBoneWithArmatureObject(scene, boneName):
     for armatureObject in iterateArmatureObjects(scene):
         armature = armatureObject.data
-        for bone in armature.bones:
-            if bone.name == boneName:
-                return (bone, armatureObject)
+        bone = armature.bones.get(boneName)
+        if bone != None:
+            return (bone, armatureObject)
     return (None, None)
 
 def selectOrCreateBoneForPartileSystem(scene, particle_system):
@@ -356,14 +357,51 @@ def selectOrCreateBoneForLight(scene, light):
 
 def selectOrCreateBoneForCamera(scene, camera):
     selectOrCreateBone(scene, camera.name)
-    
+
+
 def selectOrCreateBoneForShapeObject(scene, shapeObject):
-    selectOrCreateBone(scene, shapeObject.name)
-    
+    bone, poseBone = selectOrCreateBone(scene, shapeObject.name)
+    cubeShapeConstant = "0"
+    if shapeObject.shape == cubeShapeConstant:
+        mesh = bpy.data.meshes.new('ShapeObjectBoneMesh')
+        meshObject = bpy.data.objects.new('ShapeObjectBoneMesh', mesh)
+        meshObject.location = (0,0,0)
+        #TODO reuse existing mesh of bone if it exists
+        #TODO size0, size1, and size2 are width*2, length*2, and height*2
+        # so the current UI for the sizes is wrong
+        s0 = shapeObject.size0
+        s1 = shapeObject.size1
+        s2 = shapeObject.size2
+        matrix = shared.composeMatrix(shapeObject.offset, shapeObject.rotationEuler, shapeObject.scale)
+        untransformedPositions = [(-s0, -s1, -s2), (-s0, -s1, s2), (-s0, s1, -s2), (-s0, s1, s2), (s0, -s1, -s2), (s0, -s1, s2), (s0, s1, -s2), (s0, s1, s2)]
+        transformedPositions = []
+        for v in untransformedPositions:
+            transformedPositions.append(matrix * mathutils.Vector(v))
 
+        faces = []
+        faces.append((0, 1, 3, 2))
+        faces.append((6,7,5,4))
+        faces.append((4,5,1,0))
+        faces.append((2, 3, 7, 6))
+        faces.append((0, 2, 6, 4 ))
+        faces.append((5, 7, 3, 1 ))
 
+        mesh.vertices.add(len(transformedPositions))
+        mesh.vertices.foreach_set("co", io_utils.unpack_list(transformedPositions))
+
+        mesh.tessfaces.add(len(faces))
+        mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(faces))
+        
+        mesh.update(calc_edges=True)
+
+        #TODO handle other kind of mesh:
+        poseBone.custom_shape = meshObject
+        bone.show_wire = True
+    else:
+        pass #TODO handle other kinds of shapes
 
 def selectOrCreateBone(scene, boneName):
+    "Returns the bone and it's pose variant"
     if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode='OBJECT')
     if bpy.ops.object.select_all.poll():
@@ -374,8 +412,6 @@ def selectOrCreateBone(scene, boneName):
         armature = armatureObject.data
         armatureObject.select = True
         scene.objects.active = armatureObject
-        if bpy.ops.object.mode_set.poll():
-            bpy.ops.object.mode_set(mode='POSE')
     else:
         armatureObject = findArmatureObjectForNewBone(scene)
         if armatureObject == None:
@@ -390,13 +426,16 @@ def selectOrCreateBone(scene, boneName):
         editBone = armature.edit_bones.new(boneName)
         editBone.head = (0, 0, 0)
         editBone.tail = (1, 0, 0)
+
+    if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode='POSE')
-        bone = armature.bones[boneName]
     scene.objects.active = armatureObject
     armatureObject.select = True
     for currentBone in armature.bones:
-        currentBone.select = False
-    bone.select = True
+        currentBone.select = currentBone.name == boneName
+    poseBone = armatureObject.pose.bones[boneName]
+    bone = armatureObject.data.bones[boneName]
+    return (bone, poseBone)
   
 emissionAreaTypesWithRadius = ["2", "4"]
 emissionAreaTypesWithWidth = ["1", "3"]

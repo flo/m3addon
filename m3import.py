@@ -179,8 +179,12 @@ def determineTails(m3Bones, heads, boneDirectionVectors, absoluteScales):
             childBoneIndexLists[boneEntry.parent].append(boneIndex)
     
     tails = []
-    for head, childIndices, boneDirectionVector, absoluteScale in zip(heads, childBoneIndexLists, boneDirectionVectors, absoluteScales):
-        length = 0.1
+    for m3Bone, head, childIndices, boneDirectionVector, absoluteScale in zip(m3Bones, heads, childBoneIndexLists, boneDirectionVectors, absoluteScales):
+        real = m3Bone.getNamedBit("flags", "real")
+        if real:
+            length = 0.1
+        else:
+            length = 1.0 #So that custom bone shapes don't get scaled
         for childIndex in childIndices:
             headToChildHead = heads[childIndex] - head
             if headToChildHead.length >= 0.0001:
