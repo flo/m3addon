@@ -180,8 +180,8 @@ def determineTails(m3Bones, heads, boneDirectionVectors, absoluteScales):
     
     tails = []
     for m3Bone, head, childIndices, boneDirectionVector, absoluteScale in zip(m3Bones, heads, childBoneIndexLists, boneDirectionVectors, absoluteScales):
-        real = m3Bone.getNamedBit("flags", "real")
-        if real:
+        skinned = m3Bone.getNamedBit("flags", "skinned")
+        if skinned:
             length = 0.1
         else:
             length = 1.0 #So that custom bone shapes don't get scaled
