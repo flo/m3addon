@@ -1146,7 +1146,19 @@ class Importer:
             return bpy.context.scene.name
         else:
             raise Exception("Unhandled case")
-
+    
+    def findSimulateFrame(self, animIdToTimeValueMap):
+        # Hack:
+        # So far only seen models where Evt_Simulate and Evt_End are in the same animId element.
+        # Check through all stc.sdev entries directly instead?
+        timeValueMap = animIdToTimeValueMap[0x65bd3215]
+        
+        for frame, key, in frameValuePairs(timeValueMap):
+            if key.name == "Evt_Simulate":
+                return True, frame
+        
+        return False, 0
+    
     def createAnimations(self):
         print ("Creating actions(animation sequences)")
         scene = bpy.context.scene
@@ -1181,7 +1193,7 @@ class Importer:
                     transformationCollectionName = transformationCollectionName[len(stcPrefix):]
                 
                 transformationCollection.name = transformationCollectionName
-
+                
                 transferer = M3ToBlenderDataTransferer(self, None, blenderObject=transformationCollection, m3Object=stc)
                 shared.transferSTC(transferer)
                 animIdsOfSTC = set()     
@@ -1191,14 +1203,16 @@ class Importer:
                         raise Exception("Same animid %s got animated by different STC" % animId)
                     animIdToTimeValueMap[animId] = timeValueMap
                     animIdsOfSTC.add(animId)
-
+                
                 self.sequenceNameAndSTCIndexToAnimIdSet[sequence.name, animationSTCIndex] = animIdsOfSTC
-
+                
                 # stc.seqIndex seems to be wrong:
                 #sequence = model.sequences[stc.seqIndex]
                 if len(stc.animIds) != len(stc.animRefs):
                     raise Exception("len(stc.animids) != len(stc.animrefs)")
-
+            
+            animation.useSimulateFrame, animation.simulateFrame = self.findSimulateFrame(animIdToTimeValueMap)
+            
             self.animations.append(AnimationData(animIdToTimeValueMap, ownerTypeToActionMap, sequenceIndex))
 
 

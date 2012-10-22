@@ -310,8 +310,8 @@
             <field name="tangent" type="Vector4As4uint8" />
         </structure>
         <structure name="EVNT" version="1" size="104">
-            <description>A sequence end event</description>
-            <field name="name" type="Reference" refTo="CHARV0" expected-value="Evt_SeqEnd"/>
+            <description>An animation sequence event</description>
+            <field name="name" type="Reference" refTo="CHARV0" />
             <field name="unknown0" type="int32" expected-value="-1" />
             <field name="unknown1" type="int16" default-value="-1" />
             <field name="unknown2" type="uint16" expected-value="0" />
@@ -328,7 +328,7 @@
         </structure>
         
         <structure name="SDEV" version="0" size="32" >
-            <description>Event Key FramesAnimation block with reference to EVNT</description>
+            <description>Event Key Frames Animation block with reference to EVNT</description>
             <field name="frames" type="Reference" refTo="I32_V0" />
             <field name="flags" type="uint32" />
             <field name="fend" type="uint32" />

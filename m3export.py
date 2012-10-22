@@ -617,20 +617,39 @@ class Exporter:
         for animation in scene.m3_animations:
             animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
             animEndId = 0x65bd3215
-            animIdToAnimDataMap[animEndId] = self.createAnimationEndEvent(animation)
+            animIdToAnimDataMap[animEndId] = self.createAnimationEvents(animation)
     
-    def createAnimationEndEvent(self, animation):
+    def createAnimationEvents(self, animation):
         event = m3.SDEVV0()
-        event.frames = [self.frameToMS(animation.exlusiveEndFrame)]
+        event.frames = []
         event.flags = 1
         event.fend = self.frameToMS(animation.exlusiveEndFrame)
-        event.keys = [self.createAnimationEndEventKey(animation)]
-        return event
+        event.keys = []
         
-    def createAnimationEndEventKey(self, animation):
+        if animation.useSimulateFrame:
+            # TODO: does the flag matter?
+            event.flags = 0
+            event.frames.append(self.frameToMS(animation.simulateFrame))
+            event.keys.append(self.createSimulateEventKey())
+        
+        event.frames.append(self.frameToMS(animation.exlusiveEndFrame))
+        event.keys.append(self.createAnimationEndEventKey())
+        
+        return event
+    
+    def createAnimationEndEventKey(self):
         event = m3.EVNTV1()
         event.name = "Evt_SeqEnd"
         event.matrix = self.createIdentityMatrix()
+        return event
+    
+    def createSimulateEventKey(self):
+        event = m3.EVNTV1()
+        event.name = "Evt_Simulate"
+        event.matrix = self.createIdentityMatrix()
+        # TODO: does the matrix matter? do the unknown fields matter?
+        event.unknown1 = 0x27
+        event.unknown3 = 0x3d03
         return event
     
     def initWithPreparedAnimationData(self, model):

@@ -514,8 +514,10 @@ class M3TransformationCollection(bpy.types.PropertyGroup):
     
 class M3Animation(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Stand", options=set())
-    startFrame = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
-    exlusiveEndFrame = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
+    startFrame = bpy.props.IntProperty(subtype="UNSIGNED", options=set())
+    useSimulateFrame = bpy.props.BoolProperty(default=False, options=set())
+    simulateFrame = bpy.props.IntProperty(subtype="UNSIGNED", default=0, options=set())
+    exlusiveEndFrame = bpy.props.IntProperty(subtype="UNSIGNED", options=set())
     assignedActions = bpy.props.CollectionProperty(type=AssignedActionOfM3Animation, options=set())
     transformationCollections = bpy.props.CollectionProperty(type=M3TransformationCollection, options=set())
     transformationCollectionIndex = bpy.props.IntProperty(default=0, options=set())
@@ -883,6 +885,14 @@ class AnimationSequencesPanel(bpy.types.Panel):
             layout.prop(animation, 'notLooping', text="Doesn't Loop")
             layout.prop(animation, 'alwaysGlobal', text="Always Global")
             layout.prop(animation, 'globalInPreviewer', text="Global In Previewer")
+        
+        if not len(scene.m3_rigid_bodies) > 0:
+            return
+        
+        layout.separator()
+        layout.prop(animation, 'useSimulateFrame', text="Use physics")
+        if animation.useSimulateFrame:
+            layout.prop(animation, 'simulateFrame', text="Simulate after frame")
 
 class AnimationSequenceTransformationCollectionsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_STCs"
