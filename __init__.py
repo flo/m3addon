@@ -383,6 +383,48 @@ def selectOrCreateBoneForShapeObject(scene, shapeObject):
             y = math.sin(angle0)*radius
             untransformedPositions.append((x,y,-halfHeight))
             untransformedPositions.append((x,y,+halfHeight))
+    elif shapeObject.shape == sphereShapeConstant:
+        numberOfSideFaces = 10
+        numberOfCircles = 10
+        faces = []
+        untransformedPositions = []
+        radius = shapeObject.size0
+        for circleIndex in range(numberOfCircles):
+            circleAngle = math.pi * (circleIndex+1) / float(numberOfCircles+1)
+            circleRadius = radius*math.sin(circleAngle)
+            circleHeight = -radius*math.cos(circleAngle)
+            nextCircleIndex = (circleIndex+1) % numberOfCircles
+            for i in range(numberOfSideFaces):
+                angle = 2*math.pi * i / float(numberOfSideFaces)
+                nextI = ((i+1) % numberOfSideFaces)
+                if nextCircleIndex != 0:
+                    i0 = circleIndex * numberOfSideFaces + i
+                    i1 = circleIndex * numberOfSideFaces + nextI
+                    i2 = nextCircleIndex * numberOfSideFaces + nextI
+                    i3 = nextCircleIndex * numberOfSideFaces + i
+                    faces.append((i0, i1 ,i2, i3))
+                x = math.cos(angle)*circleRadius
+                y = math.sin(angle)*circleRadius
+                untransformedPositions.append((x, y, circleHeight))
+        
+        bottomVertexIndex = len(untransformedPositions)
+        untransformedPositions.append((0, 0,-radius))
+        for i in range(numberOfSideFaces):
+            nextI = ((i+1) % numberOfSideFaces)
+            i0 = i
+            i1 = bottomVertexIndex
+            i2 = nextI
+            faces.append((i0, i1, i2))
+        
+        topVertexIndex = len(untransformedPositions)
+        untransformedPositions.append((0, 0,radius))
+        for i in range(numberOfSideFaces):
+            nextI = ((i+1) % numberOfSideFaces)
+            i0 = ((numberOfCircles-1)* numberOfSideFaces) + nextI
+            i1 = topVertexIndex
+            i2 = ((numberOfCircles-1)* numberOfSideFaces) + i
+            faces.append((i0, i1, i2))
+
     else:
 
         #TODO size0, size1, and size2 are width*2, length*2, and height*2
