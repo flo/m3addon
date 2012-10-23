@@ -575,7 +575,7 @@
                 </bits>
             </field>
             <field offset="8" name="unknownAt8" type="uint32" />
-            <field offset="12" name="unknownAt12" size="4" expected-value="0xffffffff" />
+            <field offset="12" name="unknownAt12" type="int32" default-value="-1" />
             <field offset="16" name="lightColor" type="Vector3AnimationReference" />
             <field offset="52" name="lightIntensity" type="FloatAnimationReference" />
             <field offset="72" name="specColor" type="Vector3AnimationReference" />
