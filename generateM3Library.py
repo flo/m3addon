@@ -553,7 +553,7 @@ class ExpectedAndDefaultConstantsDeterminer(Visitor):
                 if not defaultValueString.startswith("0x"):
                     raise Exception('The expected-value "%s" of field %s does not start with 0x' % (hexString, fieldName) )
 
-                defaultValueConstant = self.toHexConstant(expectedValueString)
+                defaultValueConstant = self.toHexConstant(defaultValueString)
             
         fieldDataMap["expectedValueConstant"] = expectedValueConstant
         fieldDataMap["defaultValueConstant"] = defaultValueConstant
