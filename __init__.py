@@ -860,9 +860,9 @@ class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     size0 = bpy.props.FloatProperty(default=1.0, options=set())
     size1 = bpy.props.FloatProperty(default=0.0, options=set())
     size2 = bpy.props.FloatProperty(default=0.0, options=set())
-    offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ")
-    rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION")
-    scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ")
+    offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options=set())
+    rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION", options=set())
+    scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ", options=set())
 
 
 
