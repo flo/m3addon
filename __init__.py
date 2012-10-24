@@ -186,6 +186,10 @@ def handleAttachmentVolumeTypeChange(self, context):
     else:
         self.volumeSize2 = 0.0
 
+def handleGeometicShapeUpdate(self, context):
+    shapeObject = self
+    selectOrCreateBoneForShapeObject(context.scene, shapeObject)
+
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
     newIndex = scene.m3_animation_index
@@ -856,13 +860,13 @@ class M3AttachmentPoint(bpy.types.PropertyGroup):
 
 class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="", options=set())
-    shape = bpy.props.EnumProperty(default="1", items=fuzzyHitTestShapeList, options=set())
-    size0 = bpy.props.FloatProperty(default=1.0, options=set())
-    size1 = bpy.props.FloatProperty(default=0.0, options=set())
-    size2 = bpy.props.FloatProperty(default=0.0, options=set())
-    offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options=set())
-    rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION", options=set())
-    scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ", options=set())
+    shape = bpy.props.EnumProperty(default="1", items=fuzzyHitTestShapeList,update=handleGeometicShapeUpdate, options=set())
+    size0 = bpy.props.FloatProperty(default=1.0, update=handleGeometicShapeUpdate, options=set())
+    size1 = bpy.props.FloatProperty(default=0.0, update=handleGeometicShapeUpdate, options=set())
+    size2 = bpy.props.FloatProperty(default=0.0, update=handleGeometicShapeUpdate, options=set())
+    offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", update=handleGeometicShapeUpdate,options=set())
+    rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION", update=handleGeometicShapeUpdate, options=set())
+    scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ", update=handleGeometicShapeUpdate, options=set())
 
 
 
