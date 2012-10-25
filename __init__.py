@@ -370,80 +370,15 @@ def selectOrCreateBoneForShapeObject(scene, shapeObject):
     sphereShapeConstant = "1"
     cylinderShapeConstant = "2"    
     if shapeObject.shape == cylinderShapeConstant:
-        numberOfSideFaces = 10
-        faces = []
-        untransformedPositions = []
         radius = shapeObject.size0
-        halfHeight = shapeObject.size1
-        for i in range(numberOfSideFaces):
-            angle0 = 2*math.pi * i / float(numberOfSideFaces)
-            angle1 = 2*math.pi * (i+1) / float(numberOfSideFaces)
-            i0 = i*2+1
-            i1 = i*2
-            i2 = ((i+1)*2) % (numberOfSideFaces*2)
-            i3 = ((i+1)*2 +1)% (numberOfSideFaces*2)
-            faces.append((i0, i1 ,i2, i3))
-            x = math.cos(angle0)*radius
-            y = math.sin(angle0)*radius
-            untransformedPositions.append((x,y,-halfHeight))
-            untransformedPositions.append((x,y,+halfHeight))
+        height = shapeObject.size1
+        untransformedPositions, faces = shared.createMeshDataForCylinder(radius, height)
     elif shapeObject.shape == sphereShapeConstant:
-        numberOfSideFaces = 10
-        numberOfCircles = 10
-        faces = []
-        untransformedPositions = []
         radius = shapeObject.size0
-        for circleIndex in range(numberOfCircles):
-            circleAngle = math.pi * (circleIndex+1) / float(numberOfCircles+1)
-            circleRadius = radius*math.sin(circleAngle)
-            circleHeight = -radius*math.cos(circleAngle)
-            nextCircleIndex = (circleIndex+1) % numberOfCircles
-            for i in range(numberOfSideFaces):
-                angle = 2*math.pi * i / float(numberOfSideFaces)
-                nextI = ((i+1) % numberOfSideFaces)
-                if nextCircleIndex != 0:
-                    i0 = circleIndex * numberOfSideFaces + i
-                    i1 = circleIndex * numberOfSideFaces + nextI
-                    i2 = nextCircleIndex * numberOfSideFaces + nextI
-                    i3 = nextCircleIndex * numberOfSideFaces + i
-                    faces.append((i0, i1 ,i2, i3))
-                x = math.cos(angle)*circleRadius
-                y = math.sin(angle)*circleRadius
-                untransformedPositions.append((x, y, circleHeight))
-        
-        bottomVertexIndex = len(untransformedPositions)
-        untransformedPositions.append((0, 0,-radius))
-        for i in range(numberOfSideFaces):
-            nextI = ((i+1) % numberOfSideFaces)
-            i0 = i
-            i1 = bottomVertexIndex
-            i2 = nextI
-            faces.append((i0, i1, i2))
-        
-        topVertexIndex = len(untransformedPositions)
-        untransformedPositions.append((0, 0,radius))
-        for i in range(numberOfSideFaces):
-            nextI = ((i+1) % numberOfSideFaces)
-            i0 = ((numberOfCircles-1)* numberOfSideFaces) + nextI
-            i1 = topVertexIndex
-            i2 = ((numberOfCircles-1)* numberOfSideFaces) + i
-            faces.append((i0, i1, i2))
-
+        untransformedPositions, faces = shared.createMeshDataForSphere(radius)
     else:
-
-        #TODO size0, size1, and size2 are width*2, length*2, and height*2
-        # so the current UI for the sizes is wrong
-        s0 = shapeObject.size0
-        s1 = shapeObject.size1
-        s2 = shapeObject.size2
-        faces = []
-        faces.append((0, 1, 3, 2))
-        faces.append((6,7,5,4))
-        faces.append((4,5,1,0))
-        faces.append((2, 3, 7, 6))
-        faces.append((0, 2, 6, 4 ))
-        faces.append((5, 7, 3, 1 ))
-        untransformedPositions = [(-s0, -s1, -s2), (-s0, -s1, s2), (-s0, s1, -s2), (-s0, s1, s2), (s0, -s1, -s2), (s0, -s1, s2), (s0, s1, -s2), (s0, s1, s2)]
+        sizeX, sizeY, sizeZ = 2*shapeObject.size0, 2*shapeObject.size1, 2*shapeObject.size2
+        untransformedPositions, faces = shared.createMeshDataForCuboid(sizeX, sizeY, sizeZ)
    
     #TODO reuse existing mesh of bone if it exists
     mesh = bpy.data.meshes.new('ShapeObjectBoneMesh')
