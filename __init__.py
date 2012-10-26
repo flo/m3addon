@@ -368,11 +368,11 @@ def selectOrCreateBoneForShapeObject(scene, shapeObject):
     bone, poseBone = selectOrCreateBone(scene, shapeObject.name)
     cubeShapeConstant = "0"
     sphereShapeConstant = "1"
-    cylinderShapeConstant = "2"    
-    if shapeObject.shape == cylinderShapeConstant:
+    capsuleShapeConstant = "2"
+    if shapeObject.shape == capsuleShapeConstant:
         radius = shapeObject.size0
         height = shapeObject.size1
-        untransformedPositions, faces = shared.createMeshDataForCylinder(radius, height)
+        untransformedPositions, faces = shared.createMeshDataForCapsule(radius, height)
     elif shapeObject.shape == sphereShapeConstant:
         radius = shapeObject.size0
         untransformedPositions, faces = shared.createMeshDataForSphere(radius)
@@ -491,7 +491,7 @@ attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment 
                            
 fuzzyHitTestShapeList = [("0", 'Cuboid', "A cuboid with the given width, length and height"),
                          ("1", 'Sphere', "A sphere with the given radius"),
-                         ("2", 'Cylinder', 'A cylinder with the given radius and height'),
+                         ("2", 'Capsule', 'A capsue which is based on a cylinder with the given radius and height'),
                         ]
 matDefaultSettingsList = [("MESH", "Mesh Standard Material", "A material for meshes"), 
                         ("PARTICLE", 'Particle Standard Material', "Material for particle systems"),

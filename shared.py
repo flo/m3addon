@@ -295,6 +295,54 @@ def createMeshDataForCuboid(sizeX, sizeY, sizeZ):
     vertices = [(-s0, -s1, -s2), (-s0, -s1, s2), (-s0, s1, -s2), (-s0, s1, s2), (s0, -s1, -s2), (s0, -s1, s2), (s0, s1, -s2), (s0, s1, s2)]
     return (vertices, faces)
 
+
+def createMeshDataForCapsule(radius, height, numberOfSideFaces = 10, numberOfCircles = 10):
+    """returns vertices and faces"""
+    vertices = []
+    faces = []
+    halfHeight = height / 2.0
+    for circleIndex in range(numberOfCircles):
+        if circleIndex < numberOfCircles/2:
+            circleAngle = math.pi * (circleIndex+1) / float(numberOfCircles+1-1)
+            circleHeight = -halfHeight -radius*math.cos(circleAngle)
+        else:
+            circleAngle = math.pi * (circleIndex) / float(numberOfCircles+1-1)
+            circleHeight =  halfHeight -radius*math.cos(circleAngle)
+        circleRadius = radius*math.sin(circleAngle)
+        nextCircleIndex = (circleIndex+1) % numberOfCircles
+        for i in range(numberOfSideFaces):
+            angle = 2*math.pi * i / float(numberOfSideFaces)
+            nextI = ((i+1) % numberOfSideFaces)
+            if nextCircleIndex != 0:
+                i0 = circleIndex * numberOfSideFaces + i
+                i1 = circleIndex * numberOfSideFaces + nextI
+                i2 = nextCircleIndex * numberOfSideFaces + nextI
+                i3 = nextCircleIndex * numberOfSideFaces + i
+                faces.append((i0, i1 ,i2, i3))
+            x = math.cos(angle)*circleRadius
+            y = math.sin(angle)*circleRadius
+            vertices.append((x, y, circleHeight))
+    
+    bottomVertexIndex = len(vertices)
+    vertices.append((0, 0,-halfHeight -radius))
+    for i in range(numberOfSideFaces):
+        nextI = ((i+1) % numberOfSideFaces)
+        i0 = i
+        i1 = bottomVertexIndex
+        i2 = nextI
+        faces.append((i0, i1, i2))
+    
+    topVertexIndex = len(vertices)
+    vertices.append((0, 0,halfHeight + radius))
+    for i in range(numberOfSideFaces):
+        nextI = ((i+1) % numberOfSideFaces)
+        i0 = ((numberOfCircles-1)* numberOfSideFaces) + nextI
+        i1 = topVertexIndex
+        i2 = ((numberOfCircles-1)* numberOfSideFaces) + i
+        faces.append((i0, i1, i2))
+    return (vertices, faces)
+
+
 def createMeshDataForCylinder(radius, height, numberOfSideFaces = 10):
     """returns the vertices and faces for a cylinder without head and bottom plane"""
     halfHeight = height / 2.0
