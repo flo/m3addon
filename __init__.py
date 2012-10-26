@@ -74,22 +74,31 @@ def availableMaterials(self, context):
     return list
 
 def handleTypeOrBoneSuffixChange(self, context):
+    particleSystem = self
     scene = context.scene
     typeName = "Unknown"
     for typeId, name, description in emissionAreaTypeList:
-        if typeId == self.emissionAreaType:
+        if typeId == particleSystem.emissionAreaType:
             typeName = name
     
-    boneSuffix = self.boneSuffix
-    self.name = "%s (%s)" % (boneSuffix, typeName)
+    boneSuffix = particleSystem.boneSuffix
+    particleSystem.name = "%s (%s)" % (boneSuffix, typeName)
 
-    if self.boneSuffix != self.oldBoneSuffix:
-        oldBoneName = shared.boneNameForPartileSystem(self.oldBoneSuffix)
-        newBoneName = shared.boneNameForPartileSystem(self.boneSuffix)
+    if particleSystem.boneSuffix != particleSystem.oldBoneSuffix:
+        oldBoneName = shared.boneNameForPartileSystem(particleSystem.oldBoneSuffix)
+        newBoneName = shared.boneNameForPartileSystem(particleSystem.boneSuffix)
         bone, armatureObject = findBoneWithArmatureObject(scene, oldBoneName)
         if bone != None:
             bone.name = newBoneName
-    self.oldBoneSuffix = self.boneSuffix
+    particleSystem.oldBoneSuffix = particleSystem.boneSuffix
+    
+    selectOrCreateBoneForPartileSystem(scene, particleSystem)
+
+    
+def handleParticleSystemAreaSizeChange(self, context):
+    particleSystem = self
+    scene = context.scene
+    selectOrCreateBoneForPartileSystem(scene, particleSystem)
 
 def handleForceTypeOrBoneSuffixChange(self, context):
     scene = context.scene
@@ -761,9 +770,9 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     trailingEnabled = bpy.props.BoolProperty(default=True, options=set(), description="If trailing is enabled then particles don't follow the particle emitter")
     emissionRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
     emissionAreaType = bpy.props.EnumProperty(default="2", items=emissionAreaTypeList, update=handleTypeOrBoneSuffixChange, options=set())
-    emissionAreaSize = bpy.props.FloatVectorProperty(default=(0.1, 0.1, 0.1), name="emis. area size", size=3, subtype="XYZ", options={"ANIMATABLE"})
+    emissionAreaSize = bpy.props.FloatVectorProperty(default=(0.1, 0.1, 0.1), name="emis. area size", update=handleParticleSystemAreaSizeChange, size=3, subtype="XYZ", options={"ANIMATABLE"})
     tailUnk1 = bpy.props.FloatVectorProperty(default=(0.05, 0.05, 0.05), name="tail unk.", size=3, subtype="XYZ", options={"ANIMATABLE"})
-    emissionAreaRadius = bpy.props.FloatProperty(default=2.0, name="emis. area radius", options={"ANIMATABLE"})
+    emissionAreaRadius = bpy.props.FloatProperty(default=2.0, name="emis. area radius", update=handleParticleSystemAreaSizeChange, options={"ANIMATABLE"})
     spreadUnk = bpy.props.FloatProperty(default=0.05, name="spread unk.", options={"ANIMATABLE"})
     emissionType = bpy.props.EnumProperty(default="0", items=particleEmissionTypeList, options=set())
     randomizeWithParticleSizes2 = bpy.props.BoolProperty(default=False, options=set(), description="Specifies if particles have random sizes")
