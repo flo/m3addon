@@ -310,8 +310,8 @@
             <field name="tangent" type="Vector4As4uint8" />
         </structure>
         <structure name="EVNT" version="1" size="104">
-            <description>A sequence end event</description>
-            <field name="name" type="Reference" refTo="CHARV0" expected-value="Evt_SeqEnd"/>
+            <description>An animation sequence event</description>
+            <field name="name" type="Reference" refTo="CHARV0" />
             <field name="unknown0" type="int32" expected-value="-1" />
             <field name="unknown1" type="int16" default-value="-1" />
             <field name="unknown2" type="uint16" expected-value="0" />
@@ -328,7 +328,7 @@
         </structure>
         
         <structure name="SDEV" version="0" size="32" >
-            <description>Event Key FramesAnimation block with reference to EVNT</description>
+            <description>Event Key Frames Animation block with reference to EVNT</description>
             <field name="frames" type="Reference" refTo="I32_V0" />
             <field name="flags" type="uint32" />
             <field name="fend" type="uint32" />
@@ -575,7 +575,7 @@
                 </bits>
             </field>
             <field offset="8" name="unknownAt8" type="uint32" />
-            <field offset="12" name="unknownAt12" size="4" expected-value="0xffffffff" />
+            <field offset="12" name="unknownAt12" type="int32" default-value="-1" />
             <field offset="16" name="lightColor" type="Vector3AnimationReference" />
             <field offset="52" name="lightIntensity" type="FloatAnimationReference" />
             <field offset="72" name="specColor" type="Vector3AnimationReference" />
@@ -958,95 +958,107 @@
             <field offset="84" name="unknownAt84" type="FloatAnimationReference" />
         </structure>
 
-		<structure name="PHSH" version="1" size="132" >
-			<description>Physics shape data</description>
-			<field offset="0" name="unknownAt0" type="float" />
-			<field offset="4" name="unknownAt4" size="16" />
-			<field offset="20" name="unknownAt20" type="float" />
-			<field offset="24" name="unknownAt24" size="16" />
-			<field offset="40" name="unknownAt40" type="float" />
-			<field offset="44" name="unknownAt44" size="16" />
-			<field offset="60" name="unknownAt60" type="float" />
-			<field offset="64" name="unknownAt64" size="4" />
-			<!-- Shape Type:
-				0 = box
-				1 = sphere
-				2 = capsule
-				3 = cylinder
-				4 = convex hull
-				5 = mesh
-				6+ = invalid
-			-->
-			<field offset="68" name="shapeType" type="uint8" />
-			<field offset="69" name="unknownAt69" size="3" />
-			<field offset="72" name="vertices" type="SmallReference" refTo="VEC3V0" />
-			<field offset="80" name="unknownAt80" size="4" />
-			<field offset="84" name="unknownAt84" size="8" />
-			<field offset="92" name="unknownAt92" size="4" />
-			<field offset="96" name="faces" type="SmallReference" refTo="U16_V0" />
-			<field offset="104" name="unknownAt104" size="4" />
-			<field offset="108" name="unknownAt108" type="SmallReference" refTo="VEC4V0" />
-			<field offset="116" name="unknownAt116" size="16" />
-		</structure>
+        <structure name="PHSH" version="1" size="132" >
+            <description>Physics shape data</description>
+            <field offset="0" name="matrix" type="Matrix44" />
+            <field offset="64" name="unknownAt64" type="uint32" expected-value="0x3ca14285" />
+            <!-- Shape Type:
+                0 = box
+                1 = sphere
+                2 = capsule
+                3 = cylinder
+                4 = convex hull
+                5 = mesh
+                6+ = invalid
+            -->
+            <field offset="68" name="shapeType" type="uint8" />
+            <!-- Is not always 0. It's propably the unintialized part of shapeType: -->
+            <field offset="69" name="unknownAt69" type="uint8" default-value="0" />
+            <field offset="70" name="unknownAt70" type="uint16" default-value="0" />
+            <field offset="72" name="vertices" type="SmallReference" refTo="VEC3V0" />
+            <!-- Belongs to the previous reference and seems not be get properly initialized with 0: -->
+            <field offset="80" name="uninitializedFieldAt80" type="uint32" default-value="0" />
+            <field offset="84" name="unknownAt84" type="uint32" expected-value="0" />
+            <field offset="88" name="unknownAt88" type="uint32" expected-value="0" />
+            <!-- Belongs propably to a reference at offset 84 since it seems to be uninitialized. -->
+            <field offset="92" name="uninitializedFieldAt92" type="uint32" default-value="0" />
+            <field offset="96" name="faces" type="SmallReference" refTo="U16_V0" />
+            <!-- Belongs to the previous reference and seems not be get properly initialized with 0: -->
+            <field offset="104" name="uninitializedFieldAt104" type="uint32" default-value="0" />
+            <!-- Bounding planes used for convex hull shapes? (may include extra radius value?) -->
+            <field offset="108" name="planeEquations" type="SmallReference" refTo="VEC4V0" />
+            <!-- Belongs to the previous reference and seems not be get properly initialized with 0: -->
+            <field offset="116" name="uninitializedFieldAt116" type="uint32" default-value="0" />
+            <field offset="120" name="size0" type="float" default-value="1.0" /> <!-- box x-size / capsule radius (/ cylinder radius / sphere radius?) -->
+            <field offset="124" name="size1" type="float" default-value="1.0" /> <!-- box y-size / capsule length (/ cylinder length?) -->
+            <field offset="128" name="size2" type="float" default-value="1.0" /> <!-- box z-size -->
+        </structure>
         
         <structure name="PHRB" version="2" size="104" >
-            <description></description>
-			<field offset="0" name="unknownAt0" size="8" />
-			<field offset="8" name="unknownAt8" size="4" /> <!-- 0xcdcc4c3f Same for all models? -->
-			<field offset="12" name="unknownAt12" size="12" />
-			<field offset="24" name="unknownAt24" size="4" />
-			<field offset="28" name="unknownAt28" size="12" />
-			<field offset="40" name="unknownAt40" size="4" />
-			<field offset="44" name="unknownAt44" size="12" />
-			<field offset="56" name="unknownAt56" size="4" />
-			<field offset="60" name="boneLookup" type="uint16" />
-			<field offset="62" name="boneLookupUnused" type="uint16" /> <!-- Matches boneLookup, but doesn't seem to be used? -->
-			<field offset="64" name="unknownAt64" size="16" />
-            <field offset="80" name="phshData" type="Reference" refTo="PHSHV1" />
-			<field offset="92" name="flags" type="uint32">
-				<bits>
-					<bit mask="0x1" name="collidable" />
-					<bit mask="0x2" name="walkable" />
-					<bit mask="0x4" name="stackable" />
-					<bit mask="0x8" name="simulate on collision" />
-					<bit mask="0x10" name="ignore local bodies" />
-					<bit mask="0x20" name="always exists" />
-					<bit mask="0x80" name="do not simulate" />
-				</bits>
-			</field>
-			<field offset="96" name="localForces" type="uint16">
-				<bits>
-					<bit mask="0x1" name="1" />
-					<bit mask="0x2" name="2" />
-					<bit mask="0x4" name="3" />
-					<bit mask="0x8" name="4" />
-					<bit mask="0x10" name="5" />
-					<bit mask="0x20" name="6" />
-					<bit mask="0x40" name="7" />
-					<bit mask="0x80" name="8" />
-					<bit mask="0x100" name="9" />
-					<bit mask="0x200" name="10" />
-					<bit mask="0x400" name="11" />
-					<bit mask="0x800" name="12" />
-					<bit mask="0x1000" name="13" />
-					<bit mask="0x2000" name="14" />
-					<bit mask="0x4000" name="15" />
-					<bit mask="0x8000" name="16" />
-				</bits>
-			</field>
-			<field offset="98" name="worldForces" type="uint16">
-				<bits>
-					<bit mask="0x1" name="wind" />
-					<bit mask="0x2" name="explosion" />
-					<bit mask="0x4" name="energy" />
-					<bit mask="0x8" name="blood" />
-					<bit mask="0x10" name="magnetic" />
-					<bit mask="0x20" name="grass" />
-					<bit mask="0x40" name="brush" />
-					<bit mask="0x80" name="trees" />
-				</bits>
-			</field>
-			<field offset="100" name="priority" type="uint32" />
+            <description>Rigid Body</description>
+            <field offset="0" name="unknownAt0" type="float" default-value="5.0" />
+            <field offset="4" name="unknownAt4" type="float" default-value="4.0" />
+            <field offset="8" name="unknownAt8" type="float" default-value="0.8" /> <!-- 0.8 in all models? -->
+            <field offset="12" name="unknownAt12" type="float" default-value="0.0" />
+            <field offset="16" name="unknownAt16" type="float" default-value="0.0" />
+            <field offset="20" name="unknownAt20" type="float" default-value="0.0" />
+            <field offset="24" name="unknownAt24" type="float" default-value="0.0" />
+            <field offset="28" name="unknownAt28" type="float" default-value="0.0" />
+            <field offset="32" name="unknownAt32" type="float" default-value="0.0" />
+            <field offset="36" name="unknownAt36" type="float" default-value="0.0" />
+            <field offset="40" name="unknownAt40" type="float" default-value="0.0" />
+            <field offset="44" name="unknownAt44" type="float" default-value="0.0" />
+            <field offset="48" name="unknownAt48" type="float" default-value="0.0" />
+            <field offset="52" name="unknownAt52" type="float" default-value="0.0" />
+            <field offset="56" name="unknownAt56" type="float" default-value="0.0" />
+            <field offset="60" name="boneIndex" type="uint16" />
+            <field offset="62" name="boneIndexUnused" type="uint16" default-value="0x0" /> <!-- Matches boneLookup, but doesn't seem to be used? -->
+            <field offset="64" name="unknownAt64" size="16" default-value="0x0" />
+            <field offset="80" name="physicsShapes" type="Reference" refTo="PHSHV1" />
+            <field offset="92" name="flags" type="uint32" default-value="0x1">
+                <bits>
+                    <bit mask="0x1" name="collidable" />
+                    <bit mask="0x2" name="walkable" />
+                    <bit mask="0x4" name="stackable" />
+                    <bit mask="0x8" name="simulateOnCollision" />
+                    <bit mask="0x10" name="ignoreLocalBodies" />
+                    <bit mask="0x20" name="alwaysExists" />
+                    <bit mask="0x80" name="doNotSimulate" />
+                </bits>
+            </field>
+            <field offset="96" name="localForces" type="uint16" default-value="0x0">
+                <bits>
+                    <bit mask="0x1" name="1" />
+                    <bit mask="0x2" name="2" />
+                    <bit mask="0x4" name="3" />
+                    <bit mask="0x8" name="4" />
+                    <bit mask="0x10" name="5" />
+                    <bit mask="0x20" name="6" />
+                    <bit mask="0x40" name="7" />
+                    <bit mask="0x80" name="8" />
+                    <bit mask="0x100" name="9" />
+                    <bit mask="0x200" name="10" />
+                    <bit mask="0x400" name="11" />
+                    <bit mask="0x800" name="12" />
+                    <bit mask="0x1000" name="13" />
+                    <bit mask="0x2000" name="14" />
+                    <bit mask="0x4000" name="15" />
+                    <bit mask="0x8000" name="16" />
+                </bits>
+            </field>
+            <field offset="98" name="worldForces" type="uint16" default-value="0x0">
+                <bits>
+                    <bit mask="0x1" name="wind" />
+                    <bit mask="0x2" name="explosion" />
+                    <bit mask="0x4" name="energy" />
+                    <bit mask="0x8" name="blood" />
+                    <bit mask="0x10" name="magnetic" />
+                    <bit mask="0x20" name="grass" />
+                    <bit mask="0x40" name="brush" />
+                    <bit mask="0x80" name="trees" />
+                </bits>
+            </field>
+            <field offset="100" name="priority" type="uint32" default-value="0" />
         </structure>
         
         <structure name="SSGS" version="1" size="108" >
@@ -1307,7 +1319,7 @@
             <field offset="456" name="wrpData" type="Reference" />
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
             <field name="unknownMaybeRef1" type="Reference" />
-            <field offset="480" name="phrbData" type="Reference" refTo="PHRBV2"/>
+            <field offset="480" name="rigidBodies" type="Reference" refTo="PHRBV2"/>
             <!-- it grew in size between version from 3x2 to 3x3 which indicates a reference-->
             <field name="unknownMaybeRef2" type="Reference" />
             <field name="unknownMaybeRef3" type="Reference" />

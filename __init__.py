@@ -108,7 +108,7 @@ def handleForceTypeOrBoneSuffixChange(self, context):
         if bone != None:
             bone.name = newBoneName
     self.oldBoneSuffix = self.boneSuffix
-    
+
 def handleLightTypeOrBoneSuffixChange(self, context):
     scene = context.scene
     typeName = "Unknown"
@@ -296,7 +296,7 @@ def handleForceIndexChanged(self, context):
         return
     force = scene.m3_forces[scene.m3_force_index]
     selectOrCreateBoneForForce(scene, force)
-    
+
 def handleLightIndexChanged(self, context):
     scene = context.scene
     if scene.m3_light_index == -1:
@@ -355,7 +355,7 @@ def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
 def selectOrCreateBoneForForce(scene, force):
     boneName = shared.boneNameForForce(force.boneSuffix)
     selectOrCreateBone(scene, boneName)
-    
+
 def selectOrCreateBoneForLight(scene, light):
     boneName = shared.boneNameForLight(light.boneSuffix, light.lightType)
     selectOrCreateBone(scene, boneName)
@@ -460,11 +460,21 @@ particleTypeList = [("0", "Square Billbords", "Quads always rotated towards came
                     ("6", "Rectangular Billbords", "Rectangles which can have a length != witdh which are rotated towards the camera"),
                     ("7", "Quads with speed as normal", "Particles are quads which have their normals aligned to the speed vector of the particle")
                     ]
+
 forceTypeList = [("0", "Directional", "The particles get accelerated into one direction"), 
                     ("1", "Radial", "Particles get accelerated ayway from the force source"),
                     ("2", "Unknown", "Unknown"),
                     ("3", "Rotary", "The particles rotate in a circle around a center")
                    ]
+
+physicsShapeTypeList = [("0", "Box", "Box shape with the given width, length and height"),
+                        ("1", "Sphere", "Sphere shape with the given radius"),
+                        ("2", "Capsule", "Capsule shape with the given radius and length"),
+                        ("3", "Cylinder", "Cylinder with the given radius and length"),
+                        ("4", "Convex Hull", "Convex hull created from the attached mesh"),
+                        ("5", "Mesh", "Mesh shape created from the attached mesh"),
+                        ]
+
 uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole image UVs for particles"),
                  ("1", "UV Layer 2", "Second UV layer which can be used for decals"),
                  ("2", "UV Layer 2", "Third UV layer"),
@@ -546,8 +556,10 @@ class M3TransformationCollection(bpy.types.PropertyGroup):
     
 class M3Animation(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Stand", options=set())
-    startFrame = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
-    exlusiveEndFrame = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
+    startFrame = bpy.props.IntProperty(subtype="UNSIGNED", options=set())
+    useSimulateFrame = bpy.props.BoolProperty(default=False, options=set())
+    simulateFrame = bpy.props.IntProperty(subtype="UNSIGNED", default=0, options=set())
+    exlusiveEndFrame = bpy.props.IntProperty(subtype="UNSIGNED", options=set())
     assignedActions = bpy.props.CollectionProperty(type=AssignedActionOfM3Animation, options=set())
     transformationCollections = bpy.props.CollectionProperty(type=M3TransformationCollection, options=set())
     transformationCollectionIndex = bpy.props.IntProperty(default=0, options=set())
@@ -785,6 +797,45 @@ class M3Force(bpy.types.PropertyGroup):
     unknownAt64 = bpy.props.FloatProperty(default=0.05, name="unknownAt64", options={"ANIMATABLE"})
     unknownAt84 = bpy.props.FloatProperty(default=0.05, name="unknownAt84", options={"ANIMATABLE"})
 
+class M3PhysicsShape(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(options=set())
+    # TODO: Take matrix values from representative blender object?
+    offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ")
+    rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION")
+    scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ")
+    shapeType = bpy.props.EnumProperty(default="0", items=physicsShapeTypeList, options=set())
+    # TODO: convex hull properties...
+    size0 = bpy.props.FloatProperty(default=1.0, name="size0", options=set())
+    size1 = bpy.props.FloatProperty(default=1.0, name="size1", options=set())
+    size2 = bpy.props.FloatProperty(default=1.0, name="size2", options=set())
+
+class M3RigidBody(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(options=set())
+    boneName = bpy.props.StringProperty(name="boneName", options=set())
+    unknownAt0 = bpy.props.FloatProperty(default=5.0, name="unknownAt0", options=set())
+    unknownAt4 = bpy.props.FloatProperty(default=4.0, name="unknownAt4", options=set())
+    unknownAt8 = bpy.props.FloatProperty(default=0.8, name="unknownAt8", options=set())
+    # skip other unknown values for now
+    physicsShapes = bpy.props.CollectionProperty(type=M3PhysicsShape)
+    physicsShapeIndex = bpy.props.IntProperty(options=set())
+    collidable = bpy.props.BoolProperty(default=True, options=set())
+    walkable = bpy.props.BoolProperty(default=False, options=set())
+    stackable = bpy.props.BoolProperty(default=False, options=set())
+    simulateOnCollision = bpy.props.BoolProperty(default=False, options=set())
+    ignoreLocalBodies = bpy.props.BoolProperty(default=False, options=set())
+    alwaysExists = bpy.props.BoolProperty(default=False, options=set())
+    doNotSimulate = bpy.props.BoolProperty(default=False, options=set())
+    localForces = bpy.props.BoolVectorProperty(default=tuple(16*[False]), size=16, subtype="LAYER", options=set())
+    wind = bpy.props.BoolProperty(default=False, options=set())
+    explosion = bpy.props.BoolProperty(default=False, options=set())
+    energy = bpy.props.BoolProperty(default=False, options=set())
+    blood = bpy.props.BoolProperty(default=False, options=set())
+    magnetic = bpy.props.BoolProperty(default=False, options=set())
+    grass = bpy.props.BoolProperty(default=False, options=set())
+    brush = bpy.props.BoolProperty(default=False, options=set())
+    trees = bpy.props.BoolProperty(default=False, options=set())
+    priority = bpy.props.IntProperty(default=0, options=set())
+
 class M3AttachmentPoint(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", options=set())
     boneName = bpy.props.StringProperty(name="boneName", options=set())
@@ -825,6 +876,7 @@ class M3Light(bpy.types.PropertyGroup):
     attenuationFar = bpy.props.FloatProperty(default=3.0, name="attenuationFar", options={"ANIMATABLE"})
     hotSpot = bpy.props.FloatProperty(default=1.0, name="Hot Spot", options={"ANIMATABLE"})
     falloff = bpy.props.FloatProperty(default=1.0, name="Fall Off", options={"ANIMATABLE"})
+    unknownAt12 = bpy.props.IntProperty(default=-1, name="unknownAt12", options=set())
     unknownAt8 = bpy.props.BoolProperty(default=False,options=set())
     shadowCast = bpy.props.BoolProperty(options=set())
     specular = bpy.props.BoolProperty(options=set())
@@ -874,6 +926,14 @@ class AnimationSequencesPanel(bpy.types.Panel):
             layout.prop(animation, 'notLooping', text="Doesn't Loop")
             layout.prop(animation, 'alwaysGlobal', text="Always Global")
             layout.prop(animation, 'globalInPreviewer', text="Global In Previewer")
+        
+        if not len(scene.m3_rigid_bodies) > 0:
+            return
+        
+        layout.separator()
+        layout.prop(animation, 'useSimulateFrame', text="Use physics")
+        if animation.useSimulateFrame:
+            layout.prop(animation, 'simulateFrame', text="Simulate after frame")
 
 class AnimationSequenceTransformationCollectionsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_STCs"
@@ -1376,8 +1436,141 @@ class ForcePanel(bpy.types.Panel):
             layout.prop(force, "forceRange", text="Range")
             layout.prop(force, "unknownAt64", text="Unknown 1")
             layout.prop(force, "unknownAt84", text="Unknown 2")
-       
-       
+
+class RigidBodyPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_rigid_bodies"
+    bl_label = "M3 Rigid Bodies"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        col.template_list(scene, "m3_rigid_bodies", scene, "m3_rigid_body_index", rows=2)
+        
+        col = row.column(align=True)
+        col.operator("m3.rigid_bodies_add", icon='ZOOMIN', text="")
+        col.operator("m3.rigid_bodies_remove", icon='ZOOMOUT', text="")
+        
+        currentIndex = scene.m3_rigid_body_index
+        if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
+            return
+        rigid_body = scene.m3_rigid_bodies[currentIndex]
+        
+        layout.separator()
+        layout.prop(rigid_body, 'name', text="Name")
+        layout.prop(rigid_body, 'boneName', text="Bone")
+        
+        # TODO: Bone selection from list would be ideal.
+        # This is almost correct, but bpy.data contains deleted items too. :(
+        #if bpy.data.armatures:
+        #    sub.prop_search(rigid_body, 'armatureName', bpy.data, "armatures", text="Armature")    
+        #    if rigid_body.armatureName and bpy.data.armatures[rigid_body.armatureName]:
+        #        sub.prop_search(rigid_body, 'boneName', bpy.data.armatures[rigid_body.armatureName], "bones", text="Bone")
+        
+        split = layout.split()
+        col = split.column()
+        sub = col.column(align=True)
+        sub.label(text="Collision Flags:")
+        sub.prop(rigid_body, 'collidable', text="Collidable")
+        sub.prop(rigid_body, 'walkable', text="Walkable")
+        sub.prop(rigid_body, 'stackable', text="Stackable")
+        sub.prop(rigid_body, 'simulateOnCollision', text="Simulate On Collision")
+        sub.prop(rigid_body, 'ignoreLocalBodies', text="Ignore Local Bodies")
+        sub.prop(rigid_body, 'alwaysExists', text="Always Exists")
+        sub.prop(rigid_body, 'doNotSimulate', text="Do Not Simulate")
+        
+        layout.prop(rigid_body, 'localForces', text="Local Forces")
+        
+        split = layout.split()
+        col = split.column()
+        sub = col.column(align=True)
+        sub.label(text="World Forces:")
+        sub.prop(rigid_body, 'wind', text="Wind")
+        sub.prop(rigid_body, 'explosion', text="Explosion")
+        sub.prop(rigid_body, 'energy', text="Energy")
+        sub.prop(rigid_body, 'blood', text="Blood")
+        sub.prop(rigid_body, 'magnetic', text="Magnetic")
+        sub.prop(rigid_body, 'grass', text="Grass")
+        sub.prop(rigid_body, 'brush', text="Brush")
+        sub.prop(rigid_body, 'trees', text="Trees")
+        
+        layout.prop(rigid_body, 'priority', text="Priority")
+
+class PhyscisShapePanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_physics_shapes"
+    bl_label = "M3 Physics Shapes"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        
+        currentIndex = scene.m3_rigid_body_index
+        if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
+            layout.label("No rigid body has been selected")
+            return
+        rigid_body = scene.m3_rigid_bodies[currentIndex]
+        
+        col.template_list(rigid_body, "physicsShapes", rigid_body, "physicsShapeIndex", rows = 2)
+        
+        col = row.column(align=True)
+        col.operator("m3.physics_shapes_add", icon='ZOOMIN', text="")
+        col.operator("m3.physics_shapes_remove", icon='ZOOMOUT', text="")
+        
+        currentIndex = rigid_body.physicsShapeIndex
+        if not 0 <= currentIndex < len(rigid_body.physicsShapes):
+            return
+        physics_shape = rigid_body.physicsShapes[currentIndex]
+        
+        layout.separator()
+        layout.prop(physics_shape, 'name', text="Name")
+        layout.prop(physics_shape, 'shapeType', text="Shape")
+        
+        if not physics_shape.shapeType in ["4", "5"]:
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Dimensions")
+            if physics_shape.shapeType in ["0"]: #box
+                sub.prop(physics_shape, "size0", text="Width")
+                sub.prop(physics_shape, "size1", text="Height")
+                sub.prop(physics_shape, "size2", text="Length")
+            elif physics_shape.shapeType in ["1"]: #sphere
+                sub.prop(physics_shape, "size0", text="Radius")
+            elif physics_shape.shapeType in ["2"]: #capsule
+                sub.prop(physics_shape, "size0", text="Radius")
+                sub.prop(physics_shape, "size1", text="Length")
+            elif physics_shape.shapeType in ["3"]: #cylinder
+                sub.prop(physics_shape, "size0", text="Radius")
+                sub.prop(physics_shape, "size1", text="Length")
+        
+        # TODO: remove this when we have an object representation
+        split = layout.split()
+        col = split.column()
+        sub = col.column(align=True)
+        sub.label(text="Offset")
+        sub.prop(physics_shape, 'offset', index=0, text="X")
+        sub.prop(physics_shape, 'offset', index=1, text="Y")
+        sub.prop(physics_shape, 'offset', index=2, text="Z")
+        sub.label(text="Rotation (Euler)")
+        sub.prop(physics_shape, 'rotationEuler', index=0, text="X")
+        sub.prop(physics_shape, 'rotationEuler', index=1, text="Y")
+        sub.prop(physics_shape, 'rotationEuler', index=2, text="Z")
+        sub.label(text="Scale")
+        sub.prop(physics_shape, 'scale', index=0, text="X")
+        sub.prop(physics_shape, 'scale', index=1, text="Y")
+        sub.prop(physics_shape, 'scale', index=2, text="Z")
+
 class LightPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_lights"
     bl_label = "M3 Lights"
@@ -1422,6 +1615,7 @@ class LightPanel(bpy.types.Panel):
             layout.prop(light, "unknownAt148", text="unknownAt148")
             layout.prop(light, "hotSpot", text="Hot Spot")
             layout.prop(light, "falloff", text="Fall Off")
+            layout.prop(light, "unknownAt12", text="unknownAt12")
             layout.prop(light, "shadowCast", text="Shadow Cast")
             layout.prop(light, "unknownFlag0x04", text="Unknown Flag 0x04")
             layout.prop(light, "turnOn", text="Turn On")
@@ -2250,8 +2444,105 @@ class M3_FORCES_OT_remove(bpy.types.Operator):
                 scene.m3_forces.remove(scene.m3_force_index)
                 scene.m3_force_index-= 1
         return{'FINISHED'}
+
+class M3_RIGID_BODIES_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.rigid_bodies_add'
+    bl_label       = "Add Rigid Body"
+    bl_description = "Adds a rigid body for export to the m3 model format"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        rigid_body = scene.m3_rigid_bodies.add()
         
+        rigid_body.name = self.findUnusedName(scene)
+        rigid_body.boneName = ""
         
+        scene.m3_rigid_body_index = len(scene.m3_rigid_bodies)-1
+        return{'FINISHED'}
+    
+    def findUnusedName(self, scene):
+        usedNames = set()
+        for rigid_body in scene.m3_rigid_bodies:
+            usedNames.add(rigid_body.name)
+        unusedName = None
+        counter = 1
+        while unusedName == None:
+            suggestedName = "%d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName
+
+class M3_RIGID_BODIES_OT_remove(bpy.types.Operator):
+    bl_idname = 'm3.rigid_bodies_remove'
+    bl_label = "Remove M3 Rigid Body"
+    bl_description = "Removes the active M3 rigid body (and the M3 Physics Shapes it contains)"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        
+        currentIndex = scene.m3_rigid_body_index
+        if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
+            return {'CANCELLED'}
+        
+        scene.m3_rigid_bodies.remove(currentIndex)
+        scene.m3_rigid_body_index -= 1
+        
+        return {'FINISHED'}
+
+class M3_PHYSICS_SHAPES_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.physics_shapes_add'
+    bl_label       = "Add Physics Shape"
+    bl_description = "Adds an M3 physics shape to the active M3 rigid body"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        
+        currentIndex = scene.m3_rigid_body_index
+        if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
+            return {'CANCELLED'}
+        rigid_body = scene.m3_rigid_bodies[currentIndex]
+        
+        physics_shape = rigid_body.physicsShapes.add()
+        physics_shape.name = self.findUnusedName(rigid_body)
+        
+        rigid_body.physicsShapeIndex = len(rigid_body.physicsShapes)-1
+        return {'FINISHED'}
+    
+    def findUnusedName(self, rigid_body):
+        usedNames = set()
+        for physics_shape in rigid_body.physicsShapes:
+            usedNames.add(physics_shape.name)
+        unusedName = None
+        counter = 1
+        while unusedName == None:
+            suggestedName = "%d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName
+
+class M3_PHYSICS_SHAPES_OT_remove(bpy.types.Operator):
+    bl_idname = 'm3.physics_shapes_remove'
+    bl_label = "Remove M3 Physics Shape"
+    bl_description = "Removes the active M3 physics shape"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        
+        currentIndex = scene.m3_rigid_body_index
+        if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
+            return {'CANCELLED'}
+        rigid_body = scene.m3_rigid_bodies[currentIndex]
+        
+        currentIndex = rigid_body.physicsShapeIndex
+        if not 0 <= currentIndex < len(rigid_body.physicsShapes):
+            return {'CANCELLED'}
+        
+        rigid_body.physicsShapes.remove(currentIndex)
+        rigid_body.physicsShapeIndex -= 1
+        return {'FINISHED'}
+
 class M3_LIGHTS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.lights_add'
     bl_label       = "Add Light"
@@ -2496,6 +2787,8 @@ def register():
     bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(options=set(), update=handlePartileSystemIndexChanged)
     bpy.types.Scene.m3_forces = bpy.props.CollectionProperty(type=M3Force)
     bpy.types.Scene.m3_force_index = bpy.props.IntProperty(options=set(), update=handleForceIndexChanged)
+    bpy.types.Scene.m3_rigid_bodies = bpy.props.CollectionProperty(type=M3RigidBody)
+    bpy.types.Scene.m3_rigid_body_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_lights = bpy.props.CollectionProperty(type=M3Light)
     bpy.types.Scene.m3_light_index = bpy.props.IntProperty(options=set(), update=handleLightIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)

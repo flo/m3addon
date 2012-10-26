@@ -72,6 +72,7 @@ class Exporter:
         self.initTighHitTest(model)
         self.initParticles(model)
         self.initForces(model)
+        self.initRigidBodies(model)
         self.initLights(model)
         self.initBoundings(model)
         self.initAttachmentPoints(model)
@@ -616,20 +617,39 @@ class Exporter:
         for animation in scene.m3_animations:
             animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
             animEndId = 0x65bd3215
-            animIdToAnimDataMap[animEndId] = self.createAnimationEndEvent(animation)
+            animIdToAnimDataMap[animEndId] = self.createAnimationEvents(animation)
     
-    def createAnimationEndEvent(self, animation):
+    def createAnimationEvents(self, animation):
         event = m3.SDEVV0()
-        event.frames = [self.frameToMS(animation.exlusiveEndFrame)]
+        event.frames = []
         event.flags = 1
         event.fend = self.frameToMS(animation.exlusiveEndFrame)
-        event.keys = [self.createAnimationEndEventKey(animation)]
-        return event
+        event.keys = []
         
-    def createAnimationEndEventKey(self, animation):
+        if animation.useSimulateFrame:
+            # TODO: does the flag matter?
+            event.flags = 0
+            event.frames.append(self.frameToMS(animation.simulateFrame))
+            event.keys.append(self.createSimulateEventKey())
+        
+        event.frames.append(self.frameToMS(animation.exlusiveEndFrame))
+        event.keys.append(self.createAnimationEndEventKey())
+        
+        return event
+    
+    def createAnimationEndEventKey(self):
         event = m3.EVNTV1()
         event.name = "Evt_SeqEnd"
         event.matrix = self.createIdentityMatrix()
+        return event
+    
+    def createSimulateEventKey(self):
+        event = m3.EVNTV1()
+        event.name = "Evt_Simulate"
+        event.matrix = self.createIdentityMatrix()
+        # TODO: does the matrix matter? do the unknown fields matter?
+        event.unknown1 = 0x27
+        event.unknown3 = 0x3d03
         return event
     
     def initWithPreparedAnimationData(self, model):
@@ -870,7 +890,31 @@ class Exporter:
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Force, blenderObject=force, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferForce(transferer)
             model.forces.append(m3Force)
+    
+    def initRigidBodies(self, model):
+        scene = self.scene
+        for rigidBodyIndex, rigidBody in enumerate(scene.m3_rigid_bodies):
+            boneName = rigidBody.boneName
+            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+            if boneIndex == None:
+                boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+            m3RigidBody = m3.PHRBV2()
+            m3RigidBody.boneIndex = boneIndex
+            animPathPrefix = "m3_rigid_bodies[%s]." % rigidBodyIndex
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3RigidBody, blenderObject=rigidBody, animPathPrefix=animPathPrefix, rootObject=self.scene)
+            shared.transferRigidBody(transferer)
             
+            for physicsShapeIndex, physicsShape in enumerate(rigidBody.physicsShapes):
+                m3PhysicsShape = m3.PHSHV1()
+                animPathPrefix = "m3_physics_shapes[%s]." % physicsShapeIndex
+                transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3PhysicsShape, blenderObject=physicsShape, animPathPrefix=animPathPrefix, rootObject=self.scene)
+                shared.transferPhysicsShape(transferer)
+                matrix = shared.composeMatrix(physicsShape.offset, physicsShape.rotationEuler, physicsShape.scale)
+                m3PhysicsShape.matrix = self.createMatrixFromBlenderMatrix(matrix)
+                m3RigidBody.physicsShapes.append(m3PhysicsShape)
+            
+            model.rigidBodies.append(m3RigidBody)
+    
     def initLights(self, model):
         scene = self.scene
         for lightIndex, light in enumerate(scene.m3_lights):
@@ -1664,6 +1708,15 @@ class BlenderToM3DataTransferer:
         booleanValue = getattr(self.blenderObject, bitName)
         self.m3Object.setNamedBit(m3FieldName, bitName, booleanValue)
 
+    def transfer16Bits(self, fieldName):
+        vector = getattr(self.blenderObject, fieldName)
+        integerValue = 0
+        for bitIndex in range(0, 16):
+            if vector[bitIndex]:
+                mask = 1 << bitIndex
+                integerValue |= mask
+        setattr(self.m3Object, fieldName, integerValue)
+    
     def transfer32Bits(self, fieldName):
         vector = getattr(self.blenderObject, fieldName)
         integerValue = 0
