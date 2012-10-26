@@ -344,9 +344,6 @@ def findBoneWithArmatureObject(scene, boneName):
             return (bone, armatureObject)
     return (None, None)
 
-def selectOrCreateBoneForPartileSystem(scene, particle_system):
-    boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
-    selectOrCreateBone(scene, boneName)
 
 def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
     boneName = shared.boneNameForPartileSystemCopy(particle_system, copy)
@@ -362,7 +359,57 @@ def selectOrCreateBoneForLight(scene, light):
 
 def selectOrCreateBoneForCamera(scene, camera):
     selectOrCreateBone(scene, camera.name)
+    
+    
+def createHiddenMeshObject(name, untransformedPositions, faces, matrix):
+    mesh = bpy.data.meshes.new(name)
+    meshObject = bpy.data.objects.new(name, mesh)
+    meshObject.location = (0,0,0) 
 
+    
+    transformedPositions = []
+    for v in untransformedPositions:
+        transformedPositions.append(matrix * mathutils.Vector(v))
+
+    mesh.vertices.add(len(transformedPositions))
+    mesh.vertices.foreach_set("co", io_utils.unpack_list(transformedPositions))
+
+    mesh.tessfaces.add(len(faces))
+    mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(faces))
+    
+    mesh.update(calc_edges=True)
+    return meshObject
+
+def selectOrCreateBoneForPartileSystem(scene, particle_system):
+    boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
+    bone, poseBone = selectOrCreateBone(scene, boneName)
+    emissionAreaType = particle_system.emissionAreaType
+    if emissionAreaType == emssionAreaTypePoint:
+        untransformedPositions, faces = shared.createMeshDataForSphere(0.02)
+    elif emissionAreaType == emssionAreaTypePlane:
+        length = particle_system.emissionAreaSize[0]
+        width = particle_system.emissionAreaSize[1]
+        height = 0
+        untransformedPositions, faces = shared.createMeshDataForCuboid(length, width, height)
+    elif emissionAreaType == emssionAreaTypeSphere:
+        radius = particle_system.emissionAreaRadius
+        untransformedPositions, faces = shared.createMeshDataForSphere(radius)
+    elif emissionAreaType == emssionAreaTypeCuboid:
+        length = particle_system.emissionAreaSize[0]
+        width = particle_system.emissionAreaSize[1]
+        height = particle_system.emissionAreaSize[2]
+        untransformedPositions, faces = shared.createMeshDataForCuboid(length, width, height)
+    else:
+        radius = particle_system.emissionAreaRadius
+        height = particle_system.emissionAreaSize[2]
+        untransformedPositions, faces = shared.createMeshDataForCylinder(radius, height)
+   
+    # no transformation known so far
+    matrix = mathutils.Matrix()
+    
+    #TODO reuse existing mesh of bone if it exists
+    poseBone.custom_shape = createHiddenMeshObject(boneName + 'Mesh', untransformedPositions, faces, matrix)
+    bone.show_wire = True
 
 def selectOrCreateBoneForShapeObject(scene, shapeObject):
     bone, poseBone = selectOrCreateBone(scene, shapeObject.name)
@@ -379,25 +426,10 @@ def selectOrCreateBoneForShapeObject(scene, shapeObject):
     else:
         sizeX, sizeY, sizeZ = 2*shapeObject.size0, 2*shapeObject.size1, 2*shapeObject.size2
         untransformedPositions, faces = shared.createMeshDataForCuboid(sizeX, sizeY, sizeZ)
-   
-    #TODO reuse existing mesh of bone if it exists
-    mesh = bpy.data.meshes.new('ShapeObjectBoneMesh')
-    meshObject = bpy.data.objects.new('ShapeObjectBoneMesh', mesh)
-    meshObject.location = (0,0,0) 
 
     matrix = shared.composeMatrix(shapeObject.offset, shapeObject.rotationEuler, shapeObject.scale)
-    
-    transformedPositions = []
-    for v in untransformedPositions:
-        transformedPositions.append(matrix * mathutils.Vector(v))
 
-    mesh.vertices.add(len(transformedPositions))
-    mesh.vertices.foreach_set("co", io_utils.unpack_list(transformedPositions))
-
-    mesh.tessfaces.add(len(faces))
-    mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(faces))
-    
-    mesh.update(calc_edges=True)
+    poseBone.custom_shape = createHiddenMeshObject('ShapeObjectBoneMesh', untransformedPositions, faces, matrix)
 
     #TODO handle other kind of mesh:
     poseBone.custom_shape = meshObject
@@ -439,16 +471,22 @@ def selectOrCreateBone(scene, boneName):
     poseBone = armatureObject.pose.bones[boneName]
     bone = armatureObject.data.bones[boneName]
     return (bone, poseBone)
-  
-emissionAreaTypesWithRadius = ["2", "4"]
-emissionAreaTypesWithWidth = ["1", "3"]
-emissionAreaTypesWithLength = ["1", "3"]
-emissionAreaTypesWithHeight = ["3", "4"]
-emissionAreaTypeList =  [("0", "Point", "Particles spawn at a certain point"), 
-                        ("1", 'Plane', "Particles spawn in a rectangle"), 
-                        ("2", 'Sphere', 'Particles spawn in a sphere'),
-                        ("3", 'Cuboid', 'Particles spawn in a cuboid'),
-                        ("4", 'Cylinder', 'Particles spawn in a cylinder')
+
+
+emssionAreaTypePoint = "0"
+emssionAreaTypePlane = "1"
+emssionAreaTypeSphere = "2"
+emssionAreaTypeCuboid = "3"
+emssionAreaTypeCylinder = "4"
+emissionAreaTypesWithRadius = [emssionAreaTypeSphere, emssionAreaTypeCylinder]
+emissionAreaTypesWithWidth = [emssionAreaTypePlane, emssionAreaTypeCuboid]
+emissionAreaTypesWithLength = [emssionAreaTypePlane, emssionAreaTypeCuboid]
+emissionAreaTypesWithHeight = [emssionAreaTypeCuboid, emssionAreaTypeCylinder]
+emissionAreaTypeList =  [(emssionAreaTypePoint, "Point", "Particles spawn at a certain point"), 
+                        (emssionAreaTypePlane, 'Plane', "Particles spawn in a rectangle"), 
+                        (emssionAreaTypeSphere, 'Sphere', 'Particles spawn in a sphere'),
+                        (emssionAreaTypeCuboid, 'Cuboid', 'Particles spawn in a cuboid'),
+                        (emssionAreaTypeCylinder, 'Cylinder', 'Particles spawn in a cylinder')
                         ]
 
 particleTypeList = [("0", "Square Billbords", "Quads always rotated towards camera (id 0)"), 
