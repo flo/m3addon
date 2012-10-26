@@ -278,7 +278,14 @@ class M3ToBlenderDataTransferer:
             
     def transferBit(self, m3FieldName, bitName):
         setattr(self.blenderObject, bitName, self.m3Object.getNamedBit(m3FieldName, bitName))
-
+    
+    def transfer16Bits(self, fieldName):
+        integerValue = getattr(self.m3Object, fieldName)
+        vector = getattr(self.blenderObject, fieldName)
+        for bitIndex in range(0, 16):
+            mask = 1 << bitIndex
+            vector[bitIndex] = (mask & integerValue) > 0
+    
     def transfer32Bits(self, fieldName):
         integerValue = getattr(self.m3Object, fieldName)
         vector = getattr(self.blenderObject, fieldName)
@@ -368,6 +375,7 @@ class Importer:
         self.initTightHitTest()
         self.createParticleSystems()
         self.createForces()
+        self.createRigidBodies()
         self.createLights()
         self.createAttachmentPoints()
         self.createMesh()
@@ -797,7 +805,6 @@ class Importer:
     def createParticleSystems(self):
         currentScene = bpy.context.scene
         print("Loading particle systems")
-        index = 0
         for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
             particle_system = currentScene.m3_particle_systems.add()
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
@@ -831,7 +838,6 @@ class Importer:
     def createForces(self):
         currentScene = bpy.context.scene
         print("Loading forces")
-        index = 0
         for forceIndex, m3Force in enumerate(self.model.forces):
             force = currentScene.m3_forces.add()
             animPathPrefix = "m3_forces[%s]." % forceIndex
@@ -844,11 +850,34 @@ class Importer:
             else:
                 print("Warning: A force was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ForcePrefix))
                 force.boneSuffix = fullBoneName
-                
+    
+    def createRigidBodies(self):
+        currentScene = bpy.context.scene
+        print("Loading rigid bodies")
+        for rigidBodyIndex, m3RigidBody in enumerate(self.model.rigidBodies):
+            rigid_body = currentScene.m3_rigid_bodies.add()
+            animPathPrefix = "m3_rigid_bodies[%s]." % rigidBodyIndex
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=rigid_body, m3Object=m3RigidBody)
+            shared.transferRigidBody(transferer)
+            boneEntry = self.model.bones[m3RigidBody.boneIndex]
+            rigid_body.name = boneEntry.name
+            rigid_body.boneName = boneEntry.name
+            
+            for physicsShapeIndex, m3PhysicsShape in enumerate(m3RigidBody.physicsShapes):
+                physics_shape = rigid_body.physicsShapes.add()
+                animPathPrefix = "m3_physics_shapes[%s]." % physicsShapeIndex
+                transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=physics_shape, m3Object=m3PhysicsShape)
+                shared.transferPhysicsShape(transferer)
+                physics_shape.name = "%d" % (physicsShapeIndex + 1)
+                matrix = toBlenderMatrix(m3PhysicsShape.matrix)
+                offset, rotation, scale = matrix.decompose()
+                physics_shape.offset = offset
+                physics_shape.rotationEuler = rotation.to_euler("XYZ")
+                physics_shape.scale = scale
+    
     def createLights(self):
         currentScene = bpy.context.scene
         print("Loading lights")
-        index = 0
         for lightIndex, m3Light in enumerate(self.model.lights):
             light = currentScene.m3_lights.add()
             animPathPrefix = "m3_lights[%s]." % lightIndex
@@ -1128,7 +1157,19 @@ class Importer:
             return bpy.context.scene.name
         else:
             raise Exception("Unhandled case")
-
+    
+    def findSimulateFrame(self, animIdToTimeValueMap):
+        # Hack:
+        # So far only seen models where Evt_Simulate and Evt_End are in the same animId element.
+        # Check through all stc.sdev entries directly instead?
+        timeValueMap = animIdToTimeValueMap[0x65bd3215]
+        
+        for frame, key, in frameValuePairs(timeValueMap):
+            if key.name == "Evt_Simulate":
+                return True, frame
+        
+        return False, 0
+    
     def createAnimations(self):
         print ("Creating actions(animation sequences)")
         scene = bpy.context.scene
@@ -1163,7 +1204,7 @@ class Importer:
                     transformationCollectionName = transformationCollectionName[len(stcPrefix):]
                 
                 transformationCollection.name = transformationCollectionName
-
+                
                 transferer = M3ToBlenderDataTransferer(self, None, blenderObject=transformationCollection, m3Object=stc)
                 shared.transferSTC(transferer)
                 animIdsOfSTC = set()     
@@ -1173,14 +1214,16 @@ class Importer:
                         raise Exception("Same animid %s got animated by different STC" % animId)
                     animIdToTimeValueMap[animId] = timeValueMap
                     animIdsOfSTC.add(animId)
-
+                
                 self.sequenceNameAndSTCIndexToAnimIdSet[sequence.name, animationSTCIndex] = animIdsOfSTC
-
+                
                 # stc.seqIndex seems to be wrong:
                 #sequence = model.sequences[stc.seqIndex]
                 if len(stc.animIds) != len(stc.animRefs):
                     raise Exception("len(stc.animids) != len(stc.animrefs)")
-
+            
+            animation.useSimulateFrame, animation.simulateFrame = self.findSimulateFrame(animIdToTimeValueMap)
+            
             self.animations.append(AnimationData(animIdToTimeValueMap, ownerTypeToActionMap, sequenceIndex))
 
 

@@ -332,6 +332,36 @@ def transferForce(transferer):
     transferer.transferAnimatableFloat("unknownAt64")
     transferer.transferAnimatableFloat("unknownAt84")
 
+def transferRigidBody(transferer):
+    transferer.transferFloat("unknownAt0")
+    transferer.transferFloat("unknownAt4")
+    transferer.transferFloat("unknownAt8")
+    # skip other unknown values for now
+    transferer.transferBit("flags", "collidable")
+    transferer.transferBit("flags", "walkable")
+    transferer.transferBit("flags", "stackable")
+    transferer.transferBit("flags", "simulateOnCollision")
+    transferer.transferBit("flags", "ignoreLocalBodies")
+    transferer.transferBit("flags", "alwaysExists")
+    transferer.transferBit("flags", "doNotSimulate")
+    transferer.transfer16Bits("localForces")
+    transferer.transferBit("worldForces", "wind")
+    transferer.transferBit("worldForces", "explosion")
+    transferer.transferBit("worldForces", "energy")
+    transferer.transferBit("worldForces", "blood")
+    transferer.transferBit("worldForces", "magnetic")
+    transferer.transferBit("worldForces", "grass")
+    transferer.transferBit("worldForces", "brush")
+    transferer.transferBit("worldForces", "trees")
+    transferer.transferInt("priority")
+
+def transferPhysicsShape(transferer):
+    transferer.transferEnum("shapeType")
+    # skip unknown values for now
+    transferer.transferFloat("size0")
+    transferer.transferFloat("size1")
+    transferer.transferFloat("size2")
+
 def transferStandardMaterial(transferer):
     transferer.transferString("name")
     transferer.transferBit("flags", "unfogged")
