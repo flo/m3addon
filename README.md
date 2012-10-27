@@ -18,6 +18,7 @@ Currently the following content can be exported and imported:
   * M3 attachment points and volumes
   * M3 cameras
   * M3 lights
+  * M3 rigid bodies (simple shapes only)
 
 The script m3ToXml.py can also be used to convert a m3 file into a XML file. It
 takes a m3 file as argument and prints the XML on the command line.
