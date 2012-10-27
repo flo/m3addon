@@ -782,6 +782,11 @@ class Importer:
         if m3ShapeObject.boneIndex != -1:
             m3Bone = self.model.bones[m3ShapeObject.boneIndex]
             blenderShapeObject.name = m3Bone.name
+            poseBone = self.armatureObject.pose.bones[self.boneNames[m3ShapeObject.boneIndex]]
+            poseBone.custom_shape = shared.createMeshForShapeObject(blenderShapeObject)
+            bone = self.armature.bones[self.boneNames[m3ShapeObject.boneIndex]]
+            bone.show_wire = True
+
 
     def initTightHitTest(self):
         print("Loading tight hit test shape")
@@ -821,6 +826,14 @@ class Importer:
             else:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                 particle_system.boneSuffix = fullBoneName
+                
+                
+            poseBone = self.armatureObject.pose.bones[self.boneNames[m3ParticleSystem.bone]]
+            poseBone.custom_shape = shared.createMeshForParticleSystem(particle_system)
+            bone = self.armature.bones[self.boneNames[m3ParticleSystem.bone]]
+            bone.show_wire = True
+
+
             particle_system.materialName = self.getNameOfMaterialWithReferenceIndex(m3ParticleSystem.materialReferenceIndex)
             if m3ParticleSystem.forceChannelsCopy != m3ParticleSystem.forceChannels:
                 print("Warning: Unexpected model content: forceChannels != forceChannelsCopy")
