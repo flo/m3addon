@@ -803,7 +803,7 @@ class M3PhysicsShape(bpy.types.PropertyGroup):
     offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ")
     rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION")
     scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ")
-    shapeType = bpy.props.EnumProperty(default="0", items=physicsShapeTypeList, options=set())
+    shape = bpy.props.EnumProperty(default="0", items=physicsShapeTypeList, options=set())
     # TODO: convex hull properties...
     size0 = bpy.props.FloatProperty(default=1.0, name="size0", options=set())
     size1 = bpy.props.FloatProperty(default=1.0, name="size1", options=set())
@@ -1534,42 +1534,8 @@ class PhyscisShapePanel(bpy.types.Panel):
         
         layout.separator()
         layout.prop(physics_shape, 'name', text="Name")
-        layout.prop(physics_shape, 'shapeType', text="Shape")
         
-        if not physics_shape.shapeType in ["4", "5"]:
-            split = layout.split()
-            col = split.column()
-            sub = col.column(align=True)
-            sub.label(text="Dimensions")
-            if physics_shape.shapeType in ["0"]: #box
-                sub.prop(physics_shape, "size0", text="Width")
-                sub.prop(physics_shape, "size1", text="Height")
-                sub.prop(physics_shape, "size2", text="Length")
-            elif physics_shape.shapeType in ["1"]: #sphere
-                sub.prop(physics_shape, "size0", text="Radius")
-            elif physics_shape.shapeType in ["2"]: #capsule
-                sub.prop(physics_shape, "size0", text="Radius")
-                sub.prop(physics_shape, "size1", text="Length")
-            elif physics_shape.shapeType in ["3"]: #cylinder
-                sub.prop(physics_shape, "size0", text="Radius")
-                sub.prop(physics_shape, "size1", text="Length")
-        
-        # TODO: remove this when we have an object representation
-        split = layout.split()
-        col = split.column()
-        sub = col.column(align=True)
-        sub.label(text="Offset")
-        sub.prop(physics_shape, 'offset', index=0, text="X")
-        sub.prop(physics_shape, 'offset', index=1, text="Y")
-        sub.prop(physics_shape, 'offset', index=2, text="Z")
-        sub.label(text="Rotation (Euler)")
-        sub.prop(physics_shape, 'rotationEuler', index=0, text="X")
-        sub.prop(physics_shape, 'rotationEuler', index=1, text="Y")
-        sub.prop(physics_shape, 'rotationEuler', index=2, text="Z")
-        sub.label(text="Scale")
-        sub.prop(physics_shape, 'scale', index=0, text="X")
-        sub.prop(physics_shape, 'scale', index=1, text="Y")
-        sub.prop(physics_shape, 'scale', index=2, text="Z")
+        addUIForShapeProperties(layout, physics_shape)
 
 class LightPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_lights"
@@ -1714,24 +1680,34 @@ class AttachmentPointsPanel(bpy.types.Panel):
 
 def addUIForShapeProperties(layout, shapeObject):
     layout.prop(shapeObject, 'shape', text="Shape: ")
-    if shapeObject.shape in ["1", "2"]: 
-        layout.prop(shapeObject, 'size0', text="Radius")
-    elif shapeObject.shape in  ["0"]:
-        layout.prop(shapeObject, 'size0', text="Width")
-    if shapeObject.shape in ["0"]:
-        layout.prop(shapeObject, 'size1', text="Length")
-    elif shapeObject.shape in ["2"]:
-        layout.prop(shapeObject, 'size1', text="Height")
-    if shapeObject.shape in ["0"]:
-        layout.prop(shapeObject, 'size2', text="Height")
+    
+    if shapeObject.shape in ["0", "1", "2", "3"]:
+        split = layout.split()
+        col = split.column()
+        sub = col.column(align=True)
+        sub.label(text="Dimensions")
+        if shapeObject.shape in ["0"]: #cuboid
+            sub.prop(shapeObject, "size0", text="Width")
+            sub.prop(shapeObject, "size1", text="Length")
+            sub.prop(shapeObject, "size2", text="Height")
+        elif shapeObject.shape in ["1"]: #sphere
+            sub.prop(shapeObject, "size0", text="Radius")
+        elif shapeObject.shape in ["2"]: #capsule
+            sub.prop(shapeObject, "size0", text="Radius")
+            sub.prop(shapeObject, "size1", text="Height")
+        elif shapeObject.shape in ["3"]: #cylinder
+            sub.prop(shapeObject, "size0", text="Radius")
+            sub.prop(shapeObject, "size1", text="Height")
+    
     split = layout.split()
     col = split.column()
     sub = col.column(align=True)
+    
     sub.label(text="Offset")
     sub.prop(shapeObject, 'offset', index=0, text="X")
     sub.prop(shapeObject, 'offset', index=1, text="Y")
     sub.prop(shapeObject, 'offset', index=2, text="Z")
-
+    
     sub.label(text="Rotation (Euler)")
     sub.prop(shapeObject, 'rotationEuler', index=0, text="X")
     sub.prop(shapeObject, 'rotationEuler', index=1, text="Y")

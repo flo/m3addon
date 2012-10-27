@@ -481,7 +481,7 @@ def transferRigidBody(transferer):
     transferer.transferInt("priority")
 
 def transferPhysicsShape(transferer):
-    transferer.transferEnum("shapeType")
+    transferer.transferEnum("shape")
     # skip unknown values for now
     transferer.transferFloat("size0")
     transferer.transferFloat("size1")
