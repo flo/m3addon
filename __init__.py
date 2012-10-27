@@ -90,14 +90,15 @@ def handleTypeOrBoneSuffixChange(self, context):
         if bone != None:
             bone.name = newBoneName
     particleSystem.oldBoneSuffix = particleSystem.boneSuffix
-    
-    selectOrCreateBoneForPartileSystem(scene, particleSystem)
-
+    if particleSystem.updateBlenderBoneShapes:
+        selectOrCreateBoneForPartileSystem(scene, particleSystem)
     
 def handleParticleSystemAreaSizeChange(self, context):
     particleSystem = self
     scene = context.scene
-    selectOrCreateBoneForPartileSystem(scene, particleSystem)
+    if particleSystem.updateBlenderBoneShapes:
+        selectOrCreateBoneForPartileSystem(scene, particleSystem)
+
 
 def handleForceTypeOrBoneSuffixChange(self, context):
     scene = context.scene
@@ -196,7 +197,8 @@ def handleAttachmentVolumeTypeChange(self, context):
 
 def handleGeometicShapeUpdate(self, context):
     shapeObject = self
-    selectOrCreateBoneForShapeObject(context.scene, shapeObject)
+    if shapeObject.updateBlenderBoneShapes:
+        selectOrCreateBoneForShapeObject(context.scene, shapeObject)
 
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
@@ -673,6 +675,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleTypeOrBoneSuffixChange, default="Particle System")
     oldBoneSuffix = bpy.props.StringProperty(options=set())
+    updateBlenderBoneShapes = bpy.props.BoolProperty(options=set())
     materialName = bpy.props.StringProperty(options=set())
     maxParticles = bpy.props.IntProperty(default=20, subtype="UNSIGNED",options=set())
     emissionSpeed1 = bpy.props.FloatProperty(name="emis. speed 1",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission")
@@ -825,6 +828,7 @@ class M3AttachmentPoint(bpy.types.PropertyGroup):
 
 class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="", options=set())
+    updateBlenderBoneShapes = bpy.props.BoolProperty(options=set())
     shape = bpy.props.EnumProperty(default="1", items=fuzzyHitTestShapeList,update=handleGeometicShapeUpdate, options=set())
     size0 = bpy.props.FloatProperty(default=1.0, update=handleGeometicShapeUpdate, options=set())
     size1 = bpy.props.FloatProperty(default=0.0, update=handleGeometicShapeUpdate, options=set())

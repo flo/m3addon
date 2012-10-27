@@ -772,6 +772,7 @@ class Importer:
 
 
     def intShapeObject(self, blenderShapeObject, m3ShapeObject):
+        blenderShapeObject.updateBlenderBoneShapes = False
         transferer = M3ToBlenderDataTransferer(self, None, blenderObject=blenderShapeObject, m3Object=m3ShapeObject)
         shared.transferFuzzyHitTest(transferer)
         matrix = toBlenderMatrix(m3ShapeObject.matrix)
@@ -786,6 +787,7 @@ class Importer:
             poseBone.custom_shape = shared.createMeshForShapeObject(blenderShapeObject)
             bone = self.armature.bones[self.boneNames[m3ShapeObject.boneIndex]]
             bone.show_wire = True
+        blenderShapeObject.updateBlenderBoneShapes = True
 
 
     def initTightHitTest(self):
@@ -816,6 +818,7 @@ class Importer:
         print("Loading particle systems")
         for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
             particle_system = currentScene.m3_particle_systems.add()
+            particle_system.updateBlenderBoneShapes = False
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
             transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=particle_system, m3Object=m3ParticleSystem)
             shared.transferParticleSystem(transferer)
@@ -851,7 +854,8 @@ class Importer:
                 else:
                     print("Warning: A particle system copy was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                     copy.name = fullCopyBoneName
-                
+            particle_system.updateBlenderBoneShapes = True
+
     def createForces(self):
         currentScene = bpy.context.scene
         print("Loading forces")
