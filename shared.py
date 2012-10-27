@@ -264,7 +264,7 @@ def createHiddenMeshObject(name, untransformedPositions, faces, matrix):
     mesh.update(calc_edges=True)
     return meshObject
 
-def createMeshForShapeObject(shapeObject):
+def updateBoneShapeOfShapeObject(shapeObject, bone, poseBone):
     cubeShapeConstant = "0"
     sphereShapeConstant = "1"
     capsuleShapeConstant = "2"
@@ -281,9 +281,11 @@ def createMeshForShapeObject(shapeObject):
 
     matrix = composeMatrix(shapeObject.offset, shapeObject.rotationEuler, shapeObject.scale)
 
-    return createHiddenMeshObject('ShapeObjectBoneMesh', untransformedPositions, faces, matrix)
+    poseBone.custom_shape = createHiddenMeshObject('ShapeObjectBoneMesh', untransformedPositions, faces, matrix)
+    bone.show_wire = True
 
-def createMeshForParticleSystem(particle_system):
+
+def updateBoneShapeOfParticleSystem(particle_system, bone, poseBone):
     emissionAreaType = particle_system.emissionAreaType
     if emissionAreaType == emssionAreaTypePoint:
         untransformedPositions, faces = createMeshDataForSphere(0.02)
@@ -306,12 +308,12 @@ def createMeshForParticleSystem(particle_system):
         untransformedPositions, faces = createMeshDataForCylinder(radius, height)
    
     # no transformation known so far
-    matrix = mathutils.Matrix()
+    matrix = mathutils.Matrix()    
     
     #TODO reuse existing mesh of bone if it exists
     boneName = boneNameForPartileSystem(particle_system.boneSuffix)
-    return createHiddenMeshObject(boneName + 'Mesh', untransformedPositions, faces, matrix)
-
+    poseBone.custom_shape = createHiddenMeshObject(boneName + 'Mesh', untransformedPositions, faces, matrix)
+    bone.show_wire = True
 
 def createMeshDataForSphere(radius, numberOfSideFaces = 10, numberOfCircles = 10):
     """returns vertices and faces"""

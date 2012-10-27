@@ -783,10 +783,9 @@ class Importer:
         if m3ShapeObject.boneIndex != -1:
             m3Bone = self.model.bones[m3ShapeObject.boneIndex]
             blenderShapeObject.name = m3Bone.name
-            poseBone = self.armatureObject.pose.bones[self.boneNames[m3ShapeObject.boneIndex]]
-            poseBone.custom_shape = shared.createMeshForShapeObject(blenderShapeObject)
             bone = self.armature.bones[self.boneNames[m3ShapeObject.boneIndex]]
-            bone.show_wire = True
+            poseBone = self.armatureObject.pose.bones[self.boneNames[m3ShapeObject.boneIndex]]
+            shared.updateBoneShapeOfShapeObject(blenderShapeObject, bone, poseBone)
         blenderShapeObject.updateBlenderBoneShapes = True
 
 
@@ -831,10 +830,9 @@ class Importer:
                 particle_system.boneSuffix = fullBoneName
                 
                 
-            poseBone = self.armatureObject.pose.bones[self.boneNames[m3ParticleSystem.bone]]
-            poseBone.custom_shape = shared.createMeshForParticleSystem(particle_system)
             bone = self.armature.bones[self.boneNames[m3ParticleSystem.bone]]
-            bone.show_wire = True
+            poseBone = self.armatureObject.pose.bones[self.boneNames[m3ParticleSystem.bone]]
+            shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
 
 
             particle_system.materialName = self.getNameOfMaterialWithReferenceIndex(m3ParticleSystem.materialReferenceIndex)

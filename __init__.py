@@ -375,13 +375,11 @@ def selectOrCreateBoneForCamera(scene, camera):
 def selectOrCreateBoneForPartileSystem(scene, particle_system):
     boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
     bone, poseBone = selectOrCreateBone(scene, boneName)
-    poseBone.custom_shape = shared.createMeshForParticleSystem(particle_system)
-    bone.show_wire = True
+    shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
 
 def selectOrCreateBoneForShapeObject(scene, shapeObject):
     bone, poseBone = selectOrCreateBone(scene, shapeObject.name)
-    poseBone.custom_shape = shared.createMeshForShapeObject(particle_system)
-    bone.show_wire = True
+    shared.updateBoneShapeOfShapeObject(shapeObject, bone, poseBone)
 
 def selectOrCreateBone(scene, boneName):
     "Returns the bone and it's pose variant"
