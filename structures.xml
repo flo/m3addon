@@ -962,7 +962,7 @@
             <description>Physics shape data</description>
             <field offset="0" name="matrix" type="Matrix44" />
             <field offset="64" name="unknownAt64" type="uint32" expected-value="0x3ca14285" />
-            <!-- Shape Type:
+            <!-- Shape types:
                 0 = box
                 1 = sphere
                 2 = capsule
@@ -971,8 +971,8 @@
                 5 = mesh
                 6+ = invalid
             -->
-            <field offset="68" name="shapeType" type="uint8" />
-            <!-- Is not always 0. It's propably the unintialized part of shapeType: -->
+            <field offset="68" name="shape" type="uint8" />
+            <!-- Is not always 0. It's propably the unintialized part of shape: -->
             <field offset="69" name="unknownAt69" type="uint8" default-value="0" />
             <field offset="70" name="unknownAt70" type="uint16" default-value="0" />
             <field offset="72" name="vertices" type="SmallReference" refTo="VEC3V0" />
@@ -1013,7 +1013,7 @@
             <field offset="56" name="unknownAt56" type="float" default-value="0.0" />
             <field offset="60" name="boneIndex" type="uint16" />
             <field offset="62" name="boneIndexUnused" type="uint16" default-value="0x0" /> <!-- Matches boneLookup, but doesn't seem to be used? -->
-            <field offset="64" name="unknownAt64" size="16" default-value="0x0" />
+            <field offset="64" name="unknownAt64" size="16" default-value="0x00000000000000000000000000000000" />
             <field offset="80" name="physicsShapes" type="Reference" refTo="PHSHV1" />
             <field offset="92" name="flags" type="uint32" default-value="0x1">
                 <bits>
