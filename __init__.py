@@ -44,7 +44,6 @@ import bpy
 
 from bpy.props import StringProperty
 from bpy_extras.io_utils import ExportHelper, ImportHelper
-from bpy_extras import io_utils
 import mathutils
 import math
 
@@ -74,22 +73,32 @@ def availableMaterials(self, context):
     return list
 
 def handleTypeOrBoneSuffixChange(self, context):
+    particleSystem = self
     scene = context.scene
     typeName = "Unknown"
     for typeId, name, description in emissionAreaTypeList:
-        if typeId == self.emissionAreaType:
+        if typeId == particleSystem.emissionAreaType:
             typeName = name
     
-    boneSuffix = self.boneSuffix
-    self.name = "%s (%s)" % (boneSuffix, typeName)
+    boneSuffix = particleSystem.boneSuffix
+    particleSystem.name = "%s (%s)" % (boneSuffix, typeName)
 
-    if self.boneSuffix != self.oldBoneSuffix:
-        oldBoneName = shared.boneNameForPartileSystem(self.oldBoneSuffix)
-        newBoneName = shared.boneNameForPartileSystem(self.boneSuffix)
+    if particleSystem.boneSuffix != particleSystem.oldBoneSuffix:
+        oldBoneName = shared.boneNameForPartileSystem(particleSystem.oldBoneSuffix)
+        newBoneName = shared.boneNameForPartileSystem(particleSystem.boneSuffix)
         bone, armatureObject = findBoneWithArmatureObject(scene, oldBoneName)
         if bone != None:
             bone.name = newBoneName
-    self.oldBoneSuffix = self.boneSuffix
+    particleSystem.oldBoneSuffix = particleSystem.boneSuffix
+    if particleSystem.updateBlenderBoneShapes:
+        selectOrCreateBoneForPartileSystem(scene, particleSystem)
+    
+def handleParticleSystemAreaSizeChange(self, context):
+    particleSystem = self
+    scene = context.scene
+    if particleSystem.updateBlenderBoneShapes:
+        selectOrCreateBoneForPartileSystem(scene, particleSystem)
+
 
 def handleForceTypeOrBoneSuffixChange(self, context):
     scene = context.scene
@@ -188,7 +197,8 @@ def handleAttachmentVolumeTypeChange(self, context):
 
 def handleGeometicShapeUpdate(self, context):
     shapeObject = self
-    selectOrCreateBoneForShapeObject(context.scene, shapeObject)
+    if shapeObject.updateBlenderBoneShapes:
+        selectOrCreateBoneForShapeObject(context.scene, shapeObject)
 
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
@@ -422,9 +432,6 @@ def findBoneWithArmatureObject(scene, boneName):
             return (bone, armatureObject)
     return (None, None)
 
-def selectOrCreateBoneForPartileSystem(scene, particle_system):
-    boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
-    selectOrCreateBone(scene, boneName)
 
 def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
     boneName = shared.boneNameForPartileSystemCopy(particle_system, copy)
@@ -440,46 +447,17 @@ def selectOrCreateBoneForLight(scene, light):
 
 def selectOrCreateBoneForCamera(scene, camera):
     selectOrCreateBone(scene, camera.name)
+    
+    
 
+def selectOrCreateBoneForPartileSystem(scene, particle_system):
+    boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
+    bone, poseBone = selectOrCreateBone(scene, boneName)
+    shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
 
 def selectOrCreateBoneForShapeObject(scene, shapeObject):
     bone, poseBone = selectOrCreateBone(scene, shapeObject.name)
-    cubeShapeConstant = "0"
-    sphereShapeConstant = "1"
-    capsuleShapeConstant = "2"
-    if shapeObject.shape == capsuleShapeConstant:
-        radius = shapeObject.size0
-        height = shapeObject.size1
-        untransformedPositions, faces = shared.createMeshDataForCapsule(radius, height)
-    elif shapeObject.shape == sphereShapeConstant:
-        radius = shapeObject.size0
-        untransformedPositions, faces = shared.createMeshDataForSphere(radius)
-    else:
-        sizeX, sizeY, sizeZ = 2*shapeObject.size0, 2*shapeObject.size1, 2*shapeObject.size2
-        untransformedPositions, faces = shared.createMeshDataForCuboid(sizeX, sizeY, sizeZ)
-   
-    #TODO reuse existing mesh of bone if it exists
-    mesh = bpy.data.meshes.new('ShapeObjectBoneMesh')
-    meshObject = bpy.data.objects.new('ShapeObjectBoneMesh', mesh)
-    meshObject.location = (0,0,0) 
-
-    matrix = shared.composeMatrix(shapeObject.offset, shapeObject.rotationEuler, shapeObject.scale)
-    
-    transformedPositions = []
-    for v in untransformedPositions:
-        transformedPositions.append(matrix * mathutils.Vector(v))
-
-    mesh.vertices.add(len(transformedPositions))
-    mesh.vertices.foreach_set("co", io_utils.unpack_list(transformedPositions))
-
-    mesh.tessfaces.add(len(faces))
-    mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(faces))
-    
-    mesh.update(calc_edges=True)
-
-    #TODO handle other kind of mesh:
-    poseBone.custom_shape = meshObject
-    bone.show_wire = True
+    shared.updateBoneShapeOfShapeObject(shapeObject, bone, poseBone)
 
 def selectOrCreateBone(scene, boneName):
     "Returns the bone and it's pose variant"
@@ -517,16 +495,17 @@ def selectOrCreateBone(scene, boneName):
     poseBone = armatureObject.pose.bones[boneName]
     bone = armatureObject.data.bones[boneName]
     return (bone, poseBone)
-  
-emissionAreaTypesWithRadius = ["2", "4"]
-emissionAreaTypesWithWidth = ["1", "3"]
-emissionAreaTypesWithLength = ["1", "3"]
-emissionAreaTypesWithHeight = ["3", "4"]
-emissionAreaTypeList =  [("0", "Point", "Particles spawn at a certain point"), 
-                        ("1", 'Plane', "Particles spawn in a rectangle"), 
-                        ("2", 'Sphere', 'Particles spawn in a sphere'),
-                        ("3", 'Cuboid', 'Particles spawn in a cuboid'),
-                        ("4", 'Cylinder', 'Particles spawn in a cylinder')
+
+
+emissionAreaTypesWithRadius = [shared.emssionAreaTypeSphere, shared.emssionAreaTypeCylinder]
+emissionAreaTypesWithWidth = [shared.emssionAreaTypePlane, shared.emssionAreaTypeCuboid]
+emissionAreaTypesWithLength = [shared.emssionAreaTypePlane, shared.emssionAreaTypeCuboid]
+emissionAreaTypesWithHeight = [shared.emssionAreaTypeCuboid, shared.emssionAreaTypeCylinder]
+emissionAreaTypeList =  [(shared.emssionAreaTypePoint, "Point", "Particles spawn at a certain point"), 
+                        (shared.emssionAreaTypePlane, 'Plane', "Particles spawn in a rectangle"), 
+                        (shared.emssionAreaTypeSphere, 'Sphere', 'Particles spawn in a sphere'),
+                        (shared.emssionAreaTypeCuboid, 'Cuboid', 'Particles spawn in a cuboid'),
+                        (shared.emssionAreaTypeCylinder, 'Cylinder', 'Particles spawn in a cylinder')
                         ]
 
 particleTypeList = [("0", "Square Billbords", "Quads always rotated towards camera (id 0)"), 
@@ -777,6 +756,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleTypeOrBoneSuffixChange, default="Particle System")
     oldBoneSuffix = bpy.props.StringProperty(options=set())
+    updateBlenderBoneShapes = bpy.props.BoolProperty(default=True, options=set())
     materialName = bpy.props.StringProperty(options=set())
     maxParticles = bpy.props.IntProperty(default=20, subtype="UNSIGNED",options=set())
     emissionSpeed1 = bpy.props.FloatProperty(name="emis. speed 1",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission")
@@ -806,9 +786,9 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     trailingEnabled = bpy.props.BoolProperty(default=True, options=set(), description="If trailing is enabled then particles don't follow the particle emitter")
     emissionRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
     emissionAreaType = bpy.props.EnumProperty(default="2", items=emissionAreaTypeList, update=handleTypeOrBoneSuffixChange, options=set())
-    emissionAreaSize = bpy.props.FloatVectorProperty(default=(0.1, 0.1, 0.1), name="emis. area size", size=3, subtype="XYZ", options={"ANIMATABLE"})
+    emissionAreaSize = bpy.props.FloatVectorProperty(default=(0.1, 0.1, 0.1), name="emis. area size", update=handleParticleSystemAreaSizeChange, size=3, subtype="XYZ", options={"ANIMATABLE"})
     tailUnk1 = bpy.props.FloatVectorProperty(default=(0.05, 0.05, 0.05), name="tail unk.", size=3, subtype="XYZ", options={"ANIMATABLE"})
-    emissionAreaRadius = bpy.props.FloatProperty(default=2.0, name="emis. area radius", options={"ANIMATABLE"})
+    emissionAreaRadius = bpy.props.FloatProperty(default=2.0, name="emis. area radius", update=handleParticleSystemAreaSizeChange, options={"ANIMATABLE"})
     spreadUnk = bpy.props.FloatProperty(default=0.05, name="spread unk.", options={"ANIMATABLE"})
     emissionType = bpy.props.EnumProperty(default="0", items=particleEmissionTypeList, options=set())
     randomizeWithParticleSizes2 = bpy.props.BoolProperty(default=False, options=set(), description="Specifies if particles have random sizes")
@@ -929,6 +909,7 @@ class M3AttachmentPoint(bpy.types.PropertyGroup):
 
 class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="", options=set())
+    updateBlenderBoneShapes = bpy.props.BoolProperty(default=True, options=set())
     shape = bpy.props.EnumProperty(default="1", items=fuzzyHitTestShapeList,update=handleGeometicShapeUpdate, options=set())
     size0 = bpy.props.FloatProperty(default=1.0, update=handleGeometicShapeUpdate, options=set())
     size1 = bpy.props.FloatProperty(default=0.0, update=handleGeometicShapeUpdate, options=set())

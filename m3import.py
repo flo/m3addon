@@ -181,10 +181,7 @@ def determineTails(m3Bones, heads, boneDirectionVectors, absoluteScales):
     tails = []
     for m3Bone, head, childIndices, boneDirectionVector, absoluteScale in zip(m3Bones, heads, childBoneIndexLists, boneDirectionVectors, absoluteScales):
         skinned = m3Bone.getNamedBit("flags", "skinned")
-        if skinned:
-            length = 0.1
-        else:
-            length = 1.0 #So that custom bone shapes don't get scaled
+        length = 0.1
         for childIndex in childIndices:
             headToChildHead = heads[childIndex] - head
             if headToChildHead.length >= 0.0001:
@@ -772,6 +769,7 @@ class Importer:
 
 
     def intShapeObject(self, blenderShapeObject, m3ShapeObject):
+        blenderShapeObject.updateBlenderBoneShapes = False
         transferer = M3ToBlenderDataTransferer(self, None, blenderObject=blenderShapeObject, m3Object=m3ShapeObject)
         shared.transferFuzzyHitTest(transferer)
         matrix = toBlenderMatrix(m3ShapeObject.matrix)
@@ -782,6 +780,11 @@ class Importer:
         if m3ShapeObject.boneIndex != -1:
             m3Bone = self.model.bones[m3ShapeObject.boneIndex]
             blenderShapeObject.name = m3Bone.name
+            bone = self.armature.bones[self.boneNames[m3ShapeObject.boneIndex]]
+            poseBone = self.armatureObject.pose.bones[self.boneNames[m3ShapeObject.boneIndex]]
+            shared.updateBoneShapeOfShapeObject(blenderShapeObject, bone, poseBone)
+        blenderShapeObject.updateBlenderBoneShapes = True
+
 
     def initTightHitTest(self):
         print("Loading tight hit test shape")
@@ -811,6 +814,7 @@ class Importer:
         print("Loading particle systems")
         for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
             particle_system = currentScene.m3_particle_systems.add()
+            particle_system.updateBlenderBoneShapes = False
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
             transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=particle_system, m3Object=m3ParticleSystem)
             shared.transferParticleSystem(transferer)
@@ -821,6 +825,13 @@ class Importer:
             else:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                 particle_system.boneSuffix = fullBoneName
+                
+                
+            bone = self.armature.bones[self.boneNames[m3ParticleSystem.bone]]
+            poseBone = self.armatureObject.pose.bones[self.boneNames[m3ParticleSystem.bone]]
+            shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
+
+
             particle_system.materialName = self.getNameOfMaterialWithReferenceIndex(m3ParticleSystem.materialReferenceIndex)
             if m3ParticleSystem.forceChannelsCopy != m3ParticleSystem.forceChannels:
                 print("Warning: Unexpected model content: forceChannels != forceChannelsCopy")
@@ -838,7 +849,8 @@ class Importer:
                 else:
                     print("Warning: A particle system copy was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                     copy.name = fullCopyBoneName
-                
+            particle_system.updateBlenderBoneShapes = True
+
     def createForces(self):
         currentScene = bpy.context.scene
         print("Loading forces")

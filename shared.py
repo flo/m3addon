@@ -23,6 +23,7 @@ import bpy
 import mathutils
 import random
 import math
+from bpy_extras import io_utils
 
 standardMaterialLayerFieldNames = ["diffuseLayer", "decalLayer", "specularLayer", "selfIllumLayer",
     "emissiveLayer", "reflectionLayer", "evioLayer", "evioMaskLayer", "alphaMaskLayer", 
@@ -47,6 +48,12 @@ displacementMaterialTypeIndex = 2
 compositeMaterialTypeIndex = 3
 terrainMaterialTypeIndex = 4
 volumeMaterialTypeIndex = 5
+
+emssionAreaTypePoint = "0"
+emssionAreaTypePlane = "1"
+emssionAreaTypeSphere = "2"
+emssionAreaTypeCuboid = "3"
+emssionAreaTypeCylinder = "4"
 
 tightHitTestBoneName = "HitTestTight"
 
@@ -237,7 +244,90 @@ def getRandomAnimIdNotIn(animIdSet):
     while unusedAnimId in animIdSet:
         unusedAnimId = random.randint(1, maxValue)
     return unusedAnimId
+
+def createHiddenMeshObject(name, untransformedPositions, faces, matrix):
+    mesh = bpy.data.meshes.new(name)
+    meshObject = bpy.data.objects.new(name, mesh)
+    meshObject.location = (0,0,0) 
+
     
+    transformedPositions = []
+    for v in untransformedPositions:
+        transformedPositions.append(matrix * mathutils.Vector(v))
+
+    mesh.vertices.add(len(transformedPositions))
+    mesh.vertices.foreach_set("co", io_utils.unpack_list(transformedPositions))
+
+    mesh.tessfaces.add(len(faces))
+    mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(faces))
+    
+    mesh.update(calc_edges=True)
+    return meshObject
+
+def updateBoneShapeOfShapeObject(shapeObject, bone, poseBone):
+    cubeShapeConstant = "0"
+    sphereShapeConstant = "1"
+    capsuleShapeConstant = "2"
+    if shapeObject.shape == capsuleShapeConstant:
+        radius = shapeObject.size0
+        height = shapeObject.size1
+        untransformedPositions, faces = createMeshDataForCapsule(radius, height)
+    elif shapeObject.shape == sphereShapeConstant:
+        radius = shapeObject.size0
+        untransformedPositions, faces = createMeshDataForSphere(radius)
+    else:
+        sizeX, sizeY, sizeZ = 2*shapeObject.size0, 2*shapeObject.size1, 2*shapeObject.size2
+        untransformedPositions, faces = createMeshDataForCuboid(sizeX, sizeY, sizeZ)
+
+    matrix = composeMatrix(shapeObject.offset, shapeObject.rotationEuler, shapeObject.scale)
+
+    meshName = 'ShapeObjectBoneMesh'
+    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix)
+
+
+def updateBoneShapeOfParticleSystem(particle_system, bone, poseBone):
+    emissionAreaType = particle_system.emissionAreaType
+    if emissionAreaType == emssionAreaTypePoint:
+        untransformedPositions, faces = createMeshDataForSphere(0.02)
+    elif emissionAreaType == emssionAreaTypePlane:
+        length = particle_system.emissionAreaSize[0]
+        width = particle_system.emissionAreaSize[1]
+        height = 0
+        untransformedPositions, faces = createMeshDataForCuboid(length, width, height)
+    elif emissionAreaType == emssionAreaTypeSphere:
+        radius = particle_system.emissionAreaRadius
+        untransformedPositions, faces = createMeshDataForSphere(radius)
+    elif emissionAreaType == emssionAreaTypeCuboid:
+        length = particle_system.emissionAreaSize[0]
+        width = particle_system.emissionAreaSize[1]
+        height = particle_system.emissionAreaSize[2]
+        untransformedPositions, faces = createMeshDataForCuboid(length, width, height)
+    else:
+        radius = particle_system.emissionAreaRadius
+        height = particle_system.emissionAreaSize[2]
+        untransformedPositions, faces = createMeshDataForCylinder(radius, height)
+   
+    # no transformation known so far
+    matrix = mathutils.Matrix()    
+    
+    boneName = boneNameForPartileSystem(particle_system.boneSuffix)
+    meshName = boneName + 'Mesh'
+    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix)
+    
+
+    
+def updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix):
+    boneScale = (bone.head - bone.tail).length
+    invertedBoneScale = 1.0 / boneScale
+    scaleMatrix = mathutils.Matrix()
+    scaleMatrix[0][0] = invertedBoneScale
+    scaleMatrix[1][1] = invertedBoneScale
+    scaleMatrix[2][2] = invertedBoneScale
+    matrix = scaleMatrix * matrix
+    
+    #TODO reuse existing mesh of bone if it exists
+    poseBone.custom_shape = createHiddenMeshObject(meshName, untransformedPositions, faces, matrix)
+    bone.show_wire = True
 
 def createMeshDataForSphere(radius, numberOfSideFaces = 10, numberOfCircles = 10):
     """returns vertices and faces"""
