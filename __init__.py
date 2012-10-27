@@ -675,7 +675,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleTypeOrBoneSuffixChange, default="Particle System")
     oldBoneSuffix = bpy.props.StringProperty(options=set())
-    updateBlenderBoneShapes = bpy.props.BoolProperty(options=set())
+    updateBlenderBoneShapes = bpy.props.BoolProperty(default=True, options=set())
     materialName = bpy.props.StringProperty(options=set())
     maxParticles = bpy.props.IntProperty(default=20, subtype="UNSIGNED",options=set())
     emissionSpeed1 = bpy.props.FloatProperty(name="emis. speed 1",options={"ANIMATABLE"}, default=0.0, description="The initial speed of the particles at emission")
@@ -828,7 +828,7 @@ class M3AttachmentPoint(bpy.types.PropertyGroup):
 
 class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="", options=set())
-    updateBlenderBoneShapes = bpy.props.BoolProperty(options=set())
+    updateBlenderBoneShapes = bpy.props.BoolProperty(default=True, options=set())
     shape = bpy.props.EnumProperty(default="1", items=fuzzyHitTestShapeList,update=handleGeometicShapeUpdate, options=set())
     size0 = bpy.props.FloatProperty(default=1.0, update=handleGeometicShapeUpdate, options=set())
     size1 = bpy.props.FloatProperty(default=0.0, update=handleGeometicShapeUpdate, options=set())
