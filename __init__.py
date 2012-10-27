@@ -297,6 +297,84 @@ def handleForceIndexChanged(self, context):
     force = scene.m3_forces[scene.m3_force_index]
     selectOrCreateBoneForForce(scene, force)
 
+def createPhysicsShapeMeshData(shape):
+    if shape.shape == "0":
+        vertices, faces = shared.createMeshDataForCuboid(shape.size0, shape.size1, shape.size2)
+    elif shape.shape == "1":
+        vertices, faces = shared.createMeshDataForSphere(shape.size0)
+    elif shape.shape == "2":
+        vertices, faces = shared.createMeshDataForCapsule(shape.size0, shape.size1)
+    elif shape.shape == "3":
+        vertices, faces = shared.createMeshDataForCylinder(shape.size0, shape.size1)
+    else:
+        # TODO: mesh / convex hull types...
+        return None, None
+    
+    matrix = shared.composeMatrix(shape.offset, shape.rotationEuler, shape.scale)
+    vertices = [matrix * mathutils.Vector(v) for v in vertices]
+    
+    return vertices, faces
+
+def handlePhysicsShapeUpdate(self, context):
+    scene = context.scene
+    
+    if scene.m3_rigid_body_index == -1:
+        return
+    
+    rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+    
+    bone, armature = findBoneWithArmatureObject(scene, rigidBody.boneName)
+    if bone == None:
+        print("Warning: Could not find bone name specified in rigid body: %s" % rigidBody.name)
+        return
+    
+    poseBone = armature.pose.bones[rigidBody.boneName]
+    if poseBone == None:
+        print("Warning: Could not find posed bone: %s" % rigidBody.boneName)
+        return
+    
+    if rigidBody.physicsShapeVisibility == "0": # hide all
+        poseBone.custom_shape = None
+    elif rigidBody.physicsShapeVisibility == "1": # show all
+        combinedVertices, combinedFaces = [], []
+        for shape in rigidBody.physicsShapes:
+            vertices, faces = createPhysicsShapeMeshData(shape)
+            # TODO: remove this check when mesh / convex hull is implemented
+            if vertices == None or faces == None:
+                continue
+            
+            faces = [[fe + len(combinedVertices) for fe in f] for f in faces]
+            
+            combinedVertices.extend(vertices)
+            combinedFaces.extend(faces)
+        
+        mesh = bpy.data.meshes.new("PhysicsShapeBoneMesh")
+        mesh.from_pydata(vertices = combinedVertices, faces = combinedFaces, edges = [])
+        mesh.update(calc_edges = True)
+        
+        meshObject = bpy.data.objects.new("PhysicsShapeBoneMesh", mesh)
+        meshObject.location = (0, 0, 0)
+        
+        poseBone.custom_shape = meshObject
+        bone.show_wire = True
+        
+    else: # show selected only
+        shape = rigidBody.physicsShapes[rigidBody.physicsShapeIndex]
+        vertices, faces = createPhysicsShapeMeshData(shape)
+        # TODO: remove this check when mesh / convex hull is implemented
+        if vertices == None or faces == None:
+            return
+        
+        mesh = bpy.data.meshes.new("PhysicsShapeBoneMesh")
+        mesh.from_pydata(vertices = vertices, faces = faces, edges = [])
+        mesh.update(calc_edges = True)
+        
+        meshObject = bpy.data.objects.new("PhysicsShapeBoneMesh", mesh)
+        meshObject.location = (0, 0, 0)
+        
+        poseBone.custom_shape = meshObject
+        bone.show_wire = True
+
 def handleLightIndexChanged(self, context):
     scene = context.scene
     if scene.m3_light_index == -1:
@@ -466,6 +544,11 @@ forceTypeList = [("0", "Directional", "The particles get accelerated into one di
                     ("2", "Unknown", "Unknown"),
                     ("3", "Rotary", "The particles rotate in a circle around a center")
                    ]
+
+physicsShapeVisibilityList = [("0", "Hide all", "Hide all physics shapes for this rigid body"),
+                            ("1", "Show all", "Show all physics shapes for this rigid body"),
+                            ("2", "Show selected", "Show currently selected physics shape for this rigid body")
+                            ]
 
 physicsShapeTypeList = [("0", "Box", "Box shape with the given width, length and height"),
                         ("1", "Sphere", "Sphere shape with the given radius"),
@@ -799,15 +882,14 @@ class M3Force(bpy.types.PropertyGroup):
 
 class M3PhysicsShape(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
-    # TODO: Take matrix values from representative blender object?
-    offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ")
-    rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION")
-    scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ")
-    shape = bpy.props.EnumProperty(default="0", items=physicsShapeTypeList, options=set())
+    offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", update=handlePhysicsShapeUpdate)
+    rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION", update=handlePhysicsShapeUpdate)
+    scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ", update=handlePhysicsShapeUpdate)
+    shape = bpy.props.EnumProperty(default="0", items=physicsShapeTypeList, update=handlePhysicsShapeUpdate, options=set())
     # TODO: convex hull properties...
-    size0 = bpy.props.FloatProperty(default=1.0, name="size0", options=set())
-    size1 = bpy.props.FloatProperty(default=1.0, name="size1", options=set())
-    size2 = bpy.props.FloatProperty(default=1.0, name="size2", options=set())
+    size0 = bpy.props.FloatProperty(default=1.0, name="size0", update=handlePhysicsShapeUpdate, options=set())
+    size1 = bpy.props.FloatProperty(default=1.0, name="size1", update=handlePhysicsShapeUpdate, options=set())
+    size2 = bpy.props.FloatProperty(default=1.0, name="size2", update=handlePhysicsShapeUpdate, options=set())
 
 class M3RigidBody(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
@@ -818,6 +900,7 @@ class M3RigidBody(bpy.types.PropertyGroup):
     # skip other unknown values for now
     physicsShapes = bpy.props.CollectionProperty(type=M3PhysicsShape)
     physicsShapeIndex = bpy.props.IntProperty(options=set())
+    physicsShapeVisibility = bpy.props.EnumProperty(default="0", items=physicsShapeVisibilityList, update=handlePhysicsShapeUpdate, options=set())
     collidable = bpy.props.BoolProperty(default=True, options=set())
     walkable = bpy.props.BoolProperty(default=False, options=set())
     stackable = bpy.props.BoolProperty(default=False, options=set())
@@ -1521,8 +1604,12 @@ class PhyscisShapePanel(bpy.types.Panel):
             return
         rigid_body = scene.m3_rigid_bodies[currentIndex]
         
-        col.template_list(rigid_body, "physicsShapes", rigid_body, "physicsShapeIndex", rows = 2)
+        col.row().prop(rigid_body, "physicsShapeVisibility", expand=True)
         
+        split = layout.split()
+        row = layout.row()
+        col = row.column()
+        col.template_list(rigid_body, "physicsShapes", rigid_body, "physicsShapeIndex", rows=2)
         col = row.column(align=True)
         col.operator("m3.physics_shapes_add", icon='ZOOMIN', text="")
         col.operator("m3.physics_shapes_remove", icon='ZOOMOUT', text="")
