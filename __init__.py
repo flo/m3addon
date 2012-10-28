@@ -307,18 +307,24 @@ def handleForceIndexChanged(self, context):
     force = scene.m3_forces[scene.m3_force_index]
     selectOrCreateBoneForForce(scene, force)
 
+class PhysicsShapeVisibility:
+    Hide = "0"
+    Show = "1"
+    ShowAll = "2"
+    ShowOne = "3"
+
 def handlePhysicsShapeVisibilityChange(self, context):
     scene = context.scene
     
-    if scene.m3_physics_shape_visibility == "0": # hide
+    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.Hide:
         for rigidBody in scene.m3_rigid_bodies:
             shared.removeRigidBodyBoneShape(scene, rigidBody)
     
-    elif scene.m3_physics_shape_visibility == "1": # show
+    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.Show:
         for rigidBody in scene.m3_rigid_bodies:
             shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
     
-    elif scene.m3_physics_shape_visibility == "2": # show all
+    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowAll:
         for rigidBody in scene.m3_rigid_bodies:
             shared.removeRigidBodyBoneShape(scene, rigidBody)
         
@@ -326,7 +332,7 @@ def handlePhysicsShapeVisibilityChange(self, context):
             rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
             shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
     
-    else: # show one
+    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowOne:
         for rigidBody in scene.m3_rigid_bodies:
             shared.removeRigidBodyBoneShape(scene, rigidBody)
         
@@ -337,38 +343,35 @@ def handlePhysicsShapeVisibilityChange(self, context):
 def handlePhysicsShapeUpdate(self, context):
     scene = context.scene
     
-    if scene.m3_physics_shape_visibility == "0": # hide
-        return
-    
-    elif scene.m3_physics_shape_visibility == "1": # show
+    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.Show:
         if scene.m3_rigid_body_index != -1:
             rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
             shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
     
-    elif scene.m3_physics_shape_visibility == "2": # show all
+    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowAll:
         if scene.m3_rigid_body_index != -1:
             rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
             shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
     
-    else: # show one
+    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowOne:
         if scene.m3_rigid_body_index != -1:
             rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
             shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
 
 def handlePhysicsShapeAdd(scene, rigidBody):
-    if scene.m3_physics_shape_visibility == "1": # show
+    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.Show:
         shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
     
-    elif scene.m3_physics_shape_visibility == "2": # show all
+    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowAll:
         shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
     
     # handlePhysicsShapeIndexChange updates "show one"
 
 def handlePhysicsShapeRemove(scene, rigidBody):
-    if scene.m3_physics_shape_visibility == "1": # show
+    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.Show:
         shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
     
-    elif scene.m3_physics_shape_visibility == "2": # show all
+    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowAll:
         shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
     
     # handlePhysicsShapeIndexChange updates "show one"
@@ -376,14 +379,14 @@ def handlePhysicsShapeRemove(scene, rigidBody):
 def handlePhysicsShapeIndexChange(self, context):
     scene = context.scene
     
-    if scene.m3_physics_shape_visibility == "3": # show one
+    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowOne:
         shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
 
 def handleRigidBodyRemove(scene, rigidBody):
     shared.removeRigidBodyBoneShape(scene, rigidBody)
 
 def handleRigidBodyIndexChange(scene, context):
-    if scene.m3_physics_shape_visibility == "2": # show all
+    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowAll:
         for rigidBody in scene.m3_rigid_bodies:
             shared.removeRigidBodyBoneShape(scene, rigidBody)
         
@@ -391,7 +394,7 @@ def handleRigidBodyIndexChange(scene, context):
             rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
             shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
     
-    elif scene.m3_physics_shape_visibility == "3": # show one
+    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowOne:
         for rigidBody in scene.m3_rigid_bodies:
             shared.removeRigidBodyBoneShape(scene, rigidBody)
         
