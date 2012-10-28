@@ -335,6 +335,21 @@ def getAttribute(obj, curvePath, curveIndex):
     else:
         return obj[curveIndex]
 
+def findUnusedParticleSystemName(scene):
+    usedNames = set()
+    for particle_system in scene.m3_particle_systems:
+        usedNames.add(particle_system.boneSuffix)
+        for copy in particle_system.copies:
+            usedNames.add(copy.name)
+    unusedName = None
+    counter = 1
+    while unusedName == None:
+        suggestedName = "%02d" % counter
+        if not suggestedName in usedNames:
+            unusedName = suggestedName
+        counter += 1
+    return unusedName  
+
 def handlePartileSystemIndexChanged(self, context):
     scene = context.scene
     if scene.m3_particle_system_index == -1:
@@ -2405,6 +2420,8 @@ class M3_CAMERAS_OT_remove(bpy.types.Operator):
                 scene.m3_camera_index-= 1
         return{'FINISHED'}
 
+ 
+
 class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.particle_systems_add'
     bl_label       = "Add Particle System"
@@ -2413,7 +2430,7 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         particle_system = scene.m3_particle_systems.add()
-        particle_system.boneSuffix = self.findUnusedName(scene)
+        particle_system.boneSuffix = findUnusedParticleSystemName(scene)
         if len(scene.m3_material_references) >= 1:
             particle_system.materialName = scene.m3_material_references[0].name
 
@@ -2423,18 +2440,7 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
         selectOrCreateBoneForPartileSystem(scene, particle_system)
         return{'FINISHED'}
 
-    def findUnusedName(self, scene):
-        usedNames = set()
-        for particle_system in scene.m3_particle_systems:
-            usedNames.add(particle_system.boneSuffix)
-        unusedName = None
-        counter = 1
-        while unusedName == None:
-            suggestedName = "%02d" % counter
-            if not suggestedName in usedNames:
-                unusedName = suggestedName
-            counter += 1
-        return unusedName     
+  
 
 class M3_PARTICLE_SYSTEMS_OT_remove(bpy.types.Operator):
     bl_idname      = 'm3.particle_systems_remove'
@@ -2466,7 +2472,7 @@ class M3_PARTICLE_SYSTEM_COPIES_OT_add(bpy.types.Operator):
         scene = context.scene
         particle_system = scene.m3_particle_systems[scene.m3_particle_system_index]
         copy = particle_system.copies.add()
-        copy.name = self.findUnusedName(particle_system)
+        copy.name = findUnusedParticleSystemName(scene)
         if len(scene.m3_material_references) >= 1:
             particle_system.materialName = scene.m3_material_references[0].name
 
@@ -2476,18 +2482,6 @@ class M3_PARTICLE_SYSTEM_COPIES_OT_add(bpy.types.Operator):
         selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy)
         return{'FINISHED'}
 
-    def findUnusedName(self, particle_system):
-        usedNames = set()
-        for copy in particle_system.copies:
-            usedNames.add(copy.name)
-        unusedName = None
-        counter = 1
-        while unusedName == None:
-            suggestedName = "%02d" % counter
-            if not suggestedName in usedNames:
-                unusedName = suggestedName
-            counter += 1
-        return unusedName
 
 class M3_PARTICLE_SYSTEMS_COPIES_OT_remove(bpy.types.Operator):
     bl_idname      = 'm3.particle_system_copies_remove'
