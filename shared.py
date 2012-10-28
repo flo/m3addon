@@ -386,7 +386,7 @@ def updateRigidBodyBoneShapeAll(scene, rigidBody):
         combinedVertices.extend(vertices)
         combinedFaces.extend(faces)
     
-    updateBoneShape(bone, poseBone, "PhysicsShapeBoneMesh", combinedVertices, combinedFaces, mathutils.Matrix())
+    updateBoneShape(bone, poseBone, "PhysicsShapeBoneMesh", combinedVertices, combinedFaces, rotFixMatrixInverted)
 
 def updateRigidBodyBoneShapeOne(scene, rigidBody):
     bone, poseBone = getRigidBodyBones(scene, rigidBody)
@@ -403,7 +403,7 @@ def updateRigidBodyBoneShapeOne(scene, rigidBody):
     if vertices == None or faces == None:
         return
     
-    updateBoneShape(bone, poseBone, "PhysicsShapeBoneMesh", vertices, faces, mathutils.Matrix())
+    updateBoneShape(bone, poseBone, "PhysicsShapeBoneMesh", vertices, faces, rotFixMatrixInverted)
 
 def removeRigidBodyBoneShape(scene, rigidBody):
     bone, poseBone = getRigidBodyBones(scene, rigidBody)
