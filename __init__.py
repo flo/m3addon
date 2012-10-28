@@ -233,6 +233,15 @@ def handleTightHitTestVisiblityUpdate(self, context):
     if boneExists:
         bone.hide = not self.showTightHitTest
 
+def handleAttachmentPointVisibilityUpdate(self, context):
+    scene = context.scene
+    for attachmentPoint in scene.m3_attachment_points:
+        boneName = attachmentPoint.boneName
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
+        boneExists = bone != None
+        if boneExists:
+            bone.hide = not self.showAttachmentPoints
+
 
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
@@ -957,6 +966,7 @@ class M3SimpleGeometricShape(bpy.types.PropertyGroup):
 class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
     showFuzzyHitTests = bpy.props.BoolProperty(default=True,options=set(), update=handleFuzzyHitTestVisiblityUpdate)
     showTightHitTest = bpy.props.BoolProperty(default=True,options=set(), update=handleTightHitTestVisiblityUpdate)
+    showAttachmentPoints = bpy.props.BoolProperty(default=True,options=set(), update=handleAttachmentPointVisibilityUpdate)
     showParticleSystems = bpy.props.BoolProperty(default=True,options=set(), update=handleParticleSystemsVisiblityUpdate)
 
 class M3ExportOptions(bpy.types.PropertyGroup):
@@ -1014,6 +1024,7 @@ class BoneVisibilityPanel(bpy.types.Panel):
         scene = context.scene
         layout.prop(scene.m3_bone_visiblity_options, "showFuzzyHitTests", text="Fuzzy Hit Tests")
         layout.prop(scene.m3_bone_visiblity_options, "showTightHitTest", text="Tight Hit Test")
+        layout.prop(scene.m3_bone_visiblity_options, "showAttachmentPoints", text="Attachment Points")
         layout.prop(scene.m3_bone_visiblity_options, "showParticleSystems", text="Particle Systems")
 
 class AnimationSequencesPanel(bpy.types.Panel):
