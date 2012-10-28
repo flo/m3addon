@@ -200,6 +200,21 @@ def handleGeometicShapeUpdate(self, context):
     if shapeObject.updateBlenderBoneShapes:
         selectOrCreateBoneForShapeObject(context.scene, shapeObject)
 
+def handleParticleSystemsVisiblityUpdate(self, context):
+    scene = context.scene
+    for particleSystem in scene.m3_particle_systems:
+        boneName = shared.boneNameForPartileSystem(particleSystem.boneSuffix)
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
+        boneExists = bone != None
+        if boneExists:
+            bone.hide = not self.showParticleSystems
+        for copy in particleSystem.copies:
+            boneName = shared.boneNameForPartileSystemCopy(particleSystem, copy)
+            bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
+            boneExists = bone != None
+            if boneExists:
+                bone.hide = not self.showParticleSystems
+
 def handleFuzzyHitTestVisiblityUpdate(self, context):
     scene = context.scene
     for fuzzyHitTest in scene.m3_fuzzy_hit_tests:
@@ -942,6 +957,7 @@ class M3SimpleGeometricShape(bpy.types.PropertyGroup):
 class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
     showFuzzyHitTests = bpy.props.BoolProperty(default=True,options=set(), update=handleFuzzyHitTestVisiblityUpdate)
     showTightHitTest = bpy.props.BoolProperty(default=True,options=set(), update=handleTightHitTestVisiblityUpdate)
+    showParticleSystems = bpy.props.BoolProperty(default=True,options=set(), update=handleParticleSystemsVisiblityUpdate)
 
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
@@ -998,6 +1014,7 @@ class BoneVisibilityPanel(bpy.types.Panel):
         scene = context.scene
         layout.prop(scene.m3_bone_visiblity_options, "showFuzzyHitTests", text="Fuzzy Hit Tests")
         layout.prop(scene.m3_bone_visiblity_options, "showTightHitTest", text="Tight Hit Test")
+        layout.prop(scene.m3_bone_visiblity_options, "showParticleSystems", text="Particle Systems")
 
 class AnimationSequencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_animations"
