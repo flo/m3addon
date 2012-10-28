@@ -373,6 +373,8 @@ def handlePhysicsShapeVisibilityChange(self, context):
         if scene.m3_rigid_body_index != -1:
             rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
             shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
+    
+    selectCurrentRigidBodyBone(scene)
 
 def handlePhysicsShapeUpdate(self, context):
     scene = context.scene
@@ -391,6 +393,8 @@ def handlePhysicsShapeUpdate(self, context):
         if scene.m3_rigid_body_index != -1:
             rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
             shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
+    
+    selectCurrentRigidBodyBone(scene)
 
 def handlePhysicsShapeAdd(scene, rigidBody):
     if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.Show:
@@ -414,7 +418,11 @@ def handlePhysicsShapeIndexChange(self, context):
     scene = context.scene
     
     if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowOne:
-        shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
+        if scene.m3_rigid_body_index != -1:
+            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+            shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
+    
+    selectCurrentRigidBodyBone(scene)
 
 def handleRigidBodyRemove(scene, rigidBody):
     shared.removeRigidBodyBoneShape(scene, rigidBody)
@@ -435,12 +443,18 @@ def handleRigidBodyIndexChange(scene, context):
         if scene.m3_rigid_body_index != -1:
             rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
             shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
+    
+    selectCurrentRigidBodyBone(scene)
 
 def handleRigidBodyBoneChange(scene, context):
     # TODO: remove custom bone shape for old bone, create custom bone shape for new bone.
     # need to save old bone name somehow?
-    pass
+    selectCurrentRigidBodyBone(scene)
 
+def selectCurrentRigidBodyBone(scene):
+    if scene.m3_rigid_body_index != -1:
+        rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+        selectBone(scene, rigidBody.boneName)
 
 def handleLightIndexChanged(self, context):
     scene = context.scene
@@ -478,7 +492,7 @@ def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
 def selectOrCreateBoneForForce(scene, force):
     boneName = shared.boneNameForForce(force.boneSuffix)
     selectOrCreateBone(scene, boneName)
-
+    
 def selectOrCreateBoneForLight(scene, light):
     boneName = shared.boneNameForLight(light.boneSuffix, light.lightType)
     selectOrCreateBone(scene, boneName)
@@ -494,6 +508,27 @@ def selectOrCreateBoneForPartileSystem(scene, particle_system):
 def selectOrCreateBoneForShapeObject(scene, shapeObject):
     bone, poseBone = selectOrCreateBone(scene, shapeObject.name)
     shared.updateBoneShapeOfShapeObject(shapeObject, bone, poseBone)
+
+def selectBone(scene, boneName):
+    bone, armature = shared.findBoneWithArmatureObject(scene, boneName)
+    if bone == None or armature == None:
+        return
+    
+    if bpy.ops.object.mode_set.poll():
+        bpy.ops.object.mode_set(mode='OBJECT')
+    if bpy.ops.object.select_all.poll():
+        bpy.ops.object.select_all(action='DESELECT')
+    
+    armature.select = True
+    scene.objects.active = armature
+    
+    if bpy.ops.object.mode_set.poll():
+        bpy.ops.object.mode_set(mode='POSE')
+    
+    for b in armature.data.bones:
+        b.select = False
+    
+    bone.select = True
 
 def selectOrCreateBone(scene, boneName):
     "Returns the bone and it's pose variant"
