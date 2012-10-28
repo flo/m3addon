@@ -251,6 +251,14 @@ def handleLightsVisiblityUpdate(self, context):
         if boneExists:
             bone.hide = not self.showLights
 
+def handleCamerasVisiblityUpdate(self, context):
+    scene = context.scene
+    for camera in scene.m3_cameras:
+        boneName = camera.name
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
+        boneExists = bone != None
+        if boneExists:
+            bone.hide = not self.showCameras
 
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
@@ -988,11 +996,12 @@ class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ", update=handleGeometicShapeUpdate, options=set())
 
 class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
-    showFuzzyHitTests = bpy.props.BoolProperty(default=True,options=set(), update=handleFuzzyHitTestVisiblityUpdate)
-    showTightHitTest = bpy.props.BoolProperty(default=True,options=set(), update=handleTightHitTestVisiblityUpdate)
-    showAttachmentPoints = bpy.props.BoolProperty(default=True,options=set(), update=handleAttachmentPointVisibilityUpdate)
-    showParticleSystems = bpy.props.BoolProperty(default=True,options=set(), update=handleParticleSystemsVisiblityUpdate)
-    showLights = bpy.props.BoolProperty(default=True,options=set(), update=handleLightsVisiblityUpdate)
+    showFuzzyHitTests = bpy.props.BoolProperty(default=True, options=set(), update=handleFuzzyHitTestVisiblityUpdate)
+    showTightHitTest = bpy.props.BoolProperty(default=True, options=set(), update=handleTightHitTestVisiblityUpdate)
+    showAttachmentPoints = bpy.props.BoolProperty(default=True, options=set(), update=handleAttachmentPointVisibilityUpdate)
+    showParticleSystems = bpy.props.BoolProperty(default=True, options=set(), update=handleParticleSystemsVisiblityUpdate)
+    showLights = bpy.props.BoolProperty(default=True, options=set(), update=handleLightsVisiblityUpdate)
+    showCameras = bpy.props.BoolProperty(default=True, options=set(), update=handleCamerasVisiblityUpdate)
 
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
@@ -1052,6 +1061,7 @@ class BoneVisibilityPanel(bpy.types.Panel):
         layout.prop(scene.m3_bone_visiblity_options, "showAttachmentPoints", text="Attachment Points")
         layout.prop(scene.m3_bone_visiblity_options, "showParticleSystems", text="Particle Systems")
         layout.prop(scene.m3_bone_visiblity_options, "showLights", text="Lights")
+        layout.prop(scene.m3_bone_visiblity_options, "showCameras", text="Cameras")
 
 class AnimationSequencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_animations"
