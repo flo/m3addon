@@ -242,6 +242,15 @@ def handleAttachmentPointVisibilityUpdate(self, context):
         if boneExists:
             bone.hide = not self.showAttachmentPoints
 
+def handleLightsVisiblityUpdate(self, context):
+    scene = context.scene
+    for light in scene.m3_lights:
+        boneName = shared.boneNameForLight(light.boneSuffix, light.lightType)
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
+        boneExists = bone != None
+        if boneExists:
+            bone.hide = not self.showLights
+
 
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
@@ -983,6 +992,7 @@ class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
     showTightHitTest = bpy.props.BoolProperty(default=True,options=set(), update=handleTightHitTestVisiblityUpdate)
     showAttachmentPoints = bpy.props.BoolProperty(default=True,options=set(), update=handleAttachmentPointVisibilityUpdate)
     showParticleSystems = bpy.props.BoolProperty(default=True,options=set(), update=handleParticleSystemsVisiblityUpdate)
+    showLights = bpy.props.BoolProperty(default=True,options=set(), update=handleLightsVisiblityUpdate)
 
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
@@ -1041,6 +1051,7 @@ class BoneVisibilityPanel(bpy.types.Panel):
         layout.prop(scene.m3_bone_visiblity_options, "showTightHitTest", text="Tight Hit Test")
         layout.prop(scene.m3_bone_visiblity_options, "showAttachmentPoints", text="Attachment Points")
         layout.prop(scene.m3_bone_visiblity_options, "showParticleSystems", text="Particle Systems")
+        layout.prop(scene.m3_bone_visiblity_options, "showLights", text="Lights")
 
 class AnimationSequencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_animations"
