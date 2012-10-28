@@ -355,10 +355,31 @@ def handlePhysicsShapeUpdate(self, context):
             rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
             shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
 
+def handlePhysicsShapeAdd(scene, rigidBody):
+    if scene.m3_physics_shape_visibility == "1": # show
+        shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
+    
+    elif scene.m3_physics_shape_visibility == "2": # show all
+        shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
+    
+    # handlePhysicsShapeIndexChange updates "show one"
+
+def handlePhysicsShapeRemove(scene, rigidBody):
+    if scene.m3_physics_shape_visibility == "1": # show
+        shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
+    
+    elif scene.m3_physics_shape_visibility == "2": # show all
+        shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
+    
+    # handlePhysicsShapeIndexChange updates "show one"
+
+def handlePhysicsShapeIndexChange(self, context):
+    scene = context.scene
+    
+    if scene.m3_physics_shape_visibility == "3": # show one
+        shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
+
 # TODO:
-# add physics shape -> add custom bone shape for the added rigid body
-# remove physics shape -> update current shape / rigid body
-# shape index change -> remove old bone shapes if necessary, show new one
 # add rigid body -> nothing to do (has no shapes)
 # remove rigid body -> remove custom bone shape for the removed rigid body
 # rigid body index change -> remove old bone shapes if necessary, show new one
@@ -839,7 +860,7 @@ class M3RigidBody(bpy.types.PropertyGroup):
     unknownAt8 = bpy.props.FloatProperty(default=0.8, name="unknownAt8", options=set())
     # skip other unknown values for now
     physicsShapes = bpy.props.CollectionProperty(type=M3PhysicsShape)
-    physicsShapeIndex = bpy.props.IntProperty(options=set())
+    physicsShapeIndex = bpy.props.IntProperty(update=handlePhysicsShapeIndexChange, options=set())
     collidable = bpy.props.BoolProperty(default=True, options=set())
     walkable = bpy.props.BoolProperty(default=False, options=set())
     stackable = bpy.props.BoolProperty(default=False, options=set())
@@ -2460,8 +2481,8 @@ class M3_RIGID_BODIES_OT_add(bpy.types.Operator):
         rigid_body.name = self.findUnusedName(scene)
         rigid_body.boneName = ""
         
-        scene.m3_rigid_body_index = len(scene.m3_rigid_bodies)-1
-        return{'FINISHED'}
+        scene.m3_rigid_body_index = len(scene.m3_rigid_bodies) - 1
+        return {'FINISHED'}
     
     def findUnusedName(self, scene):
         usedNames = set()
@@ -2509,7 +2530,9 @@ class M3_PHYSICS_SHAPES_OT_add(bpy.types.Operator):
         physics_shape = rigid_body.physicsShapes.add()
         physics_shape.name = self.findUnusedName(rigid_body)
         
-        rigid_body.physicsShapeIndex = len(rigid_body.physicsShapes)-1
+        rigid_body.physicsShapeIndex = len(rigid_body.physicsShapes) - 1
+        handlePhysicsShapeAdd(scene, rigid_body)
+        
         return {'FINISHED'}
     
     def findUnusedName(self, rigid_body):
@@ -2544,6 +2567,8 @@ class M3_PHYSICS_SHAPES_OT_remove(bpy.types.Operator):
         
         rigid_body.physicsShapes.remove(currentIndex)
         rigid_body.physicsShapeIndex -= 1
+        handlePhysicsShapeRemove(scene, rigid_body)
+        
         return {'FINISHED'}
 
 class M3_LIGHTS_OT_add(bpy.types.Operator):

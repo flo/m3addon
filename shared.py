@@ -368,6 +368,10 @@ def updateRigidBodyBoneShapeAll(scene, rigidBody):
     if bone == None or poseBone == None:
         return
     
+    if len(rigidBody.physicsShapes) == 0:
+        removeRigidBodyBoneShape(scene, rigidBody)
+        return
+    
     combinedVertices, combinedFaces = [], []
     for shape in rigidBody.physicsShapes:
         vertices, faces = createPhysicsShapeMeshData(shape)
@@ -385,6 +389,10 @@ def updateRigidBodyBoneShapeAll(scene, rigidBody):
 def updateRigidBodyBoneShapeOne(scene, rigidBody):
     bone, poseBone = getRigidBodyBones(scene, rigidBody)
     if bone == None or poseBone == None:
+        return
+    
+    if rigidBody.physicsShapeIndex == -1 or len(rigidBody.physicsShapes) == 0:
+        removeRigidBodyBoneShape(scene, rigidBody)
         return
     
     shape = rigidBody.physicsShapes[rigidBody.physicsShapeIndex]
