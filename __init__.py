@@ -86,7 +86,7 @@ def handleTypeOrBoneSuffixChange(self, context):
     if particleSystem.boneSuffix != particleSystem.oldBoneSuffix:
         oldBoneName = shared.boneNameForPartileSystem(particleSystem.oldBoneSuffix)
         newBoneName = shared.boneNameForPartileSystem(particleSystem.boneSuffix)
-        bone, armatureObject = findBoneWithArmatureObject(scene, oldBoneName)
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, oldBoneName)
         if bone != None:
             bone.name = newBoneName
     particleSystem.oldBoneSuffix = particleSystem.boneSuffix
@@ -113,7 +113,7 @@ def handleForceTypeOrBoneSuffixChange(self, context):
     if self.boneSuffix != self.oldBoneSuffix:
         oldBoneName = shared.boneNameForForce(self.oldBoneSuffix)
         newBoneName = shared.boneNameForForce(self.boneSuffix)
-        bone, armatureObject = findBoneWithArmatureObject(scene, oldBoneName)
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, oldBoneName)
         if bone != None:
             bone.name = newBoneName
     self.oldBoneSuffix = self.boneSuffix
@@ -130,7 +130,7 @@ def handleLightTypeOrBoneSuffixChange(self, context):
     if self.boneSuffix != self.oldBoneSuffix or self.lightType != self.oldLightType:
         oldBoneName = shared.boneNameForLight(self.oldBoneSuffix, self.oldLightType)
         newBoneName = shared.boneNameForLight(self.boneSuffix, self.lightType)
-        bone, armatureObject = findBoneWithArmatureObject(scene, oldBoneName)
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, oldBoneName)
         if bone != None:
             bone.name = newBoneName
             
@@ -143,7 +143,7 @@ def handleParticleSystemCopyRename(self, context):
     if self.name != self.oldName:
         oldBoneName = shared.boneNameForPartileSystem(self.oldName)
         newBoneName = shared.boneNameForPartileSystem(self.name)
-        bone, armatureObject = findBoneWithArmatureObject(scene, oldBoneName)
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, oldBoneName)
         if bone != None:
             bone.name = newBoneName
     self.oldName = self.name
@@ -151,7 +151,7 @@ def handleParticleSystemCopyRename(self, context):
 def handleCameraNameChange(self, context):
     scene = context.scene
     if self.name != self.oldName:
-        bone, armatureObject = findBoneWithArmatureObject(scene, self.oldName)
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, self.oldName)
         if bone != None:
             bone.name = self.name
     self.oldName = self.name
@@ -307,83 +307,63 @@ def handleForceIndexChanged(self, context):
     force = scene.m3_forces[scene.m3_force_index]
     selectOrCreateBoneForForce(scene, force)
 
-def createPhysicsShapeMeshData(shape):
-    if shape.shape == "0":
-        vertices, faces = shared.createMeshDataForCuboid(shape.size0, shape.size1, shape.size2)
-    elif shape.shape == "1":
-        vertices, faces = shared.createMeshDataForSphere(shape.size0)
-    elif shape.shape == "2":
-        vertices, faces = shared.createMeshDataForCapsule(shape.size0, shape.size1)
-    elif shape.shape == "3":
-        vertices, faces = shared.createMeshDataForCylinder(shape.size0, shape.size1)
-    else:
-        # TODO: mesh / convex hull types...
-        return None, None
+def handlePhysicsShapeVisibilityChange(self, context):
+    scene = context.scene
     
-    matrix = shared.composeMatrix(shape.offset, shape.rotationEuler, shape.scale)
-    vertices = [matrix * mathutils.Vector(v) for v in vertices]
+    if scene.m3_physics_shape_visibility == "0": # hide
+        for rigidBody in scene.m3_rigid_bodies:
+            shared.removeRigidBodyBoneShape(scene, rigidBody)
     
-    return vertices, faces
+    elif scene.m3_physics_shape_visibility == "1": # show
+        for rigidBody in scene.m3_rigid_bodies:
+            shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
+    
+    elif scene.m3_physics_shape_visibility == "2": # show all
+        for rigidBody in scene.m3_rigid_bodies:
+            shared.removeRigidBodyBoneShape(scene, rigidBody)
+        
+        if scene.m3_rigid_body_index != -1:
+            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+            shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
+    
+    else: # show one
+        for rigidBody in scene.m3_rigid_bodies:
+            shared.removeRigidBodyBoneShape(scene, rigidBody)
+        
+        if scene.m3_rigid_body_index != -1:
+            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+            shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
 
 def handlePhysicsShapeUpdate(self, context):
     scene = context.scene
     
-    if scene.m3_rigid_body_index == -1:
+    if scene.m3_physics_shape_visibility == "0": # hide
         return
     
-    rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+    elif scene.m3_physics_shape_visibility == "1": # show
+        if scene.m3_rigid_body_index != -1:
+            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+            shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
     
-    bone, armature = findBoneWithArmatureObject(scene, rigidBody.boneName)
-    if bone == None:
-        print("Warning: Could not find bone name specified in rigid body: %s" % rigidBody.name)
-        return
+    elif scene.m3_physics_shape_visibility == "2": # show all
+        if scene.m3_rigid_body_index != -1:
+            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+            shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
     
-    poseBone = armature.pose.bones[rigidBody.boneName]
-    if poseBone == None:
-        print("Warning: Could not find posed bone: %s" % rigidBody.boneName)
-        return
-    
-    if rigidBody.physicsShapeVisibility == "0": # hide all
-        poseBone.custom_shape = None
-    elif rigidBody.physicsShapeVisibility == "1": # show all
-        combinedVertices, combinedFaces = [], []
-        for shape in rigidBody.physicsShapes:
-            vertices, faces = createPhysicsShapeMeshData(shape)
-            # TODO: remove this check when mesh / convex hull is implemented
-            if vertices == None or faces == None:
-                continue
-            
-            faces = [[fe + len(combinedVertices) for fe in f] for f in faces]
-            
-            combinedVertices.extend(vertices)
-            combinedFaces.extend(faces)
-        
-        mesh = bpy.data.meshes.new("PhysicsShapeBoneMesh")
-        mesh.from_pydata(vertices = combinedVertices, faces = combinedFaces, edges = [])
-        mesh.update(calc_edges = True)
-        
-        meshObject = bpy.data.objects.new("PhysicsShapeBoneMesh", mesh)
-        meshObject.location = (0, 0, 0)
-        
-        poseBone.custom_shape = meshObject
-        bone.show_wire = True
-        
-    else: # show selected only
-        shape = rigidBody.physicsShapes[rigidBody.physicsShapeIndex]
-        vertices, faces = createPhysicsShapeMeshData(shape)
-        # TODO: remove this check when mesh / convex hull is implemented
-        if vertices == None or faces == None:
-            return
-        
-        mesh = bpy.data.meshes.new("PhysicsShapeBoneMesh")
-        mesh.from_pydata(vertices = vertices, faces = faces, edges = [])
-        mesh.update(calc_edges = True)
-        
-        meshObject = bpy.data.objects.new("PhysicsShapeBoneMesh", mesh)
-        meshObject.location = (0, 0, 0)
-        
-        poseBone.custom_shape = meshObject
-        bone.show_wire = True
+    else: # show one
+        if scene.m3_rigid_body_index != -1:
+            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+            shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
+
+# TODO:
+# add physics shape -> add custom bone shape for the added rigid body
+# remove physics shape -> update current shape / rigid body
+# shape index change -> remove old bone shapes if necessary, show new one
+# add rigid body -> nothing to do (has no shapes)
+# remove rigid body -> remove custom bone shape for the removed rigid body
+# rigid body index change -> remove old bone shapes if necessary, show new one
+# change rigid body bone -> remove custom bone shape for old bone, create custom bone shape for new bone
+
 
 def handleLightIndexChanged(self, context):
     scene = context.scene
@@ -413,25 +393,6 @@ def handleFuzzyHitTestIndexChanged(self, context):
     fuzzyHitTest = scene.m3_fuzzy_hit_tests[scene.m3_fuzzy_hit_test_index]
     selectOrCreateBoneForShapeObject(scene, fuzzyHitTest)
 
-def iterateArmatureObjects(scene):
-    for obj in scene.objects:
-        if obj.type == "ARMATURE":
-            if obj.data != None:
-                yield obj
-
-def findArmatureObjectForNewBone(scene):
-    for obj in iterateArmatureObjects(scene):
-        return obj
-    return None
-
-def findBoneWithArmatureObject(scene, boneName):
-    for armatureObject in iterateArmatureObjects(scene):
-        armature = armatureObject.data
-        bone = armature.bones.get(boneName)
-        if bone != None:
-            return (bone, armatureObject)
-    return (None, None)
-
 
 def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
     boneName = shared.boneNameForPartileSystemCopy(particle_system, copy)
@@ -447,8 +408,6 @@ def selectOrCreateBoneForLight(scene, light):
 
 def selectOrCreateBoneForCamera(scene, camera):
     selectOrCreateBone(scene, camera.name)
-    
-    
 
 def selectOrCreateBoneForPartileSystem(scene, particle_system):
     boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
@@ -465,14 +424,14 @@ def selectOrCreateBone(scene, boneName):
         bpy.ops.object.mode_set(mode='OBJECT')
     if bpy.ops.object.select_all.poll():
         bpy.ops.object.select_all(action='DESELECT')
-    bone, armatureObject = findBoneWithArmatureObject(scene, boneName)
+    bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
     boneExists = bone != None
     if boneExists:
         armature = armatureObject.data
         armatureObject.select = True
         scene.objects.active = armatureObject
     else:
-        armatureObject = findArmatureObjectForNewBone(scene)
+        armatureObject = shared.findArmatureObjectForNewBone(scene)
         if armatureObject == None:
             armature = bpy.data.armatures.new(name="Armature")
             armatureObject = bpy.data.objects.new("Armature", armature)
@@ -524,9 +483,10 @@ forceTypeList = [("0", "Directional", "The particles get accelerated into one di
                     ("3", "Rotary", "The particles rotate in a circle around a center")
                    ]
 
-physicsShapeVisibilityList = [("0", "Hide all", "Hide all physics shapes for this rigid body"),
-                            ("1", "Show all", "Show all physics shapes for this rigid body"),
-                            ("2", "Show selected", "Show currently selected physics shape for this rigid body")
+physicsShapeVisibilityList = [("0", "Hide", "Do not display physics shapes"),
+                            ("1", "Show", "Display physics shapes for all rigid bodies"),
+                            ("2", "Show all", "Display all physics shapes for the selected rigid body"),
+                            ("3", "Show one", "Display the selected physics shape for the selected rigid body")
                             ]
 
 physicsShapeTypeList = [("0", "Box", "Box shape with the given width, length and height"),
@@ -880,7 +840,6 @@ class M3RigidBody(bpy.types.PropertyGroup):
     # skip other unknown values for now
     physicsShapes = bpy.props.CollectionProperty(type=M3PhysicsShape)
     physicsShapeIndex = bpy.props.IntProperty(options=set())
-    physicsShapeVisibility = bpy.props.EnumProperty(default="0", items=physicsShapeVisibilityList, update=handlePhysicsShapeUpdate, options=set())
     collidable = bpy.props.BoolProperty(default=True, options=set())
     walkable = bpy.props.BoolProperty(default=False, options=set())
     stackable = bpy.props.BoolProperty(default=False, options=set())
@@ -1585,7 +1544,7 @@ class PhyscisShapePanel(bpy.types.Panel):
             return
         rigid_body = scene.m3_rigid_bodies[currentIndex]
         
-        col.row().prop(rigid_body, "physicsShapeVisibility", expand=True)
+        col.row().prop(scene, "m3_physics_shape_visibility", expand=True)
         
         split = layout.split()
         row = layout.row()
@@ -2833,6 +2792,7 @@ def register():
     bpy.types.Scene.m3_force_index = bpy.props.IntProperty(options=set(), update=handleForceIndexChanged)
     bpy.types.Scene.m3_rigid_bodies = bpy.props.CollectionProperty(type=M3RigidBody)
     bpy.types.Scene.m3_rigid_body_index = bpy.props.IntProperty(options=set())
+    bpy.types.Scene.m3_physics_shape_visibility = bpy.props.EnumProperty(default="0", items=physicsShapeVisibilityList, update=handlePhysicsShapeVisibilityChange, options=set())
     bpy.types.Scene.m3_lights = bpy.props.CollectionProperty(type=M3Light)
     bpy.types.Scene.m3_light_index = bpy.props.IntProperty(options=set(), update=handleLightIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)

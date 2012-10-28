@@ -93,6 +93,26 @@ def boneNameForLight(boneSuffix, lightType):
 def boneNameForPartileSystemCopy(particleSystem, copy):
     return toValidBoneName(star2ParticlePrefix + copy.name)
 
+def iterateArmatureObjects(scene):
+    for obj in scene.objects:
+        if obj.type == "ARMATURE":
+            if obj.data != None:
+                yield obj
+
+def findArmatureObjectForNewBone(scene):
+    for obj in iterateArmatureObjects(scene):
+        return obj
+    return None
+
+def findBoneWithArmatureObject(scene, boneName):
+    for armatureObject in iterateArmatureObjects(scene):
+        armature = armatureObject.data
+        bone = armature.bones.get(boneName)
+        if bone != None:
+            return (bone, armatureObject)
+    return (None, None)
+
+
 def locRotScaleMatrix(location, rotation, scale):
     """ Important: rotation must be a normalized quaternion """
     # to_matrix() only works properly with normalized quaternions.
@@ -313,9 +333,76 @@ def updateBoneShapeOfParticleSystem(particle_system, bone, poseBone):
     boneName = boneNameForPartileSystem(particle_system.boneSuffix)
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix)
-    
 
+def getRigidBodyBones(scene, rigidBody):
+    bone, armature = findBoneWithArmatureObject(scene, rigidBody.boneName)
+    if bone == None:
+        print("Warning: Could not find bone name specified in rigid body: %s" % rigidBody.name)
     
+    poseBone = armature.pose.bones[rigidBody.boneName]
+    if poseBone == None:
+        print("Warning: Could not find posed bone: %s" % rigidBody.boneName)
+    
+    return bone, poseBone
+
+def createPhysicsShapeMeshData(shape):
+    if shape.shape == "0":
+        vertices, faces = createMeshDataForCuboid(shape.size0, shape.size1, shape.size2)
+    elif shape.shape == "1":
+        vertices, faces = createMeshDataForSphere(shape.size0)
+    elif shape.shape == "2":
+        vertices, faces = createMeshDataForCapsule(shape.size0, shape.size1)
+    elif shape.shape == "3":
+        vertices, faces = createMeshDataForCylinder(shape.size0, shape.size1)
+    else:
+        # TODO: mesh / convex hull types...
+        return None, None
+    
+    matrix = composeMatrix(shape.offset, shape.rotationEuler, shape.scale)
+    vertices = [matrix * mathutils.Vector(v) for v in vertices]
+    
+    return vertices, faces
+
+def updateRigidBodyBoneShapeAll(scene, rigidBody):
+    bone, poseBone = getRigidBodyBones(scene, rigidBody)
+    if bone == None or poseBone == None:
+        return
+    
+    combinedVertices, combinedFaces = [], []
+    for shape in rigidBody.physicsShapes:
+        vertices, faces = createPhysicsShapeMeshData(shape)
+        # TODO: remove this check when mesh / convex hull is implemented
+        if vertices == None or faces == None:
+            continue
+        
+        faces = [[fe + len(combinedVertices) for fe in f] for f in faces]
+        
+        combinedVertices.extend(vertices)
+        combinedFaces.extend(faces)
+    
+    updateBoneShape(bone, poseBone, "PhysicsShapeBoneMesh", combinedVertices, combinedFaces, mathutils.Matrix())
+
+def updateRigidBodyBoneShapeOne(scene, rigidBody):
+    bone, poseBone = getRigidBodyBones(scene, rigidBody)
+    if bone == None or poseBone == None:
+        return
+    
+    shape = rigidBody.physicsShapes[rigidBody.physicsShapeIndex]
+    vertices, faces = createPhysicsShapeMeshData(shape)
+    # TODO: remove this check when mesh / convex hull is implemented
+    if vertices == None or faces == None:
+        return
+    
+    updateBoneShape(bone, poseBone, "PhysicsShapeBoneMesh", vertices, faces, mathutils.Matrix())
+
+def removeRigidBodyBoneShape(scene, rigidBody):
+    bone, poseBone = getRigidBodyBones(scene, rigidBody)
+    if bone == None or poseBone == None:
+        return
+    
+    poseBone.custom_shape = None
+    bone.show_wire = False
+
 def updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix):
     boneScale = (bone.head - bone.tail).length
     invertedBoneScale = 1.0 / boneScale
