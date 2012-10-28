@@ -349,7 +349,7 @@ def getRigidBodyBones(scene, rigidBody):
 
 def createPhysicsShapeMeshData(shape):
     if shape.shape == "0":
-        vertices, faces = createMeshDataForCuboid(shape.size0, shape.size1, shape.size2)
+        vertices, faces = createMeshDataForCuboid(2 * shape.size0, 2 * shape.size1, 2 * shape.size2)
     elif shape.shape == "1":
         vertices, faces = createMeshDataForSphere(shape.size0)
     elif shape.shape == "2":
