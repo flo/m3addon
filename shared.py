@@ -336,12 +336,14 @@ def updateBoneShapeOfParticleSystem(particle_system, bone, poseBone):
 
 def getRigidBodyBones(scene, rigidBody):
     bone, armature = findBoneWithArmatureObject(scene, rigidBody.boneName)
-    if bone == None:
+    if armature == None or bone == None:
         print("Warning: Could not find bone name specified in rigid body: %s" % rigidBody.name)
+        return None, None
     
     poseBone = armature.pose.bones[rigidBody.boneName]
     if poseBone == None:
         print("Warning: Could not find posed bone: %s" % rigidBody.boneName)
+        return None, None
     
     return bone, poseBone
 
