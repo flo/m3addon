@@ -200,6 +200,25 @@ def handleGeometicShapeUpdate(self, context):
     if shapeObject.updateBlenderBoneShapes:
         selectOrCreateBoneForShapeObject(context.scene, shapeObject)
 
+def handleFuzzyHitTestVisiblityUpdate(self, context):
+    scene = context.scene
+    for fuzzyHitTest in scene.m3_fuzzy_hit_tests:
+        boneName = fuzzyHitTest.name
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
+        boneExists = bone != None
+        if boneExists:
+            bone.hide = not self.showFuzzyHitTests
+    
+def handleTightHitTestVisiblityUpdate(self, context):
+    scene = context.scene
+    tightHitTest = scene.m3_tight_hit_test
+    boneName = tightHitTest.name
+    bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
+    boneExists = bone != None
+    if boneExists:
+        bone.hide = not self.showTightHitTest
+
+
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
     newIndex = scene.m3_animation_index
@@ -920,7 +939,9 @@ class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION", update=handleGeometicShapeUpdate, options=set())
     scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ", update=handleGeometicShapeUpdate, options=set())
 
-
+class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
+    showFuzzyHitTests = bpy.props.BoolProperty(default=True,options=set(), update=handleFuzzyHitTestVisiblityUpdate)
+    showTightHitTest = bpy.props.BoolProperty(default=True,options=set(), update=handleTightHitTestVisiblityUpdate)
 
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
@@ -963,6 +984,20 @@ class ExportPanel(bpy.types.Panel):
 
         layout.prop(scene.m3_export_options,"path", text="")
         layout.operator("m3.quick_export", text="Export As M3")
+
+class BoneVisibilityPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_bone_visibility"
+    bl_label = "M3 Bone Visibility"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        layout.prop(scene.m3_bone_visiblity_options, "showFuzzyHitTests", text="Fuzzy Hit Tests")
+        layout.prop(scene.m3_bone_visiblity_options, "showTightHitTest", text="Tight Hit Test")
 
 class AnimationSequencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_animations"
@@ -2847,6 +2882,7 @@ def register():
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
+    bpy.types.Scene.m3_bone_visiblity_options = bpy.props.PointerProperty(type=M3BoneVisiblityOptions)
     bpy.types.Scene.m3_animation_ids = bpy.props.CollectionProperty(type=M3AnimIdData)
     bpy.types.Scene.m3_fuzzy_hit_tests = bpy.props.CollectionProperty(type=M3SimpleGeometricShape)
     bpy.types.Scene.m3_fuzzy_hit_test_index = bpy.props.IntProperty(options=set(), update=handleFuzzyHitTestIndexChanged)
