@@ -379,11 +379,30 @@ def handlePhysicsShapeIndexChange(self, context):
     if scene.m3_physics_shape_visibility == "3": # show one
         shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
 
-# TODO:
-# add rigid body -> nothing to do (has no shapes)
-# remove rigid body -> remove custom bone shape for the removed rigid body
-# rigid body index change -> remove old bone shapes if necessary, show new one
-# change rigid body bone -> remove custom bone shape for old bone, create custom bone shape for new bone
+def handleRigidBodyRemove(scene, rigidBody):
+    shared.removeRigidBodyBoneShape(scene, rigidBody)
+
+def handleRigidBodyIndexChange(scene, context):
+    if scene.m3_physics_shape_visibility == "2": # show all
+        for rigidBody in scene.m3_rigid_bodies:
+            shared.removeRigidBodyBoneShape(scene, rigidBody)
+        
+        if scene.m3_rigid_body_index != -1:
+            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+            shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
+    
+    elif scene.m3_physics_shape_visibility == "3": # show one
+        for rigidBody in scene.m3_rigid_bodies:
+            shared.removeRigidBodyBoneShape(scene, rigidBody)
+        
+        if scene.m3_rigid_body_index != -1:
+            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+            shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
+
+def handleRigidBodyBoneChange(scene, context):
+    # TODO: remove custom bone shape for old bone, create custom bone shape for new bone.
+    # need to save old bone name somehow?
+    pass
 
 
 def handleLightIndexChanged(self, context):
@@ -854,7 +873,7 @@ class M3PhysicsShape(bpy.types.PropertyGroup):
 
 class M3RigidBody(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
-    boneName = bpy.props.StringProperty(name="boneName", options=set())
+    boneName = bpy.props.StringProperty(name="boneName", update=handleRigidBodyBoneChange, options=set())
     unknownAt0 = bpy.props.FloatProperty(default=5.0, name="unknownAt0", options=set())
     unknownAt4 = bpy.props.FloatProperty(default=4.0, name="unknownAt4", options=set())
     unknownAt8 = bpy.props.FloatProperty(default=0.8, name="unknownAt8", options=set())
@@ -2509,6 +2528,8 @@ class M3_RIGID_BODIES_OT_remove(bpy.types.Operator):
         if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
             return {'CANCELLED'}
         
+        handleRigidBodyRemove(scene, scene.m3_rigid_bodies[scene.m3_rigid_body_index])
+        
         scene.m3_rigid_bodies.remove(currentIndex)
         scene.m3_rigid_body_index -= 1
         
@@ -2816,7 +2837,7 @@ def register():
     bpy.types.Scene.m3_forces = bpy.props.CollectionProperty(type=M3Force)
     bpy.types.Scene.m3_force_index = bpy.props.IntProperty(options=set(), update=handleForceIndexChanged)
     bpy.types.Scene.m3_rigid_bodies = bpy.props.CollectionProperty(type=M3RigidBody)
-    bpy.types.Scene.m3_rigid_body_index = bpy.props.IntProperty(options=set())
+    bpy.types.Scene.m3_rigid_body_index = bpy.props.IntProperty(options=set(), update=handleRigidBodyIndexChange)
     bpy.types.Scene.m3_physics_shape_visibility = bpy.props.EnumProperty(default="0", items=physicsShapeVisibilityList, update=handlePhysicsShapeVisibilityChange, options=set())
     bpy.types.Scene.m3_lights = bpy.props.CollectionProperty(type=M3Light)
     bpy.types.Scene.m3_light_index = bpy.props.IntProperty(options=set(), update=handleLightIndexChanged)
