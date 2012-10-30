@@ -513,6 +513,13 @@ def handleLightIndexChanged(self, context):
     light = scene.m3_lights[scene.m3_light_index]
     selectOrCreateBoneForLight(scene, light)
     
+def handleAttachmentPointIndexChanged(self, context):
+    scene = context.scene
+    if scene.m3_attachment_point_index == -1:
+        return
+    attachmentPoint = scene.m3_attachment_points[scene.m3_attachment_point_index]
+    selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint)
+
 def handlePartileSystemCopyIndexChanged(self, context):
     scene = context.scene
     particleSystem = self
@@ -534,6 +541,9 @@ def handleFuzzyHitTestIndexChanged(self, context):
     fuzzyHitTest = scene.m3_fuzzy_hit_tests[scene.m3_fuzzy_hit_test_index]
     selectOrCreateBoneForShapeObject(scene, fuzzyHitTest)
 
+def selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint):
+    boneName = attachmentPoint.boneName
+    bone, poseBone = selectOrCreateBone(scene, boneName)
 
 def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
     boneName = shared.boneNameForPartileSystemCopy(particle_system, copy)
@@ -2767,18 +2777,19 @@ class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
 
     def invoke(self, context, event):
         scene = context.scene
-        attachment_point = scene.m3_attachment_points.add()
+        attachmentPoint = scene.m3_attachment_points.add()
         name = self.findUnusedName(scene)
-        attachment_point.name = name
-        attachment_point.boneName = name
+        attachmentPoint.name = name
+        attachmentPoint.boneName = name
 
         scene.m3_attachment_point_index = len(scene.m3_attachment_points)-1
+        selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint)
         return{'FINISHED'}
         
     def findUnusedName(self, scene):
         usedNames = set()
-        for attachment_point in scene.m3_attachment_points:
-            usedNames.add(attachment_point.name)
+        for attachmentPoint in scene.m3_attachment_points:
+            usedNames.add(attachmentPoint.name)
         suggestedNames = {"Ref_Center", "Ref_Origin", "Ref_Overhead", "Ref_Target"}
 
         for boneName in boneNameSet():
@@ -2968,7 +2979,7 @@ def register():
     bpy.types.Scene.m3_lights = bpy.props.CollectionProperty(type=M3Light)
     bpy.types.Scene.m3_light_index = bpy.props.IntProperty(options=set(), update=handleLightIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
-    bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty(options=set())
+    bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty(options=set(), update=handleAttachmentPointIndexChanged)
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
     bpy.types.Scene.m3_bone_visiblity_options = bpy.props.PointerProperty(type=M3BoneVisiblityOptions)
     bpy.types.Scene.m3_animation_ids = bpy.props.CollectionProperty(type=M3AnimIdData)
