@@ -79,6 +79,13 @@ def toValidBoneName(name):
     maxLength = 31
     return name[:maxLength]    
 
+def boneNameForAttachmentPoint(attachmentPoint):
+    if attachmentPoint.volumeType == "-1":
+        bonePrefix = attachmentPointPrefix
+    else:
+        bonePrefix = attachmentVolumePrefix
+    return bonePrefix + attachmentPoint.boneSuffix
+
 def boneNameForPartileSystem(boneSuffix):
     return toValidBoneName(star2ParticlePrefix + boneSuffix)
     
@@ -94,6 +101,7 @@ def boneNameForLight(boneSuffix, lightType):
         
 def boneNameForPartileSystemCopy(particleSystem, copy):
     return toValidBoneName(star2ParticlePrefix + copy.name)
+
 
 def iterateArmatureObjects(scene):
     for obj in scene.objects:

@@ -931,30 +931,32 @@ class Importer:
         for attachmentPointIndex, m3AttachmentPoint in enumerate(self.model.attachmentPoints):
             boneIndex = m3AttachmentPoint.bone
             attachmentPoint = currentScene.m3_attachment_points.add()
+            attachmentPoint.updateBlenderBone = False
             m3AttchmentVolume = boneIndexToM3AttachmentVolumeMap.get(boneIndex)
             if m3AttchmentVolume == None:
                 attachmentPoint.volumeType = "-1"
-                bonePrefix = shared.attachmentPointPrefix
+                
             else:
                 attachmentPoint.volumeType = str(m3AttchmentVolume.type)
                 attachmentPoint.volumeSize0 = m3AttchmentVolume.size0
                 attachmentPoint.volumeSize1 = m3AttchmentVolume.size1
                 attachmentPoint.volumeSize2 = m3AttchmentVolume.size2
-                bonePrefix = shared.attachmentVolumePrefix
             
             prefixedName = m3AttachmentPoint.name
             if not prefixedName.startswith(shared.attachmentPointPrefix):
                 print("Warning: The name of the attachment %s does not start with %s" %(prefixedName, shared.attachmentPointPrefix))
             attachmentName = prefixedName[len(shared.attachmentPointPrefix):]
-            attachmentPoint.name = attachmentName
+            attachmentPoint.boneSuffix = attachmentName
             boneEntry = self.model.bones[boneIndex]
-            expectedBoneName = boneEntry.name
+            expectedBoneName = shared.boneNameForAttachmentPoint(attachmentPoint)
             if boneEntry.name != expectedBoneName:
-                print("Warning: The attachment bone %s did not have the name %s as expected" %(fullBoneName, expectedBoneName))
+                print("Warning: The attachment bone %s did not have the name %s as expected" %(boneEntry.name, expectedBoneName))
             # Some long bones need to be renamed. 
             # The adjusted bone names get stored in self.boneNames:
             boneNameInBlender = self.boneNames[boneIndex]
             attachmentPoint.boneName = boneNameInBlender
+            attachmentPoint.updateBlenderBone = True
+
     def getNameOfMaterialWithReferenceIndex(self, materialReferenceIndex):
         return self.materialReferenceIndexToNameMap[materialReferenceIndex] 
 

@@ -80,6 +80,31 @@ def updateBoenShapesOfParticleSystemCopies(scene, particleSystem):
             poseBone = armatureObject.pose.bones[boneName]
             shared.updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone)
 
+def handleAttachmentPointTypeOrBoneSuffixChange(self, context):
+    attachmentPoint = self
+    scene = context.scene
+    typeName = "Unknown"
+    if attachmentPoint.volumeType == "-1":
+        typeName = "Point"
+    else:
+        typeName = "Volume"
+        
+    boneSuffix = attachmentPoint.boneSuffix
+    attachmentPoint.name = "%s (%s)" % (boneSuffix, typeName)
+    
+    currentBoneName = attachmentPoint.boneName
+    calculatedBoneName = shared.boneNameForAttachmentPoint(attachmentPoint)
+    
+    if currentBoneName != calculatedBoneName:
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
+        if bone != None:
+            bone.name = calculatedBoneName
+            attachmentPoint.boneName = bone.name
+        else:
+            attachmentPoint.boneName = calculatedBoneName
+    if attachmentPoint.updateBlenderBone:
+        selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint)
+    
 def handleTypeOrBoneSuffixChange(self, context):
     particleSystem = self
     scene = context.scene
@@ -101,6 +126,8 @@ def handleTypeOrBoneSuffixChange(self, context):
     if particleSystem.updateBlenderBoneShapes:
         selectOrCreateBoneForPartileSystem(scene, particleSystem)
         updateBoenShapesOfParticleSystemCopies(scene, particleSystem)
+        
+        
 def handleParticleSystemAreaSizeChange(self, context):
     particleSystem = self
     scene = context.scene
@@ -186,6 +213,7 @@ def handleMaterialNameChange(self, context):
                 mesh.m3_material_name = materialName
     
 def handleAttachmentVolumeTypeChange(self, context):
+    handleAttachmentPointTypeOrBoneSuffixChange(self, context)
     if self.volumeType in ["0", "1", "2"]:
        if self.volumeSize0 == 0.0:
             self.volumeSize0 = 1.0
@@ -1033,6 +1061,8 @@ class M3RigidBody(bpy.types.PropertyGroup):
 
 class M3AttachmentPoint(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", options=set())
+    updateBlenderBone = bpy.props.BoolProperty(default=True, options=set())
+    boneSuffix = bpy.props.StringProperty(name="boneSuffix", update=handleAttachmentPointTypeOrBoneSuffixChange)
     boneName = bpy.props.StringProperty(name="boneName", options=set())
     volumeType = bpy.props.EnumProperty(default="-1",update=handleAttachmentVolumeTypeChange, items=attachmentVolumeTypeList, options=set())
     volumeSize0 = bpy.props.FloatProperty(default=1.0, options=set())
@@ -1887,8 +1917,7 @@ class AttachmentPointsPanel(bpy.types.Panel):
         if currentIndex >= 0 and currentIndex < len(scene.m3_attachment_points):
             attachment_point = scene.m3_attachment_points[currentIndex]
             layout.separator()
-            layout.prop(attachment_point, 'name', text="Name")
-            layout.prop(attachment_point, 'boneName', text="Bone")
+            layout.prop(attachment_point, 'boneSuffix', text="Name")
             layout.prop(attachment_point, 'volumeType', text="Volume: ")
             if attachment_point.volumeType in ["1", "2"]: 
                 layout.prop(attachment_point, 'volumeSize0', text="Volume Radius")
@@ -2779,8 +2808,10 @@ class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
         scene = context.scene
         attachmentPoint = scene.m3_attachment_points.add()
         name = self.findUnusedName(scene)
-        attachmentPoint.name = name
-        attachmentPoint.boneName = name
+        attachmentPoint.updateBlenderBone = False
+        attachmentPoint.boneSuffix = name
+        attachmentPoint.boneName = shared.boneNameForAttachmentPoint(attachmentPoint)
+        attachmentPoint.updateBlenderBone = True
 
         scene.m3_attachment_point_index = len(scene.m3_attachment_points)-1
         selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint)
@@ -2790,7 +2821,7 @@ class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
         usedNames = set()
         for attachmentPoint in scene.m3_attachment_points:
             usedNames.add(attachmentPoint.name)
-        suggestedNames = {"Ref_Center", "Ref_Origin", "Ref_Overhead", "Ref_Target"}
+        suggestedNames = {"Center", "Origin", "Overhead", "Target"}
 
         for boneName in boneNameSet():
             if boneName.startswith("Ref_"):
