@@ -2820,12 +2820,9 @@ class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
     def findUnusedName(self, scene):
         usedNames = set()
         for attachmentPoint in scene.m3_attachment_points:
-            usedNames.add(attachmentPoint.name)
+            usedNames.add(attachmentPoint.boneSuffix)
         suggestedNames = {"Center", "Origin", "Overhead", "Target"}
 
-        for boneName in boneNameSet():
-            if boneName.startswith("Ref_"):
-                suggestedNames.add(boneName)
         unusedName = None
         for suggestedName in suggestedNames:
             if not suggestedName in usedNames:
@@ -2833,7 +2830,7 @@ class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
                 break
         counter = 1
         while unusedName == None:
-            suggestedName = "Attachment " + str(counter)
+            suggestedName = "Target %02d" % counter
             if not suggestedName in usedNames:
                 unusedName = suggestedName
             counter += 1
