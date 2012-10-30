@@ -916,24 +916,45 @@ class Importer:
     def createAttachmentPoints(self):
         print("Loading attachment points and volumes")
         currentScene = bpy.context.scene
-        boneIndexToAttachmentPointMap = {}
-        for attachmentPointIndex, attachmentPointEntry in enumerate(self.model.attachmentPoints):
-            attachmentPoint = currentScene.m3_attachment_points.add()
-            attachmentPoint.name = attachmentPointEntry.name
-            attachmentPoint.boneName =  self.model.bones[attachmentPointEntry.bone].name
-            boneIndexToAttachmentPointMap[attachmentPointEntry.bone] = attachmentPointIndex
-            attachmentPoint.volumeType = "-1"
-        for attachmentVolume in self.model.attachmentVolumes:
-            if attachmentVolume.bone0 != attachmentVolume.bone1 or attachmentVolume.bone0 != attachmentVolume.bone2:
+        
+        boneIndexToM3AttachmentVolumeMap = {}
+        for m3AttchmentVolume in self.model.attachmentVolumes:
+            if m3AttchmentVolume.bone0 != m3AttchmentVolume.bone1 or m3AttchmentVolume.bone0 != m3AttchmentVolume.bone2:
                 raise Exception("Can't handle a special attachment volume")
-            attachmentPoint =  currentScene.m3_attachment_points[boneIndexToAttachmentPointMap[attachmentVolume.bone0]]
-            if not attachmentVolume.type in [0, 1, 2, 3, 4]:
-                raise Exception("Unhandled attachment volume type %d" % attachmentVolume.type)
-            attachmentPoint.volumeType = str(attachmentVolume.type)
-            attachmentPoint.volumeSize0 = attachmentVolume.size0
-            attachmentPoint.volumeSize1 = attachmentVolume.size1
-            attachmentPoint.volumeSize2 = attachmentVolume.size2
+            boneIndex = m3AttchmentVolume.bone0
+            if not m3AttchmentVolume.type in [0, 1, 2, 3, 4]:
+                raise Exception("Unhandled attachment volume type %d" % m3AttchmentVolume.type)
+            if boneIndex in boneIndexToM3AttachmentVolumeMap:
+                raise Exception("Found two attachment volumes for one attachment points")
+            boneIndexToM3AttachmentVolumeMap[boneIndex] = m3AttchmentVolume
 
+        for attachmentPointIndex, m3AttachmentPoint in enumerate(self.model.attachmentPoints):
+            boneIndex = m3AttachmentPoint.bone
+            attachmentPoint = currentScene.m3_attachment_points.add()
+            m3AttchmentVolume = boneIndexToM3AttachmentVolumeMap.get(boneIndex)
+            if m3AttchmentVolume == None:
+                attachmentPoint.volumeType = "-1"
+                bonePrefix = shared.attachmentPointPrefix
+            else:
+                attachmentPoint.volumeType = str(m3AttchmentVolume.type)
+                attachmentPoint.volumeSize0 = m3AttchmentVolume.size0
+                attachmentPoint.volumeSize1 = m3AttchmentVolume.size1
+                attachmentPoint.volumeSize2 = m3AttchmentVolume.size2
+                bonePrefix = shared.attachmentVolumePrefix
+            
+            prefixedName = m3AttachmentPoint.name
+            if not prefixedName.startswith(shared.attachmentPointPrefix):
+                print("Warning: The name of the attachment %s does not start with %s" %(prefixedName, shared.attachmentPointPrefix))
+            attachmentName = prefixedName[len(shared.attachmentPointPrefix):]
+            attachmentPoint.name = attachmentName
+            boneEntry = self.model.bones[boneIndex]
+            expectedBoneName = boneEntry.name
+            if boneEntry.name != expectedBoneName:
+                print("Warning: The attachment bone %s did not have the name %s as expected" %(fullBoneName, expectedBoneName))
+            # Some long bones need to be renamed. 
+            # The adjusted bone names get stored in self.boneNames:
+            boneNameInBlender = self.boneNames[boneIndex]
+            attachmentPoint.boneName = boneNameInBlender
     def getNameOfMaterialWithReferenceIndex(self, materialReferenceIndex):
         return self.materialReferenceIndexToNameMap[materialReferenceIndex] 
 

@@ -67,6 +67,8 @@ animFlagsForAnimatedProperty = 6
 
 star2ParticlePrefix = "Star2Part"
 star2ForcePrefix = "Star2Force"
+attachmentPointPrefix = "Ref_"
+attachmentVolumePrefix = "Vol_"
 animObjectIdModel = "MODEL"
 animObjectIdArmature = "ARMATURE"
 animObjectIdScene = "SCENE"
