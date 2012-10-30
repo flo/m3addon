@@ -844,6 +844,11 @@ class Importer:
                 shared.transferParticleSystemCopy(transferer)
                 m3Bone = self.model.bones[m3Copy.bone]
                 fullCopyBoneName = m3Bone.name
+                bone = self.armature.bones[self.boneNames[m3Copy.bone]]
+                poseBone = self.armatureObject.pose.bones[self.boneNames[m3Copy.bone]]
+                shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
+
+                
                 if fullCopyBoneName.startswith(shared.star2ParticlePrefix):
                     copy.name = fullCopyBoneName[len(shared.star2ParticlePrefix):]
                 else:

@@ -72,6 +72,14 @@ def availableMaterials(self, context):
         list.append((material.name, material.name, material.name))
     return list
 
+def updateBoenShapesOfParticleSystemCopies(scene, particleSystem):
+    for copy in particleSystem.copies:
+        boneName = shared.boneNameForPartileSystemCopy(particleSystem, copy)
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
+        if bone != None:
+            poseBone = armatureObject.pose.bones[boneName]
+            shared.updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone)
+
 def handleTypeOrBoneSuffixChange(self, context):
     particleSystem = self
     scene = context.scene
@@ -92,12 +100,13 @@ def handleTypeOrBoneSuffixChange(self, context):
     particleSystem.oldBoneSuffix = particleSystem.boneSuffix
     if particleSystem.updateBlenderBoneShapes:
         selectOrCreateBoneForPartileSystem(scene, particleSystem)
-    
+        updateBoenShapesOfParticleSystemCopies(scene, particleSystem)
 def handleParticleSystemAreaSizeChange(self, context):
     particleSystem = self
     scene = context.scene
     if particleSystem.updateBlenderBoneShapes:
         selectOrCreateBoneForPartileSystem(scene, particleSystem)
+        updateBoenShapesOfParticleSystemCopies(scene, particleSystem)
 
 
 def handleForceTypeOrBoneSuffixChange(self, context):
@@ -514,7 +523,8 @@ def handleFuzzyHitTestIndexChanged(self, context):
 
 def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
     boneName = shared.boneNameForPartileSystemCopy(particle_system, copy)
-    selectOrCreateBone(scene, boneName)
+    bone, poseBone = selectOrCreateBone(scene, boneName)
+    shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
     
 def selectOrCreateBoneForForce(scene, force):
     boneName = shared.boneNameForForce(force.boneSuffix)
