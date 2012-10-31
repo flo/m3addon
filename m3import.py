@@ -895,6 +895,8 @@ class Importer:
                 physics_shape.offset = offset
                 physics_shape.rotationEuler = rotation.to_euler("XYZ")
                 physics_shape.scale = scale
+            
+            shared.updateBoneShapeOfRigidBody(currentScene, rigid_body)
     
     def createLights(self):
         currentScene = bpy.context.scene

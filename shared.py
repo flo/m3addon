@@ -380,7 +380,7 @@ def createPhysicsShapeMeshData(shape):
     
     return vertices, faces
 
-def updateRigidBodyBoneShape(scene, rigidBody):
+def updateBoneShapeOfRigidBody(scene, rigidBody):
     bone, poseBone = getRigidBodyBones(scene, rigidBody)
     if bone == None or poseBone == None:
         return

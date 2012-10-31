@@ -409,7 +409,7 @@ def handlePhysicsShapeUpdate(self, context):
     scene = context.scene
     if scene.m3_rigid_body_index != -1:
         rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
-        shared.updateRigidBodyBoneShape(scene, rigidBody)
+        shared.updateBoneShapeOfRigidBody(scene, rigidBody)
     selectCurrentRigidBodyBone(scene)
 
 def handleRigidBodyIndexChange(self, context):
@@ -2599,7 +2599,7 @@ class M3_PHYSICS_SHAPES_OT_add(bpy.types.Operator):
         physics_shape.name = self.findUnusedName(rigid_body)
         
         rigid_body.physicsShapeIndex = len(rigid_body.physicsShapes) - 1
-        shared.updateRigidBodyBoneShape(scene, rigid_body)
+        shared.updateBoneShapeOfRigidBody(scene, rigid_body)
         
         return {'FINISHED'}
     
@@ -2635,7 +2635,7 @@ class M3_PHYSICS_SHAPES_OT_remove(bpy.types.Operator):
         
         rigid_body.physicsShapes.remove(currentIndex)
         rigid_body.physicsShapeIndex -= 1
-        shared.updateRigidBodyBoneShape(scene, rigid_body)
+        shared.updateBoneShapeOfRigidBody(scene, rigid_body)
         
         return {'FINISHED'}
 
