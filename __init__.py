@@ -241,61 +241,47 @@ def handleParticleSystemsVisiblityUpdate(self, context):
     scene = context.scene
     for particleSystem in scene.m3_particle_systems:
         boneName = shared.boneNameForPartileSystem(particleSystem.boneSuffix)
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
-        boneExists = bone != None
-        if boneExists:
-            bone.hide = not self.showParticleSystems
+        shared.setBoneVisibility(scene, boneName, self.showParticleSystems)
+        
         for copy in particleSystem.copies:
             boneName = shared.boneNameForPartileSystemCopy(particleSystem, copy)
-            bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
-            boneExists = bone != None
-            if boneExists:
-                bone.hide = not self.showParticleSystems
+            shared.setBoneVisibility(scene, boneName, self.showParticleSystems)
 
 def handleFuzzyHitTestVisiblityUpdate(self, context):
     scene = context.scene
     for fuzzyHitTest in scene.m3_fuzzy_hit_tests:
         boneName = fuzzyHitTest.name
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
-        boneExists = bone != None
-        if boneExists:
-            bone.hide = not self.showFuzzyHitTests
+        shared.setBoneVisibility(scene, boneName, self.showFuzzyHitTests)
     
 def handleTightHitTestVisiblityUpdate(self, context):
     scene = context.scene
     tightHitTest = scene.m3_tight_hit_test
     boneName = tightHitTest.name
-    bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
-    boneExists = bone != None
-    if boneExists:
-        bone.hide = not self.showTightHitTest
+    shared.setBoneVisibility(scene, boneName, self.showTightHitTest)
 
 def handleAttachmentPointVisibilityUpdate(self, context):
     scene = context.scene
     for attachmentPoint in scene.m3_attachment_points:
         boneName = attachmentPoint.boneName
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
-        boneExists = bone != None
-        if boneExists:
-            bone.hide = not self.showAttachmentPoints
+        shared.setBoneVisibility(scene, boneName, self.showAttachmentPoints)
 
 def handleLightsVisiblityUpdate(self, context):
     scene = context.scene
     for light in scene.m3_lights:
         boneName = shared.boneNameForLight(light.boneSuffix, light.lightType)
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
-        boneExists = bone != None
-        if boneExists:
-            bone.hide = not self.showLights
+        shared.setBoneVisibility(scene, boneName, self.showLights)
 
 def handleCamerasVisiblityUpdate(self, context):
     scene = context.scene
     for camera in scene.m3_cameras:
         boneName = camera.name
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
-        boneExists = bone != None
-        if boneExists:
-            bone.hide = not self.showCameras
+        shared.setBoneVisibility(scene, boneName, self.showCameras)
+
+def handlePhysicsShapeVisibilityUpdate(self, context):
+    scene = context.scene
+    for rigidBody in scene.m3_rigid_bodies:
+        boneName = rigidBody.boneName
+        shared.setBoneVisibility(scene, boneName, self.showPhysicsShapes)
 
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
@@ -418,14 +404,6 @@ def handleForceIndexChanged(self, context):
         return
     force = scene.m3_forces[scene.m3_force_index]
     selectOrCreateBoneForForce(scene, force)
-
-def handlePhysicsShapeVisibilityUpdate(self, context):
-    scene = context.scene
-    for rigidBody in scene.m3_rigid_bodies:
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, rigidBody.boneName)
-        if bone == None:
-            continue
-        bone.hide = not self.showPhysicsShapes
 
 def handlePhysicsShapeUpdate(self, context):
     scene = context.scene

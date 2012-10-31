@@ -280,7 +280,6 @@ def createHiddenMeshObject(name, untransformedPositions, faces, matrix):
     meshObject = bpy.data.objects.new(name, mesh)
     meshObject.location = (0,0,0) 
 
-    
     transformedPositions = []
     for v in untransformedPositions:
         transformedPositions.append(matrix * mathutils.Vector(v))
@@ -293,6 +292,12 @@ def createHiddenMeshObject(name, untransformedPositions, faces, matrix):
     
     mesh.update(calc_edges=True)
     return meshObject
+
+def setBoneVisibility(scene, boneName, visibility):
+    bone, armatureObject = findBoneWithArmatureObject(scene, boneName)
+    boneExists = bone != None
+    if boneExists:
+        bone.hide = not visibility
 
 def updateBoneShapeOfShapeObject(shapeObject, bone, poseBone):
     cubeShapeConstant = "0"
