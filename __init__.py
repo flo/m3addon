@@ -407,10 +407,13 @@ def handleForceIndexChanged(self, context):
 
 def handlePhysicsShapeUpdate(self, context):
     scene = context.scene
-    if scene.m3_rigid_body_index != -1:
-        rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
-        shared.updateBoneShapeOfRigidBody(scene, rigidBody)
-    selectCurrentRigidBodyBone(scene)
+    
+    if self.updateBlenderBoneShapes:
+        if scene.m3_rigid_body_index != -1:
+            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+            shared.updateBoneShapeOfRigidBody(scene, rigidBody)
+        
+        selectCurrentRigidBodyBone(scene)
 
 def handleRigidBodyIndexChange(self, context):
     selectCurrentRigidBodyBone(context.scene)
@@ -908,10 +911,12 @@ class M3Force(bpy.types.PropertyGroup):
 
 class M3PhysicsShape(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
+    updateBlenderBoneShapes = bpy.props.BoolProperty(default=True, options=set())
     offset = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", update=handlePhysicsShapeUpdate)
     rotationEuler = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), size=3, subtype="EULER", unit="ROTATION", update=handlePhysicsShapeUpdate)
     scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ", update=handlePhysicsShapeUpdate)
     shape = bpy.props.EnumProperty(default="0", items=physicsShapeTypeList, update=handlePhysicsShapeUpdate, options=set())
+    meshObjectName = bpy.props.StringProperty(name="meshName", options=set())
     # TODO: convex hull properties...
     size0 = bpy.props.FloatProperty(default=1.0, name="size0", update=handlePhysicsShapeUpdate, options=set())
     size1 = bpy.props.FloatProperty(default=1.0, name="size1", update=handlePhysicsShapeUpdate, options=set())

@@ -886,17 +886,44 @@ class Importer:
             
             for physicsShapeIndex, m3PhysicsShape in enumerate(m3RigidBody.physicsShapes):
                 physics_shape = rigid_body.physicsShapes.add()
+                physics_shape.updateBlenderBoneShapes = False
+                
                 animPathPrefix = "m3_physics_shapes[%s]." % physicsShapeIndex
                 transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=physics_shape, m3Object=m3PhysicsShape)
                 shared.transferPhysicsShape(transferer)
+                
                 physics_shape.name = "%d" % (physicsShapeIndex + 1)
                 matrix = toBlenderMatrix(m3PhysicsShape.matrix)
                 offset, rotation, scale = matrix.decompose()
                 physics_shape.offset = offset
                 physics_shape.rotationEuler = rotation.to_euler("XYZ")
                 physics_shape.scale = scale
+                
+                if physics_shape.shape in ["4", "5"]: # convex hull or mesh
+                    vertices = [(v.x, v.y, v.z) for v in m3PhysicsShape.vertices]
+                    
+                    indices = range(0, len(m3PhysicsShape.faces), 3)
+                    faces = [m3PhysicsShape.faces[i : i+3] for i in indices]
+                    
+                    mesh = bpy.data.meshes.new('PhysicsMesh')
+                    mesh.from_pydata(vertices = vertices, faces = faces, edges = [])
+                    mesh.update(calc_edges = True)
+                    
+                    meshObject = bpy.data.objects.new('PhysicsMeshObject', mesh)
+                    meshObject.location = (0,0,0)
+                    meshObject.show_name = True
+                    
+                    # TODO - either:
+                    # don't put mesh in scene (have edit button in physics shape - add to scene in edit mode / remove afterwards)?
+                    # exclude from export somehow (update when edited)?
+                    bpy.context.scene.objects.link(meshObject)
+                    
+                    physics_shape.meshObjectName = meshObject.name
+                
+                physics_shape.updateBlenderBoneShapes = True
             
             shared.updateBoneShapeOfRigidBody(currentScene, rigid_body)
+            
     
     def createLights(self):
         currentScene = bpy.context.scene

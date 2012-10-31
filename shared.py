@@ -372,8 +372,11 @@ def createPhysicsShapeMeshData(shape):
     elif shape.shape == "3":
         vertices, faces = createMeshDataForCylinder(shape.size0, shape.size1)
     else:
-        # TODO: mesh / convex hull types...
-        return None, None
+        meshObject = bpy.data.objects[shape.meshObjectName]
+        mesh = meshObject.data
+        
+        vertices = [v.co for v in mesh.vertices]
+        faces = [f.vertices for f in mesh.polygons]
     
     matrix = composeMatrix(shape.offset, shape.rotationEuler, shape.scale)
     vertices = [matrix * mathutils.Vector(v) for v in vertices]
