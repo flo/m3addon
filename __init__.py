@@ -419,115 +419,28 @@ def handleForceIndexChanged(self, context):
     force = scene.m3_forces[scene.m3_force_index]
     selectOrCreateBoneForForce(scene, force)
 
-class PhysicsShapeVisibility:
-    Hide = "0"
-    Show = "1"
-    ShowAll = "2"
-    ShowOne = "3"
-
-def handlePhysicsShapeVisibilityChange(self, context):
+def handlePhysicsShapeVisibilityUpdate(self, context):
     scene = context.scene
-    
-    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.Hide:
-        for rigidBody in scene.m3_rigid_bodies:
-            shared.removeRigidBodyBoneShape(scene, rigidBody)
-    
-    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.Show:
-        for rigidBody in scene.m3_rigid_bodies:
-            shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
-    
-    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowAll:
-        for rigidBody in scene.m3_rigid_bodies:
-            shared.removeRigidBodyBoneShape(scene, rigidBody)
-        
-        if scene.m3_rigid_body_index != -1:
-            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
-            shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
-    
-    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowOne:
-        for rigidBody in scene.m3_rigid_bodies:
-            shared.removeRigidBodyBoneShape(scene, rigidBody)
-        
-        if scene.m3_rigid_body_index != -1:
-            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
-            shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
-    
-    selectCurrentRigidBodyBone(scene)
+    for rigidBody in scene.m3_rigid_bodies:
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, rigidBody.boneName)
+        if bone == None:
+            continue
+        bone.hide = not self.showPhysicsShapes
 
 def handlePhysicsShapeUpdate(self, context):
     scene = context.scene
-    
-    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.Show:
-        if scene.m3_rigid_body_index != -1:
-            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
-            shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
-    
-    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowAll:
-        if scene.m3_rigid_body_index != -1:
-            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
-            shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
-    
-    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowOne:
-        if scene.m3_rigid_body_index != -1:
-            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
-            shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
-    
+    if scene.m3_rigid_body_index != -1:
+        rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
+        shared.updateRigidBodyBoneShape(scene, rigidBody)
     selectCurrentRigidBodyBone(scene)
 
-def handlePhysicsShapeAdd(scene, rigidBody):
-    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.Show:
-        shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
-    
-    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowAll:
-        shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
-    
-    # handlePhysicsShapeIndexChange updates "show one"
+def handleRigidBodyIndexChange(self, context):
+    selectCurrentRigidBodyBone(context.scene)
 
-def handlePhysicsShapeRemove(scene, rigidBody):
-    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.Show:
-        shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
-    
-    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowAll:
-        shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
-    
-    # handlePhysicsShapeIndexChange updates "show one"
-
-def handlePhysicsShapeIndexChange(self, context):
-    scene = context.scene
-    
-    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowOne:
-        if scene.m3_rigid_body_index != -1:
-            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
-            shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
-    
-    selectCurrentRigidBodyBone(scene)
-
-def handleRigidBodyRemove(scene, rigidBody):
-    shared.removeRigidBodyBoneShape(scene, rigidBody)
-
-def handleRigidBodyIndexChange(scene, context):
-    if scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowAll:
-        for rigidBody in scene.m3_rigid_bodies:
-            shared.removeRigidBodyBoneShape(scene, rigidBody)
-        
-        if scene.m3_rigid_body_index != -1:
-            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
-            shared.updateRigidBodyBoneShapeAll(scene, rigidBody)
-    
-    elif scene.m3_physics_shape_visibility == PhysicsShapeVisibility.ShowOne:
-        for rigidBody in scene.m3_rigid_bodies:
-            shared.removeRigidBodyBoneShape(scene, rigidBody)
-        
-        if scene.m3_rigid_body_index != -1:
-            rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
-            shared.updateRigidBodyBoneShapeOne(scene, rigidBody)
-    
-    selectCurrentRigidBodyBone(scene)
-
-def handleRigidBodyBoneChange(scene, context):
+def handleRigidBodyBoneChange(self, context):
     # TODO: remove custom bone shape for old bone, create custom bone shape for new bone.
     # need to save old bone name somehow?
-    selectCurrentRigidBodyBone(scene)
+    selectCurrentRigidBodyBone(context.scene)
 
 def selectCurrentRigidBodyBone(scene):
     if scene.m3_rigid_body_index != -1:
@@ -683,12 +596,6 @@ forceTypeList = [("0", "Directional", "The particles get accelerated into one di
                     ("2", "Unknown", "Unknown"),
                     ("3", "Rotary", "The particles rotate in a circle around a center")
                    ]
-
-physicsShapeVisibilityList = [("0", "Hide", "Do not display physics shapes"),
-                            ("1", "Show", "Display physics shapes for all rigid bodies"),
-                            ("2", "Show all", "Display all physics shapes for the selected rigid body"),
-                            ("3", "Show one", "Display the selected physics shape for the selected rigid body")
-                            ]
 
 physicsShapeTypeList = [("0", "Box", "Box shape with the given width, length and height"),
                         ("1", "Sphere", "Sphere shape with the given radius"),
@@ -1040,7 +947,7 @@ class M3RigidBody(bpy.types.PropertyGroup):
     unknownAt8 = bpy.props.FloatProperty(default=0.8, name="unknownAt8", options=set())
     # skip other unknown values for now
     physicsShapes = bpy.props.CollectionProperty(type=M3PhysicsShape)
-    physicsShapeIndex = bpy.props.IntProperty(update=handlePhysicsShapeIndexChange, options=set())
+    physicsShapeIndex = bpy.props.IntProperty(options=set())
     collidable = bpy.props.BoolProperty(default=True, options=set())
     walkable = bpy.props.BoolProperty(default=False, options=set())
     stackable = bpy.props.BoolProperty(default=False, options=set())
@@ -1087,6 +994,7 @@ class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
     showParticleSystems = bpy.props.BoolProperty(default=True, options=set(), update=handleParticleSystemsVisiblityUpdate)
     showLights = bpy.props.BoolProperty(default=True, options=set(), update=handleLightsVisiblityUpdate)
     showCameras = bpy.props.BoolProperty(default=True, options=set(), update=handleCamerasVisiblityUpdate)
+    showPhysicsShapes = bpy.props.BoolProperty(default=True, options=set(), update=handlePhysicsShapeVisibilityUpdate)
 
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
@@ -1147,6 +1055,7 @@ class BoneVisibilityPanel(bpy.types.Panel):
         layout.prop(scene.m3_bone_visiblity_options, "showParticleSystems", text="Particle Systems")
         layout.prop(scene.m3_bone_visiblity_options, "showLights", text="Lights")
         layout.prop(scene.m3_bone_visiblity_options, "showCameras", text="Cameras")
+        layout.prop(scene.m3_bone_visiblity_options, "showPhysicsShapes", text="Physics Shapes")
 
 class AnimationSequencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_animations"
@@ -1771,11 +1680,6 @@ class PhyscisShapePanel(bpy.types.Panel):
             return
         rigid_body = scene.m3_rigid_bodies[currentIndex]
         
-        col.row().prop(scene, "m3_physics_shape_visibility", expand=True)
-        
-        split = layout.split()
-        row = layout.row()
-        col = row.column()
         col.template_list(rigid_body, "physicsShapes", rigid_body, "physicsShapeIndex", rows=2)
         col = row.column(align=True)
         col.operator("m3.physics_shapes_add", icon='ZOOMIN', text="")
@@ -2693,7 +2597,7 @@ class M3_RIGID_BODIES_OT_remove(bpy.types.Operator):
         if not 0 <= currentIndex < len(scene.m3_rigid_bodies):
             return {'CANCELLED'}
         
-        handleRigidBodyRemove(scene, scene.m3_rigid_bodies[scene.m3_rigid_body_index])
+        shared.removeRigidBodyBoneShape(scene, scene.m3_rigid_bodies[currentIndex])
         
         scene.m3_rigid_bodies.remove(currentIndex)
         scene.m3_rigid_body_index -= 1
@@ -2717,7 +2621,7 @@ class M3_PHYSICS_SHAPES_OT_add(bpy.types.Operator):
         physics_shape.name = self.findUnusedName(rigid_body)
         
         rigid_body.physicsShapeIndex = len(rigid_body.physicsShapes) - 1
-        handlePhysicsShapeAdd(scene, rigid_body)
+        shared.updateRigidBodyBoneShape(scene, rigid_body)
         
         return {'FINISHED'}
     
@@ -2753,7 +2657,7 @@ class M3_PHYSICS_SHAPES_OT_remove(bpy.types.Operator):
         
         rigid_body.physicsShapes.remove(currentIndex)
         rigid_body.physicsShapeIndex -= 1
-        handlePhysicsShapeRemove(scene, rigid_body)
+        shared.updateRigidBodyBoneShape(scene, rigid_body)
         
         return {'FINISHED'}
 
@@ -3003,7 +2907,6 @@ def register():
     bpy.types.Scene.m3_force_index = bpy.props.IntProperty(options=set(), update=handleForceIndexChanged)
     bpy.types.Scene.m3_rigid_bodies = bpy.props.CollectionProperty(type=M3RigidBody)
     bpy.types.Scene.m3_rigid_body_index = bpy.props.IntProperty(options=set(), update=handleRigidBodyIndexChange)
-    bpy.types.Scene.m3_physics_shape_visibility = bpy.props.EnumProperty(default="0", items=physicsShapeVisibilityList, update=handlePhysicsShapeVisibilityChange, options=set())
     bpy.types.Scene.m3_lights = bpy.props.CollectionProperty(type=M3Light)
     bpy.types.Scene.m3_light_index = bpy.props.IntProperty(options=set(), update=handleLightIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)

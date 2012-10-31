@@ -375,7 +375,7 @@ def createPhysicsShapeMeshData(shape):
     
     return vertices, faces
 
-def updateRigidBodyBoneShapeAll(scene, rigidBody):
+def updateRigidBodyBoneShape(scene, rigidBody):
     bone, poseBone = getRigidBodyBones(scene, rigidBody)
     if bone == None or poseBone == None:
         return
@@ -397,23 +397,6 @@ def updateRigidBodyBoneShapeAll(scene, rigidBody):
         combinedFaces.extend(faces)
     
     updateBoneShape(bone, poseBone, "PhysicsShapeBoneMesh", combinedVertices, combinedFaces, rotFixMatrixInverted)
-
-def updateRigidBodyBoneShapeOne(scene, rigidBody):
-    bone, poseBone = getRigidBodyBones(scene, rigidBody)
-    if bone == None or poseBone == None:
-        return
-    
-    if rigidBody.physicsShapeIndex == -1 or len(rigidBody.physicsShapes) == 0:
-        removeRigidBodyBoneShape(scene, rigidBody)
-        return
-    
-    shape = rigidBody.physicsShapes[rigidBody.physicsShapeIndex]
-    vertices, faces = createPhysicsShapeMeshData(shape)
-    # TODO: remove this check when mesh / convex hull is implemented
-    if vertices == None or faces == None:
-        return
-    
-    updateBoneShape(bone, poseBone, "PhysicsShapeBoneMesh", vertices, faces, rotFixMatrixInverted)
 
 def removeRigidBodyBoneShape(scene, rigidBody):
     bone, poseBone = getRigidBodyBones(scene, rigidBody)
