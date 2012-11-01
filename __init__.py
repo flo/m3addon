@@ -2609,8 +2609,10 @@ class M3_FORCES_OT_remove(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         if scene.m3_force_index >= 0:
-                scene.m3_forces.remove(scene.m3_force_index)
-                scene.m3_force_index-= 1
+            force = scene.m3_forces[scene.m3_force_index]
+            removeBone(scene, force.boneName)
+            scene.m3_forces.remove(scene.m3_force_index)
+            scene.m3_force_index-= 1
         return{'FINISHED'}
 
 class M3_RIGID_BODIES_OT_add(bpy.types.Operator):
