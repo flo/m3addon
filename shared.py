@@ -100,8 +100,8 @@ def boneNameForAttachmentPoint(attachmentPoint):
 def boneNameForPartileSystem(particleSystem):
     return toValidBoneName(star2ParticlePrefix + particleSystem.boneSuffix)
     
-def boneNameForForce(boneSuffix):
-    return toValidBoneName(star2ForcePrefix + boneSuffix)
+def boneNameForForce(force):
+    return toValidBoneName(star2ForcePrefix + force.boneSuffix)
 
 def boneNameForLight(light):
     boneSuffix = light.boneSuffix

@@ -866,6 +866,7 @@ class Importer:
         print("Loading forces")
         for forceIndex, m3Force in enumerate(self.model.forces):
             force = currentScene.m3_forces.add()
+            force.updateBlenderBoneShape = False
             animPathPrefix = "m3_forces[%s]." % forceIndex
             transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=force, m3Object=m3Force)
             shared.transferForce(transferer)
@@ -876,6 +877,9 @@ class Importer:
             else:
                 print("Warning: A force was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ForcePrefix))
                 force.boneSuffix = fullBoneName
+            blenderBoneName = self.boneNames[m3Force.boneIndex]
+            force.boneName = blenderBoneName
+            force.updateBlenderBoneShape = True
     
     def createRigidBodies(self):
         currentScene = bpy.context.scene

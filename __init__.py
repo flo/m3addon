@@ -156,21 +156,29 @@ def handleParticleSystemAreaSizeChange(self, context):
 
 def handleForceTypeOrBoneSuffixChange(self, context):
     scene = context.scene
+    force = self
     typeName = "Unknown"
     for typeId, name, description in forceTypeList:
-        if typeId == self.forceType:
+        if typeId == force.forceType:
             typeName = name
     
-    boneSuffix = self.boneSuffix
+    boneSuffix = force.boneSuffix
     self.name = "%s (%s)" % (boneSuffix, typeName)
 
-    if self.boneSuffix != self.oldBoneSuffix:
-        oldBoneName = shared.boneNameForForce(self.oldBoneSuffix)
-        newBoneName = shared.boneNameForForce(self.boneSuffix)
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, oldBoneName)
-        if bone != None:
-            bone.name = newBoneName
-    self.oldBoneSuffix = self.boneSuffix
+    if force.updateBlenderBoneShape:
+        currentBoneName = force.boneName
+        calculatedBoneName = shared.boneNameForForce(force)
+
+        if currentBoneName != calculatedBoneName:
+            bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
+            if bone != None:
+                bone.name = calculatedBoneName
+                force.boneName = bone.name
+            else:
+                force.boneName = calculatedBoneName
+
+            selectOrCreateBoneForForce(scene, force)
+
 
 def handleLightTypeOrBoneSuffixChange(self, context):
     scene = context.scene
@@ -498,8 +506,8 @@ def selectOrCreateBoneForPartileSystemCopy(scene, particleSystem, copy):
     shared.updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone)
     
 def selectOrCreateBoneForForce(scene, force):
-    boneName = shared.boneNameForForce(force.boneSuffix)
-    selectOrCreateBone(scene, boneName)
+    boneName = force.boneName
+    return selectOrCreateBone(scene, boneName)
     
 def selectOrCreateBoneForLight(scene, light):
     boneName = light.boneName
@@ -953,8 +961,9 @@ class M3Force(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
     # The name gets calculated like this: name = boneSuffix (type)
     name = bpy.props.StringProperty(options=set())
+    updateBlenderBoneShape = bpy.props.BoolProperty(default=True, options=set())
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleForceTypeOrBoneSuffixChange, default="Particle System")
-    oldBoneSuffix = bpy.props.StringProperty(options=set())
+    boneName = bpy.props.StringProperty(options=set())
     forceType = bpy.props.EnumProperty(default="0", items=forceTypeList, update=handleForceTypeOrBoneSuffixChange, options=set())
     forceChannels = bpy.props.BoolVectorProperty(default=tuple(32*[False]), size=32, subtype="LAYER", options=set(), description="If a force shares a force channel with a particle system then it affects it")
     forceStrength = bpy.props.FloatProperty(default=1.0, name="forceStrength", options={"ANIMATABLE"})
@@ -2480,9 +2489,9 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
             particle_system.materialName = scene.m3_material_references[0].name
 
         handleParticleSystemTypeOrBoneSuffixChange(particle_system, context)
-        scene.m3_particle_system_index = len(scene.m3_particle_systems)-1
         
-        selectOrCreateBoneForPartileSystem(scene, particle_system)
+        # The following selection causes a new bone to be created:
+        scene.m3_particle_system_index = len(scene.m3_particle_systems)-1
         return{'FINISHED'}
 
   
@@ -2569,12 +2578,14 @@ class M3_FORCES_OT_add(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         force = scene.m3_forces.add()
+        force.updateBlenderBoneShape = False
         force.boneSuffix = self.findUnusedName(scene)
-
         handleForceTypeOrBoneSuffixChange(force, context)
+        force.boneName = shared.boneNameForForce(force)
+        force.updateBlenderBoneShape = True
+
+        # The following selection causes a new bone to be created:
         scene.m3_force_index = len(scene.m3_forces)-1
-        
-        selectOrCreateBoneForForce(scene, force)
         return{'FINISHED'}
 
     def findUnusedName(self, scene):

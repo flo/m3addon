@@ -885,8 +885,7 @@ class Exporter:
     def initForces(self, model):
         scene = self.scene
         for forceIndex, force in enumerate(scene.m3_forces):
-            boneSuffix = force.boneSuffix
-            boneName = shared.boneNameForForce(boneSuffix)
+            boneName = force.boneName
             boneIndex = self.boneNameToBoneIndexMap.get(boneName)
             if boneIndex == None:
                 boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
