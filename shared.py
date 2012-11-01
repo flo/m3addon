@@ -94,8 +94,8 @@ def boneNameForAttachmentPoint(attachmentPoint):
         bonePrefix = attachmentVolumePrefix
     return bonePrefix + attachmentPoint.boneSuffix
 
-def boneNameForPartileSystem(boneSuffix):
-    return toValidBoneName(star2ParticlePrefix + boneSuffix)
+def boneNameForPartileSystem(particleSystem):
+    return toValidBoneName(star2ParticlePrefix + particleSystem.boneSuffix)
     
 def boneNameForForce(boneSuffix):
     return toValidBoneName(star2ForcePrefix + boneSuffix)
@@ -107,7 +107,7 @@ def boneNameForLight(boneSuffix, lightType):
     else:
         return toValidBoneName(lightPrefix + boneSuffix)
         
-def boneNameForPartileSystemCopy(particleSystem, copy):
+def boneNameForPartileSystemCopy(copy):
     return toValidBoneName(star2ParticlePrefix + copy.name)
 
 
@@ -327,29 +327,29 @@ def updateBoneShapeOfShapeObject(shapeObject, bone, poseBone):
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix)
 
 
-def updateBoneShapeOfParticleSystem(particle_system, bone, poseBone):
-    emissionAreaType = particle_system.emissionAreaType
+def updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone):
+    emissionAreaType = particleSystem.emissionAreaType
     if emissionAreaType == emssionAreaTypePoint:
         untransformedPositions, faces = createMeshDataForSphere(0.02)
     elif emissionAreaType == emssionAreaTypePlane:
-        length = particle_system.emissionAreaSize[0]
-        width = particle_system.emissionAreaSize[1]
+        length = particleSystem.emissionAreaSize[0]
+        width = particleSystem.emissionAreaSize[1]
         height = 0
         untransformedPositions, faces = createMeshDataForCuboid(length, width, height)
     elif emissionAreaType == emssionAreaTypeSphere:
-        radius = particle_system.emissionAreaRadius
+        radius = particleSystem.emissionAreaRadius
         untransformedPositions, faces = createMeshDataForSphere(radius)
     elif emissionAreaType == emssionAreaTypeCuboid:
-        length = particle_system.emissionAreaSize[0]
-        width = particle_system.emissionAreaSize[1]
-        height = particle_system.emissionAreaSize[2]
+        length = particleSystem.emissionAreaSize[0]
+        width = particleSystem.emissionAreaSize[1]
+        height = particleSystem.emissionAreaSize[2]
         untransformedPositions, faces = createMeshDataForCuboid(length, width, height)
     else:
-        radius = particle_system.emissionAreaRadius
-        height = particle_system.emissionAreaSize[2]
+        radius = particleSystem.emissionAreaRadius
+        height = particleSystem.emissionAreaSize[2]
         untransformedPositions, faces = createMeshDataForCylinder(radius, height)
        
-    boneName = boneNameForPartileSystem(particle_system.boneSuffix)
+    boneName = particleSystem.boneName
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 

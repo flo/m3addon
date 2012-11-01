@@ -828,8 +828,7 @@ class Exporter:
     def initParticles(self, model):
         scene = self.scene
         for particleSystemIndex, particleSystem in enumerate(scene.m3_particle_systems):
-            boneSuffix = particleSystem.boneSuffix
-            boneName = shared.boneNameForPartileSystem(boneSuffix)
+            boneName = particleSystem.boneName
             boneIndex = self.boneNameToBoneIndexMap.get(boneName)
             if boneIndex == None:
                 boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
@@ -871,7 +870,7 @@ class Exporter:
 
             for blenderCopyIndex, copy in enumerate(particleSystem.copies):
                 m3Copy = m3.PARCV0()
-                boneName = shared.boneNameForPartileSystemCopy(particleSystem, copy)
+                boneName = copy.boneName
                 boneIndex = self.boneNameToBoneIndexMap.get(boneName)
                 if boneIndex == None:
                     boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)

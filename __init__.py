@@ -74,7 +74,7 @@ def availableMaterials(self, context):
 
 def updateBoenShapesOfParticleSystemCopies(scene, particleSystem):
     for copy in particleSystem.copies:
-        boneName = shared.boneNameForPartileSystemCopy(particleSystem, copy)
+        boneName = copy.boneName
         bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
         if bone != None:
             poseBone = armatureObject.pose.bones[boneName]
@@ -116,17 +116,36 @@ def handleParticleSystemTypeOrBoneSuffixChange(self, context):
     boneSuffix = particleSystem.boneSuffix
     particleSystem.name = "%s (%s)" % (boneSuffix, typeName)
 
-    if particleSystem.boneSuffix != particleSystem.oldBoneSuffix:
-        oldBoneName = shared.boneNameForPartileSystem(particleSystem.oldBoneSuffix)
-        newBoneName = shared.boneNameForPartileSystem(particleSystem.boneSuffix)
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, oldBoneName)
+    currentBoneName = particleSystem.boneName
+    calculatedBoneName = shared.boneNameForPartileSystem(particleSystem)
+
+    if currentBoneName != calculatedBoneName:
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
         if bone != None:
-            bone.name = newBoneName
+            bone.name = calculatedBoneName
+            particleSystem.boneName = bone.name
+        else:
+            particleSystem.boneName = calculatedBoneName
+
     particleSystem.oldBoneSuffix = particleSystem.boneSuffix
     if particleSystem.updateBlenderBoneShapes:
         selectOrCreateBoneForPartileSystem(scene, particleSystem)
         updateBoenShapesOfParticleSystemCopies(scene, particleSystem)
         
+def handleParticleSystemCopyRename(self, context):
+    scene = context.scene
+    particleSystemCopy = self
+    
+    currentBoneName = particleSystemCopy.boneName
+    calculatedBoneName = shared.boneNameForPartileSystemCopy(particleSystemCopy)
+
+    if currentBoneName != calculatedBoneName:
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
+        if bone != None:
+            bone.name = calculatedBoneName
+            particleSystemCopy.boneName = bone.name
+        else:
+            particleSystemCopy.boneName = calculatedBoneName
         
 def handleParticleSystemAreaSizeChange(self, context):
     particleSystem = self
@@ -174,15 +193,7 @@ def handleLightTypeOrBoneSuffixChange(self, context):
     self.oldLightType = self.lightType
         
         
-def handleParticleSystemCopyRename(self, context):
-    scene = context.scene
-    if self.name != self.oldName:
-        oldBoneName = shared.boneNameForPartileSystem(self.oldName)
-        newBoneName = shared.boneNameForPartileSystem(self.name)
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, oldBoneName)
-        if bone != None:
-            bone.name = newBoneName
-    self.oldName = self.name
+
 
 def handleCameraNameChange(self, context):
     scene = context.scene
@@ -251,7 +262,7 @@ def handleParticleSystemsVisiblityUpdate(self, context):
         shared.setBoneVisibility(scene, boneName, self.showParticleSystems)
         
         for copy in particleSystem.copies:
-            boneName = shared.boneNameForPartileSystemCopy(particleSystem, copy)
+            boneName = copy.boneName
             shared.setBoneVisibility(scene, boneName, self.showParticleSystems)
 
 def handleFuzzyHitTestVisiblityUpdate(self, context):
@@ -475,10 +486,10 @@ def selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint):
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone)
     
-def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
-    boneName = shared.boneNameForPartileSystemCopy(particle_system, copy)
+def selectOrCreateBoneForPartileSystemCopy(scene, particleSystem, copy):
+    boneName = copy.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
-    shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
+    shared.updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone)
     
 def selectOrCreateBoneForForce(scene, force):
     boneName = shared.boneNameForForce(force.boneSuffix)
@@ -492,7 +503,7 @@ def selectOrCreateBoneForCamera(scene, camera):
     selectOrCreateBone(scene, camera.name)
 
 def selectOrCreateBoneForPartileSystem(scene, particle_system):
-    boneName = shared.boneNameForPartileSystem(particle_system.boneSuffix)
+    boneName = particle_system.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
 
@@ -822,7 +833,7 @@ class M3Camera(bpy.types.PropertyGroup):
 
 class M3ParticleSystemCopy(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set(), update=handleParticleSystemCopyRename)
-    oldName = bpy.props.StringProperty(options=set())
+    boneName = bpy.props.StringProperty(options=set())
     emissionRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
     partEmit = bpy.props.IntProperty(default=0, subtype="UNSIGNED", options={"ANIMATABLE"})
 
@@ -839,7 +850,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     # The name gets calculated like this: name = boneSuffix (type)
     name = bpy.props.StringProperty(options=set())
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleParticleSystemTypeOrBoneSuffixChange, default="Particle System")
-    oldBoneSuffix = bpy.props.StringProperty(options=set())
+    boneName = bpy.props.StringProperty(options=set())
     updateBlenderBoneShapes = bpy.props.BoolProperty(default=True, options=set())
     materialName = bpy.props.StringProperty(options=set())
     maxParticles = bpy.props.IntProperty(default=20, subtype="UNSIGNED",options=set())

@@ -813,40 +813,45 @@ class Importer:
         currentScene = bpy.context.scene
         print("Loading particle systems")
         for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
-            particle_system = currentScene.m3_particle_systems.add()
-            particle_system.updateBlenderBoneShapes = False
+            particleSystem = currentScene.m3_particle_systems.add()
+            particleSystem.updateBlenderBoneShapes = False
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
-            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=particle_system, m3Object=m3ParticleSystem)
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=particleSystem, m3Object=m3ParticleSystem)
             shared.transferParticleSystem(transferer)
             boneEntry = self.model.bones[m3ParticleSystem.bone]
             fullBoneName = boneEntry.name
             if fullBoneName.startswith(shared.star2ParticlePrefix):
-                particle_system.boneSuffix = fullBoneName[len(shared.star2ParticlePrefix):]
+                particleSystem.boneSuffix = fullBoneName[len(shared.star2ParticlePrefix):]
             else:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
-                particle_system.boneSuffix = fullBoneName
-                
-                
-            bone = self.armature.bones[self.boneNames[m3ParticleSystem.bone]]
-            poseBone = self.armatureObject.pose.bones[self.boneNames[m3ParticleSystem.bone]]
-            shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
+                particleSystem.boneSuffix = fullBoneName
+            blenderBoneName = self.boneNames[m3ParticleSystem.bone]
+            particleSystem.boneName = blenderBoneName
+            
+            bone = self.armature.bones[blenderBoneName]
+            poseBone = self.armatureObject.pose.bones[blenderBoneName]
+            shared.updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone)
+            
 
-
-            particle_system.materialName = self.getNameOfMaterialWithReferenceIndex(m3ParticleSystem.materialReferenceIndex)
+            particleSystem.materialName = self.getNameOfMaterialWithReferenceIndex(m3ParticleSystem.materialReferenceIndex)
             if m3ParticleSystem.forceChannelsCopy != m3ParticleSystem.forceChannels:
                 print("Warning: Unexpected model content: forceChannels != forceChannelsCopy")
 
             for blenderCopyIndex, m3CopyIndex in enumerate(m3ParticleSystem.copyIndices):
                 m3Copy = self.model.particleCopies[m3CopyIndex]
-                copy = particle_system.copies.add()
+                copy = particleSystem.copies.add()
                 copyAnimPathPrefix = animPathPrefix + "copies[%d]." % blenderCopyIndex
                 transferer = M3ToBlenderDataTransferer(self, copyAnimPathPrefix, blenderObject=copy, m3Object=m3Copy)
                 shared.transferParticleSystemCopy(transferer)
                 m3Bone = self.model.bones[m3Copy.bone]
                 fullCopyBoneName = m3Bone.name
-                bone = self.armature.bones[self.boneNames[m3Copy.bone]]
-                poseBone = self.armatureObject.pose.bones[self.boneNames[m3Copy.bone]]
-                shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
+                
+                blenderBoneName = self.boneNames[m3Copy.bone]
+                copy.boneName = blenderBoneName
+                
+                bone = self.armature.bones[blenderBoneName]
+                poseBone = self.armatureObject.pose.bones[blenderBoneName]
+                shared.updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone)
 
                 
                 if fullCopyBoneName.startswith(shared.star2ParticlePrefix):
@@ -854,7 +859,7 @@ class Importer:
                 else:
                     print("Warning: A particle system copy was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                     copy.name = fullCopyBoneName
-            particle_system.updateBlenderBoneShapes = True
+            particleSystem.updateBlenderBoneShapes = True
 
     def createForces(self):
         currentScene = bpy.context.scene
