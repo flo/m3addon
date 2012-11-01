@@ -117,7 +117,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="VEC3V0" />
             <field name="nullValue" type="VEC3V0" />
-            <field name="unknown" type="uint32" expected-value="0"  />
+            <field name="unknown" type="uint32" default-value="0"  />
         </structure>
         <structure name="Vector2AnimationReference" size="28">
             <description>Animatable vector with 2 components</description>
