@@ -2717,12 +2717,12 @@ class M3_LIGHTS_OT_add(bpy.types.Operator):
         light.updateBlenderBone = False
         light.boneSuffix = self.findUnusedName(scene)
         light.boneName = shared.boneNameForLight(light)
-
         handleLightTypeOrBoneSuffixChange(light, context)
         light.updateBlenderBone = True
+        
+        # The following selection causes a new bone to be created:
         scene.m3_light_index = len(scene.m3_lights)-1
         
-        selectOrCreateBoneForLight(scene, light)
         return{'FINISHED'}
 
     def findUnusedName(self, scene):
@@ -2767,8 +2767,8 @@ class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
         attachmentPoint.boneName = shared.boneNameForAttachmentPoint(attachmentPoint)
         attachmentPoint.updateBlenderBone = True
 
+        # The following selection causes a new bone to be created:
         scene.m3_attachment_point_index = len(scene.m3_attachment_points)-1
-        selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint)
         return{'FINISHED'}
         
     def findUnusedName(self, scene):
@@ -2814,9 +2814,8 @@ class M3_FUZZY_HIT_TESTS_OT_add(bpy.types.Operator):
         m3_fuzzy_hit_test = scene.m3_fuzzy_hit_tests.add()
         m3_fuzzy_hit_test.name = self.findUnusedName(scene)
 
+        # The following selection causes a new bone to be created:
         scene.m3_fuzzy_hit_test_index = len(scene.m3_fuzzy_hit_tests)-1
-        
-        selectOrCreateBoneForShapeObject(scene, m3_fuzzy_hit_test)
         return{'FINISHED'}
         
     def findUnusedName(self, scene):
