@@ -231,6 +231,13 @@ def handleAttachmentVolumeTypeChange(self, context):
             self.volumeSize2 = 1.0
     else:
         self.volumeSize2 = 0.0
+        
+        
+def handleAttachmentVolumeSizeChange(self, context):
+    scene = context.scene
+    attachmentPoint = self
+    if attachmentPoint.updateBlenderBone:
+        selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint)
 
 def handleGeometicShapeUpdate(self, context):
     shapeObject = self
@@ -466,7 +473,8 @@ def handleFuzzyHitTestIndexChanged(self, context):
 def selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint):
     boneName = attachmentPoint.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
-
+    shared.updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone)
+    
 def selectOrCreateBoneForPartileSystemCopy(scene, particle_system, copy):
     boneName = shared.boneNameForPartileSystemCopy(particle_system, copy)
     bone, poseBone = selectOrCreateBone(scene, boneName)
@@ -602,10 +610,12 @@ uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole imag
 particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a configureable direction with a configurable spread"), 
                         ("1", 'Radial', "Particles move into all kinds of directions"), 
                         ("2", 'Unknown', 'Particles spawn in a sphere')]
-attachmentVolumeTypeList = [("-1", "None", "No Volume, it's a simple attachment point"), 
-                            ("0", 'Cuboid', "Volume with the shape of a cuboid with the given width, length and height"),
-                            ("1", 'Sphere', "Volume with the shape of a sphere with the given radius"), 
-                            ("2", 'Cylinder', 'Volume with the shape of a cylinder with the given radius and height'),
+
+
+attachmentVolumeTypeList = [(shared.attachmentVolumeNone, "None", "No Volume, it's a simple attachment point"), 
+                            (shared.attachmentVolumeCuboid, 'Cuboid', "Volume with the shape of a cuboid with the given width, length and height"),
+                            (shared.attachmentVolumeSphere, 'Sphere', "Volume with the shape of a sphere with the given radius"), 
+                            (shared.attachmentVolumeCylinder, 'Cylinder', 'Volume with the shape of a cylinder with the given radius and height'),
                             ("3", 'Unknown 3', 'Unknown Volume with id 3'),
                             ("4", 'Unknown 4', 'Unknown Volume with id 4')
                            ]
@@ -955,9 +965,9 @@ class M3AttachmentPoint(bpy.types.PropertyGroup):
     boneSuffix = bpy.props.StringProperty(name="boneSuffix", update=handleAttachmentPointTypeOrBoneSuffixChange)
     boneName = bpy.props.StringProperty(name="boneName", options=set())
     volumeType = bpy.props.EnumProperty(default="-1",update=handleAttachmentVolumeTypeChange, items=attachmentVolumeTypeList, options=set())
-    volumeSize0 = bpy.props.FloatProperty(default=1.0, options=set())
-    volumeSize1 = bpy.props.FloatProperty(default=0.0, options=set())
-    volumeSize2 = bpy.props.FloatProperty(default=0.0, options=set())
+    volumeSize0 = bpy.props.FloatProperty(default=1.0, options=set(), update=handleAttachmentVolumeSizeChange)
+    volumeSize1 = bpy.props.FloatProperty(default=0.0, options=set(), update=handleAttachmentVolumeSizeChange)
+    volumeSize2 = bpy.props.FloatProperty(default=0.0, options=set(), update=handleAttachmentVolumeSizeChange)
 
 class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="", options=set())

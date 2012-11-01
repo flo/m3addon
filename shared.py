@@ -55,6 +55,12 @@ emssionAreaTypeSphere = "2"
 emssionAreaTypeCuboid = "3"
 emssionAreaTypeCylinder = "4"
 
+attachmentVolumeNone = "-1"
+attachmentVolumeCuboid = "0"
+attachmentVolumeSphere = "1"
+attachmentVolumeCylinder = "2"
+
+
 tightHitTestBoneName = "HitTestTight"
 
 rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
@@ -349,6 +355,32 @@ def updateBoneShapeOfParticleSystem(particle_system, bone, poseBone):
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix)
 
+def updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone):
+    volumeType = attachmentPoint.volumeType
+    if volumeType == attachmentVolumeNone:
+        untransformedPositions, faces = createAttachmentPointSymbolMesh()
+    elif volumeType == attachmentVolumeCuboid:
+        length = 2*attachmentPoint.volumeSize0
+        width = 2*attachmentPoint.volumeSize1
+        height = 2*attachmentPoint.volumeSize2
+        untransformedPositions, faces = createMeshDataForCuboid(length, width, height)
+    elif volumeType == attachmentVolumeSphere:
+        radius = attachmentPoint.volumeSize0
+        untransformedPositions, faces = createMeshDataForSphere(radius)
+    elif volumeType == attachmentVolumeCylinder:
+        radius = attachmentPoint.volumeSize0
+        height = attachmentPoint.volumeSize1
+        untransformedPositions, faces = createMeshDataForCylinder(radius, height)
+    else:
+        #TODO create proper meshes for the 2 unknown shape types:
+        untransformedPositions, faces= ([(0,0,0), (0,0,1), (0,1,1)], [0,1,2])
+        
+    matrix = rotFixMatrix
+    
+    boneName = boneNameForAttachmentPoint(attachmentPoint)
+    meshName = boneName + 'Mesh'
+    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix)
+
 def getRigidBodyBones(scene, rigidBody):
     bone, armature = findBoneWithArmatureObject(scene, rigidBody.boneName)
     if armature == None or bone == None:
@@ -426,6 +458,15 @@ def updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, mat
     #TODO reuse existing mesh of bone if it exists
     poseBone.custom_shape = createHiddenMeshObject(meshName, untransformedPositions, faces, matrix)
     bone.show_wire = True
+
+
+def createAttachmentPointSymbolMesh():
+    xd = 0.05
+    yd = 0.025
+    zd = 0.1
+    vertices = [(-xd, 0, 0), (xd, 0, 0), (0, yd, 0),  (0, 0, zd)]
+    faces = [(0,1,2), (0,1,3), (1,2,3), (0,2,3)]
+    return vertices, faces
 
 def createMeshDataForSphere(radius, numberOfSideFaces = 10, numberOfCircles = 10):
     """returns vertices and faces"""

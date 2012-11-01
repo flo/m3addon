@@ -964,7 +964,6 @@ class Importer:
             m3AttchmentVolume = boneIndexToM3AttachmentVolumeMap.get(boneIndex)
             if m3AttchmentVolume == None:
                 attachmentPoint.volumeType = "-1"
-                
             else:
                 attachmentPoint.volumeType = str(m3AttchmentVolume.type)
                 attachmentPoint.volumeSize0 = m3AttchmentVolume.size0
@@ -984,6 +983,11 @@ class Importer:
             # The adjusted bone names get stored in self.boneNames:
             boneNameInBlender = self.boneNames[boneIndex]
             attachmentPoint.boneName = boneNameInBlender
+            
+            bone = self.armature.bones[boneNameInBlender]
+            poseBone = self.armatureObject.pose.bones[boneNameInBlender]
+            shared.updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone)
+
             attachmentPoint.updateBlenderBone = True
 
     def getNameOfMaterialWithReferenceIndex(self, materialReferenceIndex):
