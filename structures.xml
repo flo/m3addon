@@ -131,21 +131,21 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="QUATV0" />
             <field name="nullValue" type="QUATV0" />
-            <field name="unknown" type="uint32" expected-value="0" />
+            <field name="unknown" type="uint32" default-value="0" />
         </structure>
         <structure name="UInt32AnimationReference" size="20">
             <description>Animatable  uint32</description>
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="uint32" />
             <field name="nullValue" type="uint32" />
-            <field name="unknown" type="uint32" expected-value="0" />
+            <field name="unknown" type="uint32" default-value="0" />
         </structure>
         <structure name="UInt16AnimationReference" size="16">
             <description>Animatable uint16</description>
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="uint16" />
             <field name="nullValue" type="uint16" />
-            <field name="unknown" type="uint32" expected-value="0" />
+            <field name="unknown" type="uint32" default-value="0" />
         </structure>
         <structure name="Int16AnimationReference" size="16">
             <description>Animatable int16</description>
@@ -166,14 +166,14 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="COLV0" />
             <field name="nullValue" type="COLV0" />
-            <field name="unknown" type="uint32" expected-value="0" />
+            <field name="unknown" type="uint32" default-value="0" />
         </structure>
         <structure name="BNDSV0AnimationReference" size="68">
             <description>Animatable boundings</description>
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="BNDSV0" />
             <field name="nullValue" type="BNDSV0" />
-            <field name="unknown" type="uint32" expected-value="0" />
+            <field name="unknown" type="uint32" default-value="0" />
         </structure>
         <structure name="REAL" version="0" size="4" >
             <description>A float</description>
@@ -961,7 +961,7 @@
         <structure name="PHSH" version="1" size="132" >
             <description>Physics shape data</description>
             <field offset="0" name="matrix" type="Matrix44" />
-            <field offset="64" name="unknownAt64" type="uint32" expected-value="0x3ca14285" />
+            <field offset="64" name="unknownAt64" type="uint32" default-value="0x3ca14285" />
             <!-- Shape types:
                 0 = box
                 1 = sphere
@@ -978,9 +978,8 @@
             <field offset="72" name="vertices" type="SmallReference" refTo="VEC3V0" />
             <!-- Belongs to the previous reference and seems not be get properly initialized with 0: -->
             <field offset="80" name="uninitializedFieldAt80" type="uint32" default-value="0" />
-            <field offset="84" name="unknownAt84" type="uint32" expected-value="0" />
-            <field offset="88" name="unknownAt88" type="uint32" expected-value="0" />
-            <!-- Belongs propably to a reference at offset 84 since it seems to be uninitialized. -->
+            <field offset="84" name="unknownAt84" type="SmallReference" refTo="U8__V0"/>
+            <!-- Belongs to the previous reference and seems to be uninitialized. -->
             <field offset="92" name="uninitializedFieldAt92" type="uint32" default-value="0" />
             <field offset="96" name="faces" type="SmallReference" refTo="U16_V0" />
             <!-- Belongs to the previous reference and seems not be get properly initialized with 0: -->
@@ -1134,11 +1133,11 @@
             <field name="short3" type="uint8" expected-value="0"/>
             <field name="materialIndex" type="uint32" />
             <field name="waveLength" type="FloatAnimationReference" />
-            <field name="unknown2" type="float" expected-value="0"/>
-            <field name="unknown3" type="uint32" />
-            <field name="unknown4" type="float" expected-value="0"/>
-            <field name="unknown5" type="float" expected-value="0"/>
-            <field name="unknown6" type="float" expected-value="0"/>
+            <field offset="28" name="unkonwnAt28" type="AnimationReferenceHeader"/>
+            <field offset="36" name="unkonwnAt36" size="4" expected-value="0x00000000" />
+            <field offset="40" name="unkonwnAt40" size="4" expected-value="0x00000000" />
+            <!-- unknownAt44 is the uninitalized field that terminated a animaation reference : -->
+            <field name="unknownAt44" type="uint32" default-value="0"/>
             <field name="unknown7" type="float" expected-value="0"/>
             <field name="unknown8" type="FloatAnimationReference" />
             <field name="unknown9" type="FloatAnimationReference" />
@@ -1160,7 +1159,7 @@
             <field name="unknown24" type="uint32" expected-value="0"/>
             <field name="unknown25" type="uint32" expected-value="0"/>
             <field name="unknown26" type="uint32" expected-value="0"/>
-            <field name="unknown27" type="uint32" expected-value="0"/>
+            <field name="unknown27" type="uint32" default-value="0"/>
             <field name="baseColoring" type="ColorAnimationReference" />
             <field name="centerColoring" type="ColorAnimationReference" />
             <field name="tipColoring" type="ColorAnimationReference" />
@@ -1186,11 +1185,10 @@
             <field name="ribbonLength" type="FloatAnimationReference" />
             <field name="filler1" type="float" expected-value="0"/>
             <field offset="436" name="sribData" type="Reference" refTo="SRIBV0" />
-            <field name="unknown45" type="uint32" />
-            <field name="long4" type="uint32" />
+            <field offset="448" name="unknownAt448" type="AnimationReferenceHeader" />
             <field name="long1" type="uint32" default-value="1"/>
             <field name="long2" type="uint32" expected-value="0"/>
-            <field name="long3" type="uint32" expected-value="0"/>
+            <field name="long3" type="uint32" default-value="0"/>
             <field name="ribbonFlags" type="uint32" />
             <field name="long5" type="uint32" expected-value="0"/>
             <field name="long6" type="uint32" expected-value="0"/>
@@ -1237,7 +1235,7 @@
             <field offset="0" name="boneIndex" type="uint32" />
             <field offset="4" name="name" type="Reference" refTo="CHARV0" />
             <field offset="16" name="fieldOfView" type="FloatAnimationReference" />
-			<field offset="36" name="unknown" type="uint32" expected-value="1"/>
+			<field offset="36" name="unknown" type="uint32" default-value="1"/>
 			<field offset="40" name="farClip" type="FloatAnimationReference" />
 			<field offset="60" name="nearClip" type="FloatAnimationReference" />
 			<field offset="80" name="clip2" type="FloatAnimationReference" />
