@@ -175,25 +175,24 @@ def handleForceTypeOrBoneSuffixChange(self, context):
 
 def handleLightTypeOrBoneSuffixChange(self, context):
     scene = context.scene
+    light = self
     typeName = "Unknown"
     for typeId, name, description in lightTypeList:
-        if typeId == self.lightType:
+        if typeId == light.lightType:
             typeName = name
     
-    self.name = "%s (%s)" % (self.boneSuffix, typeName)
+    light.name = "%s (%s)" % (light.boneSuffix, typeName)
+    
+    currentBoneName = light.boneName
+    calculatedBoneName = shared.boneNameForLight(light)
 
-    if self.boneSuffix != self.oldBoneSuffix or self.lightType != self.oldLightType:
-        oldBoneName = shared.boneNameForLight(self.oldBoneSuffix, self.oldLightType)
-        newBoneName = shared.boneNameForLight(self.boneSuffix, self.lightType)
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, oldBoneName)
+    if currentBoneName != calculatedBoneName:
+        bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
         if bone != None:
-            bone.name = newBoneName
-            
-    self.oldBoneSuffix = self.boneSuffix
-    self.oldLightType = self.lightType
-        
-        
-
+            bone.name = calculatedBoneName
+            light.boneName = bone.name
+        else:
+            light.boneName = calculatedBoneName
 
 def handleCameraNameChange(self, context):
     scene = context.scene
@@ -286,7 +285,7 @@ def handleAttachmentPointVisibilityUpdate(self, context):
 def handleLightsVisiblityUpdate(self, context):
     scene = context.scene
     for light in scene.m3_lights:
-        boneName = shared.boneNameForLight(light.boneSuffix, light.lightType)
+        boneName = light.boneName
         shared.setBoneVisibility(scene, boneName, self.showLights)
 
 def handleCamerasVisiblityUpdate(self, context):
@@ -496,7 +495,7 @@ def selectOrCreateBoneForForce(scene, force):
     selectOrCreateBone(scene, boneName)
     
 def selectOrCreateBoneForLight(scene, light):
-    boneName = shared.boneNameForLight(light.boneSuffix, light.lightType)
+    boneName = light.boneName
     selectOrCreateBone(scene, boneName)
 
 def selectOrCreateBoneForCamera(scene, camera):
@@ -1033,9 +1032,8 @@ class M3Light(bpy.types.PropertyGroup):
     # The name gets calculated like this: name = boneSuffix (type)
     name = bpy.props.StringProperty(name="name", default="", options=set())
     lightType = bpy.props.EnumProperty(default="1", items=lightTypeList, options=set(), update=handleLightTypeOrBoneSuffixChange)
-    oldLightType = bpy.props.EnumProperty(default="1", items=lightTypeList, options=set())
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleLightTypeOrBoneSuffixChange, default="Particle System")
-    oldBoneSuffix = bpy.props.StringProperty(options=set())
+    boneName = bpy.props.StringProperty(options=set())
     lightColor = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="COLOR", options={"ANIMATABLE"})
     lightIntensity = bpy.props.FloatProperty(default=1.0, name="Light Intensity", options={"ANIMATABLE"})
     specColor =  bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="COLOR", options={"ANIMATABLE"})

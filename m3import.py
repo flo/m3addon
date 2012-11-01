@@ -946,6 +946,8 @@ class Importer:
             else:
                 print("Warning: A light was bound to bone %s which does not start with %s" %(fullBoneName, lightPrefix))
                 light.boneSuffix = fullBoneName
+            blenderBoneName = self.boneNames[m3Light.boneIndex]
+            light.boneName = blenderBoneName
 
     def createAttachmentPoints(self):
         print("Loading attachment points and volumes")

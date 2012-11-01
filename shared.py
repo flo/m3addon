@@ -100,7 +100,9 @@ def boneNameForPartileSystem(particleSystem):
 def boneNameForForce(boneSuffix):
     return toValidBoneName(star2ForcePrefix + boneSuffix)
 
-def boneNameForLight(boneSuffix, lightType):
+def boneNameForLight(light):
+    boneSuffix = light.boneSuffix
+    lightType = light.lightType
     lightPrefix = lightPrefixMap.get(lightType)
     if lightPrefix == None:
         raise Exception("No prefix is known for light %s" % lightType)

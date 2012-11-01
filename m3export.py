@@ -924,9 +924,7 @@ class Exporter:
     def initLights(self, model):
         scene = self.scene
         for lightIndex, light in enumerate(scene.m3_lights):
-            boneSuffix = light.boneSuffix
-            lightPrefix =  light.lightType
-            boneName = shared.boneNameForLight(boneSuffix, lightPrefix)
+            boneName = light.boneName
             boneIndex = self.boneNameToBoneIndexMap.get(boneName)
             if boneIndex == None:
                 boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
