@@ -947,7 +947,7 @@ class Exporter:
             if boneIndex == None:
                 boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=True)
             m3AttachmentPoint = m3.ATT_V1()
-            m3AttachmentPoint.name = attachmentPoint.name
+            m3AttachmentPoint.name = shared.attachmentPointPrefix + attachmentPoint.boneSuffix
             m3AttachmentPoint.bone = boneIndex
             model.attachmentPoints.append(m3AttachmentPoint)
             model.attachmentPointAddons.append(0xffff)

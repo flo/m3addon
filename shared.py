@@ -73,7 +73,9 @@ animFlagsForAnimatedProperty = 6
 
 star2ParticlePrefix = "Star2Part"
 star2ForcePrefix = "Star2Force"
-attachmentPointPrefix = "Ref_"
+# Ref_ is the bone prefix for attachment points without volume and
+# the prefix for all attachment point names (for volume attachment point names too)
+attachmentPointPrefix = "Ref_" 
 attachmentVolumePrefix = "Vol_"
 animObjectIdModel = "MODEL"
 animObjectIdArmature = "ARMATURE"
