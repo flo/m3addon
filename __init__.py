@@ -2488,8 +2488,13 @@ class M3_PARTICLE_SYSTEMS_OT_remove(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         if scene.m3_particle_system_index >= 0:
-                scene.m3_particle_systems.remove(scene.m3_particle_system_index)
-                scene.m3_particle_system_index-= 1
+            particleSystem = scene.m3_particle_systems[scene.m3_particle_system_index]
+            removeBone(scene, particleSystem.boneName)
+            for copy in particleSystem.copies:
+                removeBone(scene, copy.boneName)
+            scene.m3_particle_systems.remove(scene.m3_particle_system_index)
+            scene.m3_particle_system_index-= 1
+            
         return{'FINISHED'}
         
         
@@ -2541,8 +2546,12 @@ class M3_PARTICLE_SYSTEMS_COPIES_OT_remove(bpy.types.Operator):
         particleSystemIndex = scene.m3_particle_system_index
         particleSystem = scene.m3_particle_systems[particleSystemIndex]
         copyIndex = particleSystem.copyIndex
+        copy = particleSystem.copies[copyIndex]
+        removeBone(scene, copy.boneName)
         particleSystem.copies.remove(particleSystem.copyIndex)
         particleSystem.copyIndex -= 1
+
+        
         return{'FINISHED'}
 
 class M3_FORCES_OT_add(bpy.types.Operator):
