@@ -323,7 +323,6 @@ def updateBoneShapeOfShapeObject(shapeObject, bone, poseBone):
         untransformedPositions, faces = createMeshDataForCuboid(sizeX, sizeY, sizeZ)
 
     matrix = composeMatrix(shapeObject.offset, shapeObject.rotationEuler, shapeObject.scale)
-
     meshName = 'ShapeObjectBoneMesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix)
 
@@ -349,13 +348,10 @@ def updateBoneShapeOfParticleSystem(particle_system, bone, poseBone):
         radius = particle_system.emissionAreaRadius
         height = particle_system.emissionAreaSize[2]
         untransformedPositions, faces = createMeshDataForCylinder(radius, height)
-   
-    # no transformation known so far
-    matrix = mathutils.Matrix()    
-    
+       
     boneName = boneNameForPartileSystem(particle_system.boneSuffix)
     meshName = boneName + 'Mesh'
-    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix)
+    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
 def updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone):
     volumeType = attachmentPoint.volumeType
@@ -377,11 +373,9 @@ def updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone):
         #TODO create proper meshes for the 2 unknown shape types:
         untransformedPositions, faces= ([(0,0,0), (0,0,1), (0,1,1)], [0,1,2])
         
-    matrix = rotFixMatrix
-    
     boneName = boneNameForAttachmentPoint(attachmentPoint)
     meshName = boneName + 'Mesh'
-    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix)
+    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
 def getRigidBodyBones(scene, rigidBody):
     bone, armature = findBoneWithArmatureObject(scene, rigidBody.boneName)
@@ -438,7 +432,7 @@ def updateBoneShapeOfRigidBody(scene, rigidBody):
         combinedVertices.extend(vertices)
         combinedFaces.extend(faces)
     
-    updateBoneShape(bone, poseBone, "PhysicsShapeBoneMesh", combinedVertices, combinedFaces, rotFixMatrixInverted)
+    updateBoneShape(bone, poseBone, "PhysicsShapeBoneMesh", combinedVertices, combinedFaces)
 
 def removeRigidBodyBoneShape(scene, rigidBody):
     bone, poseBone = getRigidBodyBones(scene, rigidBody)
@@ -448,7 +442,9 @@ def removeRigidBodyBoneShape(scene, rigidBody):
     poseBone.custom_shape = None
     bone.show_wire = False
 
-def updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix):
+def updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces, matrix=mathutils.Matrix()):
+    # Undo the rotation fix:
+    matrix = rotFixMatrixInverted * matrix
     boneScale = (bone.head - bone.tail).length
     invertedBoneScale = 1.0 / boneScale
     scaleMatrix = mathutils.Matrix()
@@ -466,7 +462,7 @@ def createAttachmentPointSymbolMesh():
     xd = 0.05
     yd = 0.025
     zd = 0.1
-    vertices = [(-xd, 0, 0), (xd, 0, 0), (0, yd, 0),  (0, 0, zd)]
+    vertices = [(-xd, 0, 0), (xd, 0, 0), (0, -yd, 0),  (0, 0, zd)]
     faces = [(0,1,2), (0,1,3), (1,2,3), (0,2,3)]
     return vertices, faces
 
