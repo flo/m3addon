@@ -520,6 +520,31 @@ def selectBone(scene, boneName):
         b.select = False
     
     bone.select = True
+    
+def removeBone(scene, boneName):
+    "removes the given bone if it exists"
+    bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
+    if bone == None or armatureObject == None:
+        return
+    
+    if bpy.ops.object.mode_set.poll():
+        bpy.ops.object.mode_set(mode='OBJECT')
+    if bpy.ops.object.select_all.poll():
+        bpy.ops.object.select_all(action='DESELECT')
+    
+    armatureObject.select = True
+    scene.objects.active = armatureObject
+    
+    if bpy.ops.object.mode_set.poll():
+        bpy.ops.object.mode_set(mode='EDIT')
+    
+    armature = armatureObject.data
+    edit_bone = armature.edit_bones[boneName]
+    armature.edit_bones.remove(edit_bone)
+    
+    if bpy.ops.object.mode_set.poll():
+        bpy.ops.object.mode_set(mode='POSE')
+    
 
 def selectOrCreateBone(scene, boneName):
     "Returns the bone and it's pose variant"
@@ -2799,8 +2824,10 @@ class M3_ATTACHMENT_POINTS_OT_remove(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         if scene.m3_attachment_point_index >= 0:
-                scene.m3_attachment_points.remove(scene.m3_attachment_point_index)
-                scene.m3_attachment_point_index-= 1
+            attackmentPoint = scene.m3_attachment_points[scene.m3_attachment_point_index]
+            removeBone(scene, attackmentPoint.boneName)
+            scene.m3_attachment_points.remove(scene.m3_attachment_point_index)
+            scene.m3_attachment_point_index-= 1
         return{'FINISHED'}
         
 class M3_OT_quickExport(bpy.types.Operator):
