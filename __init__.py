@@ -2734,8 +2734,10 @@ class M3_LIGHTS_OT_remove(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         if scene.m3_light_index >= 0:
-                scene.m3_lights.remove(scene.m3_light_index)
-                scene.m3_light_index-= 1
+            light = scene.m3_lights[scene.m3_light_index]
+            removeBone(scene, light.boneName)
+            scene.m3_lights.remove(scene.m3_light_index)
+            scene.m3_light_index-= 1
         return{'FINISHED'}
         
 
