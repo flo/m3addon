@@ -105,7 +105,7 @@ def handleAttachmentPointTypeOrBoneSuffixChange(self, context):
     if attachmentPoint.updateBlenderBone:
         selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint)
     
-def handleTypeOrBoneSuffixChange(self, context):
+def handleParticleSystemTypeOrBoneSuffixChange(self, context):
     particleSystem = self
     scene = context.scene
     typeName = "Unknown"
@@ -838,7 +838,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
     # The name gets calculated like this: name = boneSuffix (type)
     name = bpy.props.StringProperty(options=set())
-    boneSuffix = bpy.props.StringProperty(options=set(), update=handleTypeOrBoneSuffixChange, default="Particle System")
+    boneSuffix = bpy.props.StringProperty(options=set(), update=handleParticleSystemTypeOrBoneSuffixChange, default="Particle System")
     oldBoneSuffix = bpy.props.StringProperty(options=set())
     updateBlenderBoneShapes = bpy.props.BoolProperty(default=True, options=set())
     materialName = bpy.props.StringProperty(options=set())
@@ -869,7 +869,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     unknownFloat2c = bpy.props.FloatProperty(default=2.0, name="unknownFloat2c",options=set())
     trailingEnabled = bpy.props.BoolProperty(default=True, options=set(), description="If trailing is enabled then particles don't follow the particle emitter")
     emissionRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
-    emissionAreaType = bpy.props.EnumProperty(default="2", items=emissionAreaTypeList, update=handleTypeOrBoneSuffixChange, options=set())
+    emissionAreaType = bpy.props.EnumProperty(default="2", items=emissionAreaTypeList, update=handleParticleSystemTypeOrBoneSuffixChange, options=set())
     emissionAreaSize = bpy.props.FloatVectorProperty(default=(0.1, 0.1, 0.1), name="emis. area size", update=handleParticleSystemAreaSizeChange, size=3, subtype="XYZ", options={"ANIMATABLE"})
     tailUnk1 = bpy.props.FloatVectorProperty(default=(0.05, 0.05, 0.05), name="tail unk.", size=3, subtype="XYZ", options={"ANIMATABLE"})
     emissionAreaRadius = bpy.props.FloatProperty(default=2.0, name="emis. area radius", update=handleParticleSystemAreaSizeChange, options={"ANIMATABLE"})
@@ -2461,7 +2461,7 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
         if len(scene.m3_material_references) >= 1:
             particle_system.materialName = scene.m3_material_references[0].name
 
-        handleTypeOrBoneSuffixChange(particle_system, context)
+        handleParticleSystemTypeOrBoneSuffixChange(particle_system, context)
         scene.m3_particle_system_index = len(scene.m3_particle_systems)-1
         
         selectOrCreateBoneForPartileSystem(scene, particle_system)
