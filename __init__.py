@@ -116,21 +116,20 @@ def handleParticleSystemTypeOrBoneSuffixChange(self, context):
     boneSuffix = particleSystem.boneSuffix
     particleSystem.name = "%s (%s)" % (boneSuffix, typeName)
 
-    currentBoneName = particleSystem.boneName
-    calculatedBoneName = shared.boneNameForPartileSystem(particleSystem)
-
-    if currentBoneName != calculatedBoneName:
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
-        if bone != None:
-            bone.name = calculatedBoneName
-            particleSystem.boneName = bone.name
-        else:
-            particleSystem.boneName = calculatedBoneName
-
-    particleSystem.oldBoneSuffix = particleSystem.boneSuffix
     if particleSystem.updateBlenderBoneShapes:
-        selectOrCreateBoneForPartileSystem(scene, particleSystem)
-        updateBoenShapesOfParticleSystemCopies(scene, particleSystem)
+        currentBoneName = particleSystem.boneName
+        calculatedBoneName = shared.boneNameForPartileSystem(particleSystem)
+
+        if currentBoneName != calculatedBoneName:
+            bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
+            if bone != None:
+                bone.name = calculatedBoneName
+                particleSystem.boneName = bone.name
+            else:
+                particleSystem.boneName = calculatedBoneName
+
+            selectOrCreateBoneForPartileSystem(scene, particleSystem)
+            updateBoenShapesOfParticleSystemCopies(scene, particleSystem)
         
 def handleParticleSystemCopyRename(self, context):
     scene = context.scene
