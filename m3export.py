@@ -404,7 +404,7 @@ class Exporter:
                     m3Vertex = m3VertexFormatClass()
                     m3Vertex.position = self.blenderToM3Vector(blenderVertex.co)
                     
-                    boneWeightSlot = 0
+                    usedBoneWeightSlots = 0
                     totalWeight = 0
                     for gIndex, g in enumerate(blenderVertex.groups):
                         vertexGroupIndex = g.group
@@ -419,20 +419,17 @@ class Exporter:
                             bone = model.bones[boneIndex]
                             bone.setNamedBit("flags", "skinned", True)
                             boneWeight = round(g.weight * 255)
-                            totalWeight += boneWeight
                             if boneWeight != 0:
-                                if boneWeightSlot == 4:
+                                if usedBoneWeightSlots == 4:
                                     raise Exception("The m3 format supports at maximum 4 bone weights per vertex")
+                                boneWeightSlot = usedBoneWeightSlots
                                 setattr(m3Vertex, "boneWeight%d" % boneWeightSlot, boneWeight)
                                 setattr(m3Vertex, "boneLookupIndex%d" % boneWeightSlot, boneLookupIndex)
-                                boneWeightSlot += 1
-                                      
-                    if totalWeight != 255:
-                        m3Vertex.boneWeight0 += (255 - totalWeight)                        
-                    
-                    if boneWeightSlot > numberOfBoneWeightPairsPerVertex:
-                        numberOfBoneWeightPairsPerVertex = boneWeightSlot
-                    isStaticVertex = (boneWeightSlot == 0)
+                                totalWeight += boneWeight
+                                usedBoneWeightSlots += 1
+                                                                            
+
+                    isStaticVertex = (usedBoneWeightSlots == 0)
                     if isStaticVertex:                    
                         staticMeshBoneIndex = self.boneNameToBoneIndexMap.get(staticMeshBoneName)
                         if staticMeshBoneIndex == None:
@@ -445,6 +442,16 @@ class Exporter:
                             boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshBoneLookupIndex
                         m3Vertex.boneWeight0 = 255
                         m3Vertex.boneLookupIndex0 = staticMeshBoneIndex
+                        usedBoneWeightSlots = 1
+                        totalWeight = m3Vertex.boneWeight0
+                    
+                    #Fix small rounding errors by adjusting the first weight:
+                    if totalWeight != 255:
+                        m3Vertex.boneWeight0 += (255 - totalWeight) 
+                    
+                    if usedBoneWeightSlots > numberOfBoneWeightPairsPerVertex:
+                        numberOfBoneWeightPairsPerVertex = usedBoneWeightSlots
+                    
                     for uvLayerIndex in range(0,uvCoordinatesPerVertex):
                         m3AttributeName = "uv" + str(uvLayerIndex)
                         blenderAttributeName = "uv%d" % (faceRelativeVertexIndex + 1)
