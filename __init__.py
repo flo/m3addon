@@ -186,13 +186,21 @@ def handleLightTypeOrBoneSuffixChange(self, context):
     currentBoneName = light.boneName
     calculatedBoneName = shared.boneNameForLight(light)
 
-    if currentBoneName != calculatedBoneName:
-        bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
-        if bone != None:
-            bone.name = calculatedBoneName
-            light.boneName = bone.name
-        else:
-            light.boneName = calculatedBoneName
+    if light.updateBlenderBone:
+        if currentBoneName != calculatedBoneName:
+            bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
+            if bone != None:
+                bone.name = calculatedBoneName
+                light.boneName = bone.name
+            else:
+                light.boneName = calculatedBoneName
+        selectOrCreateBoneForLight(scene, light)
+
+def handleLightSizeChange(self, context):
+    scene = context.scene
+    light = self
+    if light.updateBlenderBone:
+        selectOrCreateBoneForLight(scene, light)
 
 def handleCameraNameChange(self, context):
     scene = context.scene
@@ -496,7 +504,8 @@ def selectOrCreateBoneForForce(scene, force):
     
 def selectOrCreateBoneForLight(scene, light):
     boneName = light.boneName
-    selectOrCreateBone(scene, boneName)
+    bone, poseBone = selectOrCreateBone(scene, boneName)
+    shared.updateBoneShapeOfLight(light, bone, poseBone)
 
 def selectOrCreateBoneForCamera(scene, camera):
     selectOrCreateBone(scene, camera.name)
@@ -687,9 +696,9 @@ matSpecularTypeList = [("0", "RGB", "no description yet"),
                         ("1", 'Alpha Only', "no description yet")
                         ]
 
-lightTypeList = [("0", "Directional", ""),
-                 ("1", "Point", "Light are generated around a point"),
-                 ("2", "Spot", "")
+lightTypeList = [# directional light isn't supported yet: ("0", "Directional", ""),
+                 (shared.lightTypePoint, "Point", "Light are generated around a point"),
+                 (shared.lightTypeSpot, "Spot", "")
                  ]
 class M3AnimIdData(bpy.types.PropertyGroup):
     # animId is actually an unsigned integer but blender can store only signed ones
@@ -1031,6 +1040,7 @@ class M3Light(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
     # The name gets calculated like this: name = boneSuffix (type)
     name = bpy.props.StringProperty(name="name", default="", options=set())
+    updateBlenderBone = bpy.props.BoolProperty(default=True, options=set())
     lightType = bpy.props.EnumProperty(default="1", items=lightTypeList, options=set(), update=handleLightTypeOrBoneSuffixChange)
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleLightTypeOrBoneSuffixChange, default="Particle System")
     boneName = bpy.props.StringProperty(options=set())
@@ -1040,9 +1050,9 @@ class M3Light(bpy.types.PropertyGroup):
     specIntensity = bpy.props.FloatProperty(default=0.0, name="Specular Intensity", options={"ANIMATABLE"})
     attenuationNear = bpy.props.FloatProperty(default=2.5, name="attenuationNear", options={"ANIMATABLE"})
     unknownAt148 = bpy.props.FloatProperty(default=2.5, name="unknownAt148", options=set())
-    attenuationFar = bpy.props.FloatProperty(default=3.0, name="attenuationFar", options={"ANIMATABLE"})
+    attenuationFar = bpy.props.FloatProperty(default=3.0, name="attenuationFar", update=handleLightSizeChange, options={"ANIMATABLE"})
     hotSpot = bpy.props.FloatProperty(default=1.0, name="Hot Spot", options={"ANIMATABLE"})
-    falloff = bpy.props.FloatProperty(default=1.0, name="Fall Off", options={"ANIMATABLE"})
+    falloff = bpy.props.FloatProperty(default=1.0, name="Fall Off", update=handleLightSizeChange, options={"ANIMATABLE"})
     unknownAt12 = bpy.props.IntProperty(default=-1, name="unknownAt12", options=set())
     unknownAt8 = bpy.props.BoolProperty(default=False,options=set())
     shadowCast = bpy.props.BoolProperty(options=set())
@@ -2705,9 +2715,12 @@ class M3_LIGHTS_OT_add(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         light = scene.m3_lights.add()
+        light.updateBlenderBone = False
         light.boneSuffix = self.findUnusedName(scene)
+        light.boneName = shared.boneNameForLight(light)
 
         handleLightTypeOrBoneSuffixChange(light, context)
+        light.updateBlenderBone = True
         scene.m3_light_index = len(scene.m3_lights)-1
         
         selectOrCreateBoneForLight(scene, light)

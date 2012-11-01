@@ -60,6 +60,9 @@ attachmentVolumeCuboid = "0"
 attachmentVolumeSphere = "1"
 attachmentVolumeCylinder = "2"
 
+lightTypePoint = "1"
+lightTypeSpot = "2"
+
 
 tightHitTestBoneName = "HitTestTight"
 
@@ -379,6 +382,25 @@ def updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone):
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
+
+def updateBoneShapeOfLight(light, bone, poseBone):
+    lightType = light.lightType
+    if lightType == lightTypePoint:
+        radius = light.attenuationFar
+        untransformedPositions, faces = createMeshDataForSphere(radius)
+    elif lightType == lightTypeSpot:
+        radius = light.falloff
+        height = light.attenuationFar
+        untransformedPositions, faces = createMeshDataForLightCone(radius, height)
+    else:
+        raise Exception("Unsupported light type")
+        
+    boneName = boneNameForLight(light)
+    meshName = boneName + 'Mesh'
+    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
+
+
+
 def getRigidBodyBones(scene, rigidBody):
     bone, armature = findBoneWithArmatureObject(scene, rigidBody.boneName)
     if armature == None or bone == None:
@@ -467,6 +489,25 @@ def createAttachmentPointSymbolMesh():
     vertices = [(-xd, 0, 0), (xd, 0, 0), (0, -yd, 0),  (0, 0, zd)]
     faces = [(0,1,2), (0,1,3), (1,2,3), (0,2,3)]
     return vertices, faces
+
+def createMeshDataForLightCone(radius, height, numberOfSideFaces = 10):
+    vertices = []
+    faces = []
+    for i in range(numberOfSideFaces):
+        angle0 = 2*math.pi * i / float(numberOfSideFaces)
+        x = math.cos(angle0)*radius
+        y = math.sin(angle0)*radius
+        vertices.append((x,y, -height))
+        
+    tipVertexIndex = len(vertices)
+    vertices.append((0, 0, 0))
+    for i in range(numberOfSideFaces):
+        nextI = ((i+1) % numberOfSideFaces)
+        i0 = nextI
+        i1 = tipVertexIndex
+        i2 = i
+        faces.append((i0, i1, i2))
+    return (vertices, faces)
 
 def createMeshDataForSphere(radius, numberOfSideFaces = 10, numberOfCircles = 10):
     """returns vertices and faces"""
@@ -579,7 +620,6 @@ def createMeshDataForCylinder(radius, height, numberOfSideFaces = 10):
     faces = []
     for i in range(numberOfSideFaces):
         angle0 = 2*math.pi * i / float(numberOfSideFaces)
-        angle1 = 2*math.pi * (i+1) / float(numberOfSideFaces)
         i0 = i*2+1
         i1 = i*2
         i2 = ((i+1)*2) % (numberOfSideFaces*2)

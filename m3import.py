@@ -935,6 +935,7 @@ class Importer:
         print("Loading lights")
         for lightIndex, m3Light in enumerate(self.model.lights):
             light = currentScene.m3_lights.add()
+            light.updateBlenderBone = False
             animPathPrefix = "m3_lights[%s]." % lightIndex
             transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=light, m3Object=m3Light)
             shared.transferLight(transferer)
@@ -948,6 +949,10 @@ class Importer:
                 light.boneSuffix = fullBoneName
             blenderBoneName = self.boneNames[m3Light.boneIndex]
             light.boneName = blenderBoneName
+            bone = self.armature.bones[blenderBoneName]
+            poseBone = self.armatureObject.pose.bones[blenderBoneName]
+            shared.updateBoneShapeOfLight(light, bone, poseBone)
+            light.updateBlenderBone = True
 
     def createAttachmentPoints(self):
         print("Loading attachment points and volumes")
