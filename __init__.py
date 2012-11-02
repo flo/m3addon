@@ -1960,6 +1960,8 @@ def addUIForShapeProperties(layout, shapeObject):
         elif shapeObject.shape in ["3"]: #cylinder
             sub.prop(shapeObject, "size0", text="Radius")
             sub.prop(shapeObject, "size1", text="Height")
+    elif shapeObject.shape in ["4", "5"]:
+        layout.prop(shapeObject, "meshObjectName", text="Mesh Name")
     
     split = layout.split()
     col = split.column()
