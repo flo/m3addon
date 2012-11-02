@@ -316,6 +316,12 @@ def handleLightsVisiblityUpdate(self, context):
         boneName = light.boneName
         shared.setBoneVisibility(scene, boneName, self.showLights)
 
+def handleForcesVisiblityUpdate(self, context):
+    scene = context.scene
+    for force in scene.m3_forces:
+        boneName = force.boneName
+        shared.setBoneVisibility(scene, boneName, self.showForces)
+
 def handleCamerasVisiblityUpdate(self, context):
     scene = context.scene
     for camera in scene.m3_cameras:
@@ -1053,6 +1059,7 @@ class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
     showAttachmentPoints = bpy.props.BoolProperty(default=True, options=set(), update=handleAttachmentPointVisibilityUpdate)
     showParticleSystems = bpy.props.BoolProperty(default=True, options=set(), update=handleParticleSystemsVisiblityUpdate)
     showLights = bpy.props.BoolProperty(default=True, options=set(), update=handleLightsVisiblityUpdate)
+    showForces = bpy.props.BoolProperty(default=True, options=set(), update=handleForcesVisiblityUpdate)
     showCameras = bpy.props.BoolProperty(default=True, options=set(), update=handleCamerasVisiblityUpdate)
     showPhysicsShapes = bpy.props.BoolProperty(default=True, options=set(), update=handlePhysicsShapeVisibilityUpdate)
 
@@ -1114,6 +1121,7 @@ class BoneVisibilityPanel(bpy.types.Panel):
         layout.prop(scene.m3_bone_visiblity_options, "showAttachmentPoints", text="Attachment Points")
         layout.prop(scene.m3_bone_visiblity_options, "showParticleSystems", text="Particle Systems")
         layout.prop(scene.m3_bone_visiblity_options, "showLights", text="Lights")
+        layout.prop(scene.m3_bone_visiblity_options, "showForces", text="Forces")
         layout.prop(scene.m3_bone_visiblity_options, "showCameras", text="Cameras")
         layout.prop(scene.m3_bone_visiblity_options, "showPhysicsShapes", text="Physics Shapes")
 
