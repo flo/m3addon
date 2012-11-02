@@ -909,11 +909,15 @@ class Exporter:
         faces = [f.vertices for f in mesh.polygons]
         triFaces = []
         for f in faces:
-            if len(f) == 4:
+            if len(f) == 3:
+                triFaces.append(f)
+            elif len(f) == 4:
                 triFaces.append(f[0], f[1], f[2])
                 triFaces.append(f[2], f[3], f[0])
             else:
-                triFaces.append(f)
+                print("Warning: Only triangles / quads are supported for physics meshes.")
+                return
+        
         faceIndices = [i for f in triFaces for i in f]
         
         for v in vertices:
