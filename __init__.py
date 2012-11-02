@@ -521,36 +521,46 @@ def handleFuzzyHitTestIndexChanged(self, context):
     selectOrCreateBoneForShapeObject(scene, fuzzyHitTest)
 
 def selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint):
+    scene.m3_bone_visiblity_options.showAttachmentPoints = True
     boneName = attachmentPoint.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone)
     
 def selectOrCreateBoneForPartileSystemCopy(scene, particleSystem, copy):
+    scene.m3_bone_visiblity_options.showParticleSystems = True
     boneName = copy.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone)
     
 def selectOrCreateBoneForForce(scene, force):
+    scene.m3_bone_visiblity_options.showForces = True
     boneName = force.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfForce(force, bone, poseBone)
     return (bone, poseBone)
     
 def selectOrCreateBoneForLight(scene, light):
+    scene.m3_bone_visiblity_options.showLights = True
     boneName = light.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfLight(light, bone, poseBone)
 
 def selectOrCreateBoneForCamera(scene, camera):
+    scene.m3_bone_visiblity_options.showCameras = True
     selectOrCreateBone(scene, camera.name)
 
 def selectOrCreateBoneForPartileSystem(scene, particle_system):
+    scene.m3_bone_visiblity_options.showParticleSystems = True
     boneName = particle_system.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
 
 def selectOrCreateBoneForShapeObject(scene, shapeObject):
     boneName = shapeObject.boneName
+    if boneName == shared.tightHitTestBoneName:
+        scene.m3_bone_visiblity_options.showTightHitTest = True
+    else:
+        scene.m3_bone_visiblity_options.showFuzzyHitTests = True
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfShapeObject(shapeObject, bone, poseBone)
 
