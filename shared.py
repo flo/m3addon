@@ -399,7 +399,11 @@ def updateBoneShapeOfLight(light, bone, poseBone):
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
-
+def updateBoneShapeOfForce(force, bone, poseBone):
+    untransformedPositions, faces = createMeshDataForSphere(force.forceRange)
+    boneName = force.boneName
+    meshName = boneName + 'Mesh'
+    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
 def getRigidBodyBones(scene, rigidBody):
     bone, armature = findBoneWithArmatureObject(scene, rigidBody.boneName)

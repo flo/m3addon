@@ -879,6 +879,9 @@ class Importer:
                 force.boneSuffix = fullBoneName
             blenderBoneName = self.boneNames[m3Force.boneIndex]
             force.boneName = blenderBoneName
+            bone = self.armature.bones[blenderBoneName]
+            poseBone = self.armatureObject.pose.bones[blenderBoneName]
+            shared.updateBoneShapeOfForce(force, bone, poseBone)
             force.updateBlenderBoneShape = True
     
     def createRigidBodies(self):

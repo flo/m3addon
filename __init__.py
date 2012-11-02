@@ -190,7 +190,13 @@ def handleForceTypeOrBoneSuffixChange(self, context):
             else:
                 force.boneName = calculatedBoneName
 
-            selectOrCreateBoneForForce(scene, force)
+        selectOrCreateBoneForForce(scene, force)
+
+def handleForceRangeUpdate(self, context):
+    scene = context.scene
+    force = self
+    if force.updateBlenderBoneShape:
+        selectOrCreateBoneForForce(scene, force)
 
 
 def handleLightTypeOrBoneSuffixChange(self, context):
@@ -526,7 +532,9 @@ def selectOrCreateBoneForPartileSystemCopy(scene, particleSystem, copy):
     
 def selectOrCreateBoneForForce(scene, force):
     boneName = force.boneName
-    return selectOrCreateBone(scene, boneName)
+    bone, poseBone = selectOrCreateBone(scene, boneName)
+    shared.updateBoneShapeOfForce(force, bone, poseBone)
+    return (bone, poseBone)
     
 def selectOrCreateBoneForLight(scene, light):
     boneName = light.boneName
@@ -987,7 +995,7 @@ class M3Force(bpy.types.PropertyGroup):
     forceType = bpy.props.EnumProperty(default="0", items=forceTypeList, update=handleForceTypeOrBoneSuffixChange, options=set())
     forceChannels = bpy.props.BoolVectorProperty(default=tuple(32*[False]), size=32, subtype="LAYER", options=set(), description="If a force shares a force channel with a particle system then it affects it")
     forceStrength = bpy.props.FloatProperty(default=1.0, name="forceStrength", options={"ANIMATABLE"})
-    forceRange = bpy.props.FloatProperty(default=1.0, name="forceRange", options={"ANIMATABLE"})
+    forceRange = bpy.props.FloatProperty(default=1.0, name="forceRange", update=handleForceRangeUpdate, options={"ANIMATABLE"})
     unknownAt64 = bpy.props.FloatProperty(default=0.05, name="unknownAt64", options={"ANIMATABLE"})
     unknownAt84 = bpy.props.FloatProperty(default=0.05, name="unknownAt84", options={"ANIMATABLE"})
 
