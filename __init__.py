@@ -272,7 +272,7 @@ def handleGeometicShapeUpdate(self, context):
 def handleParticleSystemsVisiblityUpdate(self, context):
     scene = context.scene
     for particleSystem in scene.m3_particle_systems:
-        boneName = shared.boneNameForPartileSystem(particleSystem.boneSuffix)
+        boneName = particleSystem.boneName
         shared.setBoneVisibility(scene, boneName, self.showParticleSystems)
         
         for copy in particleSystem.copies:
