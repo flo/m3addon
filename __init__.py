@@ -104,7 +104,20 @@ def handleAttachmentPointTypeOrBoneSuffixChange(self, context):
             attachmentPoint.boneName = calculatedBoneName
     if attachmentPoint.updateBlenderBone:
         selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint)
-    
+        
+def handleGeometicShapeTypeOrBoneNameUpdate(self, context):
+    shapeObject = self
+    scene = context.scene
+    typeName = "Unknown"
+    for typeId, name, description in geometricShapeTypeList:
+        if typeId == shapeObject.shape:
+            typeName = name
+
+    shapeObject.name = "%s (%s)" % (shapeObject.boneName, typeName)
+
+    if shapeObject.updateBlenderBone:
+        selectOrCreateBoneForShapeObject(scene, shapeObject)
+
 def handleParticleSystemTypeOrBoneSuffixChange(self, context):
     particleSystem = self
     scene = context.scene
@@ -266,7 +279,7 @@ def handleAttachmentVolumeSizeChange(self, context):
 
 def handleGeometicShapeUpdate(self, context):
     shapeObject = self
-    if shapeObject.updateBlenderBoneShapes:
+    if shapeObject.updateBlenderBone:
         selectOrCreateBoneForShapeObject(context.scene, shapeObject)
 
 def handleParticleSystemsVisiblityUpdate(self, context):
@@ -282,13 +295,13 @@ def handleParticleSystemsVisiblityUpdate(self, context):
 def handleFuzzyHitTestVisiblityUpdate(self, context):
     scene = context.scene
     for fuzzyHitTest in scene.m3_fuzzy_hit_tests:
-        boneName = fuzzyHitTest.name
+        boneName = fuzzyHitTest.boneName
         shared.setBoneVisibility(scene, boneName, self.showFuzzyHitTests)
     
 def handleTightHitTestVisiblityUpdate(self, context):
     scene = context.scene
     tightHitTest = scene.m3_tight_hit_test
-    boneName = tightHitTest.name
+    boneName = tightHitTest.boneName
     shared.setBoneVisibility(scene, boneName, self.showTightHitTest)
 
 def handleAttachmentPointVisibilityUpdate(self, context):
@@ -523,7 +536,8 @@ def selectOrCreateBoneForPartileSystem(scene, particle_system):
     shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
 
 def selectOrCreateBoneForShapeObject(scene, shapeObject):
-    bone, poseBone = selectOrCreateBone(scene, shapeObject.name)
+    boneName = shapeObject.boneName
+    bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfShapeObject(shapeObject, bone, poseBone)
 
 def selectBone(scene, boneName):
@@ -671,7 +685,7 @@ attachmentVolumeTypeList = [(shared.attachmentVolumeNone, "None", "No Volume, it
                             ("4", 'Unknown 4', 'Unknown Volume with id 4')
                            ]
                            
-fuzzyHitTestShapeList = [("0", 'Cuboid', "A cuboid with the given width, length and height"),
+geometricShapeTypeList = [("0", 'Cuboid', "A cuboid with the given width, length and height"),
                          ("1", 'Sphere', "A sphere with the given radius"),
                          ("2", 'Capsule', 'A capsue which is based on a cylinder with the given radius and height'),
                         ]
@@ -1023,8 +1037,9 @@ class M3AttachmentPoint(bpy.types.PropertyGroup):
 
 class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="", options=set())
-    updateBlenderBoneShapes = bpy.props.BoolProperty(default=True, options=set())
-    shape = bpy.props.EnumProperty(default="1", items=fuzzyHitTestShapeList,update=handleGeometicShapeUpdate, options=set())
+    updateBlenderBone = bpy.props.BoolProperty(default=True, options=set())
+    boneName = bpy.props.StringProperty(name="boneName", update=handleGeometicShapeTypeOrBoneNameUpdate, options=set())
+    shape = bpy.props.EnumProperty(default="1", items=geometricShapeTypeList, update=handleGeometicShapeTypeOrBoneNameUpdate, options=set())
     size0 = bpy.props.FloatProperty(default=1.0, update=handleGeometicShapeUpdate, options=set())
     size1 = bpy.props.FloatProperty(default=0.0, update=handleGeometicShapeUpdate, options=set())
     size2 = bpy.props.FloatProperty(default=0.0, update=handleGeometicShapeUpdate, options=set())
@@ -2812,7 +2827,7 @@ class M3_TIGHT_HIT_TESTS_OT_selectorcreatebone(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         tightHitTest = scene.m3_tight_hit_test
-        tightHitTest.name = shared.tightHitTestBoneName
+        tightHitTest.boneName = shared.tightHitTestBoneName
         selectOrCreateBoneForShapeObject(scene, tightHitTest)
         return{'FINISHED'}
 
@@ -2825,16 +2840,16 @@ class M3_FUZZY_HIT_TESTS_OT_add(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         m3_fuzzy_hit_test = scene.m3_fuzzy_hit_tests.add()
-        m3_fuzzy_hit_test.name = self.findUnusedName(scene)
+        m3_fuzzy_hit_test.boneName = self.findUnusedBoneName(scene)
 
         # The following selection causes a new bone to be created:
         scene.m3_fuzzy_hit_test_index = len(scene.m3_fuzzy_hit_tests)-1
         return{'FINISHED'}
         
-    def findUnusedName(self, scene):
+    def findUnusedBoneName(self, scene):
         usedNames = set()
         for m3_fuzzy_hit_test in scene.m3_fuzzy_hit_tests:
-            usedNames.add(m3_fuzzy_hit_test.name)
+            usedNames.add(m3_fuzzy_hit_test.boneName)
         unusedName = None
         bestName = "HitTestFuzzy"
         if not bestName in usedNames:
@@ -2856,7 +2871,7 @@ class M3_FUZZY_HIT_TESTS_OT_remove(bpy.types.Operator):
         scene = context.scene
         if scene.m3_fuzzy_hit_test_index >= 0:
             hitTest = scene.m3_fuzzy_hit_tests[scene.m3_fuzzy_hit_test_index]
-            removeBone(scene, hitTest.name)
+            removeBone(scene, hitTest.boneName)
             scene.m3_fuzzy_hit_tests.remove(scene.m3_fuzzy_hit_test_index)
             scene.m3_fuzzy_hit_test_index-= 1
         return{'FINISHED'}

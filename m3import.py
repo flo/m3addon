@@ -769,7 +769,7 @@ class Importer:
 
 
     def intShapeObject(self, blenderShapeObject, m3ShapeObject):
-        blenderShapeObject.updateBlenderBoneShapes = False
+        blenderShapeObject.updateBlenderBone = False
         transferer = M3ToBlenderDataTransferer(self, None, blenderObject=blenderShapeObject, m3Object=m3ShapeObject)
         shared.transferFuzzyHitTest(transferer)
         matrix = toBlenderMatrix(m3ShapeObject.matrix)
@@ -779,11 +779,11 @@ class Importer:
         blenderShapeObject.scale = scale
         if m3ShapeObject.boneIndex != -1:
             m3Bone = self.model.bones[m3ShapeObject.boneIndex]
-            blenderShapeObject.name = m3Bone.name
+            blenderShapeObject.boneName = m3Bone.name
             bone = self.armature.bones[self.boneNames[m3ShapeObject.boneIndex]]
             poseBone = self.armatureObject.pose.bones[self.boneNames[m3ShapeObject.boneIndex]]
             shared.updateBoneShapeOfShapeObject(blenderShapeObject, bone, poseBone)
-        blenderShapeObject.updateBlenderBoneShapes = True
+        blenderShapeObject.updateBlenderBone = True
 
 
     def initTightHitTest(self):
