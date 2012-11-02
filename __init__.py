@@ -686,7 +686,7 @@ physicsShapeTypeList = [("0", "Box", "Box shape with the given width, length and
 
 uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole image UVs for particles"),
                  ("1", "UV Layer 2", "Second UV layer which can be used for decals"),
-                 ("2", "UV Layer 2", "Third UV layer"),
+                 ("2", "UV Layer 3", "Third UV layer"),
                  ("3", "UV Layer 4", "Fourth UV layer?"),
                  ("4", "Unknown (value 4)", "Unknown"),
                  ("5", "Unknown (value 5)", "Unknown"),
