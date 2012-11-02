@@ -2468,9 +2468,8 @@ class M3_CAMERAS_OT_add(bpy.types.Operator):
         camera = scene.m3_cameras.add()
         camera.name = self.findUnusedName(scene)
 
+        # The following selection causes a new bone to be created:
         scene.m3_camera_index = len(scene.m3_cameras)-1
-        
-        selectOrCreateBoneForCamera(scene, camera)
         return{'FINISHED'}
 
     def findUnusedName(self, scene):
