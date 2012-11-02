@@ -2855,8 +2855,10 @@ class M3_FUZZY_HIT_TESTS_OT_remove(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         if scene.m3_fuzzy_hit_test_index >= 0:
-                scene.m3_fuzzy_hit_tests.remove(scene.m3_fuzzy_hit_test_index)
-                scene.m3_fuzzy_hit_test_index-= 1
+            hitTest = scene.m3_fuzzy_hit_tests[scene.m3_fuzzy_hit_test_index]
+            removeBone(scene, hitTest.name)
+            scene.m3_fuzzy_hit_tests.remove(scene.m3_fuzzy_hit_test_index)
+            scene.m3_fuzzy_hit_test_index-= 1
         return{'FINISHED'}
         
 
