@@ -482,6 +482,7 @@ def handleRigidBodyBoneChange(self, context):
     selectCurrentRigidBodyBone(context.scene)
 
 def selectCurrentRigidBodyBone(scene):
+    scene.m3_bone_visiblity_options.showPhysicsShapes = True
     if scene.m3_rigid_body_index != -1:
         rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
         selectBone(scene, rigidBody.boneName)
