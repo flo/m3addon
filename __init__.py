@@ -21,10 +21,11 @@
 
 bl_info = {
     "name": "Importer and exporter for Blizzard's Starcraft 2 model files (*.m3)",
-    'author': 'Florian Köberle',
+    'author': 'Florian Köberle, netherh, chaos2night',
     "location": "Properties Editor -> Scene -> M3 Panels",
     "description": "Allows to export (and import) simple Starcraft 2 models (.m3) with particle systems. Use on own risk!",
     "category": "Import-Export",
+    "wiki_url": "http://wiki.blender.org/index.php/Dev:2.5/Py/Scripts/Import-Export/m3addon",
     "tracker_url": "https://github.com/flo/m3addon/issues?state=open"
 }
 
@@ -104,7 +105,20 @@ def handleAttachmentPointTypeOrBoneSuffixChange(self, context):
             attachmentPoint.boneName = calculatedBoneName
     if attachmentPoint.updateBlenderBone:
         selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint)
-    
+        
+def handleGeometicShapeTypeOrBoneNameUpdate(self, context):
+    shapeObject = self
+    scene = context.scene
+    typeName = "Unknown"
+    for typeId, name, description in geometricShapeTypeList:
+        if typeId == shapeObject.shape:
+            typeName = name
+
+    shapeObject.name = "%s (%s)" % (shapeObject.boneName, typeName)
+
+    if shapeObject.updateBlenderBone:
+        selectOrCreateBoneForShapeObject(scene, shapeObject)
+
 def handleParticleSystemTypeOrBoneSuffixChange(self, context):
     particleSystem = self
     scene = context.scene
@@ -177,7 +191,13 @@ def handleForceTypeOrBoneSuffixChange(self, context):
             else:
                 force.boneName = calculatedBoneName
 
-            selectOrCreateBoneForForce(scene, force)
+        selectOrCreateBoneForForce(scene, force)
+
+def handleForceRangeUpdate(self, context):
+    scene = context.scene
+    force = self
+    if force.updateBlenderBoneShape:
+        selectOrCreateBoneForForce(scene, force)
 
 
 def handleLightTypeOrBoneSuffixChange(self, context):
@@ -266,13 +286,13 @@ def handleAttachmentVolumeSizeChange(self, context):
 
 def handleGeometicShapeUpdate(self, context):
     shapeObject = self
-    if shapeObject.updateBlenderBoneShapes:
+    if shapeObject.updateBlenderBone:
         selectOrCreateBoneForShapeObject(context.scene, shapeObject)
 
 def handleParticleSystemsVisiblityUpdate(self, context):
     scene = context.scene
     for particleSystem in scene.m3_particle_systems:
-        boneName = shared.boneNameForPartileSystem(particleSystem.boneSuffix)
+        boneName = particleSystem.boneName
         shared.setBoneVisibility(scene, boneName, self.showParticleSystems)
         
         for copy in particleSystem.copies:
@@ -282,13 +302,13 @@ def handleParticleSystemsVisiblityUpdate(self, context):
 def handleFuzzyHitTestVisiblityUpdate(self, context):
     scene = context.scene
     for fuzzyHitTest in scene.m3_fuzzy_hit_tests:
-        boneName = fuzzyHitTest.name
+        boneName = fuzzyHitTest.boneName
         shared.setBoneVisibility(scene, boneName, self.showFuzzyHitTests)
     
 def handleTightHitTestVisiblityUpdate(self, context):
     scene = context.scene
     tightHitTest = scene.m3_tight_hit_test
-    boneName = tightHitTest.name
+    boneName = tightHitTest.boneName
     shared.setBoneVisibility(scene, boneName, self.showTightHitTest)
 
 def handleAttachmentPointVisibilityUpdate(self, context):
@@ -302,6 +322,12 @@ def handleLightsVisiblityUpdate(self, context):
     for light in scene.m3_lights:
         boneName = light.boneName
         shared.setBoneVisibility(scene, boneName, self.showLights)
+
+def handleForcesVisiblityUpdate(self, context):
+    scene = context.scene
+    for force in scene.m3_forces:
+        boneName = force.boneName
+        shared.setBoneVisibility(scene, boneName, self.showForces)
 
 def handleCamerasVisiblityUpdate(self, context):
     scene = context.scene
@@ -496,34 +522,47 @@ def handleFuzzyHitTestIndexChanged(self, context):
     selectOrCreateBoneForShapeObject(scene, fuzzyHitTest)
 
 def selectOrCreateBoneForAttachmentPoint(scene, attachmentPoint):
+    scene.m3_bone_visiblity_options.showAttachmentPoints = True
     boneName = attachmentPoint.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone)
     
 def selectOrCreateBoneForPartileSystemCopy(scene, particleSystem, copy):
+    scene.m3_bone_visiblity_options.showParticleSystems = True
     boneName = copy.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone)
     
 def selectOrCreateBoneForForce(scene, force):
+    scene.m3_bone_visiblity_options.showForces = True
     boneName = force.boneName
-    return selectOrCreateBone(scene, boneName)
+    bone, poseBone = selectOrCreateBone(scene, boneName)
+    shared.updateBoneShapeOfForce(force, bone, poseBone)
+    return (bone, poseBone)
     
 def selectOrCreateBoneForLight(scene, light):
+    scene.m3_bone_visiblity_options.showLights = True
     boneName = light.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfLight(light, bone, poseBone)
 
 def selectOrCreateBoneForCamera(scene, camera):
+    scene.m3_bone_visiblity_options.showCameras = True
     selectOrCreateBone(scene, camera.name)
 
 def selectOrCreateBoneForPartileSystem(scene, particle_system):
+    scene.m3_bone_visiblity_options.showParticleSystems = True
     boneName = particle_system.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
 
 def selectOrCreateBoneForShapeObject(scene, shapeObject):
-    bone, poseBone = selectOrCreateBone(scene, shapeObject.name)
+    boneName = shapeObject.boneName
+    if boneName == shared.tightHitTestBoneName:
+        scene.m3_bone_visiblity_options.showTightHitTest = True
+    else:
+        scene.m3_bone_visiblity_options.showFuzzyHitTests = True
+    bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfShapeObject(shapeObject, bone, poseBone)
 
 def selectBone(scene, boneName):
@@ -647,7 +686,7 @@ physicsShapeTypeList = [("0", "Box", "Box shape with the given width, length and
 
 uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole image UVs for particles"),
                  ("1", "UV Layer 2", "Second UV layer which can be used for decals"),
-                 ("2", "UV Layer 2", "Third UV layer"),
+                 ("2", "UV Layer 3", "Third UV layer"),
                  ("3", "UV Layer 4", "Fourth UV layer?"),
                  ("4", "Unknown (value 4)", "Unknown"),
                  ("5", "Unknown (value 5)", "Unknown"),
@@ -671,7 +710,7 @@ attachmentVolumeTypeList = [(shared.attachmentVolumeNone, "None", "No Volume, it
                             ("4", 'Unknown 4', 'Unknown Volume with id 4')
                            ]
                            
-fuzzyHitTestShapeList = [("0", 'Cuboid', "A cuboid with the given width, length and height"),
+geometricShapeTypeList = [("0", 'Cuboid', "A cuboid with the given width, length and height"),
                          ("1", 'Sphere', "A sphere with the given radius"),
                          ("2", 'Capsule', 'A capsue which is based on a cylinder with the given radius and height'),
                         ]
@@ -967,7 +1006,7 @@ class M3Force(bpy.types.PropertyGroup):
     forceType = bpy.props.EnumProperty(default="0", items=forceTypeList, update=handleForceTypeOrBoneSuffixChange, options=set())
     forceChannels = bpy.props.BoolVectorProperty(default=tuple(32*[False]), size=32, subtype="LAYER", options=set(), description="If a force shares a force channel with a particle system then it affects it")
     forceStrength = bpy.props.FloatProperty(default=1.0, name="forceStrength", options={"ANIMATABLE"})
-    forceRange = bpy.props.FloatProperty(default=1.0, name="forceRange", options={"ANIMATABLE"})
+    forceRange = bpy.props.FloatProperty(default=1.0, name="forceRange", update=handleForceRangeUpdate, options={"ANIMATABLE"})
     unknownAt64 = bpy.props.FloatProperty(default=0.05, name="unknownAt64", options={"ANIMATABLE"})
     unknownAt84 = bpy.props.FloatProperty(default=0.05, name="unknownAt84", options={"ANIMATABLE"})
 
@@ -1023,8 +1062,9 @@ class M3AttachmentPoint(bpy.types.PropertyGroup):
 
 class M3SimpleGeometricShape(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="", options=set())
-    updateBlenderBoneShapes = bpy.props.BoolProperty(default=True, options=set())
-    shape = bpy.props.EnumProperty(default="1", items=fuzzyHitTestShapeList,update=handleGeometicShapeUpdate, options=set())
+    updateBlenderBone = bpy.props.BoolProperty(default=True, options=set())
+    boneName = bpy.props.StringProperty(name="boneName", update=handleGeometicShapeTypeOrBoneNameUpdate, options=set())
+    shape = bpy.props.EnumProperty(default="1", items=geometricShapeTypeList, update=handleGeometicShapeTypeOrBoneNameUpdate, options=set())
     size0 = bpy.props.FloatProperty(default=1.0, update=handleGeometicShapeUpdate, options=set())
     size1 = bpy.props.FloatProperty(default=0.0, update=handleGeometicShapeUpdate, options=set())
     size2 = bpy.props.FloatProperty(default=0.0, update=handleGeometicShapeUpdate, options=set())
@@ -1038,6 +1078,7 @@ class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
     showAttachmentPoints = bpy.props.BoolProperty(default=True, options=set(), update=handleAttachmentPointVisibilityUpdate)
     showParticleSystems = bpy.props.BoolProperty(default=True, options=set(), update=handleParticleSystemsVisiblityUpdate)
     showLights = bpy.props.BoolProperty(default=True, options=set(), update=handleLightsVisiblityUpdate)
+    showForces = bpy.props.BoolProperty(default=True, options=set(), update=handleForcesVisiblityUpdate)
     showCameras = bpy.props.BoolProperty(default=True, options=set(), update=handleCamerasVisiblityUpdate)
     showPhysicsShapes = bpy.props.BoolProperty(default=True, options=set(), update=handlePhysicsShapeVisibilityUpdate)
 
@@ -1099,6 +1140,7 @@ class BoneVisibilityPanel(bpy.types.Panel):
         layout.prop(scene.m3_bone_visiblity_options, "showAttachmentPoints", text="Attachment Points")
         layout.prop(scene.m3_bone_visiblity_options, "showParticleSystems", text="Particle Systems")
         layout.prop(scene.m3_bone_visiblity_options, "showLights", text="Lights")
+        layout.prop(scene.m3_bone_visiblity_options, "showForces", text="Forces")
         layout.prop(scene.m3_bone_visiblity_options, "showCameras", text="Cameras")
         layout.prop(scene.m3_bone_visiblity_options, "showPhysicsShapes", text="Physics Shapes")
 
@@ -2455,9 +2497,8 @@ class M3_CAMERAS_OT_add(bpy.types.Operator):
         camera = scene.m3_cameras.add()
         camera.name = self.findUnusedName(scene)
 
+        # The following selection causes a new bone to be created:
         scene.m3_camera_index = len(scene.m3_cameras)-1
-        
-        selectOrCreateBoneForCamera(scene, camera)
         return{'FINISHED'}
 
     def findUnusedName(self, scene):
@@ -2488,8 +2529,10 @@ class M3_CAMERAS_OT_remove(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         if scene.m3_camera_index >= 0:
-                scene.m3_cameras.remove(scene.m3_camera_index)
-                scene.m3_camera_index-= 1
+            camera = scene.m3_cameras[scene.m3_camera_index]
+            removeBone(scene, camera.name)
+            scene.m3_cameras.remove(scene.m3_camera_index)
+            scene.m3_camera_index-= 1
         return{'FINISHED'}
 
  
@@ -2830,7 +2873,7 @@ class M3_TIGHT_HIT_TESTS_OT_selectorcreatebone(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         tightHitTest = scene.m3_tight_hit_test
-        tightHitTest.name = shared.tightHitTestBoneName
+        tightHitTest.boneName = shared.tightHitTestBoneName
         selectOrCreateBoneForShapeObject(scene, tightHitTest)
         return{'FINISHED'}
 
@@ -2843,16 +2886,16 @@ class M3_FUZZY_HIT_TESTS_OT_add(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         m3_fuzzy_hit_test = scene.m3_fuzzy_hit_tests.add()
-        m3_fuzzy_hit_test.name = self.findUnusedName(scene)
+        m3_fuzzy_hit_test.boneName = self.findUnusedBoneName(scene)
 
         # The following selection causes a new bone to be created:
         scene.m3_fuzzy_hit_test_index = len(scene.m3_fuzzy_hit_tests)-1
         return{'FINISHED'}
         
-    def findUnusedName(self, scene):
+    def findUnusedBoneName(self, scene):
         usedNames = set()
         for m3_fuzzy_hit_test in scene.m3_fuzzy_hit_tests:
-            usedNames.add(m3_fuzzy_hit_test.name)
+            usedNames.add(m3_fuzzy_hit_test.boneName)
         unusedName = None
         bestName = "HitTestFuzzy"
         if not bestName in usedNames:
@@ -2873,8 +2916,10 @@ class M3_FUZZY_HIT_TESTS_OT_remove(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         if scene.m3_fuzzy_hit_test_index >= 0:
-                scene.m3_fuzzy_hit_tests.remove(scene.m3_fuzzy_hit_test_index)
-                scene.m3_fuzzy_hit_test_index-= 1
+            hitTest = scene.m3_fuzzy_hit_tests[scene.m3_fuzzy_hit_test_index]
+            removeBone(scene, hitTest.boneName)
+            scene.m3_fuzzy_hit_tests.remove(scene.m3_fuzzy_hit_test_index)
+            scene.m3_fuzzy_hit_test_index-= 1
         return{'FINISHED'}
         
 

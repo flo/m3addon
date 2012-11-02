@@ -389,6 +389,12 @@ class Importer:
             scene.m3_animation_old_index = -1
             scene.m3_animation_index = -1
             scene.m3_animation_index = 0
+        
+        if bpy.ops.object.mode_set.poll():
+            bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.ops.object.select_all.poll():
+            bpy.ops.object.select_all(action='DESELECT')
+
     
     def addAnimIdData(self, animId, objectId, animPath):
         longAnimId = shared.getLongAnimIdOf(objectId, animPath)
@@ -757,6 +763,7 @@ class Importer:
 
     def createCameras(self):
         scene = bpy.context.scene
+        showCameras = scene.m3_bone_visiblity_options.showCameras
         print("Loading cameras")
         for cameraIndex, m3Camera in enumerate(self.model.cameras):
             camera = scene.m3_cameras.add()
@@ -766,10 +773,14 @@ class Importer:
             m3Bone = self.model.bones[m3Camera.boneIndex]
             if m3Bone.name != camera.name:
                 raise Exception("Bone of camera '%s' had different name: '%s'" % (camera.name, m3Bone.name))
-
+            blenderBoneName = self.boneNames[m3Camera.boneIndex]
+            bone = self.armature.bones[blenderBoneName]
+            poseBone = self.armatureObject.pose.bones[blenderBoneName]
+            bone.hide = not showCameras
 
     def intShapeObject(self, blenderShapeObject, m3ShapeObject):
-        blenderShapeObject.updateBlenderBoneShapes = False
+        scene = bpy.context.scene
+        blenderShapeObject.updateBlenderBone = False
         transferer = M3ToBlenderDataTransferer(self, None, blenderObject=blenderShapeObject, m3Object=m3ShapeObject)
         shared.transferFuzzyHitTest(transferer)
         matrix = toBlenderMatrix(m3ShapeObject.matrix)
@@ -779,11 +790,17 @@ class Importer:
         blenderShapeObject.scale = scale
         if m3ShapeObject.boneIndex != -1:
             m3Bone = self.model.bones[m3ShapeObject.boneIndex]
-            blenderShapeObject.name = m3Bone.name
-            bone = self.armature.bones[self.boneNames[m3ShapeObject.boneIndex]]
-            poseBone = self.armatureObject.pose.bones[self.boneNames[m3ShapeObject.boneIndex]]
+            blenderBoneName = self.boneNames[m3ShapeObject.boneIndex]
+            blenderShapeObject.boneName = blenderBoneName
+            bone = self.armature.bones[blenderBoneName]
+            poseBone = self.armatureObject.pose.bones[blenderBoneName]
             shared.updateBoneShapeOfShapeObject(blenderShapeObject, bone, poseBone)
-        blenderShapeObject.updateBlenderBoneShapes = True
+            if blenderBoneName == shared.tightHitTestBoneName:
+                showBone = scene.m3_bone_visiblity_options.showTightHitTest
+            else:
+                showBone = scene.m3_bone_visiblity_options.showFuzzyHitTests
+            bone.hide = not showBone
+        blenderShapeObject.updateBlenderBone = True
 
 
     def initTightHitTest(self):
@@ -810,10 +827,11 @@ class Importer:
 
     
     def createParticleSystems(self):
-        currentScene = bpy.context.scene
+        scene = bpy.context.scene
+        showParticleSystems = scene.m3_bone_visiblity_options.showParticleSystems
         print("Loading particle systems")
         for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
-            particleSystem = currentScene.m3_particle_systems.add()
+            particleSystem = scene.m3_particle_systems.add()
             particleSystem.updateBlenderBoneShapes = False
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
             transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=particleSystem, m3Object=m3ParticleSystem)
@@ -831,7 +849,7 @@ class Importer:
             bone = self.armature.bones[blenderBoneName]
             poseBone = self.armatureObject.pose.bones[blenderBoneName]
             shared.updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone)
-            
+            bone.hide = not showParticleSystems
 
             particleSystem.materialName = self.getNameOfMaterialWithReferenceIndex(m3ParticleSystem.materialReferenceIndex)
             if m3ParticleSystem.forceChannelsCopy != m3ParticleSystem.forceChannels:
@@ -852,7 +870,7 @@ class Importer:
                 bone = self.armature.bones[blenderBoneName]
                 poseBone = self.armatureObject.pose.bones[blenderBoneName]
                 shared.updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone)
-
+                bone.hide = not showParticleSystems
                 
                 if fullCopyBoneName.startswith(shared.star2ParticlePrefix):
                     copy.name = fullCopyBoneName[len(shared.star2ParticlePrefix):]
@@ -862,10 +880,11 @@ class Importer:
             particleSystem.updateBlenderBoneShapes = True
 
     def createForces(self):
-        currentScene = bpy.context.scene
+        scene = bpy.context.scene
+        showForces = scene.m3_bone_visiblity_options.showForces
         print("Loading forces")
         for forceIndex, m3Force in enumerate(self.model.forces):
-            force = currentScene.m3_forces.add()
+            force = scene.m3_forces.add()
             force.updateBlenderBoneShape = False
             animPathPrefix = "m3_forces[%s]." % forceIndex
             transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=force, m3Object=m3Force)
@@ -879,6 +898,10 @@ class Importer:
                 force.boneSuffix = fullBoneName
             blenderBoneName = self.boneNames[m3Force.boneIndex]
             force.boneName = blenderBoneName
+            bone = self.armature.bones[blenderBoneName]
+            poseBone = self.armatureObject.pose.bones[blenderBoneName]
+            shared.updateBoneShapeOfForce(force, bone, poseBone)
+            bone.hide = not showForces
             force.updateBlenderBoneShape = True
     
     def createRigidBodies(self):
@@ -933,10 +956,11 @@ class Importer:
             
     
     def createLights(self):
-        currentScene = bpy.context.scene
+        scene = bpy.context.scene
+        showLights = scene.m3_bone_visiblity_options.showLights
         print("Loading lights")
         for lightIndex, m3Light in enumerate(self.model.lights):
-            light = currentScene.m3_lights.add()
+            light = scene.m3_lights.add()
             light.updateBlenderBone = False
             animPathPrefix = "m3_lights[%s]." % lightIndex
             transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=light, m3Object=m3Light)
@@ -954,12 +978,13 @@ class Importer:
             bone = self.armature.bones[blenderBoneName]
             poseBone = self.armatureObject.pose.bones[blenderBoneName]
             shared.updateBoneShapeOfLight(light, bone, poseBone)
+            bone.hide = not showLights
             light.updateBlenderBone = True
 
     def createAttachmentPoints(self):
         print("Loading attachment points and volumes")
-        currentScene = bpy.context.scene
-        
+        scene = bpy.context.scene
+        showAttachmentPoints = scene.m3_bone_visiblity_options.showAttachmentPoints
         boneIndexToM3AttachmentVolumeMap = {}
         for m3AttchmentVolume in self.model.attachmentVolumes:
             if m3AttchmentVolume.bone0 != m3AttchmentVolume.bone1 or m3AttchmentVolume.bone0 != m3AttchmentVolume.bone2:
@@ -973,7 +998,7 @@ class Importer:
 
         for attachmentPointIndex, m3AttachmentPoint in enumerate(self.model.attachmentPoints):
             boneIndex = m3AttachmentPoint.bone
-            attachmentPoint = currentScene.m3_attachment_points.add()
+            attachmentPoint = scene.m3_attachment_points.add()
             attachmentPoint.updateBlenderBone = False
             m3AttchmentVolume = boneIndexToM3AttachmentVolumeMap.get(boneIndex)
             if m3AttchmentVolume == None:
@@ -1001,7 +1026,7 @@ class Importer:
             bone = self.armature.bones[boneNameInBlender]
             poseBone = self.armatureObject.pose.bones[boneNameInBlender]
             shared.updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone)
-
+            bone.hide = not showAttachmentPoints
             attachmentPoint.updateBlenderBone = True
 
     def getNameOfMaterialWithReferenceIndex(self, materialReferenceIndex):
