@@ -117,7 +117,7 @@ class Exporter:
                 boneIndex = len(model.bones)
                 boneName = blenderBone.name
                 if boneName in self.boneNameToBoneIndexMap:
-                    raise Exception("There are multiple bones with the name %s" % lenderBone.name)
+                    raise Exception("There are multiple bones with the name %s" % blenderBone.name)
                 self.boneNameToBoneIndexMap[boneName] = boneIndex
                                 
                 locationAnimPath = 'pose.bones["%s"].location' % boneName
