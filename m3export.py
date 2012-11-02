@@ -328,7 +328,8 @@ class Exporter:
             mesh = meshObject.data
             mesh.update(calc_tessface=True)
             if len(mesh.tessfaces) > 0:
-                nonEmptyMeshObjects.append(meshObject)
+                if not mesh.m3_physics_mesh:
+                    nonEmptyMeshObjects.append(meshObject)
             uvCoordinatesPerVertex = max(uvCoordinatesPerVertex, len(mesh.tessface_uv_textures))
 
         

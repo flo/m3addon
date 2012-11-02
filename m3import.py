@@ -917,14 +917,12 @@ class Importer:
                     mesh = bpy.data.meshes.new('PhysicsMesh')
                     mesh.from_pydata(vertices = vertices, faces = faces, edges = [])
                     mesh.update(calc_edges = True)
+                    mesh.m3_physics_mesh = True
                     
                     meshObject = bpy.data.objects.new('PhysicsMeshObject', mesh)
                     meshObject.location = (0,0,0)
                     meshObject.show_name = True
                     
-                    # TODO - either:
-                    # don't put mesh in scene (have edit button in physics shape - add to scene in edit mode / remove afterwards)?
-                    # exclude from export somehow (update when edited)?
                     bpy.context.scene.objects.link(meshObject)
                     
                     physics_shape.meshObjectName = meshObject.name

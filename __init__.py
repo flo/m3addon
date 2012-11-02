@@ -1740,6 +1740,24 @@ class PhyscisShapePanel(bpy.types.Panel):
         
         addUIForShapeProperties(layout, physics_shape)
 
+class PhysicsMeshPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_physics_mesh"
+    bl_label = "M3 Physics Mesh"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "data"
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        return o and (o.data != None) and (o.type == 'MESH')
+    
+    def draw(self, context):
+        scene = context.scene
+        layout = self.layout
+        mesh = context.object.data
+        layout.prop(mesh, "m3_physics_mesh", text="Physics Mesh Only")
+
 class LightPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_lights"
     bl_label = "M3 Lights"
@@ -2983,6 +3001,7 @@ def register():
     bpy.types.Scene.m3_tight_hit_test = bpy.props.PointerProperty(type=M3SimpleGeometricShape)
     bpy.types.Scene.m3_boundings = bpy.props.PointerProperty(type=M3Boundings)
     bpy.types.Mesh.m3_material_name = bpy.props.StringProperty(options=set())
+    bpy.types.Mesh.m3_physics_mesh = bpy.props.BoolProperty(default=False, options=set(), description="Mark mesh to be used for physics shape only (not exported).")
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
     bpy.types.Bone.m3_unapplied_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
