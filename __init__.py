@@ -2500,8 +2500,10 @@ class M3_CAMERAS_OT_remove(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         if scene.m3_camera_index >= 0:
-                scene.m3_cameras.remove(scene.m3_camera_index)
-                scene.m3_camera_index-= 1
+            camera = scene.m3_cameras[scene.m3_camera_index]
+            removeBone(scene, camera.name)
+            scene.m3_cameras.remove(scene.m3_camera_index)
+            scene.m3_camera_index-= 1
         return{'FINISHED'}
 
  
