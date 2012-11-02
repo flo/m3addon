@@ -389,6 +389,12 @@ class Importer:
             scene.m3_animation_old_index = -1
             scene.m3_animation_index = -1
             scene.m3_animation_index = 0
+        
+        if bpy.ops.object.mode_set.poll():
+            bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.ops.object.select_all.poll():
+            bpy.ops.object.select_all(action='DESELECT')
+
     
     def addAnimIdData(self, animId, objectId, animPath):
         longAnimId = shared.getLongAnimIdOf(objectId, animPath)
