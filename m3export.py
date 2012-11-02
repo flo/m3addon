@@ -897,6 +897,30 @@ class Exporter:
             shared.transferForce(transferer)
             model.forces.append(m3Force)
     
+    def initPhysicsMesh(self, physicsShape, m3PhysicsShape):
+        scene = self.scene
+        meshObject = scene.objects[physicsShape.meshObjectName]
+        if meshObject == None:
+            print("Warning: No mesh object %s found in scene for physics shape: %s" % physicsShape.meshObjectName, physicsShape.name)
+            return
+        
+        mesh = meshObject.data
+        vertices = [v.co for v in mesh.vertices]
+        faces = [f.vertices for f in mesh.polygons]
+        triFaces = []
+        for f in faces:
+            if len(f) == 4:
+                triFaces.append(f[0], f[1], f[2])
+                triFaces.append(f[2], f[3], f[0])
+            else:
+                triFaces.append(f)
+        faceIndices = [i for f in triFaces for i in f]
+        
+        for v in vertices:
+            m3PhysicsShape.vertices.append(self.createVector3(v[0], v[1], v[2]))
+        
+        m3PhysicsShape.faces.extend(faceIndices)
+    
     def initRigidBodies(self, model):
         scene = self.scene
         for rigidBodyIndex, rigidBody in enumerate(scene.m3_rigid_bodies):
@@ -917,6 +941,11 @@ class Exporter:
                 shared.transferPhysicsShape(transferer)
                 matrix = shared.composeMatrix(physicsShape.offset, physicsShape.rotationEuler, physicsShape.scale)
                 m3PhysicsShape.matrix = self.createMatrixFromBlenderMatrix(matrix)
+                
+                if physicsShape.shape in ["4","5"]:
+                    self.initPhysicsMesh(physicsShape, m3PhysicsShape)
+                    # TODO: bounding planes?
+                
                 m3RigidBody.physicsShapes.append(m3PhysicsShape)
             
             model.rigidBodies.append(m3RigidBody)
