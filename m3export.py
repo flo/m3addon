@@ -1534,6 +1534,8 @@ class BlenderToM3DataTransferer:
             timeValuesInMS = self.exporter.allFramesToMSValues(frames)
             values = self.exporter.getNoneOrValuesFor(action, animPath, 0, frames)
             if values != None:
+                if (type(defaultValue) == float):
+                    timeValuesInMS, values = shared.simplifyFloatAnimationWithInterpolation(timeValuesInMS, values)
                 convertedValues = []
                 for value in values:
                     convertedValues.append(convertMethod(value))

@@ -188,11 +188,20 @@ def smoothQuaternionTransition(previousQuaternion, quaternionToFix):
     if sumOfSquaresMinus < sumOfSquares:
         quaternionToFix.negate()
 
+
+def floatInterpolationFunction(leftInterpolationValue, rightInterpolationValue, rightFactor):
+    leftFactor = 1.0 - rightFactor
+    return leftInterpolationValue * leftFactor + rightInterpolationValue * rightFactor
+
 def vectorInterpolationFunction(leftInterpolationValue, rightInterpolationValue, rightFactor):
     return leftInterpolationValue.lerp(rightInterpolationValue, rightFactor)
 
 def quaternionInterpolationFunction(leftInterpolationValue, rightInterpolationValue, rightFactor):
     return leftInterpolationValue.slerp(rightInterpolationValue, rightFactor)
+
+def floatsAlmostEqual(floatExpected, floatActual):
+    delta = abs(floatExpected - floatActual)
+    return delta < 0.00001
     
 def vectorsAlmostEqual(vectorExpected, vectorActual):
     diff = vectorExpected - vectorActual
@@ -201,6 +210,9 @@ def vectorsAlmostEqual(vectorExpected, vectorActual):
 def quaternionsAlmostEqual(q0, q1):
     distanceSqr = sqr(q0.x-q1.x)+sqr(q0.y-q1.y)+sqr(q0.z-q1.z)+sqr(q0.w-q1.w)
     return distanceSqr < sqr(0.00001)
+
+def simplifyFloatAnimationWithInterpolation(timeValuesInMS, values):
+    return simplifyAnimationWithInterpolation(timeValuesInMS, values, floatInterpolationFunction, floatsAlmostEqual)
 
 def simplifyVectorAnimationWithInterpolation(timeValuesInMS, vectors):
     return simplifyAnimationWithInterpolation(timeValuesInMS, vectors, vectorInterpolationFunction, vectorsAlmostEqual)
