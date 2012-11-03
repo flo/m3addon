@@ -188,18 +188,28 @@ class Exporter:
                 animationActionTuples = self.determineAnimationActionTuplesFor(armatureObject.name, actionTypeArmature)
                 for animation, action in animationActionTuples:
                     frames = set()
-                    frames.update(self.getFramesFor(action, locationAnimPath, 0))
-                    frames.update(self.getFramesFor(action, locationAnimPath, 1))
-                    frames.update(self.getFramesFor(action, locationAnimPath, 2))
-                    frames.update(self.getFramesFor(action, rotationAnimPath, 0))
-                    frames.update(self.getFramesFor(action, rotationAnimPath, 1))
-                    frames.update(self.getFramesFor(action, rotationAnimPath, 2))
-                    frames.update(self.getFramesFor(action, rotationAnimPath, 3))
-                    frames.update(self.getFramesFor(action, scaleAnimPath, 0))
-                    frames.update(self.getFramesFor(action, scaleAnimPath, 1))
-                    frames.update(self.getFramesFor(action, scaleAnimPath, 2))
-                    frames = list(frames)
-                    frames.sort()
+                    # For animated rotations all frames are needed,
+                    # since Starcraft 2 isn't correcting the linearly interpolated values
+                    # 
+                    if self.fCurveExistsForPath(action, rotationAnimPath):
+                        # In Starcraft 2 there is one more key frame then there is usually in Blender:
+                        # 3 Blender key frames at the times 0, 33, 67 give a an animation for the time 0 to 100 (at 30 FPS)
+                        # For Starcraft 2 4 key frames are needed: 0, 33, 67 and 100.
+                        # For a smooth loop the key frame data of 0 and 100 need to be the same.
+                        frames = list(range(animation.startFrame, animation.exlusiveEndFrame+1))
+                    else:
+                        frames.update(self.getFramesFor(action, locationAnimPath, 0))
+                        frames.update(self.getFramesFor(action, locationAnimPath, 1))
+                        frames.update(self.getFramesFor(action, locationAnimPath, 2))
+                        frames.update(self.getFramesFor(action, rotationAnimPath, 0))
+                        frames.update(self.getFramesFor(action, rotationAnimPath, 1))
+                        frames.update(self.getFramesFor(action, rotationAnimPath, 2))
+                        frames.update(self.getFramesFor(action, rotationAnimPath, 3))                        
+                        frames.update(self.getFramesFor(action, scaleAnimPath, 0))
+                        frames.update(self.getFramesFor(action, scaleAnimPath, 1))
+                        frames.update(self.getFramesFor(action, scaleAnimPath, 2))
+                        frames = list(frames)
+                        frames.sort()
                     timeValuesInMS = self.allFramesToMSValues(frames)
 
                     xLocValues = self.getNoneOrValuesFor(action, locationAnimPath, 0, frames)
@@ -1399,6 +1409,12 @@ class Exporter:
             if (curve.data_path == animPath) and (curve.array_index == curveArrayIndex):
                 return curve
         return None
+        
+    def fCurveExistsForPath(self, action, animPath):
+        for curve in action.fcurves:
+            if (curve.data_path == animPath):
+                return True
+        return False
         
     def getDefaultValue(self, rootObject, path, index, currentValue):
         if not hasattr(self, "objectToDefaultValuesMap"):
