@@ -454,7 +454,7 @@ class Exporter:
                             model.boneLookup.append(staticMeshBoneIndex)
                             boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshBoneLookupIndex
                         m3Vertex.boneWeight0 = 255
-                        m3Vertex.boneLookupIndex0 = staticMeshBoneIndex
+                        m3Vertex.boneLookupIndex0 = staticMeshBoneLookupIndex
                         usedBoneWeightSlots = 1
                         totalWeight = m3Vertex.boneWeight0
                     
