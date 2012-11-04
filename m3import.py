@@ -905,10 +905,10 @@ class Importer:
             force.updateBlenderBoneShape = True
     
     def createRigidBodies(self):
-        currentScene = bpy.context.scene
+        scene = bpy.context.scene
         print("Loading rigid bodies")
         for rigidBodyIndex, m3RigidBody in enumerate(self.model.rigidBodies):
-            rigid_body = currentScene.m3_rigid_bodies.add()
+            rigid_body = scene.m3_rigid_bodies.add()
             animPathPrefix = "m3_rigid_bodies[%s]." % rigidBodyIndex
             transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=rigid_body, m3Object=m3RigidBody)
             shared.transferRigidBody(transferer)
@@ -946,14 +946,15 @@ class Importer:
                     meshObject.location = (0,0,0)
                     meshObject.show_name = True
                     
-                    bpy.context.scene.objects.link(meshObject)
+                    scene.objects.link(meshObject)
                     
                     physics_shape.meshObjectName = meshObject.name
                 
                 physics_shape.updateBlenderBoneShapes = True
             
-            shared.updateBoneShapeOfRigidBody(currentScene, rigid_body)
-            
+            shared.updateBoneShapeOfRigidBody(scene, rigid_body)
+            bone = self.armature.bones[rigid_body.boneName]
+            bone.hide = not scene.m3_bone_visiblity_options.showPhysicsShapes
     
     def createLights(self):
         scene = bpy.context.scene

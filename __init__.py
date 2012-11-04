@@ -472,17 +472,20 @@ def handlePhysicsShapeUpdate(self, context):
             shared.updateBoneShapeOfRigidBody(scene, rigidBody)
         
         selectCurrentRigidBodyBone(scene)
+        scene.m3_bone_visiblity_options.showPhysicsShapes = True
 
 def handleRigidBodyIndexChange(self, context):
-    selectCurrentRigidBodyBone(context.scene)
+    scene = context.scene
+    scene.m3_bone_visiblity_options.showPhysicsShapes = True
+    selectCurrentRigidBodyBone(scene)
 
 def handleRigidBodyBoneChange(self, context):
     # TODO: remove custom bone shape for old bone, create custom bone shape for new bone.
     # need to save old bone name somehow?
-    selectCurrentRigidBodyBone(context.scene)
+    scene = context.scene
+    selectCurrentRigidBodyBone(scene)
 
 def selectCurrentRigidBodyBone(scene):
-    scene.m3_bone_visiblity_options.showPhysicsShapes = True
     if scene.m3_rigid_body_index != -1:
         rigidBody = scene.m3_rigid_bodies[scene.m3_rigid_body_index]
         selectBone(scene, rigidBody.boneName)
