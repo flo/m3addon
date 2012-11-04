@@ -706,7 +706,7 @@ particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a c
 attachmentVolumeTypeList = [(shared.attachmentVolumeNone, "None", "No Volume, it's a simple attachment point"), 
                             (shared.attachmentVolumeCuboid, 'Cuboid', "Volume with the shape of a cuboid with the given width, length and height"),
                             (shared.attachmentVolumeSphere, 'Sphere', "Volume with the shape of a sphere with the given radius"), 
-                            (shared.attachmentVolumeCylinder, 'Cylinder', 'Volume with the shape of a cylinder with the given radius and height'),
+                            (shared.attachmentVolumeCapsule, 'Capsule', 'Volume with the shape of a cylinder with the given radius and height'),
                             ("3", 'Unknown 3', 'Unknown Volume with id 3'),
                             ("4", 'Unknown 4', 'Unknown Volume with id 4')
                            ]

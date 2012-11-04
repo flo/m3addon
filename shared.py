@@ -58,7 +58,7 @@ emssionAreaTypeCylinder = "4"
 attachmentVolumeNone = "-1"
 attachmentVolumeCuboid = "0"
 attachmentVolumeSphere = "1"
-attachmentVolumeCylinder = "2"
+attachmentVolumeCapsule = "2"
 
 lightTypePoint = "1"
 lightTypeSpot = "2"
@@ -382,10 +382,10 @@ def updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone):
     elif volumeType == attachmentVolumeSphere:
         radius = attachmentPoint.volumeSize0
         untransformedPositions, faces = createMeshDataForSphere(radius)
-    elif volumeType == attachmentVolumeCylinder:
+    elif volumeType == attachmentVolumeCapsule:
         radius = attachmentPoint.volumeSize0
         height = attachmentPoint.volumeSize1
-        untransformedPositions, faces = createMeshDataForCylinder(radius, height)
+        untransformedPositions, faces = createMeshDataForCapsule(radius, height)
     else:
         #TODO create proper meshes for the 2 unknown shape types:
         untransformedPositions, faces= ([(0,0,0), (0,0,1), (0,1,1)], [0,1,2])
