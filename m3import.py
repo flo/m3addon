@@ -1083,7 +1083,7 @@ class Importer:
                 vertexPositions = []
                 nextNewVertexIndex = 0
                 oldVertexIndexToNewVertexIndexMap = {}
-                newVertexIndexToOldVertexIndexMap = {}
+                newVertexIndexToOldVertexIndicesMap = {}
                 vertexIdTupleToNewIndexMap = {}
                 
                 for vertexIndex in regionVertexIndices:
@@ -1098,7 +1098,12 @@ class Importer:
                         vertexPositions.append(position)
                         vertexIdTupleToNewIndexMap[idTuple] = newIndex
                     oldVertexIndexToNewVertexIndexMap[vertexIndex] = newIndex
-                    newVertexIndexToOldVertexIndexMap[newIndex] = vertexIndex
+                    #store which old vertex indices where merged to a new one:
+                    oldVertexIndices = newVertexIndexToOldVertexIndicesMap.get(newIndex)
+                    if oldVertexIndices == None:
+                        oldVertexIndices = set()
+                        newVertexIndexToOldVertexIndicesMap[newIndex] = oldVertexIndices
+                    oldVertexIndices.add(vertexIndex)
                 
                 # since vertices got merged, the indices of the faces aren't correct anymore.
                 # the old face indices however are still later required to figure out
@@ -1117,8 +1122,14 @@ class Importer:
                 mesh.tessfaces.add(len(facesWithNewIndices))
                 mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(facesWithNewIndices))
                 
-                def getUVsFor(newVertexIndex, vertexUVAttribute):
-                    oldVertexIndex = newVertexIndexToOldVertexIndexMap[newVertexIndex]
+                def getUVsFor(newVertexIndex, vertexUVAttribute, setOfOldVertexIndicesOfFace):
+                    oldVertexIndices = newVertexIndexToOldVertexIndicesMap[newVertexIndex]
+                    # When multiple vertices got merged to single one, it's still important to determine
+                    # the correct old vertex index, in order to get correct uvs.
+                    matchingOldVertexIndices = oldVertexIndices.intersection(setOfOldVertexIndicesOfFace)
+                    if len(matchingOldVertexIndices) != 1:
+                        raise Exception("There was a problem with calculating which UV belongs to which vertex")
+                    oldVertexIndex = matchingOldVertexIndices.pop()
                     return toBlenderUVCoordinate(getattr(m3Vertices[oldVertexIndex],vertexUVAttribute))
                 
                 for vertexUVAttribute in ["uv0", "uv1", "uv2", "uv3"]:
@@ -1127,11 +1138,12 @@ class Importer:
                         for faceIndex in range(len(facesWithNewIndices)):
                             tessFace = mesh.tessfaces[faceIndex]
                             faceUV = uvLayer.data[faceIndex]
+                            setOfOldVertexIndicesOfFace = set(facesWithOldIndices[faceIndex])
                             # It's necessary to take vertex indices from tessface
                             # Since the vertex indices may get reordered within a triangle
-                            faceUV.uv1 = getUVsFor(tessFace.vertices[0], vertexUVAttribute)
-                            faceUV.uv2 = getUVsFor(tessFace.vertices[1], vertexUVAttribute)
-                            faceUV.uv3 = getUVsFor(tessFace.vertices[2], vertexUVAttribute)
+                            faceUV.uv1 = getUVsFor(tessFace.vertices[0], vertexUVAttribute, setOfOldVertexIndicesOfFace)
+                            faceUV.uv2 = getUVsFor(tessFace.vertices[1], vertexUVAttribute, setOfOldVertexIndicesOfFace)
+                            faceUV.uv3 = getUVsFor(tessFace.vertices[2], vertexUVAttribute, setOfOldVertexIndicesOfFace)
 
 
                 mesh.update(calc_edges=True)
