@@ -46,6 +46,8 @@ actionTypeArmature = "OBJECT"
 class Exporter:
     def export(self, scene, m3FileName):
         self.isAnimationExport = m3FileName.endswith(".m3a")
+        if bpy.ops.object.mode_set.poll():
+            bpy.ops.object.mode_set(mode='OBJECT')
         self.generatedAnimIdCounter = 0
         self.scene = scene
         self.boundingAnimId = 0x1f9bd2
