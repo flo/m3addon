@@ -388,7 +388,8 @@ def updateBoneShapeOfAttachmentPoint(attachmentPoint, bone, poseBone):
         untransformedPositions, faces = createMeshDataForCapsule(radius, height)
     else:
         #TODO create proper meshes for the 2 unknown shape types:
-        untransformedPositions, faces= ([(0,0,0), (0,0,1), (0,1,1)], [0,1,2])
+        print("Warning: The attachment volume %s has the unsupported type id %s" % (attachmentPoint.name, volumeType))
+        untransformedPositions, faces= ([(0,0,0), (0,0,1), (0,1,1)], [(0,1,2)])
         
     boneName = boneNameForAttachmentPoint(attachmentPoint)
     meshName = boneName + 'Mesh'
