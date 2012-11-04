@@ -829,7 +829,7 @@ class Exporter:
         if fixedName != None:
             boneName = fixedName
         else:
-            boneName = shapeObject.name
+            boneName = shapeObject.boneName
         boneIndex = self.boneNameToBoneIndexMap.get(boneName, -1)
         m3ShapeObject.boneIndex = boneIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ShapeObject, blenderObject=shapeObject, animPathPrefix=None, rootObject=self.scene)
