@@ -27,6 +27,9 @@ from m3 import *
 import argparse
 import os.path
 import os
+import io
+import time
+import traceback
 
 def byteDataToHex(byteData):
     s = "0x"
@@ -39,7 +42,6 @@ def byteDataToHex(byteData):
 
 def printXmlElement(out, indent, name, stringValue):
     out.write(("\t"*indent) + ("<%s>" % name) + stringValue + ("</%s>\n" % name))
-
 
 def printObject(out, indent, name, objectToPrint):
     if type(objectToPrint) == int:
@@ -64,45 +66,106 @@ def printObject(out, indent, name, objectToPrint):
     else:
         printXmlElement(out, indent, name, str(objectToPrint))
 
-def printFile(out, inputFile):
-    model = loadModel(inputFile)
-    printObject(out, 0, "model", model)
-
-
-def convertFile(inputFilePath, outputDirectory):
-    if outputDirectory != None:
-        fileName = os.path.basename(inputFilePath)
-        outputFilePath = os.path.join(outputDirectory, fileName+ ".xml")
-    else:
-        outputFilePath = inputFilePath + ".xml"
-    print("Converting %s -> %s" % (inputFilePath, outputFilePath))
+def printModel(model, outputFilePath):
+    outputStream = io.StringIO()
+    
     outputFile = open(outputFilePath, "w")
+    printObject(outputStream, 0, "model", model)
+    
+    outputFile.write(outputStream.getvalue())
+    outputFile.close()
+    
+    outputStream.close()
+
+def convertFile(count, inputFilePath, outputFilePath, errorFile):
+    print("\nFile %d:" % count)
+    print("In:\t%s" % inputFilePath)
+    print("Out:\t%s" % outputFilePath)
+    
+    t0 = time.time()
+    
+    model = None
     try:
-        printFile(outputFile, inputFilePath)
-    finally:
-        outputFile.close()
+        model = loadModel(inputFilePath)
+    except Exception as e:
+        print("Error: %s" % e)
+        if errorFile != None:
+            errorFile.write("\nFile: %s\n" % inputFilePath)
+            errorFile.write("Trace: %s\n" % traceback.format_exc())
+        return False
+    
+    printModel(model, outputFilePath)
+    
+    t1 = time.time()
+    print("Success: %.3f s" % (t1 - t0))
+    
+    return True
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('path', nargs='+', help="Either a m3 file or a directory with m3 files")
-    parser.add_argument('--output-directory', '-o', help='directory in which the xml files get stored')
+    parser = argparse.ArgumentParser(description='Convert Starcraft II m3 models to xml format.')
+    parser.add_argument('input_path', 
+        help='M3 file or directory containing m3 files to convert.')
+    parser.add_argument('output_path',
+        nargs='?',
+        help='Directory for xml file output.')
+    parser.add_argument('-r', '--recurse',
+        action='store_true', default=False,
+        help='Recurse input directory and convert all m3 files found.')
+    parser.add_argument('-l', '--error_log',
+        help='File to output errors encountered during conversion.')
+    
     args = parser.parse_args()
-    outputDirectory = args.output_directory
-    if outputDirectory != None and not os.path.isdir(outputDirectory):
-        sys.stderr.write("%s is not a directory" % outputDirectory)
+    
+    inputPath = args.input_path
+    if not os.path.isdir(inputPath) and not os.path.isfile(inputPath):
+        sys.stderr.write("input_path %s is not a valid directory or file" % inputPath)
         sys.exit(2)
-    counter = 0
-    for filePath in args.path:
-        if os.path.isdir(filePath):
-            for fileName in os.listdir(filePath):
-                inputFilePath = os.path.join(filePath, fileName)
-                if fileName.endswith(".m3"):
-                     convertFile(inputFilePath, outputDirectory)
-                     counter += 1
+    
+    outputPath = args.output_path
+    if outputPath == None:
+        if not os.path.isdir(inputPath):
+            outputPath = os.path.dirname(inputPath)
         else:
-            convertFile(filePath, outputDirectory)
-            counter += 1
-    if counter == 1:
-        print("Converted %d file" % counter)
-    else:
-        print("Converted %d files" % counter)
+            outputPath = inputPath
+    
+    recurse = args.recurse
+    
+    errorFile = None
+    errorLog = args.error_log
+    if errorLog != None:
+        errorFile = open(errorLog, "w")
+    
+    t0 = time.time()
+    print("Started!")
+    
+    count = 0
+    successCount = 0
+    failureCount = 0
+    for path, dirs, files in os.walk(inputPath):
+        
+        for file in files:
+            if file.endswith(".m3"):
+                inputFilePath = os.path.join(path, file)
+                commonStem = os.path.commonprefix([inputPath, inputFilePath])
+                relativePath = os.path.relpath(inputFilePath, commonStem)
+                outputFilePath = os.path.join(outputPath, relativePath)
+                
+                outputDirectory = os.path.dirname(outputFilePath)
+                if not os.path.exists(outputDirectory):
+                    os.makedirs(outputDirectory)
+                
+                success = convertFile(count, inputFilePath, outputFilePath + ".xml", errorFile)
+                
+                successCount += success
+                failureCount += not success
+                count += 1
+        
+        if not recurse:
+            break
+    
+    if errorLog != None:
+        errorFile.close()
+    
+    t1 = time.time()
+    print("\nFinished!")
+    print("%d files found, %d succeeded, %d failed in %.2f s" % (count, successCount, failureCount, (t1 - t0)))
