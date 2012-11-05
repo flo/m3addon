@@ -34,36 +34,69 @@ import traceback
 def byteDataToHex(byteData):
     return '0x' + ''.join(["%02x" % x for x in byteData])
 
-def printXmlElement(out, indent, name, stringValue):
-    out.write(("\t"*indent) + ("<%s>" % name) + stringValue + ("</%s>\n" % name))
 
-def printObject(out, indent, name, objectToPrint):
-    if type(objectToPrint) == int:
-        printXmlElement(out, indent, name, hex(objectToPrint))
-    elif type(objectToPrint) == bytearray or type(objectToPrint) == bytes:
-        s = byteDataToHex(objectToPrint)
-        printXmlElement(out, indent, name, s)
-    elif hasattr(type(objectToPrint),"fields"):
-        out.write(("\t"*indent) + "<%s>\n" % name)
-        for fieldName in objectToPrint.fields:
-            fieldValue = getattr(objectToPrint,fieldName)
-            if fieldValue == None:
-                out.write(("\t"*(indent+1)) + "<%s />\n" % fieldName)
-            elif fieldValue.__class__ == list:
-                out.write(("\t"*(indent+1)) + "<%s>\n" % fieldName)
-                for entry in fieldValue:
-                    printObject(out, indent+2,fieldName+"-element", entry)
-                out.write(("\t"*(indent+1)) + "</%s>\n" % fieldName)
-            else:
-                printObject(out, indent+1,fieldName, fieldValue)
-        out.write(("\t"*indent) + "</%s>\n" % name)
+def indent(level):
+    return "\t" * level
+
+def openTag(name):
+    return "<%s>" % name
+
+def closeTag(name):
+    return "</%s>\n" % name
+
+def openCloseTag(name):
+    return "<%s />\n" % name
+
+
+def printXmlElement(out, level, name, stringValue):
+    out.write(indent(level) + openTag(name) + stringValue + closeTag(name))
+
+def printObject(out, level, name, object):
+    
+    otype = type(object)
+    
+    if otype is type(None):
+        out.write(indent(level) + openCloseTag(name))
+        return
+    
+    elif otype is int:
+        value = hex(object)
+        printXmlElement(out, level, name, value)
+        return
+    
+    elif otype is bytearray or otype is bytes:
+        value = byteDataToHex(object)
+        printXmlElement(out, level, name, value)
+        return
+    
+    elif otype is list:
+        out.write(indent(level) + openTag(name) + "\n")
+        
+        for entry in object:
+            printObject(out, level + 1, name + "-element", entry)
+        
+        out.write(indent(level) + closeTag(name))
+        return
+    
+    elif hasattr(otype, "fields"):
+        out.write(indent(level) + openTag(name) + "\n")
+        
+        for field in object.fields:
+            value = getattr(object, field)
+            printObject(out, level + 1, field, value)
+        
+        out.write(indent(level) + closeTag(name))
+        return
+    
     else:
-        printXmlElement(out, indent, name, str(objectToPrint))
+        printXmlElement(out, level, name, str(object))
+        return
 
 def printModel(model, outputFilePath):
     outputStream = io.StringIO()
     
     outputFile = open(outputFilePath, "w")
+    
     printObject(outputStream, 0, "model", model)
     
     outputFile.write(outputStream.getvalue())
@@ -127,7 +160,8 @@ def processDirectory(inputPath, outputPath, recurse, errorFile):
             break
     
     return count, succeeded, failed
-    
+ 
+ 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Convert Starcraft II m3 models to xml format.')
     parser.add_argument('input_path', 
