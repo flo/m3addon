@@ -77,11 +77,7 @@ def printModel(model, outputFilePath):
     
     outputStream.close()
 
-def convertFile(count, inputFilePath, outputFilePath, errorFile):
-    print("\nFile %d:" % count)
-    print("In:\t%s" % inputFilePath)
-    print("Out:\t%s" % outputFilePath)
-    
+def convertFile(inputFilePath, outputFilePath, errorFile):
     t0 = time.time()
     
     model = None
@@ -101,6 +97,43 @@ def convertFile(count, inputFilePath, outputFilePath, errorFile):
     
     return True
 
+def processFile(inputPath, outputPath, inputFilePath, errorFile):
+    relativeInputPath = os.path.relpath(inputFilePath, inputPath)
+    relativeOutputPath = relativeInputPath + ".xml"
+    
+    print("In:\t%s" % relativeInputPath)
+    print("Out:\t%s" % relativeOutputPath)
+    
+    outputFilePath = os.path.join(outputPath, relativeOutputPath)
+    
+    outputDirectory = os.path.dirname(outputFilePath)
+    if outputDirectory and not os.path.exists(outputDirectory):
+        os.makedirs(outputDirectory)
+    
+    return convertFile(inputFilePath, outputFilePath, errorFile)
+
+def processDirectory(inputPath, outputPath, recurse, errorFile):
+    
+    count, succeeded, failed = 0, 0, 0
+    
+    for path, dirs, files in os.walk(inputPath):
+        
+        for file in files:
+            if file.endswith(".m3"):
+                
+                print("\nFile %d:" % count)
+                inputFilePath = os.path.join(path, file)
+                success = convertFile(inputPath, outputPath, inputFilePath, errorFile)
+                
+                succeeded += success
+                failed += not success
+                count += 1
+        
+        if not recurse:
+            break
+    
+    return count, succeeded, failed
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Convert Starcraft II m3 models to xml format.')
     parser.add_argument('input_path', 
@@ -138,34 +171,17 @@ if __name__ == "__main__":
     t0 = time.time()
     print("Started!")
     
-    count = 0
-    successCount = 0
-    failureCount = 0
-    for path, dirs, files in os.walk(inputPath):
-        
-        for file in files:
-            if file.endswith(".m3"):
-                inputFilePath = os.path.join(path, file)
-                commonStem = os.path.commonprefix([inputPath, inputFilePath])
-                relativePath = os.path.relpath(inputFilePath, commonStem)
-                outputFilePath = os.path.join(outputPath, relativePath)
-                
-                outputDirectory = os.path.dirname(outputFilePath)
-                if not os.path.exists(outputDirectory):
-                    os.makedirs(outputDirectory)
-                
-                success = convertFile(count, inputFilePath, outputFilePath + ".xml", errorFile)
-                
-                successCount += success
-                failureCount += not success
-                count += 1
-        
-        if not recurse:
-            break
+    if os.path.isfile(inputPath):
+        inputFilePath = inputPath
+        inputPath = os.path.dirname(inputPath)
+        success = processFile(inputPath, outputPath, inputFilePath, errorFile)
+        total, succeeded, failed = 1, success, not success
+    else:
+        total, succeeded, failed = processDirectory(inputPath, outputPath, recurse, errorFile)
     
     if errorLog != None:
         errorFile.close()
     
     t1 = time.time()
     print("\nFinished!")
-    print("%d files found, %d succeeded, %d failed in %.2f s" % (count, successCount, failureCount, (t1 - t0)))
+    print("%d files found, %d succeeded, %d failed in %.2f s" % (total, succeeded, failed, (t1 - t0)))
