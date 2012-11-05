@@ -48,8 +48,8 @@ def openCloseTag(name):
     return "<%s />\n" % name
 
 
-def printXmlElement(out, level, name, stringValue):
-    out.write(indent(level) + openTag(name) + stringValue + closeTag(name))
+def printXmlElement(out, level, name, value):
+    out.write(indent(level) + openTag(name) + value + closeTag(name))
 
 def printObject(out, level, name, object):
     
@@ -89,7 +89,8 @@ def printObject(out, level, name, object):
         return
     
     else:
-        printXmlElement(out, level, name, str(object))
+        value = str(object)
+        printXmlElement(out, level, name, value)
         return
 
 def printModel(model, outputFilePath):
@@ -103,6 +104,7 @@ def printModel(model, outputFilePath):
     outputFile.close()
     
     outputStream.close()
+
 
 def convertFile(inputFilePath, outputFilePath, errorFile):
     t0 = time.time()
