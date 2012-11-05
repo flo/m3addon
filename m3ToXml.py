@@ -117,7 +117,7 @@ def processDirectory(inputPath, outputPath, recurse, errorFile):
                 
                 print("\nFile %d:" % count)
                 inputFilePath = os.path.join(path, file)
-                success = convertFile(inputPath, outputPath, inputFilePath, errorFile)
+                success = processFile(inputPath, outputPath, inputFilePath, errorFile)
                 
                 succeeded += success
                 failed += not success
