@@ -32,13 +32,7 @@ import time
 import traceback
 
 def byteDataToHex(byteData):
-    s = "0x"
-    for i in range(len(byteData)):
-        hexValue = hex(byteData[i])[2:]
-        if len(hexValue) <= 1:
-            hexValue = "0"+hexValue
-        s +=hexValue
-    return s
+    return '0x' + ''.join(["%02x" % x for x in byteData])
 
 def printXmlElement(out, indent, name, stringValue):
     out.write(("\t"*indent) + ("<%s>" % name) + stringValue + ("</%s>\n" % name))
