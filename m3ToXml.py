@@ -106,9 +106,7 @@ def printModel(model, outputFilePath):
     outputStream.close()
 
 
-def convertFile(inputFilePath, outputFilePath, errorFile):
-    t0 = time.time()
-    
+def convertFile(inputFilePath, outputFilePath, errorFile):    
     model = None
     try:
         model = loadModel(inputFilePath)
@@ -120,25 +118,21 @@ def convertFile(inputFilePath, outputFilePath, errorFile):
         return False
     
     printModel(model, outputFilePath)
-    
-    t1 = time.time()
-    print("Success: %.3f s" % (t1 - t0))
-    
     return True
 
-def processFile(inputPath, outputPath, inputFilePath, errorFile):
+def processFile(inputPath, outputDirectory, inputFilePath, errorFile):
     relativeInputPath = os.path.relpath(inputFilePath, inputPath)
     relativeOutputPath = relativeInputPath + ".xml"
+   
+    if outputDirectory:
+        if outputDirectory and not os.path.exists(outputDirectory):
+            os.makedirs(outputDirectory)
+        outputFilePath = os.path.join(outputDirectory, relativeOutputPath)
+    else:
+        outputFileName = inputFilePath + ".xml"
     
-    print("In:\t%s" % relativeInputPath)
-    print("Out:\t%s" % relativeOutputPath)
-    
-    outputFilePath = os.path.join(outputPath, relativeOutputPath)
-    
-    outputDirectory = os.path.dirname(outputFilePath)
-    if outputDirectory and not os.path.exists(outputDirectory):
-        os.makedirs(outputDirectory)
-    
+    print("%s -> %s" % (inputFilePath, outputFilePath))
+
     return convertFile(inputFilePath, outputFilePath, errorFile)
 
 def processDirectory(inputPath, outputPath, recurse, errorFile):
@@ -150,7 +144,6 @@ def processDirectory(inputPath, outputPath, recurse, errorFile):
         for file in files:
             if file.endswith(".m3"):
                 
-                print("\nFile %d:" % count)
                 inputFilePath = os.path.join(path, file)
                 success = processFile(inputPath, outputPath, inputFilePath, errorFile)
                 
@@ -162,15 +155,14 @@ def processDirectory(inputPath, outputPath, recurse, errorFile):
             break
     
     return count, succeeded, failed
- 
- 
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Convert Starcraft II m3 models to xml format.')
-    parser.add_argument('input_path', 
-        help='M3 file or directory containing m3 files to convert.')
-    parser.add_argument('output_path',
-        nargs='?',
-        help='Directory for xml file output.')
+    parser.add_argument('path', nargs='+', help="Either a *.m3 file or a directory with *.m3 files")
+    parser.add_argument('--output-directory', 
+        '-o', 
+        help='Directory in which m3 files will be placed')
     parser.add_argument('-r', '--recurse',
         action='store_true', default=False,
         help='Recurse input directory and convert all m3 files found.')
@@ -179,17 +171,15 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    inputPath = args.input_path
-    if not os.path.isdir(inputPath) and not os.path.isfile(inputPath):
-        sys.stderr.write("input_path %s is not a valid directory or file" % inputPath)
+    outputDirectory = args.output_directory
+    if outputDirectory != None and not os.path.isdir(outputDirectory):
+        sys.stderr.write("%s is not a directory" % outputDirectory)
         sys.exit(2)
-    
-    outputPath = args.output_path
-    if outputPath == None:
-        if not os.path.isdir(inputPath):
-            outputPath = os.path.dirname(inputPath)
-        else:
-            outputPath = inputPath
+        
+    for path in args.path:
+        if not os.path.isdir(path) and not os.path.isfile(path):
+            sys.stderr.write("Path %s is not a valid directory or file" % path)
+            sys.exit(2)
     
     recurse = args.recurse
     
@@ -199,19 +189,23 @@ if __name__ == "__main__":
         errorFile = open(errorLog, "w")
     
     t0 = time.time()
-    print("Started!")
-    
-    if os.path.isfile(inputPath):
-        inputFilePath = inputPath
-        inputPath = os.path.dirname(inputPath)
-        success = processFile(inputPath, outputPath, inputFilePath, errorFile)
-        total, succeeded, failed = 1, success, not success
-    else:
-        total, succeeded, failed = processDirectory(inputPath, outputPath, recurse, errorFile)
-    
+    print("Converting files..")
+    for path in args.path:
+        total, succeeded, failed = (0, 0, 0)
+        if os.path.isfile(path):
+            inputFilePath = path
+            path = os.path.dirname(path)
+            success = processFile(path, outputDirectory, inputFilePath, errorFile)
+            totalDelta, succeededDelta, failedDelta = 1, success, not success
+        else:
+            totalDelta, succeededDelta, failedDelta = processDirectory(path, outputDirectory, recurse, errorFile)
+        total += totalDelta
+        succeeded += succeededDelta
+        failed += failedDelta
     if errorLog != None:
         errorFile.close()
     
     t1 = time.time()
-    print("\nFinished!")
-    print("%d files found, %d succeeded, %d failed in %.2f s" % (total, succeeded, failed, (t1 - t0)))
+    print("%d files found, %d converted, %d failed in %.2f s" % (total, succeeded, failed, (t1 - t0)))
+    if failed > 0:
+        sys.exit(1)
