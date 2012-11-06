@@ -111,10 +111,12 @@ def convertFile(inputFilePath, outputFilePath, errorFile):
     try:
         model = loadModel(inputFilePath)
     except Exception as e:
-        print("Error: %s" % e)
         if errorFile != None:
+            print("Error: %s" % e)
             errorFile.write("\nFile: %s\n" % inputFilePath)
             errorFile.write("Trace: %s\n" % traceback.format_exc())
+        else:
+            raise e
         return False
     
     printModel(model, outputFilePath)
