@@ -131,7 +131,7 @@ def processFile(inputPath, outputDirectory, inputFilePath, continueAtErrors):
             os.makedirs(outputDirectory)
         outputFilePath = os.path.join(outputDirectory, relativeOutputPath)
     else:
-        outputFileName = inputFilePath + ".xml"
+        outputFilePath = inputFilePath + ".xml"
     
     print("%s -> %s" % (inputFilePath, outputFilePath))
 
