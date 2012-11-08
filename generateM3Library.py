@@ -114,17 +114,17 @@ class Section:
 
 class FieldTypeInfo:
     \"\"\" Stores information of the type of a field:\"\"\"
-    def __init__(self, typeName, typeClass, isList):
+    def __init__(self, typeName, typeClass, referencedTag):
         self.typeName = typeName
         self.typeClass = typeClass
-        self.isList = isList
+        self.referencedTag = referencedTag
 
-def resolveRef(ref, sections, expectedType, variable):
+def resolveRef(ref, sections, expectedTagName, variable):
     if ref.entries == 0:
-        if expectedType == None:
+        if expectedTagName == None:
             return []
         else:
-            return expectedType.createEmptyArray()
+            return createEmptyArrayOf(expectedTagName)
     
     referencedSection = sections[ref.index]
     referencedSection.timesReferenced += 1
@@ -134,19 +134,37 @@ def resolveRef(ref, sections, expectedType, variable):
         raise Exception("%s references more elements then there actually are" % variable)
 
     referencedObject = referencedSection.content
-    if expectedType != None:
-        expectedTagName = expectedType.tagName
+    if expectedTagName != None:
         actualTagName = indexEntry.tag
         if actualTagName != expectedTagName:
             raise Exception("Expected ref %s point to %s, but it points to %s" % (variable, expectedTagName, actualTagName))
-        expectedTagVersion = expectedType.tagVersion
-        actualTagVersion = indexEntry.version
-        if actualTagName != expectedTagName:
-            raise Exception("Expected ref %s point to %s in version %s, but it points version %s" % (variable, expectedTagName,expectedTagVersion, actualTagVersion))
-
     else:
         raise Exception("Field %s can be marked as a reference pointing to %sV%s" % (variable, indexEntry.tag,indexEntry.version))
     return referencedObject
+    
+def getListContentClassForTag(l, tagName):
+    if tagName in ["CHAR", "U8__", "REAL", "I16_", "U16_", "I32_", "U32_"]:
+        return structMap[tagName + "V0"]
+
+    if type(l) != list:
+        raise Exception("Expected a list of %s, but instead of a list it was a object of type %s" % (tagName , type(l)))
+    if len(l) == 0:
+        return None
+    
+    contentClass = type(l[0])
+    if not hasattr(contentClass, "tagName"):
+        raise Exception("Expected a list to contain a object of a class of %s, but it contained a object of class %s" % (tagName, contentClass))
+    if not contentClass.tagName == tagName:
+        raise Exception("Expected a list to contain a object of a class with tagName %s, but it contained a object of class %s with tagName %s" % (tagName, contentClass, contentClass.tagName))
+    return contentClass
+
+def createEmptyArrayOf(tagName):
+    if tagName == "CHAR":
+        return None # even no terminating character
+    elif tagName == "U8__":
+        return bytearray(0)
+    else:
+        return []
 
 """
     def visitStart(self, generalDataMap):
@@ -198,6 +216,13 @@ class KnownStructuresListDeterminer(Visitor):
     def visitClassEnd(self, generalDataMap, classDataMap):
         fullName = classDataMap["fullName"]
         generalDataMap["knownStructs"].add(fullName)
+
+class KnownTagsListDeterminer(Visitor):
+    def visitStart(self, generalDataMap):
+        generalDataMap["knownTags"] = set()
+    def visitClassEnd(self, generalDataMap, classDataMap):
+        tagName = classDataMap["tagName"]
+        generalDataMap["knownTags"].add(tagName)
 
 class PrimitiveStructureDetector(Visitor):
     def visitClassStart(self, generalDataMap, classDataMap):
@@ -436,9 +461,13 @@ class ReferenceFeatureAdder(Visitor):
         pass #nothing to do
 """
     introduceReferencesTemplate = """\
-        indexReference = indexMaker.getIndexReferenceTo(self.%(fieldName)s, %(referenceClass)s, %(refTo)s)
-        %(refTo)s.introduceIndexReferencesForOneOrMore(self.%(fieldName)s, indexMaker)
-        self.%(fieldName)s = indexReference
+        listContentClass = getListContentClassForTag(self.%(fieldName)s, "%(refTo)s")
+        if listContentClass != None:
+            indexReference = indexMaker.getIndexReferenceTo(self.%(fieldName)s, %(referenceClass)s, listContentClass)
+            listContentClass.introduceIndexReferencesForOneOrMore(self.%(fieldName)s, indexMaker)
+            self.%(fieldName)s = indexReference
+        else:
+            self.%(fieldName)s = indexMaker.getIndexReferenceTo(self.%(fieldName)s, %(referenceClass)s, None)
 """
 
     introduceReferencesForFieldTemplate = """\
@@ -458,17 +487,18 @@ class ReferenceFeatureAdder(Visitor):
         fieldName = fieldDataMap["fieldName"]
         fieldType = fieldDataMap["typeString"]
         knownStructs = generalDataMap["knownStructs"]
+        knownTags = generalDataMap["knownTags"]
         if fieldType == "Reference" or fieldType == "SmallReference":
             refTo = fieldDataMap["refTo"]
-            if (refTo != None) and (not (refTo in knownStructs)):
-                raise Exception("Structure %s referenced by %s.%s is not defined" % (refTo,fullName,fieldName))
+            if (refTo != None) and (not (refTo in knownTags)):
+                raise Exception("The structure with tagName %s referenced by %s.%s is not defined" % (refTo,fullName,fieldName))
 
             if refTo == None:
                 template = ReferenceFeatureAdder.introduceReferencesForNoneTemplate
             else:
                 template = ReferenceFeatureAdder.introduceReferencesTemplate
             self.introduceReferencesAssigments += template % {"fieldName": fieldName, "referenceClass": fieldType, "refTo":refTo}
-            self.resolveAssigments += "        self.%(fieldName)s = resolveRef(self.%(fieldName)s,sections,%(refTo)s,\"%(fullName)s.%(fieldName)s\")\n" % {"fieldName": fieldName, "fullName":fullName, "refTo": refTo}
+            self.resolveAssigments += "        self.%(fieldName)s = resolveRef(self.%(fieldName)s,sections,\"%(refTo)s\",\"%(fullName)s.%(fieldName)s\")\n" % {"fieldName": fieldName, "fullName":fullName, "refTo": refTo}
         elif fieldType in knownStructs:
             self.introduceReferencesAssigments += ReferenceFeatureAdder.introduceReferencesForFieldTemplate % {"fieldName": fieldName, "fieldType": fieldType}
             self.resolveAssigments += "        self.%(fieldName)s.resolveReferences(sections)\n" % {"fieldName": fieldName}
@@ -494,7 +524,7 @@ class ExpectedAndDefaultConstantsDeterminer(Visitor):
         fieldType = fieldDataMap["typeString"]
         fieldIndex = fieldDataMap["fieldIndex"]
         refTo = fieldDataMap["refTo"]
-        knownStructs = generalDataMap["knownStructs"]
+        knownTags = generalDataMap["knownTags"]
         fullName = classDataMap["fullName"]
         expectedValueString = fieldDataMap["expectedValueString"]
         defaultValueString = fieldDataMap["defaultValueString"]
@@ -536,8 +566,8 @@ class ExpectedAndDefaultConstantsDeterminer(Visitor):
                 else:
                     defaultValueConstant = defaultValueString
         elif fieldType == "Reference" or fieldType == "SmallReference":
-            if refTo in knownStructs:
-                defaultValueConstant = '%s.createEmptyArray()' % (refTo)
+            if refTo in knownTags:
+                defaultValueConstant = 'createEmptyArrayOf("%s")' % (refTo)
             else:
                 defaultValueConstant = '[]'
         elif fieldType == None:
@@ -618,7 +648,6 @@ class CreateInstancesFeatureAdder(Visitor):
         fieldName = fieldDataMap["fieldName"]
         fieldType = fieldDataMap["typeString"]
         fieldIndex = fieldDataMap["fieldIndex"]
-        refTo = fieldDataMap["refTo"]
         knownStructs = generalDataMap["knownStructs"]
         expectedValueConstant = fieldDataMap["expectedValueConstant"]
         defaultValueConstant = fieldDataMap["defaultValueConstant"]
@@ -882,36 +911,6 @@ class BytesRequiredForOneOrMoreMethodAdder(Visitor):
         template = BytesRequiredForOneOrMoreMethodAdder.template
         text = template % {"fullName":fullName}
         generalDataMap["out"].write(text)
-        
-class CreateEmptyArrayMethodAdder(Visitor):
-    charTemplate = """
-    @staticmethod
-    def createEmptyArray():
-        return None # even no terminating character
-    """
-    
-    u8Template = """
-    @staticmethod
-    def createEmptyArray():
-        return bytearray(0)
-    """
-    
-    defaultTemplate = """
-    @staticmethod
-    def createEmptyArray():
-        return []
-    """
-    
-    def visitClassEnd(self, generalDataMap, classDataMap):
-        fullName = classDataMap.get("fullName")
-        if fullName ==  "CHARV0":
-            template = CreateEmptyArrayMethodAdder.charTemplate
-        elif fullName == "U8__V0":
-            template = CreateEmptyArrayMethodAdder.u8Template
-        else:
-            template = CreateEmptyArrayMethodAdder.defaultTemplate
-        text = template % {}
-        generalDataMap["out"].write(text)
 
 class BitMethodsAdder(Visitor):
     template = """
@@ -989,10 +988,10 @@ class GetFieldTypeInfoMethodAdder(Visitor):
         fieldIndex = fieldDataMap["fieldIndex"]
         knownStructs = generalDataMap["knownStructs"]
         if (fieldType == 'Reference' or fieldType == 'SmallReference'):
-            fieldType = fieldDataMap["refTo"]
-            fieldIsList = True
+            referencedTag = fieldDataMap["refTo"]
+            referencedTagWithQuotes = '"%s"' % referencedTag
         else:
-            fieldIsList = False
+            referencedTagWithQuotes = "None"
         
         if fieldType in knownStructs:
             typeClass = fieldType
@@ -1003,8 +1002,8 @@ class GetFieldTypeInfoMethodAdder(Visitor):
         
         if fieldIndex != 0:
             self.fieldToTypeInfoMapStr += ", "
-        self.fieldToTypeInfoMapStr += ('"%(fieldName)s":FieldTypeInfo(%(fieldTypeStr)s,%(typeClass)s, %(isList)s)' % 
-            {"fieldName":fieldName, "fieldTypeStr":fieldTypeStr, "typeClass": typeClass ,"isList":fieldIsList})
+        self.fieldToTypeInfoMapStr += ('"%(fieldName)s":FieldTypeInfo(%(fieldTypeStr)s,%(typeClass)s, %(referencedTagWithQuotes)s)' % 
+            {"fieldName":fieldName, "fieldTypeStr":fieldTypeStr, "typeClass": typeClass ,"referencedTagWithQuotes":referencedTagWithQuotes})
         
     def visitClassEnd(self, generalDataMap, classDataMap):
         fullName = classDataMap["fullName"]
@@ -1014,8 +1013,8 @@ class GetFieldTypeInfoMethodAdder(Visitor):
         generalDataMap["out"].write(methodText)
 
 class ValidateMethodAdder(Visitor):
-    intRefToMinValue = {"I16_V0":(-(1<<15)), "U16_V0":0, "I32_V0":(-(1<<31)), "U32_V0":0}
-    intRefToMaxValue = {"I16_V0":((1<<15)-1), "U16_V0":((1<<16)-1), "I32_V0":((1<<31)-1), "U32_V0":((1<<32)-1)}
+    intRefToMinValue = {"I16_":(-(1<<15)), "U16_":0, "I32_":(-(1<<31)), "U32_":0}
+    intRefToMaxValue = {"I16_":((1<<15)-1), "U16_":((1<<16)-1), "I32_":((1<<31)-1), "U32_":((1<<32)-1)}
     intTypeToMinValue = {"int16":(-(1<<15)), "uint16":0, "int32":(-(1<<31)), "uint32":0, "int8":-(1<<7), "uint8": 0}
     intTypeToMaxValue = {"int16":((1<<15)-1), "uint16":((1<<16)-1), "int32":((1<<31)-1), "uint32":((1<<32)-1), "int8":((1<<7)-1), "uint8": ((1<<8)-1)}
 
@@ -1046,8 +1045,9 @@ class ValidateMethodAdder(Visitor):
     validateList = """
         if (type(instance.%(fieldName)s) != list):
             raise Exception("%%s is not a list of %%s but a %%s" %% (fieldId, "%(refTo)s", type(instance.%(fieldName)s)))
+        listContentClass = getListContentClassForTag(instance.%(fieldName)s, "%(refTo)s")
         for itemIndex, item in enumerate(instance.%(fieldName)s):
-            %(refTo)s.validateInstance(item, "%%s[%%d]" %% (fieldId, itemIndex))
+            listContentClass.validateInstance(item, "%%s[%%d]" %% (fieldId, itemIndex))
 """
     validateEmptyList = """
         if (type(instance.%(fieldName)s) != list) or (len(instance.%(fieldName)s) != 0):
@@ -1096,6 +1096,7 @@ class ValidateMethodAdder(Visitor):
         fieldIndex = fieldDataMap["fieldIndex"]
         refTo = fieldDataMap["refTo"]
         knownStructs = generalDataMap["knownStructs"]
+        knownTags = generalDataMap["knownTags"]
         self.statements += '        fieldId = id + ".%(fieldName)s"\n'  % {"fieldName":fieldName}
         if fieldType == "tag":
             self.statements += ValidateMethodAdder.validateTagTemplate % {"fieldName":fieldName}
@@ -1106,14 +1107,14 @@ class ValidateMethodAdder(Visitor):
         elif fieldType == "float":
             self.statements += ValidateMethodAdder.validateFloatTemplate % {"fieldName":fieldName}
         elif fieldType == "Reference" or fieldType == "SmallReference":
-            if refTo in knownStructs:
-                if refTo == "CHARV0":
+            if refTo in knownTags:
+                if refTo == "CHAR":
                     self.statements +=  ValidateMethodAdder.validateCHARV0Reference % {"fieldName":fieldName}
-                elif refTo == "U8__V0":
+                elif refTo == "U8__":
                     self.statements +=  ValidateMethodAdder.validateU8__V0Reference % {"fieldName":fieldName}
-                elif refTo == "REALV0":
+                elif refTo == "REAL":
                     self.statements +=  ValidateMethodAdder.validateREALV0Reference % {"fieldName":fieldName}
-                elif refTo in  ["I16_V0", "U16_V0", "I32_V0", "U32_V0"]:
+                elif refTo in  ["I16_", "U16_", "I32_", "U32_"]:
                     minValue = ValidateMethodAdder.intRefToMinValue[refTo]
                     maxValue = ValidateMethodAdder.intRefToMaxValue[refTo]
                     self.statements +=  ValidateMethodAdder.validateIntReference % {"fieldName":fieldName, "minValue":minValue, "maxValue":maxValue}
@@ -1302,7 +1303,7 @@ class IndexReferenceSourceAndSectionListMaker:
 def modelToSections(model):
     header = MD34V11()
     header.tag = "MD34"
-    header.model = model
+    header.model = [model]
     
     indexMaker = IndexReferenceSourceAndSectionListMaker()
     indexMaker.getIndexReferenceTo([header], Reference ,MD34V11)
@@ -1387,7 +1388,8 @@ def writeM3PythonTo(structuresXmlFile, out):
     firstRunVisitors = [
         StructureAttributesReader(),
         FullNameDeterminer(),
-        KnownStructuresListDeterminer()]
+        KnownStructuresListDeterminer(),
+        KnownTagsListDeterminer()]
     visitStructresDomWith(doc, firstRunVisitors, generalDataMap)
 
     generalDataMap["out"] = out
@@ -1421,7 +1423,6 @@ def writeM3PythonTo(structuresXmlFile, out):
         RawBytesForOneOrMoreMethodAdder(),
         CountOneOrMoreMethodAdder(),
         BytesRequiredForOneOrMoreMethodAdder(),
-        CreateEmptyArrayMethodAdder(),
         BitMethodsAdder(),
         GetFieldTypeInfoMethodAdder(),
         ValidateMethodAdder(),

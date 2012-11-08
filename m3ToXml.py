@@ -70,8 +70,17 @@ def printObject(out, level, name, object):
         return
     
     elif otype is list:
-        out.write(indent(level) + openTag(name) + "\n")
         
+        if len(object) == 0:
+            out.write(indent(level) + openTag(name) + closeTag(name))
+            return
+        contentClass = type(object[0])
+        if hasattr(contentClass, "tagVersion"):
+            structName = contentClass.tagName
+            structVersion = contentClass.tagVersion
+            out.write(('%s<%s structureName="%s" structureVersion="%s" >\n' % (indent(level), name, structName, structVersion)))
+        else:
+            out.write(indent(level) + openTag(name) + "\n")
         for entry in object:
             printObject(out, level + 1, name + "-element", entry)
         
@@ -98,7 +107,13 @@ def printModel(model, outputFilePath):
     
     outputFile = open(outputFilePath, "w")
     
-    printObject(outputStream, 0, "model", model)
+    outputStream.write('<model structureName="%s" structureVersion="%s" >\n' %(model.tagName, model.tagVersion))
+
+    for field in model.fields:
+        value = getattr(model, field)
+        printObject(outputStream, 0, field, value)
+
+    outputStream.write(closeTag("model"))
     
     outputFile.write(outputStream.getvalue())
     outputFile.close()

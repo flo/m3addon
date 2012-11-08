@@ -34,7 +34,7 @@ def createSingleStructureElement(xmlNode, typeClass):
     for child in xmlNode.childNodes:
         if type(child) == xml.dom.minidom.Text:
             if not child.wholeText.isspace():
-                raise Exception("Unexpected content \"%s\" within element %s", (child.wholeText, xmlNode.nodeName))
+                raise Exception("Unexpected content \"%s\" within element %s" % (child.wholeText, xmlNode.nodeName))
         else:
             fieldName = child.nodeName
             fieldTypeInfo = typeClass.getFieldTypeInfo(fieldName)
@@ -45,15 +45,16 @@ def createSingleStructureElement(xmlNode, typeClass):
         
 def createFieldContent(xmlNode, fieldName, fieldTypeInfo):
     typeName = fieldTypeInfo.typeName
-    fieldIsList =  fieldTypeInfo.isList
-    if typeName == "CHARV0":
+    referencedTag =  fieldTypeInfo.referencedTag
+    if referencedTag == "CHAR":
         return stringContentOf(xmlNode)
-    elif (typeName == None and not fieldIsList):
-        return hexToBytes(stringContentOf(xmlNode),xmlNode)
-    elif typeName == "U8__V0":
+    elif referencedTag == "U8__":
         return bytearray(hexToBytes(stringContentOf(xmlNode),xmlNode))
-    elif fieldIsList:
-        return createElementList(xmlNode, fieldName, fieldTypeInfo.typeName, fieldTypeInfo.typeClass)
+    elif (referencedTag != None):
+        return createElementList(xmlNode, fieldName, referencedTag)
+    elif (typeName == None):
+        return hexToBytes(stringContentOf(xmlNode),xmlNode)
+
     else:
         return createSingleElement(xmlNode, fieldTypeInfo.typeName, fieldTypeInfo.typeClass)
 
@@ -88,20 +89,40 @@ def createSingleElement(xmlNode, typeName, typeClass):
         return createSingleStructureElement(xmlNode, typeClass)
     else:
         raise Exception("%(nodeName)s of type %(typeName)s has no class" % {"nodeName":xmlNode.nodeName,"typeName":typeName})
-        
-def createElementList(xmlNode, parentName, typeName, typeClass):
+      
+      
+def childElementsOf(parentName, xmlNode):
     expectedChildNames = parentName + "-element"
-    child = xmlNode.firstChild
-    createdList = []
     for child in xmlNode.childNodes:
         if type(child) == xml.dom.minidom.Text:
             if not child.data.isspace():
-                raise Exception("Unexpected content \"%s\" within element %s", (child.wholeText, xmlNode.nodeName))
+                raise Exception("Unexpected content \"%s\" within element %s" % (child.wholeText, xmlNode.nodeName))
         else:
             if (child.nodeName != expectedChildNames):
                 raise Exception("Unexpected child \"%s\" within element %s", (child.nodeName, xmlNode.nodeName))
-            o = createSingleElement(child, typeName, typeClass)
-            createdList.append(o)
+            yield child
+
+def createElementList(xmlNode, parentName, referencedTag):
+    xmlElements = list(childElementsOf(parentName, xmlNode))
+    if referencedTag in ["CHAR", "I32_","I16_", "I8__", "U32_", "U16_", "U8__", "REAL"]:
+        structVersion = "0"
+    else:
+        if len(xmlElements) == 0:
+            return []
+        
+        child = xmlNode.firstChild
+        structVersion = xmlNode.getAttribute("structureVersion")
+        structName = xmlNode.getAttribute("structureName")
+        if structName == "" or structVersion == "":
+            raise Exception("Incompatible format: Require now a strutName and structVerson attribute for the list %s" % parentName)
+        if structName != referencedTag:
+            raise Exception("Expected a %s to have the structure name %s instead of %s" % (parentName, referencedTag, structName))
+    fullStructName = referencedTag + "V" + structVersion
+    structClass = structMap[fullStructName]
+    createdList = []
+    for child in xmlElements:
+        o = createSingleElement(child, fullStructName, structClass)
+        createdList.append(o)
         
     return createdList
         
