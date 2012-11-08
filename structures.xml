@@ -1191,7 +1191,7 @@
             <field name="long3" type="uint32" default-value="0"/>
             <field name="ribbonFlags" type="uint32" />
             <field name="long5" type="uint32" expected-value="0"/>
-            <field name="long6" type="uint32" expected-value="0"/>
+            <field offset="476" name="unknownAt476" type="float" default-value="0.0"/>
             <field name="long7" type="uint32" default-value="2"/>
             <field name="long8" type="uint32" default-value="0"/> <!--hydralisk death 2-->
             <field name="directionVariationBool" type="uint32" />
