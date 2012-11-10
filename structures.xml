@@ -755,6 +755,12 @@
             <field offset="80" name="unknown3" type="uint32" expected-value="0x20" />
         </structure>
         
+        <structure name="CREP" version="0" size="24" >
+            <description>Creep Material</description>
+            <field offset="0" name="name" type="Reference" refTo="CHAR" />
+            <field offset="12" name="layer" type="Reference" refTo="LAYR" />
+        </structure>
+
         <structure name="SCHR" version="0" size="12" >
             <description>Unknown</description>
             <field offset="0" name="path" type="Reference" refTo="CHAR" />
@@ -1308,7 +1314,7 @@
             <field offset="360" name="volumeMaterials" type="Reference" refTo="VOL_" />
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
             <field name="unknownMaybeRef0" type="Reference" />
-            <field name="crepData" type="Reference" />
+            <field offset="384" name="creepMaterials" type="Reference" refTo="CREP" />
             <field offset="396" name="particles" type="Reference" refTo="PAR_" />
             <field offset="408" name="particleCopies" type="Reference" refTo="PARC" />
             <field offset="420" name="ribbons" type="Reference" refTo="RIB_" />

@@ -41,13 +41,16 @@ terrainMaterialLayerNames = ["Terrain"]
 volumeMaterialLayerFieldNames = ["colorDefiningLayer", "unknownLayer2", "unknownLayer3"]
 volumeMaterialLayerNames = ["Color Defining Layer", "Layer 2", "Layer 3"]
 
+creepMaterialLayerFieldNames = ["layer"]
+creepMaterialLayerNames = ["Creep"]
 
-materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume"]
+materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume", "Unknown", "Creep"]
 standardMaterialTypeIndex = 1
 displacementMaterialTypeIndex = 2
 compositeMaterialTypeIndex = 3
 terrainMaterialTypeIndex = 4
 volumeMaterialTypeIndex = 5
+creepMaterialTypeIndex = 7
 
 emssionAreaTypePoint = "0"
 emssionAreaTypePlane = "1"
@@ -177,6 +180,8 @@ def getMaterial(scene, materialTypeIndex, materialIndex):
         return scene.m3_terrain_materials[materialIndex] 
     elif materialTypeIndex == volumeMaterialTypeIndex:
         return scene.m3_volume_materials[materialIndex] 
+    elif materialTypeIndex == creepMaterialTypeIndex:
+        return scene.m3_creep_materials[materialIndex] 
     return None
 
 def sqr(x):
@@ -817,6 +822,9 @@ def transferTerrainMaterial(transferer):
 def transferVolumeMaterial(transferer):
     transferer.transferString("name")
     transferer.transferAnimatableFloat("volumeDensity")
+
+def transferCreepMaterial(transferer):
+    transferer.transferString("name")
 
 def transferMaterialLayer(transferer):
     transferer.transferString("imagePath")

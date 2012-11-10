@@ -1073,7 +1073,7 @@ class Exporter:
     def initMaterials(self, model):
         scene = self.scene
         
-        supportedMaterialTypes = {shared.standardMaterialTypeIndex, shared.displacementMaterialTypeIndex, shared.compositeMaterialTypeIndex, shared.terrainMaterialTypeIndex, shared.volumeMaterialTypeIndex}
+        supportedMaterialTypes = {shared.standardMaterialTypeIndex, shared.displacementMaterialTypeIndex, shared.compositeMaterialTypeIndex, shared.terrainMaterialTypeIndex, shared.volumeMaterialTypeIndex, shared.creepMaterialTypeIndex}
         for materialReference in scene.m3_material_references:
             materialType = materialReference.materialType
             if materialType in supportedMaterialTypes:
@@ -1095,6 +1095,9 @@ class Exporter:
 
         for materialIndex, material in enumerate(scene.m3_volume_materials):
             model.volumeMaterials.append(self.createVolumeMaterial(materialIndex, material))
+
+        for materialIndex, material in enumerate(scene.m3_creep_materials):
+            model.creepMaterials.append(self.createCreepMaterial(materialIndex, material))
 
     def createStandardMaterial(self, materialIndex, material):
         m3Material = m3.MAT_V15()
@@ -1164,6 +1167,20 @@ class Exporter:
 
         layerIndex = 0
         for layer, layerFieldName in zip(material.layers, shared.volumeMaterialLayerFieldNames):
+            animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
+            m3Layer = self.createMaterialLayer(layer, animPathPrefix)
+            setattr(m3Material, layerFieldName, [m3Layer])
+            layerIndex += 1
+        return m3Material
+
+    def createCreepMaterial(self, materialIndex, material):
+        m3Material = m3.CREPV0()
+        materialAnimPathPrefix = "m3_creep_materials[%s]." % materialIndex
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
+        shared.transferCreepMaterial(transferer)
+
+        layerIndex = 0
+        for layer, layerFieldName in zip(material.layers, shared.creepMaterialLayerFieldNames):
             animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
             m3Layer = self.createMaterialLayer(layer, animPathPrefix)
             setattr(m3Material, layerFieldName, [m3Layer])

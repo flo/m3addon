@@ -714,6 +714,22 @@ class Importer:
                 layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
                 shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1
+                
+    def createCreepMaterials(self, scene):
+        for materialIndex, m3Material in enumerate(self.model.creepMaterials):
+            material = scene.m3_creep_materials.add()
+            animPathPrefix = "m3_creep_materials[%s]." % materialIndex
+            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            shared.transferCreepMaterial(materialTransferer)
+            layerIndex = 0
+            for (layerName, layerFieldName) in zip(shared.creepMaterialLayerNames, shared.creepMaterialLayerFieldNames):
+                materialLayersEntry = getattr(m3Material, layerFieldName)[0]
+                materialLayer = material.layers.add()
+                materialLayer.name = layerName
+                animPathPrefix = "m3_creep_materials[%s].layers[%s]." % (materialIndex, layerIndex)
+                layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
+                shared.transferMaterialLayer(layerTransferer)
+                layerIndex += 1  
 
     def createMaterialReferences(self, scene):
         for m3MaterialReference in self.model.materialReferences:
@@ -747,6 +763,8 @@ class Importer:
             return self.model.terrainMaterials[materialIndex].name
         elif materialType == shared.volumeMaterialTypeIndex:
             return self.model.volumeMaterials[materialIndex].name
+        elif materialType == shared.creepMaterialTypeIndex:
+            return self.model.creepMaterials[materialIndex].name
         else:
             return None
         
@@ -759,6 +777,7 @@ class Importer:
         self.createCompositeMaterials(scene)
         self.createTerrainMaterials(scene)
         self.createVolumeMaterials(scene)
+        self.createCreepMaterials(scene)
         self.createMaterialReferences(scene)
 
     def createCameras(self):

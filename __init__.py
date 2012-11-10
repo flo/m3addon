@@ -718,12 +718,21 @@ geometricShapeTypeList = [("0", 'Cuboid', "A cuboid with the given width, length
                          ("1", 'Sphere', "A sphere with the given radius"),
                          ("2", 'Capsule', 'A capsue which is based on a cylinder with the given radius and height'),
                         ]
-matDefaultSettingsList = [("MESH", "Mesh Standard Material", "A material for meshes"), 
-                        ("PARTICLE", 'Particle Standard Material', "Material for particle systems"),
-                        ("DISPLACEMENT", "Displacement Material", "Moves the colors of the background to other locations"),
-                        ("COMPOSITE", "Composite Material", "A combination of multiple materials"),
-                        ("TERRAIN", "Terrain Material", "Makes the object look like the ground below it"),
-                        ("VOLUME", "Volume Material", "A fog like material")
+                        
+defaultSettingMesh = "MESH"
+defaultSettingParticle = "PARTICLE"
+defaultSettingDisplacement = "DISPLACEMENT"
+defaultSettingComposite = "COMPOSITE"
+defaultSettingTerrain = "TERRAIN"
+defaultSettingVolume = "VOLUME"
+defaultSettingCreep = "CREEP"
+matDefaultSettingsList = [(defaultSettingMesh, "Mesh Standard Material", "A material for meshes"), 
+                        (defaultSettingParticle, 'Particle Standard Material', "Material for particle systems"),
+                        (defaultSettingDisplacement, "Displacement Material", "Moves the colors of the background to other locations"),
+                        (defaultSettingComposite, "Composite Material", "A combination of multiple materials"),
+                        (defaultSettingTerrain, "Terrain Material", "Makes the object look like the ground below it"),
+                        (defaultSettingVolume, "Volume Material", "A fog like material"),
+                        (defaultSettingCreep, "Creep Material", "Looks like creep if there is creep below the model and is invisible otherwise")
                         ]
                         
 matBlendModeList = [("0", "Opaque", "no description yet"), 
@@ -875,6 +884,12 @@ class M3VolumeMaterial(bpy.types.PropertyGroup):
     # the following field gets used to update the name of the material reference:
     materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
     volumeDensity = bpy.props.FloatProperty(name="volume density",options={"ANIMATABLE"}, default=1.0, description="Factor that gets multiplicated with the strength values")
+    layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
+
+class M3CreepMaterial(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="name", default="Material", update=handleMaterialNameChange, options=set())
+    # the following field gets used to update the name of the material reference:
+    materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
     layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
 
 class M3Camera(bpy.types.PropertyGroup):
@@ -1312,6 +1327,9 @@ class MaterialPropertiesPanel(bpy.types.Panel):
                 material = scene.m3_volume_materials[materialIndex]
                 layout.prop(material, 'name', text="Name")
                 layout.prop(material, 'volumeDensity', text="Volume Density")
+            elif materialType == shared.creepMaterialTypeIndex:
+                material = scene.m3_creep_materials[materialIndex]
+                layout.prop(material, 'name', text="Name")
             else:
                 layout.label(text=("Unsupported material type %d" % materialType))
 
@@ -2100,12 +2118,6 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
   
     def execute(self, context):
         scene = context.scene
-        defaultSettingMesh = "MESH"
-        defaultSettingParticle = "PARTICLE"
-        defaultSettingDisplacement = "DISPLACEMENT"
-        defaultSettingComposite = "COMPOSITE"
-        defaultSettingTerrain = "TERRAIN"
-        defaultSettingVolume = "VOLUME"
 
         if self.defaultSetting in [defaultSettingMesh, defaultSettingParticle]:
             materialType = shared.standardMaterialTypeIndex
@@ -2165,13 +2177,15 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
             for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
                 layer = material.layers.add()
                 layer.name = layerName
-        elif self.defaultSetting == defaultSettingTerrain:
-            materialType = shared.volumeMaterialTypeIndex
-            materialIndex = len(scene.m3_volume_materials)
-            material = scene.m3_volume_materials.add()
-            for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
+        elif self.defaultSetting == defaultSettingCreep:
+            materialType = shared.creepMaterialTypeIndex
+            materialIndex = len(scene.m3_creep_materials)
+            material = scene.m3_creep_materials.add()
+            for (layerName, layerFieldName) in zip(shared.creepMaterialLayerNames, shared.creepMaterialLayerFieldNames):
                 layer = material.layers.add()
                 layer.name = layerName
+                
+                
         materialReferenceIndex = len(scene.m3_material_references)
         materialReference = scene.m3_material_references.add()
         materialReference.materialIndex = materialIndex
@@ -3031,6 +3045,7 @@ def register():
     bpy.types.Scene.m3_composite_materials = bpy.props.CollectionProperty(type=M3CompositeMaterial)
     bpy.types.Scene.m3_terrain_materials = bpy.props.CollectionProperty(type=M3TerrainMaterial)
     bpy.types.Scene.m3_volume_materials = bpy.props.CollectionProperty(type=M3VolumeMaterial)
+    bpy.types.Scene.m3_creep_materials = bpy.props.CollectionProperty(type=M3CreepMaterial)
     bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_cameras = bpy.props.CollectionProperty(type=M3Camera)
     bpy.types.Scene.m3_camera_index = bpy.props.IntProperty(options=set(), update=handleCameraIndexChanged)
