@@ -807,6 +807,7 @@ def transferStandardMaterial(transferer):
     transferer.transferEnum("blendMode")
     transferer.transferInt("priority")
     transferer.transferFloat("specularity")
+    transferer.transferInt("cutoutThresh")
     transferer.transferFloat("specMult")
     transferer.transferFloat("emisMult")
     transferer.transferEnum("layerBlendType")

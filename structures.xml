@@ -685,7 +685,8 @@
             <field offset="28" name="unknown1" type="uint32" default-value="0" />
             <field offset="32" name="specularity" type="float" />
             <field offset="36" name="unknown2" type="float" default-value="0.0" />
-            <field offset="40" name="cutoutThresh" type="uint32" default-value="0" />
+            <field offset="40" name="cutoutThresh" type="uint8" default-value="0" />
+            <field offset="41" name="unknownAt41" size="3" expected-value="0x000000" />
             <field offset="44" name="specMult" type="float" default-value="1.0" />
             <field offset="48" name="emisMult" type="float" default-value="1.0" />
             <field offset="52" name="diffuseLayer" type="Reference" refTo="LAYR" />
