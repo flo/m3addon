@@ -981,6 +981,9 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     unknownFloat5 = bpy.props.FloatProperty(default=1.0, name="unknownFloat5",options=set())
     unknownFloat6 = bpy.props.FloatProperty(default=1.0, name="unknownFloat6",options=set())
     unknownFloat7 = bpy.props.FloatProperty(default=1.0, name="unknownFloat7",options=set())
+    unknownAt908 = bpy.props.FloatProperty(default=0.0, name="unknownAt908",options={"ANIMATABLE"})
+    unknownAt952 = bpy.props.FloatProperty(default=0.0, name="unknownAt952",options={"ANIMATABLE"})
+    unknownAt1168 = bpy.props.FloatProperty(default=0.0, name="unknownAt1168",options={"ANIMATABLE"})
     particleType = bpy.props.EnumProperty(default="0", items=particleTypeList, options=set())
     lengthWidthRatio = bpy.props.FloatProperty(default=1.0, name="lengthWidthRatio",options=set())
     forceChannels = bpy.props.BoolVectorProperty(default=tuple(32*[False]), size=32, subtype="LAYER", options=set(), description="If a force shares a force channel with a particle system then it affects it")
@@ -1643,8 +1646,9 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(particle_system, "unknownFloat5", text="Unknown Float 5")
             layout.prop(particle_system, "unknownFloat6", text="Unknown Float 6")
             layout.prop(particle_system, "unknownFloat7", text="Unknown Float 7")
-
-            
+            layout.prop(particle_system, "unknownAt908", text="Unknown Float 8")
+            layout.prop(particle_system, "unknownAt952", text="Unknown Float 9")
+            layout.prop(particle_system, "unknownAt1168", text="Unknown Float 10")
             layout.prop(particle_system, 'sort', text="Sort")
             layout.prop(particle_system, 'collideTerrain', text="Collide Terrain")
             layout.prop(particle_system, 'collideObjects', text="Collide Objects")
