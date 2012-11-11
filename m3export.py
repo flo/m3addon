@@ -57,7 +57,8 @@ class Exporter:
         self.nameToAnimIdToAnimDataMap = {}
         for animation in scene.m3_animations:
             self.nameToAnimIdToAnimDataMap[animation.name] = {}
-        self.initMaterialNameToReferenceIndexMap()
+        self.initOldReferenceIndicesInCorrectedOrder()
+        self.initMaterialNameToNewReferenceIndexMap()
         
         model = self.createModel(m3FileName)
         m3.saveAndInvalidateModel(model, m3FileName)
@@ -327,11 +328,42 @@ class Exporter:
             if not shared.quaternionsAlmostEqual(quaternion, q):
                 return True
         return False
-        
-    def initMaterialNameToReferenceIndexMap(self):
-        self.materialNameToReferenceIndexMap = {}
+      
+    def initOldReferenceIndicesInCorrectedOrder(self):
+        scene = self.scene
+        materialNameToOldReferenceIndexMap = {}
         for materialReferenceIndex, materialReference in enumerate(self.scene.m3_material_references):
-            self.materialNameToReferenceIndexMap[materialReference.name] = materialReferenceIndex
+            materialNameToOldReferenceIndexMap[materialReference.name] = materialReferenceIndex
+        
+        remainingMaterials = list(range(len(self.scene.m3_material_references)))
+        self.oldReferenceIndicesInCorrectedOrder = []
+        while len(remainingMaterials) > 0:
+            unableToDefineChildsFirst = True
+            for oldReferenceIndex in remainingMaterials:
+                reference = scene.m3_material_references[oldReferenceIndex]
+                canBeDefined = True
+                if reference.materialType == shared.compositeMaterialTypeIndex:
+                    compositeMaterial = scene.m3_composite_materials[reference.materialIndex]
+                    for sectionIndex, section in enumerate(compositeMaterial.sections):
+                        oldChildReferenceIndex = materialNameToOldReferenceIndexMap.get(section.name)
+                        if oldChildReferenceIndex == None:
+                            raise Exception("The composite material %s uses '%s' as material, but no m3 material with that name exist!" % (compositeMaterial.name, section.name))
+                        if not oldChildReferenceIndex in self.oldReferenceIndicesInCorrectedOrder:
+                            canBeDefined = False
+                
+                if canBeDefined:
+                    remainingMaterials.remove(oldReferenceIndex)
+                    self.oldReferenceIndicesInCorrectedOrder.append(oldReferenceIndex)
+                    unableToDefineChildsFirst = False
+                    break
+            if unableToDefineChildsFirst:
+                raise Exception("Unable to define all sections before the actual composite material: Is there a loop back?")
+      
+    def initMaterialNameToNewReferenceIndexMap(self):
+        self.materialNameToNewReferenceIndexMap = {}
+        for newRefeferenceIndex, oldReferenceIndex in enumerate(self.oldReferenceIndicesInCorrectedOrder):
+            materialReference = self.scene.m3_material_references[oldReferenceIndex]
+            self.materialNameToNewReferenceIndexMap[materialReference.name] = newRefeferenceIndex
         
     def initMesh(self, model):
         nonEmptyMeshObjects = []
@@ -523,8 +555,7 @@ class Exporter:
             
             m3Object = m3.BAT_V1()
             m3Object.regionIndex = meshIndex
-            
-            materialReferenceIndex = self.materialNameToReferenceIndexMap.get(mesh.m3_material_name)
+            materialReferenceIndex = self.materialNameToNewReferenceIndexMap.get(mesh.m3_material_name)
             if materialReferenceIndex == None:
                 raise Exception("The mesh %s uses '%s' as material, but no m3 material with that name exist!" % (mesh.name, mesh.m3_material_name))
             m3Object.materialReferenceIndex = materialReferenceIndex
@@ -875,7 +906,7 @@ class Exporter:
             m3ParticleSystem.unknownAt1264 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
             model.particles.append(m3ParticleSystem)
             
-            materialReferenceIndex = self.materialNameToReferenceIndexMap.get(particleSystem.materialName)
+            materialReferenceIndex = self.materialNameToNewReferenceIndexMap.get(particleSystem.materialName)
             if materialReferenceIndex == None:
                 raise Exception("The particle system %s uses '%s' as material, but no m3 material with that name exist!" % (particleSystem.name, particleSystem.materialName))
             m3ParticleSystem.materialReferenceIndex = materialReferenceIndex
@@ -1070,17 +1101,21 @@ class Exporter:
         m3Bone.ar1 = self.createNullUInt32AnimationReference(1)
         return m3Bone
 
+        
+
     def initMaterials(self, model):
         scene = self.scene
         
-        supportedMaterialTypes = {shared.standardMaterialTypeIndex, shared.displacementMaterialTypeIndex, shared.compositeMaterialTypeIndex, shared.terrainMaterialTypeIndex, shared.volumeMaterialTypeIndex, shared.creepMaterialTypeIndex}
-        for materialReference in scene.m3_material_references:
+        for oldReferenceIndex in self.oldReferenceIndicesInCorrectedOrder:
+            materialReference = self.scene.m3_material_references[oldReferenceIndex]
             materialType = materialReference.materialType
-            if materialType in supportedMaterialTypes:
-                materialIndex = materialReference.materialIndex
-                model.materialReferences.append(self.createMaterialReference(materialIndex, materialType))
-            else:
+            materialIndex = materialReference.materialIndex
+            material = shared.getMaterial(scene, materialType, materialIndex)
+            if material == None:
                 raise Exception("The material list contains an unsupported material of type %s" % shared.materialNames[materialType])
+            model.materialReferences.append(self.createMaterialReference(materialIndex, materialType))
+
+        
         for materialIndex, material in enumerate(scene.m3_standard_materials):
             model.standardMaterials.append(self.createStandardMaterial(materialIndex, material))
 
@@ -1137,7 +1172,7 @@ class Exporter:
         shared.transferCompositeMaterial(transferer)
         for sectionIndex, section in enumerate(material.sections):
             m3Section = m3.CMS_V0()
-            m3Section.materialReferenceIndex = self.materialNameToReferenceIndexMap[section.name]
+            m3Section.materialReferenceIndex = self.materialNameToNewReferenceIndexMap[section.name]
             sectionAnimPathPrefix = "m3_composite_materials[%s].sections[%s]." % (materialIndex, sectionIndex)
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Section, blenderObject=section, animPathPrefix=sectionAnimPathPrefix, rootObject=self.scene)
             shared.transferCompositeMaterialSection(transferer)
