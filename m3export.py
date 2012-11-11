@@ -882,11 +882,6 @@ class Exporter:
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ParticleSystem, blenderObject=particleSystem, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferParticleSystem(transferer)
             m3ParticleSystem.indexPlusHighestIndex = len(scene.m3_particle_systems) -1 + particleSystemIndex
-            m3ParticleSystem.unknownAt776 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt796 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt820 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt840 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt864 = self.createNullAnimHeader(interpolationType=1)
             m3ParticleSystem.unknownAt884 = self.createNullAnimHeader(interpolationType=1)
             m3ParticleSystem.unknownAt928 = self.createNullAnimHeader(interpolationType=1)
             m3ParticleSystem.unknownAt972 = self.createNullAnimHeader(interpolationType=1)

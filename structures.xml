@@ -848,19 +848,17 @@
             <field offset="756" name="lengthWidthRatio" type="float" default-value="1.0" />
             <field offset="760" name="unknown11" size="8" expected-value="0x0000000000000000" />
             <field offset="768" name="unknownFloat7" type="float" expected-value="1.0"/>
-            <field offset="772" name="unknownAt772" size="4" expected-value="0x00000000" />
-            <field offset="776" name="unknownAt776" type="AnimationReferenceHeader" />
-            <field offset="784" name="unknownAt784" size="12" expected-value="0x000000000000000000000000" />
-            <field offset="796" name="unknownAt796" type="AnimationReferenceHeader" />
-            <field offset="804" name="unknownAt804" size="16" expected-value="0x00000000000000000000000000000000" />
-            <field offset="820" name="unknownAt820" type="AnimationReferenceHeader" />
-            <field offset="828" name="unknownAt828" size="12" expected-value="0x000000000000000000000000" />
-            <field offset="840" name="unknownAt840" type="AnimationReferenceHeader" />
-            <field offset="848" name="unknownAt848" size="16" expected-value="0x00000000000000000000000000000000" />
-            <field offset="864" name="unknownAt864" type="AnimationReferenceHeader"/>           
-            <field offset="872" name="unknownAt872" size="12" expected-value="0x000000000000000000000000" />
+            <field offset="772" name="unknownAt772" type="uint32" default-value="0" />
+            <field offset="776" name="unknownAt776" type="FloatAnimationReference" />
+            <field offset="796" name="unknownAt796" type="FloatAnimationReference" />
+            <field offset="816" name="unknownAt816" type="uint32" default-value="0" />
+            <field offset="820" name="unknownAt820" type="FloatAnimationReference" />
+            <field offset="840" name="unknownAt840" type="FloatAnimationReference" />
+            <field offset="860" name="unknownAt860" type="uint32" default-value="0" />
+            <field offset="864" name="unknownAt864" type="FloatAnimationReference"/>           
             <field offset="884" name="unknownAt884" type="AnimationReferenceHeader" />
-            <field offset="892" name="unknownAt892" size="16" expected-value="0x00000000000000000000000000000000" />
+            <field offset="892" name="unknownAt892" type="float" default-value="0.0" />
+            <field offset="896" name="unknownAt896" size="12" expected-value="0x000000000000000000000000" />
             <field offset="908" name="unknownAt908" type="FloatAnimationReference" />
             <field offset="928" name="unknownAt928" type="AnimationReferenceHeader" />
             <field offset="936" name="unknownAt936" type="float" default-value="0.0" />
