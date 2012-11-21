@@ -1310,7 +1310,7 @@ class Importer:
         # Hack:
         # So far only seen models where Evt_Simulate and Evt_End are in the same animId element.
         # Check through all stc.sdev entries directly instead?
-        timeValueMap = animIdToTimeValueMap[0x65bd3215]
+        timeValueMap = animIdToTimeValueMap.get(0x65bd3215,{})
         
         for frame, key, in frameValuePairs(timeValueMap):
             if key.name == "Evt_Simulate":
