@@ -721,7 +721,7 @@
             <field offset="36" name="normalLayer" type="Reference" refTo="LAYR" />
             <field offset="48" name="strengthLayer" type="Reference" refTo="LAYR" />
             <field offset="60" name="flags" type="uint32" default-value="0" />
-            <field offset="64" name="priority" type="uint32" />
+            <field offset="64" name="priority" type="int32" />
         </structure>
         
         <structure name="CMS_" version="0" size="24" >
