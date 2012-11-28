@@ -48,14 +48,33 @@ if __name__ == "__main__":
         boneWithAnimId = boneNameToAnimIdBoneMap[boneToFix.name]
         oldAnimId = boneToFix.location.header.animId
         newAnimId = boneWithAnimId.location.header.animId
+        boneToFix.location.header.animId = newAnimId
         oldAnimIdToNewAnimIdMap[oldAnimId] = newAnimId
+        
         oldAnimId = boneToFix.rotation.header.animId
         newAnimId = boneWithAnimId.rotation.header.animId
+        boneToFix.rotation.header.animId = newAnimId
         oldAnimIdToNewAnimIdMap[oldAnimId] = newAnimId
+        
         oldAnimId = boneToFix.scale.header.animId
         newAnimId = boneWithAnimId.scale.header.animId
+        boneToFix.scale.header.animId = newAnimId
         oldAnimIdToNewAnimIdMap[oldAnimId] = newAnimId
+       
+    def assertModelContainsOneDivisionAndMSec(model):
+        if len(model.divisions) != 1 or len(model.divisions[0].msec) != 1:
+            raise Exception("Model contains %d divisions and the first division has %d msec" %(en(model.divisions), len(model.divisions[0].msec)))
     
+    assertModelContainsOneDivisionAndMSec(modelToFix)
+    assertModelContainsOneDivisionAndMSec(animIdModel)
+    msecToFix = modelToFix.divisions[0].msec[0]
+    msecWithAnimId = animIdModel.divisions[0].msec[0]
+    oldAnimId = msecToFix.boundingsAnimation.header.animId
+    newAnimId = msecWithAnimId.boundingsAnimation.header.animId
+    msecToFix.boundingsAnimation.header.animId = newAnimId
+    oldAnimIdToNewAnimIdMap[oldAnimId] = newAnimId
+        
+
     for stc in modelToFix.sequenceTransformationCollections:
         animIds = stc.animIds
         for i in range(len(animIds)):
