@@ -152,7 +152,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="int16" />
             <field name="nullValue" type="int16" />
-            <field name="unknown" type="uint32" expected-value="0" />
+            <field name="unknown" type="uint32" default-value="0" />
         </structure>
         <structure name="FloatAnimationReference" size="20">
             <description>Animatable float</description>
