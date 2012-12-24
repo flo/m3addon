@@ -137,7 +137,11 @@ def convertFile(inputFilePath, outputDirectory):
     print("Converting %s -> %s" % (inputFilePath, outputFilePath))
     doc = xml.dom.minidom.parse(inputFilePath)
     modelElement = doc.firstChild
-    model = createSingleElement(modelElement, "MODLV23", MODLV23)
+    structVersion = modelElement.getAttribute("structureVersion")
+    structName = modelElement.getAttribute("structureName")
+    fullStructName = structName + "V" + structVersion
+    structClass = structMap[fullStructName]
+    model = createSingleElement(modelElement, fullStructName, structClass)
     saveAndInvalidateModel(model, outputFilePath)
 
 if __name__ == "__main__":

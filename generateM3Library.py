@@ -1254,7 +1254,7 @@ def loadModel(filename):
     checkThatAllSectionsGotReferenced(sections)
     header = sections[0].content[0]
     model = header.model[0]
-    MODLV23.validateInstance(model,"model")
+    type(model).validateInstance(model,"model")
     return model
 
 class IndexReferenceSourceAndSectionListMaker:
@@ -1335,7 +1335,7 @@ def saveSections(sections, filename):
         
 def saveAndInvalidateModel(model, filename):
     '''Do not use the model object after calling this method since it gets modified'''
-    MODLV23.validateInstance(model,"model")
+    type(model).validateInstance(model,"model")
     sections = modelToSections(model)
     saveSections(sections, filename)
 
