@@ -1218,11 +1218,11 @@ class Exporter:
         m3Layer = m3.LAYRV22()
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, rootObject=self.scene)
         shared.transferMaterialLayer(transferer)
-        m3Layer.unknown6 = self.createNullUInt32AnimationReference(0)
-        m3Layer.unknown7 = self.createNullVector2AnimationReference(0.0, 0.0, interpolationType=0)
-        m3Layer.unknown8 = self.createNullUInt16AnimationReference(0)
-        m3Layer.unknown9 = self.createNullUInt32AnimationReference(0, interpolationType=1)
-        m3Layer.unknown10 = self.createNullFloatAnimationReference(1.0, interpolationType=1)
+        m3Layer.unknownbc0c14e5 = self.createNullUInt32AnimationReference(0)
+        m3Layer.unknowne740df12 = self.createNullVector2AnimationReference(0.0, 0.0, interpolationType=0)
+        m3Layer.unknown39ade219 = self.createNullUInt16AnimationReference(0)
+        m3Layer.unknowna4ec0796 = self.createNullUInt32AnimationReference(0, interpolationType=1)
+        m3Layer.unknowna44bf452 = self.createNullFloatAnimationReference(1.0, interpolationType=1)
         return m3Layer
 
     def createNullVector2AnimationReference(self, x, y, interpolationType=1):

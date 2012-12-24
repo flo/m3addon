@@ -837,7 +837,7 @@ def transferCreepMaterial(transferer):
 
 def transferMaterialLayer(transferer):
     transferer.transferString("imagePath")
-    transferer.transferInt("unknown11")
+    transferer.transferInt("unknownbd3f7b5d")
     transferer.transferAnimatableColor("color")
     transferer.transferBit("flags", "textureWrapX")
     transferer.transferBit("flags", "textureWrapY")

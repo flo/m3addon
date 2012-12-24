@@ -606,7 +606,7 @@
         
         <structure name="LAYR" version="22" size="356" >
             <description>Describes a layer of a material</description>
-            <field name="unknown0" type="uint32" expected-value="0" />
+            <field name="unknown2daf9c00" type="uint32" expected-value="0" />
             <field name="imagePath" type="Reference" refTo="CHAR" />
             <field name="color" type="ColorAnimationReference" />
             <field name="flags" type="uint32" default-value="0xec">
@@ -626,21 +626,21 @@
             </field>
             <field name="brightMult" type="FloatAnimationReference" />
             <field name="midtoneOffset" type="FloatAnimationReference" />
-            <field name="unknown1" type="uint32" expected-value="0" />
-            <field name="unknown2" type="int32" expected-value="-1" />
-            <field name="unknown3" size="8" expected-value="0x0000000000000000" />
-            <field name="unknown4" type="int32" expected-value="0" />
-            <field name="unknown5" size="8" expected-value="0x0000000000000000" />
-            <field name="unknown6" type="UInt32AnimationReference" />
-            <field name="unknown7" type="Vector2AnimationReference" />
-            <field name="unknown8" type="UInt16AnimationReference" />
+            <field name="unknownfe24088c" type="uint32" expected-value="0" />
+            <field name="unknown4fce8921" type="int32" expected-value="-1" />
+            <field name="unknownfd48875c" size="8" expected-value="0x0000000000000000" />
+            <field name="unknown63b7f7f2" type="int32" expected-value="0" />
+            <field name="unknowna56066e9" size="8" expected-value="0x0000000000000000" />
+            <field name="unknownbc0c14e5" type="UInt32AnimationReference" />
+            <field name="unknowne740df12" type="Vector2AnimationReference" />
+            <field name="unknown39ade219" type="UInt16AnimationReference" />
             <field name="uvOffset" type="Vector2AnimationReference" />
             <field name="uvAngle" type="Vector3AnimationReference" />
             <field name="uvTiling" type="Vector2AnimationReference" />
-            <field name="unknown9" type="UInt32AnimationReference" />
-            <field name="unknown10" type="FloatAnimationReference" />
+            <field name="unknowna4ec0796" type="UInt32AnimationReference" />
+            <field name="unknowna44bf452" type="FloatAnimationReference" />
             <field name="brightness" type="FloatAnimationReference" />
-            <field name="unknown11" type="int32" default-value="-1" />
+            <field name="unknownbd3f7b5d" type="int32" default-value="-1" />
             <field name="tintFlags" type="uint32" default-value="0">
                 <bits>
                     <bit mask="0x1" name="useTint" />
