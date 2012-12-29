@@ -671,7 +671,9 @@ particleTypeList = [("0", "Square Billbords", "Quads always rotated towards came
                     ("4", "Square Billbords 4?", "Unknown 4"),
                     ("5", "Square Billbords 5?", "Unknown 5"),
                     ("6", "Rectangular Billbords", "Rectangles which can have a length != witdh which are rotated towards the camera"),
-                    ("7", "Quads with speed as normal", "Particles are quads which have their normals aligned to the speed vector of the particle")
+                    ("7", "Quads with speed as normal", "Particles are quads which have their normals aligned to the speed vector of the particle"),
+                    ("8", "Unknown (Id 8)", "Code 8 with unknown meaning"),
+                    ("9", "Unknown (Id 9)", "Code 9 with unknown meaning")
                     ]
 
 forceTypeList = [("0", "Directional", "The particles get accelerated into one direction"), 

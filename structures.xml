@@ -309,6 +309,7 @@
             <field name="uv3" type="Vector2As2int16" />
             <field name="tangent" type="Vector4As4uint8" />
         </structure>
+        
         <structure name="EVNT" version="1" size="104">
             <description>An animation sequence event</description>
             <field name="name" type="Reference" refTo="CHAR" />
@@ -1098,6 +1099,196 @@
             <field offset="1288" name="unknownAt1288" type="int32" default-value="0" />
             <field offset="1292" name="usedModel" type="Reference" refTo="SCHR"/>
             <field offset="1304" name="copyIndices" type="Reference" refTo="U32_" />
+        </structure>
+        
+        <structure name="PAR_" version="21" size="1464" >
+            <description>Particle System</description>
+            <field name="bone" type="uint32" />
+            <field name="materialReferenceIndex" type="uint32" />
+            <!-- unknownca50ede4 had the values 3 and 15 -->
+            <field name="unknownca50ede4" type="uint32" default-value="0" />
+            <field name="emissionSpeed1" type="FloatAnimationReference" />
+            <field name="emissionSpeed2" type="FloatAnimationReference" />
+            <!-- removed ?
+            <field name="randomizeWithEmissionSpeed2" type="uint32" />
+            -->
+            <field name="emissionAngleX" type="FloatAnimationReference" />
+            <field name="emissionAngleY" type="FloatAnimationReference" />
+            <field name="emissionSpreadX" type="FloatAnimationReference" />
+            <field name="emissionSpreadY" type="FloatAnimationReference" />
+            <field name="lifespan1" type="FloatAnimationReference" />
+            <field name="lifespan2" type="FloatAnimationReference" />
+            <field name="randomizeWithLifespan2" type="uint32" />
+            <field name="unknown0" type="uint32" expected-value="0" />
+            <field name="unknown1" type="uint32" expected-value="0" />
+            <field name="unknown2" type="uint32" default-value="0" />
+            <field name="zAcceleration" type="float" />
+            <field name="unknownFloat1a" type="float" />
+            <field name="unknownFloat1b" type="float" default-value="1.0" />
+            <field name="unknownFloat1c" type="float" default-value="1.0" />
+            <field name="unknownFloat1d" type="float" default-value="1.0" />
+            <field name="unknown0AddedV21" size="4" expected-value="0x00000000" />
+            <field name="unknown1AddedV21" type="float" default-value="0.25" />
+            <field name="unknown2AddedV21" size="4" expected-value="0x00000000" />
+            <field name="particleSizes1" type="Vector3AnimationReference" />
+            <field name="rotationValues1" type="Vector3AnimationReference" />
+            <field name="initialColor1" type="ColorAnimationReference" />
+            <field name="finalColor1" type="ColorAnimationReference" />
+            <field name="unknownColor1" type="ColorAnimationReference" />
+            <field name="slowdown" type="float" />
+            <field name="unknownFloat2a" type="float" default-value="0.0" />
+            <field name="unknownFloat2b" type="float" default-value="1.0"/> <!-- external force strength?-->
+            <field name="unknownFloat2c" type="float" default-value="1.0"/>
+            <field name="unknown4" type="float" default-value="0.0" />
+            <field name="trailingEnabled" type="uint32" />
+            <field name="forceChannels" type="uint32" default-value="0" />
+            <!-- forceChannelsCopy seems to have the same value as forceChannels 
+            <field name="forceChannelsCopy" type="uint32" default-value="0" />-->
+            <field name="unknownFloat3a" type="float" default-value="0.0" />
+            <field name="unknownFloat3b" type="float" default-value="0.0" />
+            <field name="unknownFloat3c" type="float" default-value="0.0" />
+            <!-- got removed?
+            <field name="unknownFloat3d" type="float" default-value="0.1" />
+            -->
+            <field name="indexPlusHighestIndex" type="uint32" />
+            <field name="maxParticles" type="uint32" />
+            <field name="emissionRate" type="FloatAnimationReference" />
+            <field name="emissionAreaType" type="uint32" />
+            <field name="emissionAreaSize" type="Vector3AnimationReference" />
+            <field name="tailUnk1" type="Vector3AnimationReference" />
+            <field name="emissionAreaRadius" type="FloatAnimationReference" />
+            <field name="spreadUnk" type="FloatAnimationReference" />
+            <field name="emissionType" type="uint32" />
+            <field name="unknown3AddedV21" size="8" expected-value="0x0000000000000000" />
+            <field name="unknown4AddedV21" type="uint32" default-value="1" />
+            <field name="randomizeWithParticleSizes2" type="uint32" />
+            <field name="particleSizes2" type="Vector3AnimationReference" />
+            <field name="randomizeWithRotationValues2" type="uint32" />
+            <field name="rotationValues2" type="Vector3AnimationReference" />
+            <field name="randomizeWithColor2" type="uint32" />
+            <field name="initialColor2" type="ColorAnimationReference" />
+            <field name="finalColor2" type="ColorAnimationReference" />
+            <field name="unknownColor2" type="ColorAnimationReference" />
+            <field name="unknown7" type="uint32" default-value="0" />
+            <field name="partEmit" type="Int16AnimationReference" />
+            <field name="phase1StartImageIndex" type="uint8"  default-value="0" />
+            <field name="phase1EndImageIndex" type="uint8"  default-value="0" />
+            <field name="phase2EndImageIndex" type="uint8" default-value="0" />
+            <field name="phase2StartImageIndex" type="uint8" expected-value="0" />
+            <field name="relativePhase1Length" type="float" />
+            <field name="numberOfColumns" type="uint16" />
+            <field name="numberOfRows" type="uint16" />
+            <field name="columnWidth" type="float" default-value="inf" />
+            <field name="rowHeight" type="float" default-value="inf" />
+            <field name="unknownFloat4" type="float" default-value="0.0" />
+            <field name="unknownFloat5" type="float" default-value="1.0"/>
+            <field name="unknown9" type="int32" default-value="-1" />
+            <field name="unknownAt732" size="20"/>
+            <!-- particleType: 
+            0,2,3,4,5=Square Billbords ?
+            1= Speed Scaled and Rotated Billbords influenced by lengthWidhtRatio 
+            6 = Rectangular Billbords (see lengthWidthRatio)
+            7 = Quads with speed as normal
+            -->
+            <field name="particleType" type="uint32"/>
+            <field name="lengthWidthRatio" type="float" default-value="1.0" />
+            <field name="unknown11" size="8" default-value="0x0000000000000000" />
+            <field name="unknownFloat7" type="float" default-value="1.0"/>
+            <field name="unknown5AddedV21" type="float"  expected-value="1.0" />
+            <field name="unknownAt772" type="uint32" default-value="0" />
+            <field name="unknownAt776" type="FloatAnimationReference" />
+            <field name="unknownAt796" type="FloatAnimationReference" />
+            <field name="unknownAt816" type="uint32" default-value="0" />
+            <field name="unknownAt820" type="FloatAnimationReference" />
+            <field name="unknownAt840" type="FloatAnimationReference" />
+            <field name="unknownAt860" type="uint32" default-value="0" />
+            <field name="unknownAt864" type="FloatAnimationReference"/>           
+            <field name="unknownAt884" type="AnimationReferenceHeader" />
+            <field name="unknownAt892" type="float" default-value="0.0" />
+            <field name="unknownAt896" size="12" default-value="0x000000000000000000000000" />
+            <field name="unknownAt908" type="FloatAnimationReference" />
+            <field name="unknownAt928" type="AnimationReferenceHeader" />
+            <field name="unknownAt936" type="float" default-value="0.0" />
+            <field name="unknownAt940" size="12" default-value="0x000000000000000000000000"  />
+            <field name="unknownAt952" type="FloatAnimationReference" />
+            <field name="unknownAt972" type="AnimationReferenceHeader" />
+            <field name="unknownAt980" type="float" default-value="0.0" />
+            <field name="unknownAt984" size="12" default-value="0x000000000000000000000000" />
+            <field name="unknownAt996" type="AnimationReferenceHeader" />
+            <field name="unknownAt1004" size="12" default-value="0x000000000000000000000000" />
+            <field name="unknownAt1016" type="AnimationReferenceHeader" />
+            <field name="unknownAt1024" size="16" default-value="0x00000000000000000000000000000000" />
+            <field name="unknownAt1040" type="AnimationReferenceHeader" />
+            <field name="unknownAt1048" size="12" default-value="0x000000000000000000000000" />
+            <field name="unknownAt1060" type="AnimationReferenceHeader" />
+            <field name="unknownAt1068" size="16" default-value="0x00000000000000000000000000000000" />
+            <field name="unknownAt1084" type="AnimationReferenceHeader" />
+            <field name="unknownAt1092" size="12" default-value="0x000000000000000000000000" />
+            <field name="unknownAt1104" type="AnimationReferenceHeader" />
+            <field name="unknownAt1112" size="16" default-value="0x00000000000000000000000000000000" />
+            <field name="unknownAt1128" type="AnimationReferenceHeader"  />
+            <field name="unknownAt1136" size="12" default-value="0x000000000000000000000000" />
+            <field name="unknownAt1148" type="AnimationReferenceHeader" />
+            <field name="unknownAt1156" size="12" default-value="0x000000000000000000000000" />
+            <field name="unknownAt1168" type="FloatAnimationReference" />
+            <field name="flags" type="uint32" default-value="0" >
+                <bits>
+                    <bit mask="0x1" name="sort" />
+                    <bit mask="0x2" name="collideTerrain" />
+                    <bit mask="0x4" name="collideObjects" />
+                    <bit mask="0x8" name="spawnOnBounce" />
+                    <bit mask="0x10" name="useInnerShape" />
+                    <bit mask="0x20" name="inheritEmissionParams" />
+                    <bit mask="0x40" name="inheritParentVel"/>
+                    <bit mask="0x80" name="sortByZHeight"/>
+                    <bit mask="0x100" name="reverseIteration" />
+                    <bit mask="0x200" name="smoothRotation" />
+                    <bit mask="0x400" name="bezSmoothRotation"/>
+                    <bit mask="0x800" name="smoothSize"/>
+                    <bit mask="0x1000" name="bezSmoothSize"/>
+                    <bit mask="0x2000" name="smoothColor"/>
+                    <bit mask="0x4000" name="bezSmoothColor"/>
+                    <bit mask="0x8000" name="litParts"/>
+                    <bit mask="0x10000" name="randFlipBookStart"/>
+                    <bit mask="0x20000" name="multiplyByGravity"/>
+                    <bit mask="0x40000" name="clampTailParts"/>
+                    <bit mask="0x80000" name="spawnTrailingParts"/>
+                    <bit mask="0x100000" name="fixLengthTailParts"/>
+                    <bit mask="0x200000" name="useVertexAlpha"/>
+                    <bit mask="0x400000" name="modelParts"/>
+                    <bit mask="0x800000" name="swapYZonModelParts"/>
+                    <bit mask="0x1000000" name="scaleTimeByParent"/>
+                    <bit mask="0x2000000" name="useLocalTime"/>
+                    <bit mask="0x4000000" name="simulateOnInit"/>
+                    <bit mask="0x8000000" name="copy"/>
+                </bits>
+            </field>
+            <!-- unknowne51f8f9b  had the values 4 and  7-->
+            <field name="unknowne51f8f9b" type="uint32" default-value="4" />
+            <field name="unknown25dac4d2"  type="uint32" default-value="3" />
+            <field name="unknown56dbedec" size="8"  expected-value="0x0000000000000000"/>
+            <field name="unknown22856fde" type="FloatAnimationReference"/>
+            <field name="unknownb35ad6e1" type="Vector2AnimationReference" />
+            <field name="unknown686e5943" type="Vector3AnimationReference"/>
+            <field name="unknown18a90564" type="Vector2AnimationReference" /> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
+            <field name="unknown22fec01a" size="16" expected-value="0x00000000000000000000000000000000"/>
+            <!--unknown5156cf07 Observed values: 2 and 0 -->
+            <field name="unknown5156cf07" type="uint32" default-value="2"/>
+            <!-- unknown92dba6ab Observed values: 0 and 1 -->
+            <field name="unknown92dba6ab" type="uint32" default-value="1"/>
+            <field name="unknown21ca0cea" type="AnimationReferenceHeader" />
+            <field name="initOfUnknown21ca0cea" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknown21ca0cea" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknown21ca0cea" size="4" expected-value="0xffffffff" />
+            <field name="unknown1e97145f" type="FloatAnimationReference" /> <!-- default 1.0 -->
+            <field name="unknown1b8e6ea3" size="8" expected-value="0xffffffff00000000"/>
+            <field name="unknownd3bfa169" type="AnimationReferenceHeader" />
+            <field name="initOfUnknownd3bfa169" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknownd3bfa169" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknownd3bfa169" size="4" expected-value="0xffffffff" />
+            <field name="unknownfdab7ff3" size="8" expected-value="0xffffffff00000000"/>
+            <field name="usedModel" size="12" type="Reference" refTo="SCHR" /> 
+            <field name="copyIndices" size="12" type="Reference"  refTo="U32_" />
         </structure>
         
         <structure name="PARC" version="0" size="40">

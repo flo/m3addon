@@ -229,7 +229,10 @@ class M3ToBlenderDataTransferer:
         self.animPathPrefix = animPathPrefix
         self.blenderObject = blenderObject
         self.m3Object = m3Object
-    
+        if hasattr(type(self.m3Object), "tagVersion"):
+            self.m3Version = type(self.m3Object).tagVersion
+        else:
+            self.m3Version = None    
     def transferAnimatableFloat(self, fieldName):
         animationReference = getattr(self.m3Object, fieldName)
         setattr(self.blenderObject, fieldName, animationReference.initValue)
@@ -268,7 +271,9 @@ class M3ToBlenderDataTransferer:
             value = ""
         setattr(self.blenderObject, fieldName, value)
 
-    def transferBoolean(self, fieldName):
+    def transferBoolean(self, fieldName, tillVersion=None):
+        if (tillVersion != None) and (self.m3Version > tillVersion):
+            return
         integerValue = getattr(self.m3Object, fieldName)
         if integerValue == 0:
             setattr(self.blenderObject, fieldName, False)
@@ -871,7 +876,7 @@ class Importer:
             bone.hide = not showParticleSystems
 
             particleSystem.materialName = self.getNameOfMaterialWithReferenceIndex(m3ParticleSystem.materialReferenceIndex)
-            if m3ParticleSystem.forceChannelsCopy != m3ParticleSystem.forceChannels:
+            if hasattr(m3ParticleSystem, "forceChannelsCopy") and m3ParticleSystem.forceChannelsCopy != m3ParticleSystem.forceChannels:
                 print("Warning: Unexpected model content: forceChannels != forceChannelsCopy")
 
             for blenderCopyIndex, m3CopyIndex in enumerate(m3ParticleSystem.copyIndices):

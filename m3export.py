@@ -1512,7 +1512,11 @@ class BlenderToM3DataTransferer:
         actionOwnerName = rootObject.name
         self.animationActionTuples = self.exporter.determineAnimationActionTuplesFor(actionOwnerName, actionOwnerType)
         self.rootObject = rootObject
-        
+        if hasattr(type(self.m3Object), "tagVersion"):
+            self.m3Version = type(self.m3Object).tagVersion
+        else:
+            self.m3Version = None
+
     def transferAnimatableColor(self, fieldName):
         animPath = self.animPathPrefix + fieldName
         animId = self.exporter.getAnimIdFor(self.objectIdForAnimId, animPath)
@@ -1797,7 +1801,9 @@ class BlenderToM3DataTransferer:
         value = getattr(self.blenderObject, fieldName)
         setattr(self.m3Object, fieldName , value)
         
-    def transferBoolean(self, fieldName):
+    def transferBoolean(self, fieldName, tillVersion=None):
+        if (tillVersion != None) and (self.m3Version > tillVersion):
+            return
         booleanValue = getattr(self.blenderObject, fieldName)
         if booleanValue:
             intValue = 1

@@ -656,7 +656,7 @@ def createMeshDataForCylinder(radius, height, numberOfSideFaces = 10):
 def transferParticleSystem(transferer):
     transferer.transferAnimatableFloat("emissionSpeed1")
     transferer.transferAnimatableFloat("emissionSpeed2")
-    transferer.transferBoolean("randomizeWithEmissionSpeed2")
+    transferer.transferBoolean("randomizeWithEmissionSpeed2", tillVersion=20)
     transferer.transferAnimatableFloat("emissionAngleX")
     transferer.transferAnimatableFloat("emissionAngleY")
     transferer.transferAnimatableFloat("emissionSpreadX")
