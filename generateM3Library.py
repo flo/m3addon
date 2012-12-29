@@ -249,11 +249,6 @@ class FieldAttributesReader(Visitor):
         else:
             fieldDataMap["refTo"] = None
 
-        if xmlNode.hasAttribute("offset"):
-            fieldDataMap["specifiedOffsetString"] = xmlNode.getAttribute("offset")
-        else:
-            fieldDataMap["specifiedOffsetString"] = None
-
         if xmlNode.hasAttribute("size"):
             fieldDataMap["specifiedFieldSize"] = int(xmlNode.getAttribute("size"))
         else:
@@ -268,26 +263,6 @@ class FieldAttributesReader(Visitor):
             fieldDataMap["defaultValueString"] = xmlNode.getAttribute("default-value")
         else:
             fieldDataMap["defaultValueString"] = None
-            
-class FieldOffsetChecker(Visitor):
-    def visitClassStart(self, generalDataMap, classDataMap):
-        self.nextFieldOffset = 0
-    
-    def visitFieldStart(self, generalDataMap, classDataMap, fieldDataMap):
-        offset = self.nextFieldOffset
-        specifiedOffsetString = fieldDataMap["specifiedOffsetString"]
-        if specifiedOffsetString != None:
-            if specifiedOffsetString == "":
-                fieldName = fieldDataMap["fieldName"]
-                fullName = classDataMap["fullName"]
-                stderr.write("Field %s of %s has an empty offset. The calculated offset is %d.\n" % (fieldName, fullName, offset));
-            else:
-                specifiedOffset = int(specifiedOffsetString)
-                if specifiedOffset != offset:
-                    fieldName = fieldDataMap["fieldName"]
-                    fullName = classDataMap["fullName"]
-                    raise Exception("Field %s of %s has been defined to start at '%d' but starts at '%d'" % (fieldName, fullName, specifiedOffset, offset));
-        self.nextFieldOffset += fieldDataMap["fieldSize"]
 
 class DuplicateFieldNameChecker(Visitor):
     def visitClassStart(self, generalDataMap, classDataMap):
@@ -1405,7 +1380,6 @@ def writeM3PythonTo(structuresXmlFile, out):
         BitAttributesReader(),
         DuplicateFieldNameChecker(), 
         SizeDeterminer(),
-        FieldOffsetChecker(), 
         QuotedFieldsDeterminer(), 
         ClassHeaderAdder(),
         FullNameConstantAdder(),
