@@ -1161,7 +1161,7 @@ def loadSections(filename):
             offsetToSizeMap[previousOffset] = offset - previousOffset
             previousOffset = offset
         
-        unknownSections = 0
+        unknownSections = set()
         for section in sections:
             indexEntry = section.indexEntry
             className = indexEntry.tag + "V" + str(indexEntry.version)
@@ -1181,9 +1181,9 @@ def loadSections(filename):
                 guessedBytesPerEntry = float(len(section.rawBytes) - guessedUnusedSectionBytes) / indexEntry.repetitions
                 message = "ERROR: Unknown section at offset %s with tag=%s version=%s repetitions=%s sectionLengthInBytes=%s guessedUnusedSectionBytes=%s guessedBytesPerEntry=%s\\n" % (indexEntry.offset, indexEntry.tag, indexEntry.version, indexEntry.repetitions, len(section.rawBytes),guessedUnusedSectionBytes,guessedBytesPerEntry )
                 stderr.write(message)
-                unknownSections += 1
-        if unknownSections != 0:
-            raise Exception("There were %s unknown sections" % unknownSections)
+                unknownSections.add(className)
+        if len(unknownSections) != 0:
+            raise Exception("There were %s unknown sections: %s (see console log for more details)" % (len(unknownSections), unknownSections))
     finally:
         source.close()
     return sections
