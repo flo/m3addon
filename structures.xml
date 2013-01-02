@@ -1187,6 +1187,7 @@
             1= Speed Scaled and Rotated Billbords influenced by lengthWidhtRatio 
             6 = Rectangular Billbords (see lengthWidthRatio)
             7 = Quads with speed as normal
+            9 = Quads that scratches between spawn point and current location
             -->
             <field name="particleType" type="uint32"/>
             <field name="lengthWidthRatio" type="float" default-value="1.0" />
