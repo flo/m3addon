@@ -1157,9 +1157,8 @@
             <field name="tailUnk1" type="Vector3AnimationReference" />
             <field name="emissionAreaRadius" type="FloatAnimationReference" />
             <field name="spreadUnk" type="FloatAnimationReference" />
+            <field name="unknown3AddedV21" size="12" expected-value="0x000000000000000000000000" />
             <field name="emissionType" type="uint32" />
-            <field name="unknown3AddedV21" size="8" expected-value="0x0000000000000000" />
-            <field name="unknown4AddedV21" type="uint32" default-value="1" />
             <field name="randomizeWithParticleSizes2" type="uint32" />
             <field name="particleSizes2" type="Vector3AnimationReference" />
             <field name="randomizeWithRotationValues2" type="uint32" />
