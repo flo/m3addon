@@ -1105,23 +1105,22 @@
             <description>Particle System</description>
             <field name="bone" type="uint32" />
             <field name="materialReferenceIndex" type="uint32" />
-            <!-- unknownca50ede4 had the values 3 and 15 -->
-            <field name="unknownca50ede4" type="uint32" default-value="0" />
+            <field name="randomizationFlags" type="uint32" default-value="0" >
+                <bits>
+                    <bit mask="0x1" name="randomizeWithEmissionSpeed2" />
+                    <bit mask="0x2" name="randomizeWithLifespan2" />
+                </bits>
+            </field>
             <field name="emissionSpeed1" type="FloatAnimationReference" />
             <field name="emissionSpeed2" type="FloatAnimationReference" />
-            <!-- removed ?
-            <field name="randomizeWithEmissionSpeed2" type="uint32" />
-            -->
             <field name="emissionAngleX" type="FloatAnimationReference" />
             <field name="emissionAngleY" type="FloatAnimationReference" />
             <field name="emissionSpreadX" type="FloatAnimationReference" />
             <field name="emissionSpreadY" type="FloatAnimationReference" />
             <field name="lifespan1" type="FloatAnimationReference" />
             <field name="lifespan2" type="FloatAnimationReference" />
-            <field name="randomizeWithLifespan2" type="uint32" />
-            <field name="unknown0" type="uint32" expected-value="0" />
-            <field name="unknown1" type="uint32" expected-value="0" />
-            <field name="unknown2" type="uint32" default-value="0" />
+            <field name="unknownf21cc980" size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknown82a208f7" type="uint32" expected-value="0x80000000" />
             <field name="zAcceleration" type="float" />
             <field name="unknownFloat1a" type="float" />
             <field name="unknownFloat1b" type="float" default-value="1.0" />

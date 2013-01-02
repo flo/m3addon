@@ -1811,7 +1811,9 @@ class BlenderToM3DataTransferer:
             intValue = 0
         setattr(self.m3Object, fieldName , intValue)
 
-    def transferBit(self, m3FieldName, bitName):
+    def transferBit(self, m3FieldName, bitName, sinceVersion=None):
+        if (sinceVersion != None) and (self.m3Version < sinceVersion):
+            return
         booleanValue = getattr(self.blenderObject, bitName)
         self.m3Object.setNamedBit(m3FieldName, bitName, booleanValue)
 

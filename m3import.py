@@ -282,7 +282,9 @@ class M3ToBlenderDataTransferer:
         else:
             print("WARNING: %s was neither 0 nor 1" % fieldName)
             
-    def transferBit(self, m3FieldName, bitName):
+    def transferBit(self, m3FieldName, bitName, sinceVersion=None):
+        if (sinceVersion != None) and (self.m3Version < sinceVersion):
+            return
         setattr(self.blenderObject, bitName, self.m3Object.getNamedBit(m3FieldName, bitName))
     
     def transfer16Bits(self, fieldName):
