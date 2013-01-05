@@ -697,7 +697,7 @@ class ToBytesFeatureAdder(Visitor):
             generalDataMap["out"].write(text)
 
 class SizeDeterminer(Visitor):
-    primitiveFieldTypeSizes = {"uint32":4,"int32":4,"uint16":2,"int16":2, "uint8":1, "float":4, "tag":4}
+    primitiveFieldTypeSizes = {"uint32":4,"int32":4,"uint16":2,"int16":2, "uint8":1, "int8":1, "float":4, "tag":4}
 
     def visitStart(self, generalDataMap):
         generalDataMap["knownStructSizes"] = {}
@@ -759,7 +759,7 @@ class StructSizeConstantAdder(Visitor):
 
 class StructFormatConstantAdder(Visitor):
     template = """    structFormat = struct.Struct("%(formatString)s")\n"""
-    primitiveFieldTypeFormats = {"uint32":"I","int32":"i","uint16":"H","int16":"h", "uint8":"B", "float":"f", "tag":"4s"}
+    primitiveFieldTypeFormats = {"uint32":"I","int32":"i","uint16":"H","int16":"h", "uint8":"B", "int8":"b" , "float":"f", "tag":"4s"}
     def visitClassStart(self, generalDataMap, classDataMap):
         self.structureFormatString = "<"
 
@@ -1008,7 +1008,7 @@ class ValidateMethodAdder(Visitor):
 
     validateIntTemplate = """
         if (type(instance.%(fieldName)s) != int):
-            raise Exception("%%s is not an int" %% (fieldId))
+            raise Exception("%%s is not an int but a " %% (fieldId), type(instance.%(fieldName)s))
         if (instance.%(fieldName)s < %(minValue)d) or (instance.%(fieldName)s > %(maxValue)d):
             raise Exception("%%s has value %%d which is not in range [%(minValue)d, %(maxValue)d]"  %% (fieldId, instance.%(fieldName)s))
 
