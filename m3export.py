@@ -1835,7 +1835,9 @@ class BlenderToM3DataTransferer:
                 integerValue |= mask
         setattr(self.m3Object, fieldName, integerValue)
 
-    def transferFloat(self, fieldName):
+    def transferFloat(self, fieldName, tillVersion=None):
+        if (tillVersion != None) and (self.m3Version > tillVersion):
+            return
         value = getattr(self.blenderObject, fieldName)
         setattr(self.m3Object, fieldName , value)
         

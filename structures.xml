@@ -1550,6 +1550,40 @@
             <field name="size2" type="float" default-value="1.0" /> <!-- box z-size -->
         </structure>
         
+        <structure name="PHSH" version="3" size="300" >
+            <description>A physical shape</description>
+            <field name="matrix" type="Matrix44" />
+            <field name="shape" type="uint32" />
+            <field name="unknown66ce545e" size="24" expected-value="0x000000000000000000000000000000000000000000000000"/>
+            <field name="size0" type="float" />
+            <field name="size1" type="float" />
+            <field name="size2" type="float" />
+            <field name="unknownbda8f787" size="60" expected-value="0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" />
+            <!-- unknown2e655ca4 can have the value 0x80000000 too -->
+            <field name="unknown2e655ca4" size="4" />
+            <!-- unknown7df99f73 is not a float and has strange content -->
+            <field name="unknown7df99f73" size="4" />
+            <field name="unknown5c04305e" size="4" expected-value="0x00000000" />
+            <!-- unknown8d41b3f8 is not a float and has strange content -->
+            <field name="unknown8d41b3f8" size="4" />
+            <!-- unknown56fece2 is not a float and has strange content -->
+            <field name="unknown56fece2" size="4" />
+            <field name="unknown6a9914ac" size="84" expected-value="0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" />
+            <field name="unknown9d115fa7" size="4" />
+            <!-- unknown9aea956e is not a float and has strange content -->
+            <field name="unknown9aea956e" size="4" />
+            <field name="unknown17c6f44e" size="4" expected-value="0x00000000" />
+            <field name="unknowne444b392" size="4" />
+            <field name="unknown32885641" size="4" expected-value="0x00000000" />
+            <!-- unknown721b9a99 is not a float and has strange content-->
+            <field name="unknown721b9a99" size="4" />
+            <!-- unknowna495c84b is not a float and has strange content-->
+            <field name="unknowna495c84b" size="4" />
+            <!-- unknown12e15bc4 is not a float and has strange content-->
+            <field name="unknown12e15bc4" size="4" />
+        </structure>
+        
+
         <structure name="PHRB" version="2" size="104" >
             <description>Rigid Body</description>
             <field name="unknownAt0" type="float" default-value="5.0" />
@@ -1570,6 +1604,69 @@
             <field name="boneIndex" type="uint16" />
             <field name="boneIndexUnused" type="uint16" default-value="0x0" /> <!-- Matches boneLookup, but doesn't seem to be used? -->
             <field name="unknownAt64" size="16" default-value="0x00000000000000000000000000000000" />
+            <field name="physicsShapes" type="Reference" refTo="PHSH" />
+            <field name="flags" type="uint32" default-value="0x1">
+                <bits>
+                    <bit mask="0x1" name="collidable" />
+                    <bit mask="0x2" name="walkable" />
+                    <bit mask="0x4" name="stackable" />
+                    <bit mask="0x8" name="simulateOnCollision" />
+                    <bit mask="0x10" name="ignoreLocalBodies" />
+                    <bit mask="0x20" name="alwaysExists" />
+                    <bit mask="0x80" name="doNotSimulate" />
+                </bits>
+            </field>
+            <field name="localForces" type="uint16" default-value="0x0">
+                <bits>
+                    <bit mask="0x1" name="1" />
+                    <bit mask="0x2" name="2" />
+                    <bit mask="0x4" name="3" />
+                    <bit mask="0x8" name="4" />
+                    <bit mask="0x10" name="5" />
+                    <bit mask="0x20" name="6" />
+                    <bit mask="0x40" name="7" />
+                    <bit mask="0x80" name="8" />
+                    <bit mask="0x100" name="9" />
+                    <bit mask="0x200" name="10" />
+                    <bit mask="0x400" name="11" />
+                    <bit mask="0x800" name="12" />
+                    <bit mask="0x1000" name="13" />
+                    <bit mask="0x2000" name="14" />
+                    <bit mask="0x4000" name="15" />
+                    <bit mask="0x8000" name="16" />
+                </bits>
+            </field>
+            <field name="worldForces" type="uint16" default-value="0x0">
+                <bits>
+                    <bit mask="0x1" name="wind" />
+                    <bit mask="0x2" name="explosion" />
+                    <bit mask="0x4" name="energy" />
+                    <bit mask="0x8" name="blood" />
+                    <bit mask="0x10" name="magnetic" />
+                    <bit mask="0x20" name="grass" />
+                    <bit mask="0x40" name="brush" />
+                    <bit mask="0x80" name="trees" />
+                </bits>
+            </field>
+            <field name="priority" type="uint32" default-value="0" />
+        </structure>
+        
+        <structure name="PHRB" version="4" size="80" >
+            <description>Rigid Body</description>
+            <field name="unknown7ee981a1" type="uint16" expected-value="1" />
+            <field name="unknown9a561188" type="uint16" default-value="0" />
+            <field name="boneIndex" type="uint32" />
+            <field name="unknown6fe32955" type="float" default-value="2400.0"/>
+            <field name="unknownf4a3152b" type="float" default-value="0.7" />
+            <field name="unknown1cde99d0" type="float" default-value="0.1" />
+            <field name="unknown85048243" type="float" default-value="0.001" />
+            <field name="unknowna5f8324d" type="float" default-value="0.001" />
+            <field name="unknown1b54daab" type="float" default-value="1.0" />
+            <field name="unknown8de065e8" type="AnimationReferenceHeader" />
+            <field name="unknown568ae4f7" size="4" expected-value="0x00000000" />
+            <field name="unknown82406bbb" size="4" expected-value="0x00000000" />
+            <field name="unknownac1544c0" size="4" expected-value="0xffffffff" />
+            <field name="unknown57796a4d" type="float" default-value="1.0" />
             <field name="physicsShapes" type="Reference" refTo="PHSH" />
             <field name="flags" type="uint32" default-value="0x1">
                 <bits>

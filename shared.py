@@ -759,9 +759,9 @@ def transferForce(transferer):
     transferer.transferAnimatableFloat("unknownAt84")
 
 def transferRigidBody(transferer):
-    transferer.transferFloat("unknownAt0")
-    transferer.transferFloat("unknownAt4")
-    transferer.transferFloat("unknownAt8")
+    transferer.transferFloat("unknownAt0", tillVersion=3)
+    transferer.transferFloat("unknownAt4", tillVersion=3)
+    transferer.transferFloat("unknownAt8", tillVersion=3)
     # skip other unknown values for now
     transferer.transferBit("flags", "collidable")
     transferer.transferBit("flags", "walkable")

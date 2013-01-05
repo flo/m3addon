@@ -259,7 +259,9 @@ class M3ToBlenderDataTransferer:
         self.transferAnimatableInteger(fieldName)
 
     
-    def transferFloat(self, fieldName):
+    def transferFloat(self, fieldName, tillVersion=None):
+        if (tillVersion != None) and (self.m3Version > tillVersion):
+            return
         setattr(self.blenderObject, fieldName, getattr(self.m3Object, fieldName))
         
     def transferInt(self, fieldName):
