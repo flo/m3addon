@@ -964,7 +964,12 @@ class Importer:
                     
                     indices = range(0, len(m3PhysicsShape.faces), 3)
                     faces = [m3PhysicsShape.faces[i : i+3] for i in indices]
-                    
+
+                    # Prevent Blender from crashing for real when the vertex data is invalid:
+                    for f in faces:
+                        if f[0] >= len(vertices) or f[1] >= len(vertices) or f[2] >= len(vertices):
+                            raise Exception("A phsyical mesh is invalid")
+                        
                     mesh = bpy.data.meshes.new('PhysicsMesh')
                     mesh.from_pydata(vertices = vertices, faces = faces, edges = [])
                     mesh.update(calc_edges = True)
