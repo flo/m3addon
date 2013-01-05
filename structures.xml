@@ -1550,6 +1550,14 @@
             <field name="size2" type="float" default-value="1.0" /> <!-- box z-size -->
         </structure>
         
+        <structure name="DMSE" version="0" size="4">
+            <description>Unknown structure</description>
+            <field name="unknown" type="int8" />
+            <field name="i0" type="uint8" />
+            <field name="i1" type="uint8" />
+            <field name="i2" type="uint8" />
+        </structure>
+        
         <structure name="PHSH" version="3" size="300" >
             <description>A physical shape</description>
             <field name="matrix" type="Matrix44" />
@@ -1558,12 +1566,16 @@
             <field name="size0" type="float" />
             <field name="size1" type="float" />
             <field name="size2" type="float" />
-            <field name="unknownbda8f787" size="60" expected-value="0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" />
+            <field name="unknown71459989" type="Reference" refTo="VEC3" />
+            <field name="unknown46c85f1e" type="Reference" refTo="VEC4" />
+            <field name="unknown4f8176e7" type="Reference" refTo="DMSE" />
+            <field name="unknown124fad04" type="Reference" refTo="U8__" />
+            <field name="unknownbda8f787" size="12" default-value="0x000000000000000000000000" />
             <!-- unknown2e655ca4 can have the value 0x80000000 too -->
             <field name="unknown2e655ca4" size="4" />
             <!-- unknown7df99f73 is not a float and has strange content -->
             <field name="unknown7df99f73" size="4" />
-            <field name="unknown5c04305e" size="4" expected-value="0x00000000" />
+            <field name="unknown5c04305e" size="4" default-value="0x00000000" />
             <!-- unknown8d41b3f8 is not a float and has strange content -->
             <field name="unknown8d41b3f8" size="4" />
             <!-- unknown56fece2 is not a float and has strange content -->
@@ -1663,7 +1675,7 @@
             <field name="unknowna5f8324d" type="float" default-value="0.001" />
             <field name="unknown1b54daab" type="float" default-value="1.0" />
             <field name="unknown8de065e8" type="AnimationReferenceHeader" />
-            <field name="unknown568ae4f7" size="4" expected-value="0x00000000" />
+            <field name="unknown568ae4f7" type="uint32" />
             <field name="unknown82406bbb" size="4" expected-value="0x00000000" />
             <field name="unknownac1544c0" size="4" expected-value="0xffffffff" />
             <field name="unknown57796a4d" type="float" default-value="1.0" />
