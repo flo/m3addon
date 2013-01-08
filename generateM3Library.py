@@ -39,6 +39,8 @@ class Visitor:
     def visitEnd(self, generalDataMap):
         pass
 
+namesOfPrimitiveTypes = set(["CHAR", "U8__", "REAL", "I16_", "U16_", "I32_", "U32_"])
+
 class HeaderAdder(Visitor):
     text= """\
 #!/usr/bin/python3
@@ -110,8 +112,10 @@ class Section:
                 rawBytes[i] = 0xaa
             self.rawBytes = rawBytes
     def resolveReferences(self, sections):
-        self.contentClass.resolveReferencesOfOneOrMore(self.content, sections)
-
+        if not self.contentClass.isPrimitive:
+            for object in self.content:
+                object.resolveReferences(sections) 
+        
 class FieldTypeInfo:
     \"\"\" Stores information of the type of a field:\"\"\"
     def __init__(self, typeName, typeClass, referencedTag):
@@ -226,9 +230,8 @@ class KnownTagsListDeterminer(Visitor):
 
 class PrimitiveStructureDetector(Visitor):
     def visitClassStart(self, generalDataMap, classDataMap):
-        fullName = classDataMap["fullName"]
-        classDataMap["primitive"] = (fullName in ["CHARV0", "U8__V0", "REALV0", "I16_V0", "U16_V0", "I32_V0", "U32_V0"])
-
+        tagName = classDataMap["tagName"]
+        classDataMap["primitive"] = (tagName in namesOfPrimitiveTypes)
 
 class FieldAttributesReader(Visitor):
     def visitFieldStart(self, generalDataMap, classDataMap, fieldDataMap):
@@ -354,6 +357,13 @@ class VersionConstantAdder(Visitor):
             text = "    tagVersion = %(version)s\n" % {"version": version}
             generalDataMap["out"].write(text)
 
+class PrimitiveFieldAdder(Visitor):
+    def visitClassEnd(self, generalDataMap, classDataMap):
+        isPrimitive = classDataMap["primitive"]
+        text = "    isPrimitive = %(isPrimitive)s\n" % {"isPrimitive": isPrimitive}
+        generalDataMap["out"].write(text)
+        
+
 class FieldsConstantAdder(Visitor):
     def visitClassEnd(self, generalDataMap, classDataMap):
         quotedFields = classDataMap["quotedFields"]
@@ -402,57 +412,51 @@ class ReferenceFeatureAdder(Visitor):
     def resolveReferences(self, sections):
 %(resolveAssigments)s
 
-    @staticmethod
-    def resolveReferencesOfOneOrMore(oneOrMore, sections):
-        if oneOrMore.__class__ == [].__class__:
-            for object in oneOrMore:
-                object.resolveReferences(sections) 
-        else:
-            oneOrMore.resolveReferences(sections)
-
     def introduceIndexReferences(self, indexMaker):
 %(introduceReferencesAssigments)s
 
-    @staticmethod
-    def introduceIndexReferencesForOneOrMore(object, indexMaker):
-        if object.__class__ == MD34IndexEntry:
-            return # nothing to do (object was reachable trough 2 paths)
-        if object.__class__ == [].__class__:
-            for o in object:
-                o.introduceIndexReferences(indexMaker) 
-        else:
-            object.introduceIndexReferences(indexMaker)
 """
     simpleFuctionsTemplate = """
     def resolveReferences(self, sections):
         pass
 
-    @staticmethod
-    def introduceIndexReferencesForOneOrMore(object, indexMaker):
-        pass #nothing to do
-    
-    @staticmethod
-    def resolveReferencesOfOneOrMore(oneOrMore, sections):
-        pass #nothing to do
+    def introduceIndexReferences(self, indexMaker):
+        pass
 """
     introduceReferencesTemplate = """\
         listContentClass = getListContentClassForTag(self.%(fieldName)s, "%(refTo)s")
         if listContentClass != None:
             indexReference = indexMaker.getIndexReferenceTo(self.%(fieldName)s, %(referenceClass)s, listContentClass)
-            listContentClass.introduceIndexReferencesForOneOrMore(self.%(fieldName)s, indexMaker)
+            introduceIndexReferencesForOneOrMore(self.%(fieldName)s, indexMaker)
             self.%(fieldName)s = indexReference
         else:
             self.%(fieldName)s = indexMaker.getIndexReferenceTo(self.%(fieldName)s, %(referenceClass)s, None)
 """
 
+    introduceReferencesForPrimitiveTemplate = """\
+        listContentClass = getListContentClassForTag(self.%(fieldName)s, "%(refTo)s")
+        indexReference = indexMaker.getIndexReferenceTo(self.%(fieldName)s, %(referenceClass)s, listContentClass)
+        self.%(fieldName)s = indexReference
+"""
+
     introduceReferencesForFieldTemplate = """\
-        %(fieldType)s.introduceIndexReferencesForOneOrMore(self.%(fieldName)s, indexMaker) 
+        introduceIndexReferencesForOneOrMore(self.%(fieldName)s, indexMaker) 
 """
 
     introduceReferencesForNoneTemplate = """\
         self.%(fieldName)s = indexMaker.getIndexReferenceTo(self.%(fieldName)s, %(referenceClass)s, None)
 """
-
+    globalfunctions = """\
+    
+def introduceIndexReferencesForOneOrMore(object, indexMaker):
+    if object.__class__ == MD34IndexEntry:
+        return # nothing to do (object was reachable trough 2 paths)
+    if object.__class__ == [].__class__:
+        for o in object:
+            o.introduceIndexReferences(indexMaker) 
+    else:
+        object.introduceIndexReferences(indexMaker)
+"""
     def visitClassStart(self, generalDataMap, classDataMap):
         self.resolveAssigments = ""
         self.introduceReferencesAssigments = ""
@@ -467,9 +471,10 @@ class ReferenceFeatureAdder(Visitor):
             refTo = fieldDataMap["refTo"]
             if (refTo != None) and (not (refTo in knownTags)):
                 raise Exception("The structure with tagName %s referenced by %s.%s is not defined" % (refTo,fullName,fieldName))
-
             if refTo == None:
                 template = ReferenceFeatureAdder.introduceReferencesForNoneTemplate
+            elif (refTo in namesOfPrimitiveTypes):
+                template = ReferenceFeatureAdder.introduceReferencesForPrimitiveTemplate
             else:
                 template = ReferenceFeatureAdder.introduceReferencesTemplate
             self.introduceReferencesAssigments += template % {"fieldName": fieldName, "referenceClass": fieldType, "refTo":refTo}
@@ -486,7 +491,8 @@ class ReferenceFeatureAdder(Visitor):
             "introduceReferencesAssigments":self.introduceReferencesAssigments, "resolveAssigments":self.resolveAssigments}
         generalDataMap["out"].write(text)
         
-        
+    def visitEnd(self, generalDataMap):
+        generalDataMap["out"].write(ReferenceFeatureAdder.globalfunctions)
 
 class ExpectedAndDefaultConstantsDeterminer(Visitor):
     def toHexConstant(self, hexString):
@@ -1385,6 +1391,7 @@ def writeM3PythonTo(structuresXmlFile, out):
         FullNameConstantAdder(),
         TagNameConstantAdder(),
         VersionConstantAdder(),
+        PrimitiveFieldAdder(),
         StructSizeConstantAdder(),
         StructFormatConstantAdder(),
         FieldsConstantAdder(), 
