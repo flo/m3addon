@@ -191,6 +191,15 @@ def createEmptyArrayOf(tagName):
         return bytearray(0)
     else:
         return []
+        
+def countInstancesFor(instances, structureClass):
+    if structureClass.tagName == "CHAR":
+        if instances == None:
+            return 0
+        return len(instances)+1 # +1 terminating null character
+    else: # either a list or an array of bytes
+        return len(instances) 
+
 
 """
     def visitStart(self, generalDataMap):
@@ -804,56 +813,18 @@ class StructFormatConstantAdder(Visitor):
         text = StructFormatConstantAdder.template % {"formatString":self.structureFormatString}
         generalDataMap["out"].write(text)
 
-class CountOneOrMoreMethodAdder(Visitor):
-    charTypeTemplate = """
-    @staticmethod
-    def countOneOrMore(object):
-        if object == None:
-            return 0
-        return len(object)+1 # +1 terminating null character
-    """
-
-    u8TypeTemplate = """
-    @staticmethod
-    def countOneOrMore(object):
-        return len(object)
-    """
-
-    defaultTemplate = """
-    @staticmethod
-    def countOneOrMore(object):
-        if object.__class__ == [].__class__:
-            return len(object)
-        else:
-            return 1
-    """
-    
-    def visitClassEnd(self, generalDataMap, classDataMap):
-        knownStructs = generalDataMap["knownStructs"]
-        fullName = classDataMap.get("fullName")
-        primitive = classDataMap["primitive"]
-        
-        if fullName ==  "CHARV0":
-            template = CountOneOrMoreMethodAdder.charTypeTemplate
-        elif fullName == "U8__V0":
-            template = CountOneOrMoreMethodAdder.u8TypeTemplate
-        else:
-            template = CountOneOrMoreMethodAdder.defaultTemplate
-
-        text = template % {}
-        generalDataMap["out"].write(text)
-
 class BytesRequiredForOneOrMoreMethodAdder(Visitor):
     template = """
     @staticmethod
     def bytesRequiredForOneOrMore(object):
-        return %(fullName)s.countOneOrMore(object) * %(fullName)s.size
+        return countInstancesFor(object, %(fullName)s) * %(fullName)s.size
     """
 
     def visitClassEnd(self, generalDataMap, classDataMap):
         fullName = classDataMap.get("fullName")
+        tagName = classDataMap.get("tagName")
         template = BytesRequiredForOneOrMoreMethodAdder.template
-        text = template % {"fullName":fullName}
+        text = template % {"fullName":fullName,"tagName":tagName}
         generalDataMap["out"].write(text)
 
 class BitMethodsAdder(Visitor):
@@ -1216,7 +1187,7 @@ class IndexReferenceSourceAndSectionListMaker:
         if objectClass == None:
             repetitions = 0
         else:
-            repetitions = objectClass.countOneOrMore(objectToSave)
+            repetitions = countInstancesFor(objectToSave, objectClass)
         
         indexReference = referenceClass()
         indexReference.entries = repetitions
@@ -1364,7 +1335,6 @@ def writeM3PythonTo(structuresXmlFile, out):
         ExpectedAndDefaultConstantsDeterminer(),
         CreateInstancesFeatureAdder(),
         ToBytesFeatureAdder(),
-        CountOneOrMoreMethodAdder(),
         BytesRequiredForOneOrMoreMethodAdder(),
         BitMethodsAdder(),
         GetFieldTypeInfoMethodAdder(),
