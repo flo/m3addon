@@ -101,7 +101,7 @@ class Section:
         self.content = self.contentClass.createInstances(rawBytes=self.rawBytes, count=indexEntry.repetitions)
 
     def determineFieldRawBytes(self):
-        minRawBytes = self.contentClass.rawBytesForOneOrMore(oneOrMore=self.content)
+        minRawBytes = self.determineRawBytesWithData()
         sectionSize = increaseToValidSectionSize(len(minRawBytes))
         if len(minRawBytes) == sectionSize:
             self.rawBytes = minRawBytes
@@ -111,6 +111,28 @@ class Section:
             for i in range(len(minRawBytes),sectionSize):
                 rawBytes[i] = 0xaa
             self.rawBytes = rawBytes
+            
+    def determineRawBytesWithData(self):
+        if self.contentClass.tagName == "CHAR":
+            return self.content.encode("ASCII") + b"\\x00"
+
+        if self.contentClass.tagName == "U8__":
+            return self.content
+
+        rawBytes = bytearray(self.contentClass.bytesRequiredForOneOrMore(self.content))
+        offset = 0
+        nextOffset = self.contentClass.size
+        for object in self.content:
+            if self.contentClass.isPrimitive:
+                rawBytes[offset:nextOffset] = self.contentClass.structFormat.pack(object)
+            else:
+                rawBytes[offset:nextOffset] = object.toBytes()
+
+            offset = nextOffset
+            nextOffset += self.contentClass.size
+        return rawBytes
+            
+            
     def resolveReferences(self, sections):
         if not self.contentClass.isPrimitive:
             for object in self.content:
@@ -821,65 +843,6 @@ class CountOneOrMoreMethodAdder(Visitor):
         text = template % {}
         generalDataMap["out"].write(text)
 
-class RawBytesForOneOrMoreMethodAdder(Visitor):
-    charTypeTemplate = """
-    def rawBytesForOneOrMore(oneOrMore):
-        return oneOrMore.encode("ASCII") + b"\\x00"
-    """
-    
-    u8TypeTemplate = """
-    def rawBytesForOneOrMore(oneOrMore):
-        return oneOrMore
-    """
-
-    primitiveTypeTemplate = """
-    @staticmethod
-    def rawBytesForOneOrMore(oneOrMore):
-        if oneOrMore.__class__ == [].__class__:
-            list = oneOrMore
-        else:
-            list = [oneOrMore]
-        rawBytes = bytearray(%(fullName)s.bytesRequiredForOneOrMore(oneOrMore))
-        offset = 0
-        nextOffset = %(fullName)s.size
-        for object in list:
-            rawBytes[offset:nextOffset] = %(fullName)s.structFormat.pack(object)
-            offset = nextOffset
-            nextOffset += %(fullName)s.size
-        return rawBytes
-    """
-
-    defaultTemplate = """
-    @staticmethod
-    def rawBytesForOneOrMore(oneOrMore):
-        if oneOrMore.__class__ == [].__class__:
-            list = oneOrMore
-        else:
-            list = [oneOrMore]
-        rawBytes = bytearray(%(fullName)s.bytesRequiredForOneOrMore(oneOrMore))
-        offset = 0
-        nextOffset = %(fullName)s.size
-        for object in list:
-            rawBytes[offset:nextOffset] = object.toBytes()
-            offset = nextOffset
-            nextOffset += %(fullName)s.size
-        return rawBytes
-    """
-    
-    def visitClassEnd(self, generalDataMap, classDataMap):
-        fullName = classDataMap.get("fullName")
-        primitive = classDataMap["primitive"]
-        if fullName ==  "CHARV0":
-            template = RawBytesForOneOrMoreMethodAdder.charTypeTemplate
-        elif fullName == "U8__V0":
-            template = RawBytesForOneOrMoreMethodAdder.u8TypeTemplate
-        elif primitive:
-            template = RawBytesForOneOrMoreMethodAdder.primitiveTypeTemplate
-        else:
-            template = RawBytesForOneOrMoreMethodAdder.defaultTemplate
-        text = template % {"fullName":fullName}
-        generalDataMap["out"].write(text)
-        
 class BytesRequiredForOneOrMoreMethodAdder(Visitor):
     template = """
     @staticmethod
@@ -1401,7 +1364,6 @@ def writeM3PythonTo(structuresXmlFile, out):
         ExpectedAndDefaultConstantsDeterminer(),
         CreateInstancesFeatureAdder(),
         ToBytesFeatureAdder(),
-        RawBytesForOneOrMoreMethodAdder(),
         CountOneOrMoreMethodAdder(),
         BytesRequiredForOneOrMoreMethodAdder(),
         BitMethodsAdder(),
