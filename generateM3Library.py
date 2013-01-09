@@ -119,7 +119,7 @@ class Section:
         if self.contentClass.tagName == "U8__":
             return self.content
 
-        rawBytes = bytearray(self.contentClass.bytesRequiredForOneOrMore(self.content))
+        rawBytes = bytearray(self.bytesRequiredForContent())
         offset = 0
         nextOffset = self.contentClass.size
         for object in self.content:
@@ -131,7 +131,11 @@ class Section:
             offset = nextOffset
             nextOffset += self.contentClass.size
         return rawBytes
-            
+    
+    def bytesRequiredForContent(self):
+        count = countInstancesFor(self.content, self.contentClass)
+        sizePerEntry = self.contentClass.size
+        return count * sizePerEntry
             
     def resolveReferences(self, sections):
         if not self.contentClass.isPrimitive:
@@ -813,20 +817,6 @@ class StructFormatConstantAdder(Visitor):
         text = StructFormatConstantAdder.template % {"formatString":self.structureFormatString}
         generalDataMap["out"].write(text)
 
-class BytesRequiredForOneOrMoreMethodAdder(Visitor):
-    template = """
-    @staticmethod
-    def bytesRequiredForOneOrMore(object):
-        return countInstancesFor(object, %(fullName)s) * %(fullName)s.size
-    """
-
-    def visitClassEnd(self, generalDataMap, classDataMap):
-        fullName = classDataMap.get("fullName")
-        tagName = classDataMap.get("tagName")
-        template = BytesRequiredForOneOrMoreMethodAdder.template
-        text = template % {"fullName":fullName,"tagName":tagName}
-        generalDataMap["out"].write(text)
-
 class BitMethodsAdder(Visitor):
     template = """
     fieldToBitMaskMapMap = %(fieldToBitMaskMapMap)s
@@ -1208,7 +1198,7 @@ class IndexReferenceSourceAndSectionListMaker:
             section.contentClass = structMap[("%sV%s" % (indexEntry.tag, indexEntry.version))]
             self.sections.append(section)
             self.objectsIdToIndexReferenceMap[id(objectToSave)] = indexReference
-            totalBytes = objectClass.bytesRequiredForOneOrMore(objectToSave)
+            totalBytes = section.bytesRequiredForContent()
             totalBytes = increaseToValidSectionSize(totalBytes)
             self.offset += totalBytes
             self.nextFreeIndexPosition += 1
@@ -1335,7 +1325,6 @@ def writeM3PythonTo(structuresXmlFile, out):
         ExpectedAndDefaultConstantsDeterminer(),
         CreateInstancesFeatureAdder(),
         ToBytesFeatureAdder(),
-        BytesRequiredForOneOrMoreMethodAdder(),
         BitMethodsAdder(),
         GetFieldTypeInfoMethodAdder(),
         ValidateMethodAdder(),
