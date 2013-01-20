@@ -21,9 +21,7 @@
 
 import struct
 import sys
-from generateM3Library import generateM3Library
-generateM3Library()
-from m3 import *
+import m3
 import argparse
 import os.path
 import os
@@ -51,67 +49,63 @@ def openCloseTag(name):
 def printXmlElement(out, level, name, value):
     out.write(indent(level) + openTag(name) + value + closeTag(name))
 
-def printObject(out, level, name, object):
-    
-    otype = type(object)
-    
-    if otype is type(None):
+def printObject(out, level, name, value):
+    valueType = type(value)
+    if value == None:
         out.write(indent(level) + openCloseTag(name))
         return
     
-    elif otype is int:
-        value = hex(object)
+    elif valueType == int:
+        value = hex(value)
         printXmlElement(out, level, name, value)
         return
     
-    elif otype is bytearray or otype is bytes:
-        value = byteDataToHex(object)
+    elif valueType == bytearray or valueType == bytes:
+        value = byteDataToHex(value)
         printXmlElement(out, level, name, value)
         return
     
-    elif otype is list:
-        
-        if len(object) == 0:
+    elif valueType == list:
+        if len(value) == 0:
             out.write(indent(level) + openTag(name) + closeTag(name))
             return
-        contentClass = type(object[0])
-        if hasattr(contentClass, "tagVersion"):
-            structName = contentClass.tagName
-            structVersion = contentClass.tagVersion
-            out.write(('%s<%s structureName="%s" structureVersion="%s" >\n' % (indent(level), name, structName, structVersion)))
+        firstObject = value[0]
+        if isinstance(firstObject, m3.M3Structure):
+            structureName = firstObject.structureDescription.structureName
+            structureVersion = firstObject.structureDescription.structureVersion
+            out.write(('%s<%s structureName="%s" structureVersion="%s" >\n' % (indent(level), name, structureName, structureVersion)))
         else:
             out.write(indent(level) + openTag(name) + "\n")
-        for entry in object:
+        for entry in value:
             printObject(out, level + 1, name + "-element", entry)
         
         out.write(indent(level) + closeTag(name))
         return
     
-    elif hasattr(otype, "fields"):
+    elif valueType == m3.M3Structure:
         out.write(indent(level) + openTag(name) + "\n")
         
-        for field in object.fields:
-            value = getattr(object, field)
-            printObject(out, level + 1, field, value)
+        for field in value.structureDescription.fields:
+            v = getattr(value, field.name)
+            printObject(out, level + 1, field.name, v)
         
         out.write(indent(level) + closeTag(name))
         return
     
     else:
-        value = str(object)
-        printXmlElement(out, level, name, value)
+        printXmlElement(out, level, name, str(value))
         return
 
 def printModel(model, outputFilePath):
     outputStream = io.StringIO()
     
     outputFile = open(outputFilePath, "w")
-    
-    outputStream.write('<model structureName="%s" structureVersion="%s" >\n' %(model.tagName, model.tagVersion))
+    modelDescription = model.structureDescription
+    outputStream.write('<model structureName="%s" structureVersion="%s" >\n' % (modelDescription.structureName, modelDescription.structureVersion))
 
-    for field in model.fields:
-        value = getattr(model, field)
-        printObject(outputStream, 0, field, value)
+    for field in modelDescription.fields:
+        value = getattr(model, field.name)
+        printObject(outputStream, 0, field.name, value)
 
     outputStream.write(closeTag("model"))
     
@@ -124,7 +118,7 @@ def printModel(model, outputFilePath):
 def convertFile(inputFilePath, outputFilePath, continueAtErrors):    
     model = None
     try:
-        model = loadModel(inputFilePath)
+        model = m3.loadModel(inputFilePath)
     except Exception as e:
         if continueAtErrors:
             sys.stderr.write("\nError: %s\n" % e)

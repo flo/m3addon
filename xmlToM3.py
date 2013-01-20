@@ -21,43 +21,71 @@
 
 import struct
 import sys
-from generateM3Library import generateM3Library
-generateM3Library()
-from m3 import *
+import m3
 import xml.dom.minidom
 from xml.dom.minidom import Node
 import argparse
 import os
 
-def createSingleStructureElement(xmlNode, typeClass):
-    createdObject = typeClass()
+def forElementsIn(xmlNode):
     for child in xmlNode.childNodes:
         if type(child) == xml.dom.minidom.Text:
             if not child.wholeText.isspace():
                 raise Exception("Unexpected content \"%s\" within element %s" % (child.wholeText, xmlNode.nodeName))
         else:
-            fieldName = child.nodeName
-            fieldTypeInfo = typeClass.getFieldTypeInfo(fieldName)
-            o = createFieldContent(child,fieldName,fieldTypeInfo)
-            setattr(createdObject, fieldName, o)
+            yield child
+
+def createSingleStructureElement(xmlNode, structureDescription):
+    createdObject = structureDescription.createInstance()
+    fieldIndex = 0
+    for child in forElementsIn(xmlNode):
+        fieldName = child.nodeName
+        if fieldIndex >= len(structureDescription.fields):
+            raise Exception("XML file is incompatible: too many fields")
+        field = structureDescription.fields[fieldIndex]
+        if field.name != fieldName:
+            raise Exception("XML file is incompatible: Expected field %s but found field %s" % (field.name, fieldName) )
+        
+        fieldContent = createFieldContent(child,field)
+        setattr(createdObject, field.name, fieldContent)
+        fieldIndex += 1
+    
+    missingFields = len(structureDescription.fields) - fieldIndex
+    if missingFields > 0:
+        raise Exception("XML file is incompatible: %d fields are missing in %s" % (missingFields, structureDescription.structureName))
+        
     return createdObject
                 
-        
-def createFieldContent(xmlNode, fieldName, fieldTypeInfo):
-    typeName = fieldTypeInfo.typeName
-    referencedTag =  fieldTypeInfo.referencedTag
-    if referencedTag == "CHAR":
-        return stringContentOf(xmlNode)
-    elif referencedTag == "U8__":
-        return bytearray(hexToBytes(stringContentOf(xmlNode),xmlNode))
-    elif (referencedTag != None):
-        return createElementList(xmlNode, fieldName, referencedTag)
-    elif (typeName == None):
+intTypeStrings = set(["int32","int16","int8","uint32", "uint16", "uint8"])     
+def createFieldContent(xmlNode, field):
+    if isinstance(field, m3.ReferenceField):
+        if field.historyOfReferencedStructures == None:
+            return [] # TODO check if that's correct
+        else:
+            referencedStructureName = field.historyOfReferencedStructures.name
+            if referencedStructureName == "CHAR":
+                return stringContentOf(xmlNode)
+            elif referencedStructureName == "U8__":
+                return bytearray(hexToBytes(stringContentOf(xmlNode), xmlNode))
+            else:
+                if field.historyOfReferencedStructures != None:
+                    return createElementList(xmlNode, field.name, field.historyOfReferencedStructures)
+                else:
+                    return createElementList(xmlNode, field.name, None)
+
+    elif isinstance(field, m3.UnknownBytesField):
         return hexToBytes(stringContentOf(xmlNode),xmlNode)
-
-    else:
-        return createSingleElement(xmlNode, fieldTypeInfo.typeName, fieldTypeInfo.typeClass)
-
+    elif isinstance(field, m3.PrimitiveField):
+        if field.typeString == "float":
+            return float(stringContentOf(xmlNode))
+        elif field.typeString in intTypeStrings:
+            return int(stringContentOf(xmlNode), 0)
+        else:
+            raise Exception("Unsupported primtive: %s" % field.typeString)
+    elif isinstance(field, m3.EmbeddedStructureField):
+        return createSingleStructureElement(xmlNode, field.structureDescription)
+    else: # TagField
+        raise Exception("Unsupported field type %s" % type(field))
 
 def removeWhitespace(s):
     return s.translate({ord(" "):None,ord("\t"):None,ord("\r"):None,ord("\n"):None})
@@ -80,15 +108,13 @@ def stringContentOf(xmlNode):
             raise Exception("Element %s contained childs of xml node type %s." % (xmlNode.nodeName,type(xmlNode)))
     return content
 
-def createSingleElement(xmlNode, typeName, typeClass):
-    if typeName in ["int32","int16","int8","uint32", "uint16", "uint8", "I32_V0","I16_V0", "I8__V0", "U32_V0", "U16_V0", "U8__V0"]:
+def createListElement(xmlNode, structureDescription):
+    if structureDescription.structureName in ["I32_","I16_", "I8__", "U32_", "U16_", "U8__"]:
         return int(stringContentOf(xmlNode), 0)
-    elif typeName in ["float","REALV0"]:
+    elif structureDescription.structureName in ["REAL"]:
         return float(stringContentOf(xmlNode))
-    elif typeClass != None:
-        return createSingleStructureElement(xmlNode, typeClass)
     else:
-        raise Exception("%(nodeName)s of type %(typeName)s has no class" % {"nodeName":xmlNode.nodeName,"typeName":typeName})
+        return createSingleStructureElement(xmlNode, structureDescription)
       
       
 def childElementsOf(parentName, xmlNode):
@@ -102,26 +128,25 @@ def childElementsOf(parentName, xmlNode):
                 raise Exception("Unexpected child \"%s\" within element %s", (child.nodeName, xmlNode.nodeName))
             yield child
 
-def createElementList(xmlNode, parentName, referencedTag):
+def createElementList(xmlNode, parentName, historyOfReferencedStructure):
     xmlElements = list(childElementsOf(parentName, xmlNode))
-    if referencedTag in ["CHAR", "I32_","I16_", "I8__", "U32_", "U16_", "U8__", "REAL"]:
-        structVersion = "0"
+    if historyOfReferencedStructure.name in ["CHAR", "I32_","I16_", "I8__", "U32_", "U16_", "U8__", "REAL"]:
+        structVersion = 0
     else:
         if len(xmlElements) == 0:
             return []
         
         child = xmlNode.firstChild
-        structVersion = xmlNode.getAttribute("structureVersion")
+        structVersion = int(xmlNode.getAttribute("structureVersion"))
         structName = xmlNode.getAttribute("structureName")
         if structName == "" or structVersion == "":
-            raise Exception("Incompatible format: Require now a strutName and structVerson attribute for the list %s" % parentName)
-        if structName != referencedTag:
-            raise Exception("Expected a %s to have the structure name %s instead of %s" % (parentName, referencedTag, structName))
-    fullStructName = referencedTag + "V" + structVersion
-    structClass = structMap[fullStructName]
+            raise Exception("Incompatible format: Require now a strutureName and structureVerson attribute for the list %s" % parentName)
+        if structName != historyOfReferencedStructure.name:
+            raise Exception("Expected a %s to have the structure name %s instead of %s" % (parentName,  historyOfReferencedStructure.name, structName))
+    structureDescription = historyOfReferencedStructure.getVersion(structVersion)
     createdList = []
     for child in xmlElements:
-        o = createSingleElement(child, fullStructName, structClass)
+        o = createListElement(child, structureDescription)
         createdList.append(o)
         
     return createdList
@@ -137,12 +162,11 @@ def convertFile(inputFilePath, outputDirectory):
     print("Converting %s -> %s" % (inputFilePath, outputFilePath))
     doc = xml.dom.minidom.parse(inputFilePath)
     modelElement = doc.firstChild
-    structVersion = modelElement.getAttribute("structureVersion")
+    structVersion = int(modelElement.getAttribute("structureVersion"))
     structName = modelElement.getAttribute("structureName")
-    fullStructName = structName + "V" + structVersion
-    structClass = structMap[fullStructName]
-    model = createSingleElement(modelElement, fullStructName, structClass)
-    saveAndInvalidateModel(model, outputFilePath)
+    modelDescription = m3.structures[structName].getVersion(structVersion)
+    model = createSingleStructureElement(modelElement, modelDescription)
+    m3.saveAndInvalidateModel(model, outputFilePath)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

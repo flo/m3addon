@@ -21,13 +21,6 @@
 
 if "bpy" in locals():
     import imp
-    if "generateM3Library" in locals():
-        imp.reload(generateM3Library)
-from . import generateM3Library
-generateM3Library.generateM3Library()
-
-if "bpy" in locals():
-    import imp
     if "m3" in locals():
         imp.reload(m3)
     if "shared" in locals():
@@ -1068,17 +1061,16 @@ class Importer:
 
     def createMesh(self):
         model = self.model
-        vertexClass = None
         if model.vFlags == 0x180007d:
             return # no vertices
         
-        vertexClassName = "VertexFormat" + hex(self.model.vFlags)
-        if not vertexClassName in m3.structMap:
+        vertexClassName = "VertexFormat" + hex(self.model.vFlags)        
+        if not vertexClassName in m3.structures:
             raise Exception("Vertex flags %s can't behandled yet" % hex(self.model.vFlags))
-        vertexClass = m3.structMap[vertexClassName]
+        vertexStructureDescription = m3.structures[vertexClassName].getVersion(0)
 
-        numberOfVertices = len(self.model.vertices) // vertexClass.size
-        m3Vertices = vertexClass.createInstances(rawBytes=self.model.vertices, count=numberOfVertices)
+        numberOfVertices = len(self.model.vertices) // vertexStructureDescription.size
+        m3Vertices = vertexStructureDescription.createInstances(buffer=self.model.vertices, count=numberOfVertices)
 
         for division in self.model.divisions:
             divisionFaceIndices = division.faces
@@ -1167,7 +1159,7 @@ class Importer:
                     return toBlenderUVCoordinate(getattr(m3Vertices[oldVertexIndex],vertexUVAttribute))
                 
                 for vertexUVAttribute in ["uv0", "uv1", "uv2", "uv3"]:
-                    if vertexUVAttribute in vertexClass.fieldToTypeInfoMap: 
+                    if vertexStructureDescription.hasField(vertexUVAttribute): 
                         uvLayer = mesh.tessface_uv_textures.new()
                         for faceIndex in range(len(facesWithNewIndices)):
                             tessFace = mesh.tessfaces[faceIndex]
