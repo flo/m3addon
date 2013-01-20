@@ -100,7 +100,7 @@ class M3StructureHistory:
                     usedFields.append(field)
             specifiedSize = self.versionToSizeMap.get(version)  
             if specifiedSize == None:
-                raise Exception("The version %d of %s has not been defined" % (version, self.name))
+                return None
             structure = M3StructureDescription(self.name, version, usedFields, specifiedSize, self)
             self.versionToStructureDescriptionMap[version] = structure
         return structure
