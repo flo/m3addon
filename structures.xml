@@ -1388,6 +1388,16 @@
         </fields>
     </structure>
     
+    <structure name="PHYJ">
+        <description>Physical Joins</description>
+        <versions>
+            <version number="0" size="180" />
+        </versions>
+        <fields>
+            <field name="unknown" size="180" />
+        </fields>
+    </structure>
+    
     <structure  name="FOR_">
         <description>
             Force that effects particles of certain particle systems
@@ -1889,7 +1899,7 @@
             <field name="rigidBodies" type="Reference" refTo="PHRB"/>
             <!-- it grew in size between version from 3x2 to 3x3 which indicates a reference-->
             <field name="unknownMaybeRef2" type="Reference" />
-            <field name="unknownMaybeRef3" type="Reference" />
+            <field name="physicalJoint" type="Reference" refTo="PHYJ" />
             <field name="unknownMaybeRef4" type="Reference" />
             <field name="ikjtData" type="Reference" refTo="IKJT"/>
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
