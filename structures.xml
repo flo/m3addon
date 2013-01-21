@@ -1374,7 +1374,7 @@
     <structure name="PROJ">
         <description>Projections</description>
         <versions>
-            <version number="4" size="388" />
+            <version number="-4" size="388" />
         </versions>
         <fields>
             <field name="unknown" size="388" />
@@ -1448,7 +1448,7 @@
             <field till-version="1" name="unknown1c286108" type="uint8" default-value="0" />
             <field till-version="1" name="unknown4ddf14b3" type="uint16" default-value="0" />
             <!-- assuming the field is fixed in version 3: -->
-            <field since-version="3" name="shape" type="uint32" />
+            <field name="shape" type="uint32" since-version="3" />
             <field till-version="1" name="vertices" type="SmallReference" refTo="VEC3" />
             <!-- Belongs to the previous reference and seems not be get properly initialized with 0: -->
             <field till-version="1" name="uninitializedFieldAt80" type="uint32" default-value="0" />
@@ -1480,7 +1480,7 @@
             <field name="unknown8d41b3f8" size="4" since-version="3" />
             <!-- unknown56fece2 is not a float and has strange content -->
             <field name="unknown56fece2" size="4" since-version="3" />
-            <field name="unknown6a9914ac" size="84" expected-value="0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" />
+            <field name="unknown6a9914ac" size="84" expected-value="0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" since-version="3" />
             <field name="unknown9d115fa7" size="4" since-version="3" />
             <!-- unknown9aea956e is not a float and has strange content -->
             <field name="unknown9aea956e" size="4" since-version="3" />
@@ -1526,7 +1526,7 @@
             <!-- Version 4 specific part: (please try to minimize it if possible)-->
             <field name="unknown7ee981a1" type="uint16" expected-value="1" since-version="4" />
             <field name="unknown9a561188" type="uint16" default-value="0" since-version="4" />
-            <field name="boneIndex" type="uint32" />
+            <field name="boneIndex" type="uint32" since-version="4" />
             <field name="unknown6fe32955" type="float" default-value="2400.0" since-version="4" />
             <field name="unknownf4a3152b" type="float" default-value="0.7" since-version="4" />
             <field name="unknown1cde99d0" type="float" default-value="0.1"  since-version="4" />
