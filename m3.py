@@ -131,6 +131,11 @@ class M3StructureDescription:
         for field in fields:
             calculatedSize += field.size
         if calculatedSize != specifiedSize:
+            offset = 0
+            stderr.write("Offsets of %s in version %d:\n" % (structureName, structureVersion))
+            for field in self.fields:
+                stderr.write("%s: %s\n" % (offset, field.name))
+                offset += field.size
             raise Exception("Size mismatch: %s in version %d has been specified to have size %d, but the calculated size was %d" % (structureName, structureVersion, specifiedSize, calculatedSize))
 
         nameToFieldMap = {}
