@@ -398,7 +398,6 @@ class ReferenceField(Field):
             defaultValue = self.historyOfReferencedStructures.createEmptyArray()
         else:
             defaultValue = []
-            
         setattr(owner, self.name, defaultValue )
 
     # The method validateContent is defined in subclasses
@@ -777,7 +776,10 @@ class ExpectedAndDefaultConstantsDeterminer(Visitor):
                 except ValueError:
                     raise Exception("The specified default value for %s is not an integer" % variableName)
             else:
-                defaultValue = 0
+                if expectedValue != None:
+                    defaultValue = expectedValue
+                else:
+                    defaultValue = 0
         elif fieldType == "float":
             if expectedValueString != None:
                 try:
@@ -791,7 +793,10 @@ class ExpectedAndDefaultConstantsDeterminer(Visitor):
                 except ValueError:
                     raise Exception("The specified default value for %s is not a a float" % variableName)
             else:
-                defaultValue = 0.0
+                if expectedValue != None:
+                    defaultValue = expectedValue
+                else:
+                    defaultValue = 0.0
         elif fieldType == None:
             specifiedFieldSize = fieldDataMap["specifiedFieldSize"]
             defaultValue = None
