@@ -126,6 +126,9 @@ class Exporter:
         self.structureVersionMap["SDMB"] = 0
         self.structureVersionMap["SD2V"] = 0 
 
+    def getVersionOf(self, structureName):
+        return self.structureVersionMap[structureName] 
+
     def createInstanceOf(self, structureName):
         version = self.structureVersionMap[structureName]
         structureHistory = m3.structures[structureName]
@@ -951,20 +954,35 @@ class Exporter:
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ParticleSystem, blenderObject=particleSystem, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferParticleSystem(transferer)
             m3ParticleSystem.indexPlusHighestIndex = len(scene.m3_particle_systems) -1 + particleSystemIndex
-            m3ParticleSystem.unknownAt884 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt928 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt972 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt996 = self.createNullAnimHeader(interpolationType=0)
-            m3ParticleSystem.unknownAt1016 = self.createNullAnimHeader(interpolationType=0)
-            m3ParticleSystem.unknownAt1040 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt1060 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt1084 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt1104 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt1128 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt1148 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt1216 = self.createNullAnimHeader(interpolationType=1)
-            m3ParticleSystem.unknownAt1236 = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
-            m3ParticleSystem.unknownAt1264 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            
+            m3ParticleSystem.unknowne0bd54c8 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3ParticleSystem.unknowna2d44d80 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3ParticleSystem.unknownf8e2b3d0 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3ParticleSystem.unknown54f4ae30 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3ParticleSystem.unknown5f54fb02 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3ParticleSystem.unknown84d843d6 = self.createNullAnimHeader(interpolationType=1)
+            m3ParticleSystem.unknown9cb3dd18 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3ParticleSystem.unknown2e01be90 = self.createNullAnimHeader(interpolationType=1)
+            m3ParticleSystem.unknownf6193fc0 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3ParticleSystem.unknowna5e2260a = self.createNullAnimHeader(interpolationType=1)
+            m3ParticleSystem.unknown485f7eea = self.createNullAnimHeader(interpolationType=0)
+            m3ParticleSystem.unknown34b6f141 = self.createNullAnimHeader(interpolationType=0)
+            m3ParticleSystem.unknown89cdf966 = self.createNullAnimHeader(interpolationType=1)
+            m3ParticleSystem.unknown4eefdfc1 = self.createNullAnimHeader(interpolationType=1)
+            m3ParticleSystem.unknownab37a1d5 = self.createNullAnimHeader(interpolationType=1)
+            m3ParticleSystem.unknownbef7f4d3 = self.createNullAnimHeader(interpolationType=1)
+            m3ParticleSystem.unknownb2dbf2f3 = self.createNullAnimHeader(interpolationType=1)
+            m3ParticleSystem.unknown3c76d64c = self.createNullAnimHeader(interpolationType=1) 
+            m3ParticleSystem.unknownbc151e17 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            if self.getVersionOf("PAR_") >= 21:
+                m3ParticleSystem.unknown8f507b52 = self.createNullAnimHeader(interpolationType=1)
+                m3ParticleSystem.unknown22856fde = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+                m3ParticleSystem.unknownb35ad6e1 = self.createNullVector2AnimationReference(x=0.0, y=0.0, interpolationType=1)
+                m3ParticleSystem.unknown686e5943 = self.createNullVector3AnimationReference(x=0.0, y=0.0, z=0.0, initIsNullValue=False, interpolationType=1)
+                m3ParticleSystem.unknown18a90564 = self.createNullVector2AnimationReference(x=0.0, y=0.0, interpolationType=1)
+            m3ParticleSystem.unknown21ca0cea = self.createNullAnimHeader(interpolationType=1)
+            m3ParticleSystem.unknown1e97145f = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
+            m3ParticleSystem.unknownd3bfa169 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
             model.particles.append(m3ParticleSystem)
             
             materialReferenceIndex = self.materialNameToNewReferenceIndexMap.get(particleSystem.materialName)
@@ -1581,10 +1599,7 @@ class BlenderToM3DataTransferer:
         actionOwnerName = rootObject.name
         self.animationActionTuples = self.exporter.determineAnimationActionTuplesFor(actionOwnerName, actionOwnerType)
         self.rootObject = rootObject
-        if hasattr(type(self.m3Object), "tagVersion"):
-            self.m3Version = type(self.m3Object).tagVersion
-        else:
-            self.m3Version = None
+        self.m3Version = m3Object.structureDescription.structureVersion
 
     def transferAnimatableColor(self, fieldName):
         animPath = self.animPathPrefix + fieldName

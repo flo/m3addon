@@ -222,10 +222,8 @@ class M3ToBlenderDataTransferer:
         self.animPathPrefix = animPathPrefix
         self.blenderObject = blenderObject
         self.m3Object = m3Object
-        if hasattr(type(self.m3Object), "tagVersion"):
-            self.m3Version = type(self.m3Object).tagVersion
-        else:
-            self.m3Version = None    
+        self.m3Version =  m3Object.structureDescription.structureVersion
+
     def transferAnimatableFloat(self, fieldName):
         animationReference = getattr(self.m3Object, fieldName)
         setattr(self.blenderObject, fieldName, animationReference.initValue)
