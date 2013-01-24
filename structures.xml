@@ -188,6 +188,17 @@
             <field name="unknown" type="uint32" default-value="0"  />
         </fields>
     </structure>
+        <structure name="SVC3" >
+        <description>
+            Vector 3 animation reference
+        </description>
+        <versions>
+            <version number="0" size="36" />
+        </versions>
+        <fields>
+            <field name="unknown" type="Vector3AnimationReferenceV0" />
+        </fields>
+    </structure>
     <structure name="Vector2AnimationReference">
         <description>Animatable vector with 2 components</description>
         <versions>
@@ -1338,7 +1349,8 @@
             <field name="unknownb35ad6e1" type="Vector2AnimationReferenceV0" since-version="21" />
             <field name="unknown686e5943" type="Vector3AnimationReferenceV0" since-version="21" />
             <field name="unknown18a90564" type="Vector2AnimationReferenceV0" since-version="21" /> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
-            <field name="unknown22fec01a" size="16" expected-value="0x00000000000000000000000000000000"/>
+            <field name="unknown22fec01a" type="Reference" refTo="SVC3" />
+            <field name="unknown105fd76d" size="4" expected-value="0x00000000"/>
             <!--unknown5156cf07 Observed values: 2 and 0 -->
             <field name="unknown5156cf07" type="uint32" default-value="2"/>
             <!-- unknown92dba6ab Observed values: 0 and 1 -->
