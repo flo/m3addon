@@ -144,6 +144,15 @@
             <field name="alpha" type="uint8"/>
         </fields>
     </structure>
+    <structure name="FLAG">
+        <description>A flag used by animations</description>
+        <versions>
+            <version number="0" size="4" />
+        </versions>
+        <fields>
+            <field name="value" type="uint32" />
+        </fields>
+    </structure>
     <structure name="BNDS">
         <description>
             Describes the rough shape of an object.
@@ -280,6 +289,18 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="COLV0" />
             <field name="nullValue" type="COLV0" />
+            <field name="unknown" type="uint32" default-value="0" />
+        </fields>
+    </structure>
+    <structure name="FlagAnimationReference">
+        <description>Animatable boolean</description>
+        <versions>
+            <version number="0" size="20" />
+        </versions>
+        <fields>
+            <field name="header" type="AnimationReferenceHeader" />
+            <field name="initValue" type="FLAGV0" />
+            <field name="nullValue" type="FLAGV0" />
             <field name="unknown" type="uint32" default-value="0" />
         </fields>
     </structure>
@@ -518,16 +539,6 @@
             <field name="unknown6" type="uint32" expected-value="0" />
             <field name="unknown7" type="uint32" expected-value="0" />
             <field name="unknown8" type="uint32" expected-value="0" since-version="2"/>
-        </fields>
-    </structure>
-    
-    <structure name="FLAG">
-        <description>A flag used by animations</description>
-        <versions>
-            <version number="0" size="4" />
-        </versions>
-        <fields>
-            <field name="value" type="uint32" />
         </fields>
     </structure>
     
@@ -1386,10 +1397,48 @@
     <structure name="PROJ">
         <description>Projections</description>
         <versions>
-            <version number="-4" size="388" />
+            <version number="4" size="388" />
         </versions>
         <fields>
-            <field name="unknown" size="388" />
+            <field name="unknown5b4bb38c" type="uint32" expected-value="1" />
+            <field name="boneIndex" type="uint32" />
+            <field name="materialIndex" type="uint32" /><!-- maybe -->>
+            <field name="unknownbbe33f90" type="AnimationReferenceHeader" />
+            <field name="unknownd18b890d" size="28" expected-value="0x00000000000000000000000000000000000000000000000000000000" />
+            <field name="unknown9d264f5b" type="AnimationReferenceHeader" />
+            <field name="unknowndc3b29a3" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="unknown66ebe1e2" type="AnimationReferenceHeader" />
+            <field name="unknowndc3b29a3" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="unknowndf06caf9" type="AnimationReferenceHeader" />
+            <field name="unknowncda1e09c" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="unknown7efe2497" type="AnimationReferenceHeader" />
+            <field name="unknown533fc1ee" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="unknown8d88a239" type="AnimationReferenceHeader" />
+            <field name="unknownc96d9d28" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="unknowne82404f6" type="AnimationReferenceHeader" />
+            <field name="unknown2069a0cf" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="unknown13e470c5" type="AnimationReferenceHeader" />
+            <field name="unknown40bad0f2" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="unknown59478ee7" type="FloatAnimationReference" />
+            <field name="unknowne0b23113" type="FloatAnimationReference" />
+            <field name="unknown8d892963" type="FloatAnimationReference" />
+            <field name="unknown85cba5dc" type="FloatAnimationReference" />
+            <field name="unknown34a38463" type="FloatAnimationReference" />
+            <field name="unknownf7351664" type="FloatAnimationReference" />
+            <field name="unknownc0972eaf" size="4" expected-value="0x00000000"/>
+            <field name="unknowna01217c1" type="float" default-value="1.0" />
+            <field name="unknowne6644c96" type="float" default-value="1.0"  />
+            <field name="unknown1a597211" type="float" default-value="0.8" />
+            <field name="unknown7d90d255" type="float" default-value="0.8" />
+            <field name="unknowne243c135" size="4" expected-value="0x00000000"/>
+            <field name="unknownbf38195c" type="float" defeault-value="10.0" />
+            <field name="unknown55fd8fa6" size="4" expected-value="0x00000000"/>
+            <field name="unknown1c58f255" type="float" defeault-value="5.0" />
+            <field name="unknowne4fcbb89" size="4" expected-value="0x00000000"/>
+            <field name="unknown15aa6267" type="float" defeault-value="5.0" />
+            <field name="unknown44efb863" type="FlagAnimationReference" />
+            <field name="unknown9588cd5c" type="uint32" expected-value="1" />
+            <field name="unknownef7b512d" size="12" expected-value="0x000000000000000000000000"/>
         </fields>
     </structure>
     
