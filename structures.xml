@@ -1744,7 +1744,7 @@
             <field name="short2" type="uint8" expected-value="0"/>
             <field name="short3" type="uint8" expected-value="0"/>
             <field name="materialIndex" type="uint32" />
-            <field name="unknown1f9302c9" type="uint32" default-value="0" since-verison="8" />
+            <field name="unknown1f9302c9" type="uint32" default-value="0" since-version="8" />
             <field name="waveLength" type="FloatAnimationReference" />
             <field name="unkonwnAt28" type="AnimationReferenceHeader"/>
             <field name="unkonwnAt36" size="4" default-value="0x00000000" />
