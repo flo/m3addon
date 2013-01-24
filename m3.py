@@ -131,11 +131,7 @@ class M3StructureDescription:
         for field in fields:
             calculatedSize += field.size
         if calculatedSize != specifiedSize:
-            offset = 0
-            stderr.write("Offsets of %s in version %d:\n" % (structureName, structureVersion))
-            for field in self.fields:
-                stderr.write("%s: %s\n" % (offset, field.name))
-                offset += field.size
+            self.dumpOffsets()
             raise Exception("Size mismatch: %s in version %d has been specified to have size %d, but the calculated size was %d" % (structureName, structureVersion, specifiedSize, calculatedSize))
 
         nameToFieldMap = {}
@@ -168,6 +164,13 @@ class M3StructureDescription:
                 instanceOffset += self.size
             return list
     
+    def dumpOffsets(self):
+        offset = 0
+        stderr.write("Offsets of %s in version %d:\n" % (self.structureName, self.structureVersion))
+        for field in self.fields:
+            stderr.write("%s: %s\n" % (offset, field.name))
+            offset += field.size
+
     def countInstances(self, instances):
         if self.structureName == "CHAR":
             if instances == None:
@@ -1101,22 +1104,25 @@ def resolveReferencesOfSections(sections):
 
 def checkThatAllSectionsGotReferenced(sections):
     numberOfUnreferencedSections = 0
+    referenceStructureDescription = reference = structures["Reference"].getVersion(0)
     for sectionIndex, section in enumerate(sections):
-
+        
         if (section.timesReferenced == 0) and (sectionIndex != 0):
             numberOfUnreferencedSections += 1
-            stderr.write("WARNING: %sV%s (%d repetitions) got %d times referenced\\n" % (section.indexEntry.tag, section.indexEntry.version, section.indexEntry.repetitions , section.timesReferenced))
-            reference = Reference()
+            stderr.write("WARNING: %sV%s (%d repetitions) got %d times referenced\n" % (section.indexEntry.tag, section.indexEntry.version, section.indexEntry.repetitions , section.timesReferenced))
+            reference = referenceStructureDescription.createInstance()
             reference.entries = section.indexEntry.repetitions
             reference.index = sectionIndex
             reference.flags = 0
-            bytesToSearch = reference.toBytes()
+            bytesToSearch = referenceStructureDescription.instancesToBytes([reference])
             possibleReferences = 0
             for sectionToCheck in sections:
                 positionInSection = sectionToCheck.rawBytes.find(bytesToSearch)
                 if positionInSection != -1:
                     possibleReferences += 1
-                    stderr.write("  -> Found a reference at offset %d in a section of type %sV%s\\n" % (positionInSection, sectionToCheck.indexEntry.tag,sectionToCheck.indexEntry.version)) 
+                    stderr.write("  -> Found a reference at offset %d in a section of type %sV%s\n" % (positionInSection, sectionToCheck.indexEntry.tag,sectionToCheck.indexEntry.version)) 
+                    sectionToCheck.structureDescription.dumpOffsets()
+
             if possibleReferences == 0:
                 bytesToSearch = bytesToSearch[0:-4]
                 for sectionToCheck in sections:
@@ -1124,8 +1130,8 @@ def checkThatAllSectionsGotReferenced(sections):
                     if positionInSection != -1:
                         flagBytes = sectionToCheck.rawBytes[positionInSection+8:positionInSection+12]
                         flagsAsHex = byteDataToHex(flagBytes)
-                        stderr.write("  -> Found maybe a reference at offset %d in a section of type %sV%s with flag %s\\n" % (positionInSection, sectionToCheck.indexEntry.tag,sectionToCheck.indexEntry.version, flagsAsHex)) 
-
+                        stderr.write("  -> Found maybe a reference at offset %d in a section of type %sV%s with flag %s\n" % (positionInSection, sectionToCheck.indexEntry.tag,sectionToCheck.indexEntry.version, flagsAsHex)) 
+                        sectionToCheck.structureDescription.dumpOffsets()
 
     if numberOfUnreferencedSections > 0:
         raise Exception("Unable to load all data: There were %d unreferenced sections. View log for details" % numberOfUnreferencedSections)
