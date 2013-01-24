@@ -375,6 +375,7 @@ class Importer:
         self.createFuzzyHitTests()
         self.initTightHitTest()
         self.createParticleSystems()
+        self.createProjections()
         self.createForces()
         self.createRigidBodies()
         self.createLights()
@@ -897,6 +898,32 @@ class Importer:
                     print("Warning: A particle system copy was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                     copy.name = fullCopyBoneName
             particleSystem.updateBlenderBoneShapes = True
+
+    def createProjections(self):
+        scene = bpy.context.scene
+        showProjections = scene.m3_bone_visiblity_options.showProjections
+        print("Loading particle systems")
+        for projectionIndex, m3Projection in enumerate(self.model.projections):
+            projection = scene.m3_projections.add()
+            projection.updateBlenderBoneShapes = False
+            animPathPrefix = "m3_projections[%s]." % projectionIndex
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=projection, m3Object=m3Projection)
+            shared.transferProjection(transferer)
+            boneEntry = self.model.bones[m3Projection.boneIndex]
+            fullBoneName = boneEntry.name
+            if fullBoneName.startswith(shared.projectionPrefix):
+                projection.boneSuffix = fullBoneName[len(shared.projectionPrefix):]
+            else:
+                projection.boneSuffix = fullBoneName
+            blenderBoneName = self.boneNames[m3Projection.boneIndex]
+            projection.boneName = blenderBoneName
+            
+            bone = self.armature.bones[blenderBoneName]
+            poseBone = self.armatureObject.pose.bones[blenderBoneName]
+            shared.updateBoneShapeOfProjection(projection, bone, poseBone)
+            bone.hide = not showProjections
+
+            projection.materialName = self.getNameOfMaterialWithReferenceIndex(m3Projection.materialReferenceIndex)
 
     def createForces(self):
         scene = bpy.context.scene

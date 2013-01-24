@@ -83,6 +83,7 @@ star2ForcePrefix = "Star2Force"
 # the prefix for all attachment point names (for volume attachment point names too)
 attachmentPointPrefix = "Ref_" 
 attachmentVolumePrefix = "Vol_"
+projectionPrefix = "Star2 projector"
 animObjectIdModel = "MODEL"
 animObjectIdArmature = "ARMATURE"
 animObjectIdScene = "SCENE"
@@ -115,6 +116,10 @@ def boneNameForLight(light):
     else:
         return toValidBoneName(lightPrefix + boneSuffix)
         
+def boneNameForProjection(projection):    
+    return projectionPrefix + projection.boneSuffix
+
+
 def boneNameForPartileSystemCopy(copy):
     return toValidBoneName(star2ParticlePrefix + copy.name)
 
@@ -416,6 +421,16 @@ def updateBoneShapeOfLight(light, bone, poseBone):
     boneName = boneNameForLight(light)
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
+
+def updateBoneShapeOfProjection(projection, bone, poseBone):
+    # TODO create correct mesh for visualization
+    radius = 1.0
+    untransformedPositions, faces = createMeshDataForSphere(radius)
+
+    boneName = boneNameForProjection(projection)
+    meshName = boneName + 'Mesh'
+    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
+
 
 def updateBoneShapeOfForce(force, bone, poseBone):
     untransformedPositions, faces = createMeshDataForSphere(force.forceRange)
@@ -741,7 +756,22 @@ def transferParticleSystem(transferer):
 def transferParticleSystemCopy(transferer):
     transferer.transferAnimatableFloat("emissionRate")
     transferer.transferAnimatableInt16("partEmit")
-    
+
+def transferProjection(transferer):
+    transferer.transferAnimatableFloat("unknown59478ee7")
+    transferer.transferAnimatableFloat("unknowne0b23113")
+    transferer.transferAnimatableFloat("unknown8d892963")
+    transferer.transferAnimatableFloat("unknown85cba5dc")
+    transferer.transferAnimatableFloat("unknown34a38463")
+    transferer.transferAnimatableFloat("unknownf7351664")
+    transferer.transferFloat("unknowna01217c1")
+    transferer.transferFloat("unknowne6644c96")
+    transferer.transferFloat("unknown1a597211")
+    transferer.transferFloat("unknown7d90d255")
+    transferer.transferFloat("unknownbf38195c")
+    transferer.transferFloat("unknown1c58f255")
+    transferer.transferFloat("unknown15aa6267")
+
 def transferForce(transferer):
     transferer.transferEnum("forceType")
     transferer.transfer32Bits("forceChannels")

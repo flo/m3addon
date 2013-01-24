@@ -229,6 +229,26 @@ def handleLightSizeChange(self, context):
     if light.updateBlenderBone:
         selectOrCreateBoneForLight(scene, light)
 
+
+def handleProjectionTypeOrBoneSuffixChange(self, context):
+    scene = context.scene
+    projection = self
+    
+    projection.name = projection.boneSuffix
+    
+    currentBoneName = projection.boneName
+    calculatedBoneName = shared.boneNameForProjection(projection)
+
+    if projection.updateBlenderBone:
+        if currentBoneName != calculatedBoneName:
+            bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
+            if bone != None:
+                bone.name = calculatedBoneName
+                projection.boneName = bone.name
+            else:
+                projection.boneName = calculatedBoneName
+        selectOrCreateBoneForProjection(scene, projection)
+
 def handleCameraNameChange(self, context):
     scene = context.scene
     if self.name != self.oldName:
@@ -251,6 +271,10 @@ def handleMaterialNameChange(self, context):
         for particle_system in scene.m3_particle_systems:
             if particle_system.materialName == oldMaterialName:
                 particle_system.materialName = materialName
+                
+        for projection in scene.m3_projections:
+            if projection.materialName == oldMaterialName:
+                projection.materialName = materialName
                 
         for meshObject in shared.findMeshObjects(scene):
             mesh = meshObject.data
@@ -340,6 +364,12 @@ def handlePhysicsShapeVisibilityUpdate(self, context):
     for rigidBody in scene.m3_rigid_bodies:
         boneName = rigidBody.boneName
         shared.setBoneVisibility(scene, boneName, self.showPhysicsShapes)
+
+def handleProjectionVisibilityUpdate(self, context):
+    scene = context.scene
+    for projection in scene.m3_projections:
+        boneName = projection.boneName
+        shared.setBoneVisibility(scene, boneName, self.showProjections)
 
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
@@ -497,6 +527,13 @@ def handleLightIndexChanged(self, context):
     light = scene.m3_lights[scene.m3_light_index]
     selectOrCreateBoneForLight(scene, light)
     
+def handleProjectionIndexChanged(self, context):
+    scene = context.scene
+    if scene.m3_projection_index == -1:
+        return
+    projection = scene.m3_projections[scene.m3_projection_index]
+    selectOrCreateBoneForProjection(scene, projection)
+    
 def handleAttachmentPointIndexChanged(self, context):
     scene = context.scene
     if scene.m3_attachment_point_index == -1:
@@ -549,6 +586,12 @@ def selectOrCreateBoneForLight(scene, light):
     boneName = light.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfLight(light, bone, poseBone)
+
+def selectOrCreateBoneForProjection(scene, projection):
+    scene.m3_bone_visiblity_options.showProjections = True
+    boneName = projection.boneName
+    bone, poseBone = selectOrCreateBone(scene, boneName)
+    shared.updateBoneShapeOfProjection(projection, bone, poseBone)
 
 def selectOrCreateBoneForCamera(scene, camera):
     scene.m3_bone_visiblity_options.showCameras = True
@@ -1103,9 +1146,34 @@ class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
     showForces = bpy.props.BoolProperty(default=True, options=set(), update=handleForcesVisiblityUpdate)
     showCameras = bpy.props.BoolProperty(default=True, options=set(), update=handleCamerasVisiblityUpdate)
     showPhysicsShapes = bpy.props.BoolProperty(default=True, options=set(), update=handlePhysicsShapeVisibilityUpdate)
+    showProjections = bpy.props.BoolProperty(default=True, options=set(), update=handleProjectionVisibilityUpdate)
 
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
+
+
+class M3Projection(bpy.types.PropertyGroup):
+    # name attribute seems to be needed for template_list but is not actually in the m3 file
+    # The name gets calculated like this: name = boneSuffix (type)
+    name = bpy.props.StringProperty(options=set())
+    updateBlenderBone = bpy.props.BoolProperty(default=True, options=set())
+    boneSuffix = bpy.props.StringProperty(options=set(), update=handleProjectionTypeOrBoneSuffixChange, default="Particle System")
+    boneName = bpy.props.StringProperty(options=set())
+    materialName = bpy.props.StringProperty(options=set())
+
+    unknown59478ee7 = bpy.props.FloatProperty(default=-5.0, name="unknown59478ee7", options={"ANIMATABLE"})
+    unknowne0b23113 = bpy.props.FloatProperty(default=5.0, name="unknowne0b23113", options={"ANIMATABLE"})
+    unknown8d892963 = bpy.props.FloatProperty(default=-5.0, name="unknown8d892963", options={"ANIMATABLE"})
+    unknown85cba5dc = bpy.props.FloatProperty(default=5.0, name="unknown85cba5dc", options={"ANIMATABLE"})
+    unknown34a38463 = bpy.props.FloatProperty(default=-5.0, name="unknown34a38463", options={"ANIMATABLE"})
+    unknownf7351664 = bpy.props.FloatProperty(default=5.0, name="unknownf7351664", options={"ANIMATABLE"})
+    unknowna01217c1 = bpy.props.FloatProperty(default=1.0, name="unknowna01217c1", options=set())
+    unknowne6644c96 = bpy.props.FloatProperty(default=1.0, name="unknowne6644c96", options=set())
+    unknown1a597211 = bpy.props.FloatProperty(default=0.8, name="unknown1a597211", options=set())
+    unknown7d90d255 = bpy.props.FloatProperty(default=0.8, name="unknown7d90d255", options=set())
+    unknownbf38195c = bpy.props.FloatProperty(default=10.0, name="unknownbf38195c", options=set())
+    unknown1c58f255 = bpy.props.FloatProperty(default=5.0, name="unknown1c58f255", options=set())
+    unknown15aa6267 = bpy.props.FloatProperty(default=5.0, name="unknown15aa6267", options=set())
 
 class M3Light(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
@@ -1165,6 +1233,7 @@ class BoneVisibilityPanel(bpy.types.Panel):
         layout.prop(scene.m3_bone_visiblity_options, "showForces", text="Forces")
         layout.prop(scene.m3_bone_visiblity_options, "showCameras", text="Cameras")
         layout.prop(scene.m3_bone_visiblity_options, "showPhysicsShapes", text="Physics Shapes")
+        layout.prop(scene.m3_bone_visiblity_options, "showProjections", text="Projections")
 
 class AnimationSequencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_animations"
@@ -1875,6 +1944,53 @@ class LightPanel(bpy.types.Panel):
             layout.prop(light, "unknownAt8", text="unknownAt8")
 
 
+class ProjectionPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_projections"
+    bl_label = "M3 Projections"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        col.template_list(scene, "m3_projections", scene, "m3_projection_index", rows=2)
+
+        col = row.column(align=True)
+        col.operator("m3.projections_add", icon='ZOOMIN', text="")
+        col.operator("m3.projections_remove", icon='ZOOMOUT', text="")
+        currentIndex = scene.m3_projection_index
+        if currentIndex >= 0 and currentIndex < len(scene.m3_projections):
+            projection = scene.m3_projections[currentIndex]
+            layout.separator()
+            layout.prop(projection, 'boneSuffix', text="Name")
+            layout.prop_search(projection, 'materialName', scene, 'm3_material_references', text="Material", icon='NONE')
+            split = layout.split()
+            col = split.column()
+            col.label("Unknown Range 1")
+            col.prop(projection, 'unknown59478ee7', text="Unk. 59478ee7")
+            col.prop(projection, 'unknowne0b23113', text="Unk. e0b23113")
+            split = layout.split()
+            col = split.column()
+            col.label("Unknown Range 2")
+            col.prop(projection, 'unknown8d892963', text="Unk. 8d892963")
+            col.prop(projection, 'unknown85cba5dc', text="Unk. 85cba5dc")
+            split = layout.split()
+            col = split.column()
+            col.label("Unknown Range 3")
+            col.prop(projection, 'unknown34a38463', text="Unk. 34a38463")
+            col.prop(projection, 'unknownf7351664', text="Unk. f7351664")
+            layout.label("Other values:")
+            layout.prop(projection, 'unknowna01217c1', text="Unk. a01217c1")
+            layout.prop(projection, 'unknowne6644c96', text="Unk. e6644c96")
+            layout.prop(projection, 'unknown1a597211', text="Unk. 1a597211")
+            layout.prop(projection, 'unknown7d90d255', text="Unk. 7d90d255")
+            layout.prop(projection, 'unknownbf38195c', text="Unk. bf38195c")
+            layout.prop(projection, 'unknown1c58f255', text="Unk. 1c58f255")
+            layout.prop(projection, 'unknown15aa6267', text="Unk. 15aa6267")
             
 class ParticleSystemCopiesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_particle_copies"
@@ -2229,6 +2345,10 @@ class M3_MATERIALS_OT_remove(bpy.types.Operator):
             for particle_system in scene.m3_particle_systems:
                 if particle_system.materialName == materialName:
                     self.report({"ERROR"}, "Can't delete: The particle system '%s' is using this material" % particle_system.name)
+                    return {"CANCELLED"}
+            for projection in scene.m3_projections:
+                if projection.materialName == materialName:
+                    self.report({"ERROR"}, "Can't delete: The projection '%s' is using this material" % projection.name)
                     return {"CANCELLED"}
             for meshObject in shared.findMeshObjects(scene):
                 mesh = meshObject.data
@@ -2848,6 +2968,51 @@ class M3_LIGHTS_OT_remove(bpy.types.Operator):
             scene.m3_light_index-= 1
         return{'FINISHED'}
         
+class M3_PROJECTIONS_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.projections_add'
+    bl_label       = "Add Projection"
+    bl_description = "Adds a projection for the export to the m3 model format"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        projection = scene.m3_projections.add()
+        projection.updateBlenderBone = False
+        projection.boneSuffix = self.findUnusedName(scene)
+        projection.boneName = shared.boneNameForProjection(projection)
+        handleProjectionTypeOrBoneSuffixChange(projection, context)
+        projection.updateBlenderBone = True
+        
+        # The following selection causes a new bone to be created:
+        scene.m3_projection_index = len(scene.m3_projections)-1
+        
+        return{'FINISHED'}
+
+    def findUnusedName(self, scene):
+        usedNames = set()
+        for projection in scene.m3_projections:
+            usedNames.add(projection.boneSuffix)
+        unusedName = None
+        counter = 1
+        while unusedName == None:
+            suggestedName = "%02d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName 
+        
+class M3_PROJECTIONS_OT_remove(bpy.types.Operator):
+    bl_idname      = 'm3.projections_remove'
+    bl_label       = "Remove M3 Projection"
+    bl_description = "Removes the active M3 projection"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_projection_index >= 0:
+            projection = scene.m3_projections[scene.m3_projection_index]
+            removeBone(scene, projection.boneName)
+            scene.m3_projections.remove(scene.m3_projection_index)
+            scene.m3_projection_index-= 1
+        return{'FINISHED'}
 
 class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.attachment_points_add'
@@ -3059,6 +3224,8 @@ def register():
     bpy.types.Scene.m3_rigid_body_index = bpy.props.IntProperty(options=set(), update=handleRigidBodyIndexChange)
     bpy.types.Scene.m3_lights = bpy.props.CollectionProperty(type=M3Light)
     bpy.types.Scene.m3_light_index = bpy.props.IntProperty(options=set(), update=handleLightIndexChanged)
+    bpy.types.Scene.m3_projections = bpy.props.CollectionProperty(type=M3Projection)
+    bpy.types.Scene.m3_projection_index = bpy.props.IntProperty(options=set(), update=handleProjectionIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty(options=set(), update=handleAttachmentPointIndexChanged)
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)

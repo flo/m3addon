@@ -125,6 +125,8 @@ class Exporter:
         self.structureVersionMap["FLAG"] = 0
         self.structureVersionMap["SDMB"] = 0
         self.structureVersionMap["SD2V"] = 0 
+        self.structureVersionMap["FlagAnimationReference"] = 0
+        self.structureVersionMap["PROJ"] = 4
 
     def getVersionOf(self, structureName):
         return self.structureVersionMap[structureName] 
@@ -146,6 +148,7 @@ class Exporter:
         self.initFuzzyHitTests(model)
         self.initTighHitTest(model)
         self.initParticles(model)
+        self.initProjections(model)
         self.initForces(model)
         self.initRigidBodies(model)
         self.initLights(model)
@@ -1004,6 +1007,43 @@ class Exporter:
                 copyIndex = len(model.particleCopies)
                 model.particleCopies.append(m3Copy)
                 m3ParticleSystem.copyIndices.append(copyIndex)
+    
+    def initProjections(self, model):
+        scene = self.scene
+        for projectionIndex, projection in enumerate(scene.m3_projections):
+            boneName = projection.boneName
+            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+            if boneIndex == None:
+                boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+            m3Projection = self.createInstanceOf("PROJ")
+            m3Projection.bone = boneIndex
+            animPathPrefix = "m3_projections[%s]." % projectionIndex
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Projection, blenderObject=projection, animPathPrefix=animPathPrefix, rootObject=self.scene)
+            shared.transferProjection(transferer)
+            m3Projection.indexPlusHighestIndex = len(scene.m3_projections) -1 + projectionIndex
+            
+
+            m3Projection.unknownbbe33f90 = self.createNullAnimHeader(interpolationType=0)
+            m3Projection.unknown9d264f5b = self.createNullAnimHeader(interpolationType=0)
+            m3Projection.unknown66ebe1e2 = self.createNullAnimHeader(interpolationType=0)
+            m3Projection.unknowndf06caf9 = self.createNullAnimHeader(interpolationType=0)
+            m3Projection.unknown7efe2497 = self.createNullAnimHeader(interpolationType=0)
+            m3Projection.unknown8d88a239 = self.createNullAnimHeader(interpolationType=0)
+            m3Projection.unknowne82404f6 = self.createNullAnimHeader(interpolationType=0)
+            m3Projection.unknown13e470c5 = self.createNullAnimHeader(interpolationType=0)
+            m3Projection.unknown44efb863 = self.createInstanceOf("FlagAnimationReference")
+            m3Projection.unknown44efb863.header = self.createNullAnimHeader(interpolationType=0)
+            m3Projection.unknown44efb863.initValue.value = 1 
+            m3Projection.unknown44efb863.nullValue.value = 0 
+
+            
+            materialReferenceIndex = self.materialNameToNewReferenceIndexMap.get(projection.materialName)
+            if materialReferenceIndex == None:
+                raise Exception("The projection %s uses '%s' as material, but no m3 material with that name exist!" % (projection.name, projection.materialName))
+            m3Projection.materialReferenceIndex = materialReferenceIndex
+            
+            model.projections.append(m3Projection)
+
     
     def initForces(self, model):
         scene = self.scene
