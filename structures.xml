@@ -410,7 +410,7 @@
             <field name="unknown" type="uint32" expected-value="0xffffffff"/>
             <field name="uv0" type="Vector2As2int16V0" />
             <field name="tangent" type="Vector3As3Fixed8V0" />
-            <field name="unused" type="fixed8" expected-value="1.0" />
+            <field name="unused" type="fixed8" default-value="1.0" /> <!-- Can be -1.0 in old 3ds max exporter files -->
         </fields>
     </structure>
     <structure name="VertexFormat0x182007d" >
