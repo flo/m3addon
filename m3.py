@@ -813,7 +813,7 @@ class ExpectedAndDefaultConstantsDeterminer(Visitor):
                     defaultValue = expectedValue
                 else:
                     defaultValue = 0
-        elif fieldType == "float":
+        elif fieldType == "float" or fieldType == "fixed8":
             if expectedValueString != None:
                 try:
                     expectedValue = float(expectedValueString)
