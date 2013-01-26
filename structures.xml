@@ -110,16 +110,15 @@
             <field name="w" type="VEC4V0"/>
         </fields>
     </structure>
-    <structure name="Vector4As4Fixed8">
-        <description>A vector out of 4 bytes which must be converted with the formula (((i / 255.0) * 2) -1) to get the actual float value</description>
+    <structure name="Vector3As3Fixed8">
+        <description>A vector out of 3 bytes which must be converted with the formula (((i / 255.0) * 2) -1) to get the actual float value</description>
         <versions>
-            <version number="0" size="4" />
+            <version number="0" size="3" />
         </versions>
         <fields>
             <field name="x" type="fixed8"/>
             <field name="y" type="fixed8" />
             <field name="z" type="fixed8"/>
-            <field name="w" type="fixed8"/>
         </fields>
     </structure>
     <structure name="Vector2As2int16">
@@ -406,10 +405,12 @@
             <field name="boneLookupIndex1" type="uint8" default-value="0" />
             <field name="boneLookupIndex2" type="uint8" default-value="0" />
             <field name="boneLookupIndex3" type="uint8" default-value="0" />
-            <field name="normal" type="Vector4As4Fixed8V0" />
+            <field name="normal" type="Vector3As3Fixed8V0" />
+            <field name="sign" type="fixed8" />
             <field name="unknown" type="uint32" expected-value="0xffffffff"/>
             <field name="uv0" type="Vector2As2int16V0" />
-            <field name="tangent" type="Vector4As4Fixed8V0" />
+            <field name="tangent" type="Vector3As3Fixed8V0" />
+            <field name="unused" type="fixed8" expected-value="1.0" />
         </fields>
     </structure>
     <structure name="VertexFormat0x182007d" >
@@ -427,9 +428,11 @@
             <field name="boneLookupIndex1" type="uint8" default-value="0" />
             <field name="boneLookupIndex2" type="uint8" default-value="0" />
             <field name="boneLookupIndex3" type="uint8" default-value="0" />
-            <field name="normal" type="Vector4As4Fixed8V0" />
+            <field name="normal" type="Vector3As3Fixed8V0" />
+            <field name="sign" type="fixed8" />
             <field name="uv0" type="Vector2As2int16V0" />
-            <field name="tangent" type="Vector4As4Fixed8V0" />
+            <field name="tangent" type="Vector3As3Fixed8V0" />
+            <field name="unused" type="fixed8" expected-value="1.0" />
         </fields>
     </structure>
     <structure name="VertexFormat0x186007d" >
@@ -447,10 +450,12 @@
             <field name="boneLookupIndex1" type="uint8" default-value="0" />
             <field name="boneLookupIndex2" type="uint8" default-value="0" />
             <field name="boneLookupIndex3" type="uint8" default-value="0" />
-            <field name="normal" type="Vector4As4Fixed8V0" />
+            <field name="normal" type="Vector3As3Fixed8V0" />
+            <field name="sign" type="fixed8" />
             <field name="uv0" type="Vector2As2int16V0" />
             <field name="uv1" type="Vector2As2int16V0" />
-            <field name="tangent" type="Vector4As4Fixed8V0" />
+            <field name="tangent" type="Vector3As3Fixed8V0" />
+            <field name="unused" type="fixed8" expected-value="1.0" />
         </fields>
     </structure>
     <structure name="VertexFormat0x186027d" >
@@ -468,11 +473,13 @@
             <field name="boneLookupIndex1" type="uint8" default-value="0" />
             <field name="boneLookupIndex2" type="uint8" default-value="0" />
             <field name="boneLookupIndex3" type="uint8" default-value="0" />
-            <field name="normal" type="Vector4As4Fixed8V0" />
+            <field name="normal" type="Vector3As3Fixed8V0" />
+            <field name="sign" type="fixed8" />
             <field name="unknown" type="uint32" expected-value="0xffffffff"/>
             <field name="uv0" type="Vector2As2int16V0" />
             <field name="uv1" type="Vector2As2int16V0" />
-            <field name="tangent" type="Vector4As4Fixed8V0" />
+            <field name="tangent" type="Vector3As3Fixed8V0" />
+            <field name="unused" type="fixed8" expected-value="1.0" />
         </fields>
     </structure>
     <structure name="VertexFormat0x18e007d">
@@ -490,11 +497,13 @@
             <field name="boneLookupIndex1" type="uint8" default-value="0" />
             <field name="boneLookupIndex2" type="uint8" default-value="0" />
             <field name="boneLookupIndex3" type="uint8" default-value="0" />
-            <field name="normal" type="Vector4As4Fixed8V0" />
+            <field name="normal" type="Vector3As3Fixed8V0" />
+            <field name="sign" type="fixed8" />
             <field name="uv0" type="Vector2As2int16V0" />
             <field name="uv1" type="Vector2As2int16V0" />
             <field name="uv2" type="Vector2As2int16V0" />
-            <field name="tangent" type="Vector4As4Fixed8V0" />
+            <field name="tangent" type="Vector3As3Fixed8V0" />
+            <field name="unused" type="fixed8" expected-value="1.0" />
         </fields>
     </structure>
     <structure name="VertexFormat0x19e007d" >
@@ -512,12 +521,14 @@
             <field name="boneLookupIndex1" type="uint8" default-value="0" />
             <field name="boneLookupIndex2" type="uint8" default-value="0" />
             <field name="boneLookupIndex3" type="uint8" default-value="0" />
-            <field name="normal" type="Vector4As4Fixed8V0" />
+            <field name="normal" type="Vector3As3Fixed8V0" />
+            <field name="sign" type="fixed8" />
             <field name="uv0" type="Vector2As2int16V0" />
             <field name="uv1" type="Vector2As2int16V0" />
             <field name="uv2" type="Vector2As2int16V0" />
             <field name="uv3" type="Vector2As2int16V0" />
-            <field name="tangent" type="Vector4As4Fixed8V0" />
+            <field name="tangent" type="Vector3As3Fixed8V0" />
+            <field name="unused" type="fixed8" expected-value="1.0" />
         </fields>
     </structure>
     
