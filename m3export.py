@@ -25,6 +25,9 @@ if "bpy" in locals():
         imp.reload(m3)
     if "shared" in locals():
         imp.reload(shared)
+    if "calculateTangents" in locals():
+        imp.reload(calculateTangents)
+        
 
 from . import m3
 from . import shared
@@ -32,6 +35,7 @@ import bpy
 import mathutils
 import os.path
 import random
+from . import calculateTangents
 
 actionTypeScene = "SCENE"
 actionTypeArmature = "OBJECT"
@@ -637,7 +641,9 @@ class Exporter:
             
             division.objects.append(m3Object)
         
-        model.vertices = m3VertexStructureDefinition.instancesToBytes(m3Vertices)
+        
+        
+        
         
         minV = mathutils.Vector((float("inf"), float("inf") ,float("inf")))
         maxV = mathutils.Vector((-float("inf"), -float("inf"), -float("inf")))
@@ -654,9 +660,12 @@ class Exporter:
         for boneIndex, bone in enumerate(model.bones):
             if bone.getNamedBit("flags","skinned"):
                 numberOfBonesToCheckForSkin = boneIndex + 1
-        model.numberOfBonesToCheckForSkin = numberOfBonesToCheckForSkin
+        model.numberOfBonesToCheckForSkin = numberOfBonesToCheckForSkin        
+        #Add tangents to the vertices used for bump/normal mapping:
+        calculateTangents.recalculateTangentsOfDivisions(m3Vertices, model.divisions)
 
-    
+        model.vertices = m3VertexStructureDefinition.instancesToBytes(m3Vertices)
+
     def findRootBoneIndex(self, model, boneIndices):
         boneIndexSet = set(boneIndices)
         for boneIndex in boneIndices:

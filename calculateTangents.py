@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import m3
+from . import m3
 import sys
-import m3ToXml
 import argparse
 import math
 
