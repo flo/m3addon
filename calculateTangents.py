@@ -95,9 +95,6 @@ def recalculateTangentsOfFaces(m3VerticesToUpdate, faces):
             bxsum += bitangent[0]
             bysum += bitangent[1]
             bzsum += bitangent[2]
-            # for debugging:
-            if False:
-                print("calc part t = (%.2f %.2f %.2f)" % tangent)
             count += 1
         tx, ty, tz = normalize(txsum, tysum, tzsum)
 
@@ -120,13 +117,6 @@ def recalculateTangentsOfFaces(m3VerticesToUpdate, faces):
         else:
             sign = 1.0
 
-        # for debugging:
-        if False:
-            if sign != vertex.sign:
-                print("wrong sign")
-            print("  v stored t = (%.2f %.2f %.2f)" % (vertex.tangent.x, vertex.tangent.y, vertex.tangent.z))
-            print("calculated t = (%.2f %.2f %.2f)" % (tx, ty, tz))
-            print()
         vertex.tangent.x = tx
         vertex.tangent.y = ty
         vertex.tangent.z = tz
