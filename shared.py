@@ -865,6 +865,7 @@ def transferMaterialLayer(transferer):
     transferer.transferAnimatableColor("color")
     transferer.transferBit("flags", "textureWrapX")
     transferer.transferBit("flags", "textureWrapY")
+    transferer.transferBit("flags", "invertColor")
     transferer.transferBit("flags", "colorEnabled")
     transferer.transferEnum("uvSource")
     transferer.transferBit("alphaFlags", "alphaAsTeamColor")
