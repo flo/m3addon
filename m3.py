@@ -605,7 +605,7 @@ class Fixed8Field(PrimitiveField):
         if self.expectedValue != None and floatValue != self.expectedValue:
             structureName = owner.structureDescription.structureName
             structureVersion = owner.structureDescription.structureVersion
-            raise Exception("Expected that field %s of %s (V. %d) has always the value %s, but it was %s" % (self.name, structureName, structureVersion, self.expectedValue, value))
+            raise Exception("Expected that field %s of %s (V. %d) has always the value %s, but it was %s" % (self.name, structureName, structureVersion, self.expectedValue, intValue))
         setattr(owner, self.name, floatValue)
 
     def writeToBuffer(self, owner, buffer, offset):
