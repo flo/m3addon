@@ -587,7 +587,7 @@ class Exporter:
                         else:
                             setattr(m3Vertex, m3AttributeName, self.createM3UVVector(0.0, 0.0))
 
-                    m3Vertex.normal = self.blenderVector3AndScaleToVector3As3Fixed8(blenderVertex.normal, 1.0)
+                    m3Vertex.normal = self.blenderVector3ToVector3As3Fixed8(blenderVertex.normal)
                     m3Vertex.sign = 1.0
                     m3Vertex.tangent = self.createVector3As3Fixed8(0.0, 0.0, 0.0)
                     v = m3Vertex
