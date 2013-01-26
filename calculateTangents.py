@@ -53,9 +53,8 @@ def recalculateTangentsOfFaces(m3VerticesToUpdate, faces):
         e2z = vertex2.position.z - vertex0.position.z
         
         inverseFactor = (deltaU1*deltaV2 - deltaU2*deltaV1)
-        if (inverseFactor < 0.00001 and inverseFactor > -0.00001):
+        if (inverseFactor < 0.00000001 and inverseFactor > -0.00000001):
             continue;
-        print(inverseFactor)
         factor = 1.0 / inverseFactor
         tx = (deltaV2 * e1x - deltaV1 * e2x)
         ty = (deltaV2 * e1y - deltaV1 * e2y)
@@ -80,57 +79,58 @@ def recalculateTangentsOfFaces(m3VerticesToUpdate, faces):
         listV2 = faceIndexToTangentAndBitangentTupleList.get(face[2],[])
         listV2.append(tangentBitangentTuple)
         faceIndexToTangentAndBitangentTupleList[face[2]] = listV2
-        
-        # sign calcuation doesn't work yet:
-        #nx = vertex2.normal.x
-        #ny = vertex2.normal.y
-        #nz = vertex2.normal.z
-        # determinant of:
-        # tx ty tz
-        # bx by bz
-        # nx ny nz
-        #det = tx*by*nz + ty*bz*nx + tz*bx*ny - nx*by*tz - ny*bz*tx - nz*bx*ty
-        #print("det %.2f (v0: %.2f, v1: %.2f, v2: %.2f)" % (det, vertex0.sign, vertex1.sign, vertex2.sign))
-        if False: # for debugging:
-            print(" deltaU1 %s" % deltaU1)
-            print(" deltaU2 %s" % deltaU2)
-            print(" deltaV1 %s" % deltaV1)
-            print(" deltaV2 %s" % deltaV2)
-            print(" v0 stored t = (%.2f %.2f %.2f)" % (vertex0.tangent.x, vertex0.tangent.y, vertex0.tangent.z))
-            print(" v1 stored t = (%.2f %.2f %.2f)" % (vertex1.tangent.x, vertex1.tangent.y, vertex1.tangent.z))
-            print(" v2 stored t = (%.2f %.2f %.2f)" % (vertex2.tangent.x, vertex2.tangent.y, vertex2.tangent.z))
-            print("calculated t = (%.2f %.2f %.2f)" % (tx, ty, tz))
-            print("calculated b = (%.2f %.2f %.2f)" % (bx, by, bz))
-            print()
-    
+
     for vertexIndex, tangentBitangentTupleList in faceIndexToTangentAndBitangentTupleList.items():
         txsum = 0.0
         tysum = 0.0
         tzsum = 0.0
+        bxsum = 0.0
+        bysum = 0.0
+        bzsum = 0.0
         count = 0
         for tangent, bitangent in tangentBitangentTupleList:
             txsum += tangent[0]
             tysum += tangent[1]
             tzsum += tangent[2]
+            bxsum += bitangent[0]
+            bysum += bitangent[1]
+            bzsum += bitangent[2]
             # for debugging:
             if False:
                 print("calc part t = (%.2f %.2f %.2f)" % tangent)
             count += 1
-        tx = txsum / count
-        ty = tysum / count
-        tz = tzsum / count
-        tx, ty, tz = normalize(tx, ty, tz)
+        tx, ty, tz = normalize(txsum, tysum, tzsum)
+
+        bx = bxsum / count
+        by = bysum / count
+        bz = bzsum / count
+        bx, by, bz = normalize(bxsum, bysum, bzsum)
 
         vertex = m3VerticesToUpdate[vertexIndex]
+        nx = vertex.normal.x
+        ny = vertex.normal.y
+        nz = vertex.normal.z
+        # determinant of:
+        # tx ty tz
+        # bx by bz
+        # nx ny nz
+        det = tx*by*nz + ty*bz*nx + tz*bx*ny - nx*by*tz - ny*bz*tx - nz*bx*ty
+        if det >= 0:# comparing in that correction seems to be correct...
+            sign = -1.0
+        else:
+            sign = 1.0
 
         # for debugging:
         if False:
+            if sign != vertex.sign:
+                print("wrong sign")
             print("  v stored t = (%.2f %.2f %.2f)" % (vertex.tangent.x, vertex.tangent.y, vertex.tangent.z))
             print("calculated t = (%.2f %.2f %.2f)" % (tx, ty, tz))
             print()
         vertex.tangent.x = tx
         vertex.tangent.y = ty
         vertex.tangent.z = tz
+        vertex.sign = sign
 
 def recalculateTangentsOfDivisions(m3VerticesToUpdate, divisions):
     faces = []
