@@ -432,7 +432,7 @@
             <field name="sign" type="fixed8" />
             <field name="uv0" type="Vector2As2int16V0" />
             <field name="tangent" type="Vector3As3Fixed8V0" />
-            <field name="unused" type="fixed8" expected-value="1.0" />
+            <field name="unused" type="fixed8" default-value="1.0" />
         </fields>
     </structure>
     <structure name="VertexFormat0x186007d" >
@@ -455,7 +455,7 @@
             <field name="uv0" type="Vector2As2int16V0" />
             <field name="uv1" type="Vector2As2int16V0" />
             <field name="tangent" type="Vector3As3Fixed8V0" />
-            <field name="unused" type="fixed8" expected-value="1.0" />
+            <field name="unused" type="fixed8" default-value="1.0" />
         </fields>
     </structure>
     <structure name="VertexFormat0x186027d" >
@@ -479,7 +479,7 @@
             <field name="uv0" type="Vector2As2int16V0" />
             <field name="uv1" type="Vector2As2int16V0" />
             <field name="tangent" type="Vector3As3Fixed8V0" />
-            <field name="unused" type="fixed8" expected-value="1.0" />
+            <field name="unused" type="fixed8" default-value="1.0" />
         </fields>
     </structure>
     <structure name="VertexFormat0x18e007d">
@@ -503,7 +503,7 @@
             <field name="uv1" type="Vector2As2int16V0" />
             <field name="uv2" type="Vector2As2int16V0" />
             <field name="tangent" type="Vector3As3Fixed8V0" />
-            <field name="unused" type="fixed8" expected-value="1.0" />
+            <field name="unused" type="fixed8" default-value="1.0" />
         </fields>
     </structure>
     <structure name="VertexFormat0x19e007d" >
@@ -528,7 +528,7 @@
             <field name="uv2" type="Vector2As2int16V0" />
             <field name="uv3" type="Vector2As2int16V0" />
             <field name="tangent" type="Vector3As3Fixed8V0" />
-            <field name="unused" type="fixed8" expected-value="1.0" />
+            <field name="unused" type="fixed8" default-value="1.0" />
         </fields>
     </structure>
     
