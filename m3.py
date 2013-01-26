@@ -70,8 +70,8 @@ class Section:
                 object.resolveReferences(sections)
 
 
-primitiveFieldTypeSizes = {"uint32":4,"int32":4,"uint16":2,"int16":2, "uint8":1, "int8":1, "float":4, "tag":4}
-primitiveFieldTypeFormats = {"uint32":"I","int32":"i","uint16":"H","int16":"h", "uint8":"B", "int8":"b" , "float":"f", "tag":"4s"}
+primitiveFieldTypeSizes = {"uint32":4,"int32":4,"uint16":2,"int16":2, "uint8":1, "int8":1, "float":4, "tag":4, "fixed8": 1}
+primitiveFieldTypeFormats = {"uint32":"I","int32":"i","uint16":"H","int16":"h", "uint8":"B", "int8":"b" , "float":"f", "tag":"4s", "fixed8": "B"}
 intTypes = {"uint32","int32","uint16","int16", "uint8", "int8"}
 
 structureNamesOfPrimitiveTypes = set(["CHAR", "U8__", "REAL", "I16_", "U16_", "I32_", "U32_"])
@@ -593,7 +593,32 @@ class FloatField(PrimitiveField):
         if (type(fieldContent) != float):
             raise Exception("%s is not a float but a %s!" % (fieldPath, type(fieldContent)))
 
+class Fixed8Field(PrimitiveField):
+    
+    def __init__(self, name, typeString, sinceVersion, tillVersion, defaultValue, expectedValue):
+        PrimitiveField.__init__(self, name, typeString, sinceVersion, tillVersion, defaultValue, expectedValue)
 
+    def readFromBuffer(self, owner, buffer, offset):
+        intValue = self.structFormat.unpack_from(buffer, offset)[0]
+        floatValue =  ((intValue / 255.0 * 2.0) -1) 
+        
+        if self.expectedValue != None and floatValue != self.expectedValue:
+            structureName = owner.structureDescription.structureName
+            structureVersion = owner.structureDescription.structureVersion
+            raise Exception("Expected that field %s of %s (V. %d) has always the value %s, but it was %s" % (self.name, structureName, structureVersion, self.expectedValue, value))
+        setattr(owner, self.name, floatValue)
+
+    def writeToBuffer(self, owner, buffer, offset):
+        floatValue = getattr(owner, self.name)
+        intValue = round((floatValue+1) / 2.0 * 255.0)
+        return self.structFormat.pack_into(buffer, offset, intValue)
+    
+    
+    def validateContent(self, fieldContent, fieldPath):
+        if (type(fieldContent) != float):
+            raise Exception("%s is not a float but a %s!" % (fieldPath, type(fieldContent)))
+        
+    
 class UnknownBytesField(Field):
 
     def __init__(self, name, size, sinceVersion, tillVersion, defaultValue, expectedValue):
@@ -860,6 +885,8 @@ class FieldListCreator(Visitor):
             field = IntField(fieldName, typeString, sinceVersion, tillVersion, defaultValue, expectedValue, bitMaskMap)
         elif typeString == "float":
             field = FloatField(fieldName, typeString, sinceVersion, tillVersion, defaultValue, expectedValue)
+        elif typeString == "fixed8":
+            field = Fixed8Field(fieldName, typeString, sinceVersion, tillVersion, defaultValue, expectedValue)
         elif typeString == None:
             field = UnknownBytesField(fieldName, specifiedFieldSize, sinceVersion, tillVersion, defaultValue, expectedValue)
         else:

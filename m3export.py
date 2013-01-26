@@ -76,7 +76,7 @@ class Exporter:
         self.structureVersionMap["DIV_"] = 2
         self.structureVersionMap["REGN"] = 3
         self.structureVersionMap["BAT_"] = 1
-        self.structureVersionMap["Vector4As4uint8"] = 0
+        self.structureVersionMap["Vector4As4Fixed8"] = 0
         self.structureVersionMap["Vector2As2int16"] = 0
         self.structureVersionMap["EVNT"] = 1
         self.structureVersionMap["SEQS"] = 1
@@ -583,8 +583,8 @@ class Exporter:
                         else:
                             setattr(m3Vertex, m3AttributeName, self.createM3UVVector(0.0, 0.0))
 
-                    m3Vertex.normal = self.blenderVector3AndScaleToM3Vector4As4uint8(-blenderVertex.normal, 1.0)
-                    m3Vertex.tangent = self.createVector4As4uint8FromFloats(0.0, 0.0, 0.0, 0.0)
+                    m3Vertex.normal = self.blenderVector3AndScaleToVector4As4Fixed8(blenderVertex.normal, 1.0)
+                    m3Vertex.tangent = self.createVector4As4Fixed8(0.0, 0.0, 0.0, 0.0)
                     v = m3Vertex
                     vertexIdList = []
                     vertexIdList.extend((v.position.x, v.position.y, v.position.z))
@@ -680,22 +680,21 @@ class Exporter:
             shared.smoothQuaternionTransition(previousQuaternion=previousQuaternion, quaternionToFix=quaternion)
             previousQuaternion = quaternion
     
-    def blenderVector3AndScaleToM3Vector4As4uint8(self, blenderVector3, scale):
+    def blenderVector3AndScaleToVector4As4Fixed8(self, blenderVector3, scale):
         x = blenderVector3.x
         y = blenderVector3.y
         z = blenderVector3.z
         w = scale
-        return self.createVector4As4uint8FromFloats(x, y, z, w)
+        return self.createVector4As4Fixed8(x, y, z, w)
 
-    def createVector4As4uint8FromFloats(self, x, y, z, w):
-        m3Vector = self.createInstanceOf("Vector4As4uint8")
-        def convert(f):
-            return round((-f+1) / 2.0 * 255.0)
-        m3Vector.x = convert(x)
-        m3Vector.y = convert(y)
-        m3Vector.z = convert(z)
-        m3Vector.w = convert(w)
+    def createVector4As4Fixed8(self, x, y, z, w):
+        m3Vector = self.createInstanceOf("Vector4As4Fixed8")
+        m3Vector.x = x
+        m3Vector.y = y
+        m3Vector.z = z
+        m3Vector.w = w
         return m3Vector
+
         
     def createM3UVVector(self, x, y):
         m3UV = self.createInstanceOf("Vector2As2int16")
