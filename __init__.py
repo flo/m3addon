@@ -1813,6 +1813,10 @@ class RigidBodyPanel(bpy.types.Panel):
         #    if rigid_body.armatureName and bpy.data.armatures[rigid_body.armatureName]:
         #        sub.prop_search(rigid_body, 'boneName', bpy.data.armatures[rigid_body.armatureName], "bones", text="Bone")
         
+        layout.prop(rigid_body, "unknownAt0")
+        layout.prop(rigid_body, "unknownAt4")
+        layout.prop(rigid_body, "unknownAt8")
+        
         split = layout.split()
         col = split.column()
         sub = col.column(align=True)
