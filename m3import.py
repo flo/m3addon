@@ -1266,12 +1266,23 @@ class Importer:
         editBones = []
         for index, boneEntry in enumerate(m3Bones):
             editBone = self.armature.edit_bones.new(self.boneNames[index])
+            editBone.head = heads[index]
+            delta = tails[index] - heads[index]
+            absoluteScale = absoluteScales[index]
+            delta[0] *= absoluteScale[0]
+            delta[1] *= absoluteScale[1]
+            delta[2] *= absoluteScale[2]
+            editBone.tail = heads[index] + delta
+                            
+            editBone.roll = rolls[index]
+                
             if boneEntry.parent != -1:
                 parentEditBone = editBones[boneEntry.parent]
                 editBone.parent = parentEditBone
-            editBone.head = heads[index]
-            editBone.tail = tails[index]
-            editBone.roll = rolls[index]
+                parentToChildVector = parentEditBone.tail - editBone.head
+                if parentToChildVector.length < 0.000001:
+                    editBone.use_connect = True
+                
             editBone.m3_unapplied_scale = absoluteScales[index]
             editBones.append(editBone)
         return editBones
