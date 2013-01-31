@@ -1131,6 +1131,28 @@ class Importer:
                 # This way there are not only fewer vertices to edit,
                 # but also the calculated normals will more likly match
                 # the given ones.
+                
+                # old (stored) vertex -> tuple of vertex data that makes the vertex unique
+                oldVertexIndexToTupleIdMap = {}
+                for vertexIndex in regionVertexIndices:
+                    m3Vertex = m3Vertices[vertexIndex]
+                    v = m3Vertex
+                    idTuple = (v.position.x, v.position.y, v.position.z, v.boneWeight0, v.boneWeight1, v.boneWeight2, v.boneWeight3, v.boneLookupIndex0, v.boneLookupIndex1, v.boneLookupIndex2, v.boneLookupIndex3, v.normal.x, v.normal.y, v.normal.z)
+                    oldVertexIndexToTupleIdMap[vertexIndex] = idTuple
+                
+                nonTrianglesCounter = 0
+                tranglesWithOldIndices = []
+                for face in facesWithOldIndices:
+                    t0 = oldVertexIndexToTupleIdMap[face[0]]
+                    t1 = oldVertexIndexToTupleIdMap[face[1]]
+                    t2 = oldVertexIndexToTupleIdMap[face[2]]
+                    if (t0 != t1 and t0 != t2 and t1 != t2):
+                        tranglesWithOldIndices.append(face)
+                    else:
+                        nonTrianglesCounter += 1
+                if nonTrianglesCounter > 0:
+                    print("Warning: The mesh contained %d invalid triangles which have been ignored" % nonTrianglesCounter)
+                
                 vertexPositions = []
                 nextNewVertexIndex = 0
                 oldVertexIndexToNewVertexIndexMap = {}
@@ -1138,13 +1160,12 @@ class Importer:
                 vertexIdTupleToNewIndexMap = {}
                 
                 for vertexIndex in regionVertexIndices:
-                    m3Vertex = m3Vertices[vertexIndex]
-                    v = m3Vertex
-                    idTuple = (v.position.x, v.position.y, v.position.z, v.boneWeight0, v.boneWeight1, v.boneWeight2, v.boneWeight3, v.boneLookupIndex0, v.boneLookupIndex1, v.boneLookupIndex2, v.boneLookupIndex3, v.normal.x, v.normal.y, v.normal.z)
+                    idTuple = oldVertexIndexToTupleIdMap[vertexIndex]
                     newIndex = vertexIdTupleToNewIndexMap.get(idTuple)
                     if newIndex == None:
                         newIndex = nextNewVertexIndex
                         nextNewVertexIndex += 1
+                        m3Vertex = m3Vertices[vertexIndex]
                         position = (m3Vertex.position.x, m3Vertex.position.y, m3Vertex.position.z)
                         vertexPositions.append(position)
                         vertexIdTupleToNewIndexMap[idTuple] = newIndex
@@ -1159,19 +1180,22 @@ class Importer:
                 # since vertices got merged, the indices of the faces aren't correct anymore.
                 # the old face indices however are still later required to figure out
                 # what Uv coordinates a face has.
-                facesWithNewIndices = []
-                for faceWithOldIndices in facesWithOldIndices:
+                trianglesWithNewIndices = []
+                for faceWithOldIndices in tranglesWithOldIndices:
                     i0 = oldVertexIndexToNewVertexIndexMap[faceWithOldIndices[0]]
                     i1 = oldVertexIndexToNewVertexIndexMap[faceWithOldIndices[1]]
                     i2 = oldVertexIndexToNewVertexIndexMap[faceWithOldIndices[2]]
-                    faceWithNewIndices = (i0, i1, i2)
-                    facesWithNewIndices.append(faceWithNewIndices)
+                    isATriangle = ((i0 != i1) and (i1 != i2) and (i0 != i2))
+                    if isATriangle:
+                        faceWithNewIndices = (i0, i1, i2)
+                        trianglesWithNewIndices.append(faceWithNewIndices)
+                    
                 
                 mesh.vertices.add(len(vertexPositions))
                 mesh.vertices.foreach_set("co", io_utils.unpack_list(vertexPositions))
 
-                mesh.tessfaces.add(len(facesWithNewIndices))
-                mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(facesWithNewIndices))
+                mesh.tessfaces.add(len(trianglesWithNewIndices))
+                mesh.tessfaces.foreach_set("vertices_raw", io_utils.unpack_face_list(trianglesWithNewIndices))
                 
                 def getUVsFor(newVertexIndex, vertexUVAttribute, setOfOldVertexIndicesOfFace):
                     oldVertexIndices = newVertexIndexToOldVertexIndicesMap[newVertexIndex]
@@ -1179,17 +1203,17 @@ class Importer:
                     # the correct old vertex index, in order to get correct uvs.
                     matchingOldVertexIndices = oldVertexIndices.intersection(setOfOldVertexIndicesOfFace)
                     if len(matchingOldVertexIndices) != 1:
-                        raise Exception("There was a problem with calculating which UV belongs to which vertex")
+                        raise Exception("There was a problem with calculating which UV belongs to which vertex: matching vertices %s; newToOldIndices: %s, triangle: %s" % (len(matchingOldVertexIndices), oldVertexIndices, setOfOldVertexIndicesOfFace))
                     oldVertexIndex = matchingOldVertexIndices.pop()
                     return toBlenderUVCoordinate(getattr(m3Vertices[oldVertexIndex],vertexUVAttribute))
                 
                 for vertexUVAttribute in ["uv0", "uv1", "uv2", "uv3"]:
                     if vertexStructureDescription.hasField(vertexUVAttribute): 
                         uvLayer = mesh.tessface_uv_textures.new()
-                        for faceIndex in range(len(facesWithNewIndices)):
+                        for faceIndex in range(len(trianglesWithNewIndices)):
                             tessFace = mesh.tessfaces[faceIndex]
                             faceUV = uvLayer.data[faceIndex]
-                            setOfOldVertexIndicesOfFace = set(facesWithOldIndices[faceIndex])
+                            setOfOldVertexIndicesOfFace = set(tranglesWithOldIndices[faceIndex])
                             # It's necessary to take vertex indices from tessface
                             # Since the vertex indices may get reordered within a triangle
                             faceUV.uv1 = getUVsFor(tessFace.vertices[0], vertexUVAttribute, setOfOldVertexIndicesOfFace)
