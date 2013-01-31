@@ -837,8 +837,11 @@ class Importer:
     
     def createBoundings(self):
         scene = bpy.context.scene
-        if len(self.model.divisions) != 1 or len(self.model.divisions[0].msec) != 1:
-            raise Exception("Unsupported Model type: Model has more then one division or msec per division")
+        if len(self.model.divisions) != 1:
+            raise Exception("Unsupported Model type: Model has %d divisions" % len(self.model.divisions))
+
+        if len(self.model.divisions[0].msec) != 1:
+            print("Warning the model has %d msec structures but only 1 can be imported for now" % len(self.model.divisions[0].msec))
         m3Boundings = self.model.divisions[0].msec[0].boundingsAnimation
         boundingsObject = scene.m3_boundings
         animPathPrefix = "m3_boundings."
