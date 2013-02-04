@@ -385,8 +385,8 @@ class Exporter:
                             bone.setNamedBit("flags", "animated", True)
                 
                 scaleMatrix = mathutils.Matrix()
-                for i in range(3):
-                    scaleMatrix[i][i] = blenderBone.m3_unapplied_scale[i]
+                #for i in range(3):
+                #    scaleMatrix[i][i] = blenderBone.m3_unapplied_scale[i]
                 absRestPosMatrixScaled = absRestPosMatrix * scaleMatrix
                 absRestPosMatrixFixed = absRestPosMatrixScaled * shared.rotFixMatrixInverted
                 

@@ -423,12 +423,13 @@ class Importer:
         
         About the bone import:
         Let m_i be the matrix which does the rotation, scale and translation specified in the m3 file for a given bone i
-        
-        Since the matrix is relative to it's parent bone, the absolut transformation done by a bone 2 can be calculated with:
-        F_2 = m_0 * m_1 * m_2 where bone 1 is the parent of bone 2 and bone 0 is the parent of bone 1
+        and b_i the bind matrix (current name: absoluteInverseBoneRestPositions) of that bone i.
+                
+        Since the matrix m_i is relative to it's parent bone, the absolut transformation done by a bone 2 to a vertex can be calculated with:
+        F_2 = m_0 * m_1 * m_2 * b_2 where bone 1 is the parent of bone 2 and bone 0 is the parent of bone 1
         
         The bone i in blender should have then the transformation F_i plus maybe a rotation fix r_i to have bones point to each other:
-        f_2 = F_2 * r_2 = m_0 * m_ 1 * m_2 * r_2
+        f_2 = F_2 * r_2 = m_0 * m_ 1 * m_2 * b_2 * r_2 
         
         
         In blender however there is the concept of a rest position of an armature.
@@ -439,14 +440,17 @@ class Importer:
         For a bone 2 with parent 1, and grandparent 0 the final transformation gets calculated like this:
         f_2 = (e_0 * p_0) * (e_1 * p_1) * (e_2 * p_2)
         The goal is now to determine p_i so that f_2 is the same as:
-        f_2 = m_0 * m_1 * m_2 * r_2 <=>
-        f_2 = E * m_0 * E * m_1 * E * m_2 * r_2 <=>
-        f_2 = (e_0 * e_0^-1)  * m_0 * (r_0 * e_1 * e_1^-1 * r_0^-1) * m_1 * (r_1 * e_2 * e_2^-1 * r_1^-1) * m_2 * r_2) <=>
-        f_2 = e_0 * (e_0^-1  * m_0 * r_0) * e_1 * (e_1^-1 * r_0^-1 * m_1 * r_1) * e_2 * (e_2^-1 * r_1^-1 * m_2 * r_2)
+        f_2 = m_0 * m_1 * m_2 * b_2 * r_2 <=>
+        f_2 = E * m_0 * E * m_1 * E * m_2 * b_2 * r_2 <=>
+        f_2 = (e_0 * e_0^-1) * m_0 * (b_0 * r_0 * e_1 * e_1^-1 * r_0^-1 * b_0^-1) * m_1 * (b_1 * r_1 * e_2 * e_2^-1 * r_1^-1 * b_1^-1) * m_2 * b_2 * r_2)  <=>
+        f_2 = e_0 * (e_0^-1 * m_0 * b_0 * r_0) * e_1 * (e_1^-1 * r_0^-1 * b_0^-1 * m_1 * b_1 * r_1) * e_2 * (e_2^-1 * r_1^-1 * b_1^-1 * m_2 * b_2  * r_2)
+              \------------------------------/         \------------------------------------------/         \-------------------------------------------/
+                         p0                                             p1                                                        p2
         thus:
-        p_0 = (e_0^-1  * m_0 * r_0)
-        p_1 = (e_1^-1 * r_0^-1 * m_1 * r_1)
-        p_2 =  (e_2^-1 * r_1^-1 * m_2 * r_2)
+        p_0 = (e_0^-1  * m_0 * b_0 * r_0)
+        p_1 = (e_1^-1 * r_0^-1 * b_0^-1 * m_1 * b_1 * r_1)
+        p_2 = (e_2^-1 * r_1^-1 * b_1^-1 * m_2 * b_2 * r_2)
+        
         
         In the following code is
         r_i = rotFixMatrix
@@ -480,25 +484,35 @@ class Importer:
         self.adjustPoseBones(model.bones, relEditBoneMatrices)
     
     def adjustPoseBones(self, m3Bones, relEditBoneMatrices):
+        bindMatrices = []
+        for inverseBoneRestPosition in self.model.absoluteInverseBoneRestPositions:
+            matrix = toBlenderMatrix(inverseBoneRestPosition.matrix)
+            location, rotation, scale = matrix.decompose()
+            matrix = mathutils.Matrix()
+            matrix[0][0] = scale[0]
+            matrix[1][1] = scale[1]
+            matrix[2][2] = scale[2]
+            # TODO find out why it's just the scale that need to be applied
+            bindMatrices.append(matrix)
+        
         index = 0
-        for bone, relEditBoneMatrix in zip(m3Bones, relEditBoneMatrices):
+        for bone, relEditBoneMatrix, bindMatrix in zip(m3Bones, relEditBoneMatrices, bindMatrices):
             poseBone = self.armatureObject.pose.bones[self.boneNames[index]]
             scale = toBlenderVector3(bone.scale.initValue)
             rotation = toBlenderQuaternion(bone.rotation.initValue)
             location = toBlenderVector3(bone.location.initValue)
             
             if bone.parent != -1:
-                leftCorrectionMatrix = relEditBoneMatrix.inverted() * shared.rotFixMatrixInverted
-                rightCorrectionMatrix = shared.rotFixMatrix
+                #TODO perforamcne optimization: cache bindMatrices[bone.parent].inverted()
+                leftCorrectionMatrix = relEditBoneMatrix.inverted() * shared.rotFixMatrixInverted * bindMatrices[bone.parent].inverted()
+                rightCorrectionMatrix = bindMatrix * shared.rotFixMatrix
             else:
                 leftCorrectionMatrix = relEditBoneMatrix.inverted()
-                rightCorrectionMatrix = shared.rotFixMatrix
-            
-            _, leftRotCorrection, leftScaleCorrection = leftCorrectionMatrix.decompose()
-            _, rightRotCorrection, rightScaleCorrection = rightCorrectionMatrix.decompose()
-            
-            location = leftCorrectionMatrix * location
-            rotation = leftRotCorrection * rotation * rightRotCorrection
+                rightCorrectionMatrix = bindMatrix * shared.rotFixMatrix
+
+            poseBoneTransform = shared.locRotScaleMatrix(location, rotation, scale)
+            poseBoneTransform = leftCorrectionMatrix * poseBoneTransform * rightCorrectionMatrix
+            location, rotation, scale = poseBoneTransform.decompose()
 
             poseBone.scale = scale
             poseBone.rotation_quaternion = rotation
@@ -506,6 +520,8 @@ class Importer:
             
             self.animateBone(index, bone, leftCorrectionMatrix, rightCorrectionMatrix, location, rotation, scale)
             index+=1
+            
+            
     def determineAbsoluteRestPosScales(self, absoluteBoneRestPositions):
         absoluteScales = []
         for absoluteBoneRestMatrix in absoluteBoneRestPositions:
@@ -1307,7 +1323,6 @@ class Importer:
                 parentEditBone = editBones[boneEntry.parent]
                 editBone.parent = parentEditBone
                 parentToChildVector = parentEditBone.tail - editBone.head
-                # connecting bones causes issues due to a scale issue:
                 #if parentToChildVector.length < 0.000001:
                 #    editBone.use_connect = True
                 
