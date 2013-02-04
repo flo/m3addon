@@ -1323,8 +1323,15 @@ class Importer:
                 parentEditBone = editBones[boneEntry.parent]
                 editBone.parent = parentEditBone
                 parentToChildVector = parentEditBone.tail - editBone.head
-                #if parentToChildVector.length < 0.000001:
-                #    editBone.use_connect = True
+                
+                animId = boneEntry.location.header.animId
+                if parentToChildVector.length < 0.000001:
+                    animated = False
+                    for animIdSet in self.sequenceNameAndSTCIndexToAnimIdSet.values():
+                        if animId in animIdSet:
+                            animated = True
+                    if not animated:
+                        editBone.use_connect = True
                 
             editBone.m3_unapplied_scale = absoluteScales[index]
             editBones.append(editBone)
