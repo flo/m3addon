@@ -164,7 +164,7 @@ def checkOrder(boneEntries):
 
 
 
-def determineTails(m3Bones, heads, boneDirectionVectors, absoluteScales):
+def determineTails(m3Bones, heads, boneDirectionVectors):
     childBoneIndexLists = []
     for boneIndex, boneEntry in enumerate(m3Bones):
         childBoneIndexLists.append([])
@@ -172,7 +172,7 @@ def determineTails(m3Bones, heads, boneDirectionVectors, absoluteScales):
             childBoneIndexLists[boneEntry.parent].append(boneIndex)
     
     tails = []
-    for m3Bone, head, childIndices, boneDirectionVector, absoluteScale in zip(m3Bones, heads, childBoneIndexLists, boneDirectionVectors, absoluteScales):
+    for m3Bone, head, childIndices, boneDirectionVector in zip(m3Bones, heads, childBoneIndexLists, boneDirectionVectors):
         skinned = m3Bone.getNamedBit("flags", "skinned")
         length = 0.1
         for childIndex in childIndices:
@@ -181,8 +181,6 @@ def determineTails(m3Bones, heads, boneDirectionVectors, absoluteScales):
                 if abs(headToChildHead.angle(boneDirectionVector)) < 0.1:
                     length = headToChildHead.length 
         tailOffset = length * boneDirectionVector
-        for i in range(3):
-            tailOffset[i] /= absoluteScale[i]
         tail = head + tailOffset
         tails.append(tail)
     return tails
@@ -464,47 +462,36 @@ class Importer:
         bpy.ops.object.mode_set(mode='EDIT')
         checkOrder(model.bones)
         
-        absoluteScales = self.determineAbsoluteRestPosScales(absoluteBoneRestPositions)
-        relativeScales = self.determineRelativeRestPosScales(absoluteScales, model.bones)
-
         heads = list(m.translation for m in absoluteBoneRestPositions)  
         # In blender the edit bone with the vector (0,1,0) stands for a idenity matrix
         # So the second column of a edit bone matrix represents the bone vector
         boneDirectionVectors = list(m.col[1].to_3d().normalized() for m in absoluteBoneRestPositions)
-        tails = determineTails(model.bones, heads, boneDirectionVectors, absoluteScales)
+        tails = determineTails(model.bones, heads, boneDirectionVectors)
         rolls = determineRolls(absoluteBoneRestPositions, heads , tails)
 
-        editBones = self.createEditBones(model.bones, heads, tails, rolls, absoluteScales)
-            
+        bindScales = self.determineBindScales()
+        bindScaleMatrices = self.scaleVectorsToMatrices(bindScales)
+
+        editBones = self.createEditBones(model.bones, heads, tails, rolls, bindScales)
         
         relEditBoneMatrices = self.determineRelEditBoneMatrices(model.bones, editBones)
 
         print("Adjusting pose bones")
         bpy.ops.object.mode_set(mode='POSE')
-        self.adjustPoseBones(model.bones, relEditBoneMatrices)
+        self.adjustPoseBones(model.bones, relEditBoneMatrices, bindScaleMatrices)
     
-    def adjustPoseBones(self, m3Bones, relEditBoneMatrices):
-        bindMatrices = []
-        for inverseBoneRestPosition in self.model.absoluteInverseBoneRestPositions:
-            matrix = toBlenderMatrix(inverseBoneRestPosition.matrix)
-            location, rotation, scale = matrix.decompose()
-            matrix = mathutils.Matrix()
-            matrix[0][0] = scale[0]
-            matrix[1][1] = scale[1]
-            matrix[2][2] = scale[2]
-            # TODO find out why it's just the scale that need to be applied
-            bindMatrices.append(matrix)
-        
+    def adjustPoseBones(self, m3Bones, relEditBoneMatrices, bindScaleMatrices):
         index = 0
-        for bone, relEditBoneMatrix, bindMatrix in zip(m3Bones, relEditBoneMatrices, bindMatrices):
+        for bone, relEditBoneMatrix, bindMatrix in zip(m3Bones, relEditBoneMatrices, bindScaleMatrices):
             poseBone = self.armatureObject.pose.bones[self.boneNames[index]]
             scale = toBlenderVector3(bone.scale.initValue)
             rotation = toBlenderQuaternion(bone.rotation.initValue)
             location = toBlenderVector3(bone.location.initValue)
             
             if bone.parent != -1:
-                #TODO perforamcne optimization: cache bindMatrices[bone.parent].inverted()
-                leftCorrectionMatrix = relEditBoneMatrix.inverted() * shared.rotFixMatrixInverted * bindMatrices[bone.parent].inverted()
+                # TODO perforamcne optimization: cache bindScaleMatrices[bone.parent].inverted()
+                # TODO find out why it's just the scale that need to be applied
+                leftCorrectionMatrix = relEditBoneMatrix.inverted() * shared.rotFixMatrixInverted * bindScaleMatrices[bone.parent].inverted()
                 rightCorrectionMatrix = bindMatrix * shared.rotFixMatrix
             else:
                 leftCorrectionMatrix = relEditBoneMatrix.inverted()
@@ -521,28 +508,25 @@ class Importer:
             self.animateBone(index, bone, leftCorrectionMatrix, rightCorrectionMatrix, location, rotation, scale)
             index+=1
             
-            
-    def determineAbsoluteRestPosScales(self, absoluteBoneRestPositions):
-        absoluteScales = []
-        for absoluteBoneRestMatrix in absoluteBoneRestPositions:
-            mat3x3 = absoluteBoneRestMatrix.to_3x3()
-            scaleX = mat3x3.col[0].length
-            scaleY = mat3x3.col[1].length
-            scaleZ = mat3x3.col[2].length
-            scaleVec = mathutils.Vector((scaleX, scaleY, scaleZ))
-            absoluteScales.append(scaleVec)
-        return absoluteScales
-    def determineRelativeRestPosScales(self, absoluteScales, m3Bones):
-        relativeScales = []
-        for absoluteScale, m3Bone in zip(absoluteScales, m3Bones):
-            relativeScale = absoluteScale.copy()
-            if m3Bone.parent != -1:
-                parentAbsScale = absoluteScales[m3Bone.parent]
-                for i in range(3):
-                    relativeScale[i] = absoluteScale[i] / parentAbsScale[i]
-            relativeScales.append(relativeScale)
-        return relativeScales
-
+    def determineBindScales(self):
+        bindScales = []
+        for inverseBoneRestPosition in self.model.absoluteInverseBoneRestPositions:
+            matrix = toBlenderMatrix(inverseBoneRestPosition.matrix)
+            location, rotation, scale = matrix.decompose()
+            bindScales.append(scale)
+        return bindScales
+    
+    
+    def scaleVectorsToMatrices(self, scaleVectors):
+        scaleMatrices = []
+        for scale in scaleVectors:
+            matrix = mathutils.Matrix()
+            matrix[0][0] = scale[0]
+            matrix[1][1] = scale[1]
+            matrix[2][2] = scale[2]
+            scaleMatrices.append(matrix)
+        return scaleMatrices
+    
     def fix180DegreeRotationsInMapWithKeys(self, timeToRotationMap, timeEntries):
         previousRotation = None
         for timeInMS in timeEntries:
@@ -1304,19 +1288,13 @@ class Importer:
             names.append(name)
         return names
 
-    def createEditBones(self, m3Bones, heads, tails, rolls, absoluteScales):
+    def createEditBones(self, m3Bones, heads, tails, rolls, bindScales):
         self.boneNames = self.determineBoneNameList(m3Bones)
         editBones = []
         for index, boneEntry in enumerate(m3Bones):
             editBone = self.armature.edit_bones.new(self.boneNames[index])
             editBone.head = heads[index]
-            delta = tails[index] - heads[index]
-            absoluteScale = absoluteScales[index]
-            delta[0] *= absoluteScale[0]
-            delta[1] *= absoluteScale[1]
-            delta[2] *= absoluteScale[2]
-            editBone.tail = heads[index] + delta
-                            
+            editBone.tail = tails[index]
             editBone.roll = rolls[index]
                 
             if boneEntry.parent != -1:
@@ -1333,7 +1311,7 @@ class Importer:
                     if not animated:
                         editBone.use_connect = True
                 
-            editBone.m3_unapplied_scale = absoluteScales[index]
+            editBone.m3_unapplied_scale = bindScales[index]
             editBones.append(editBone)
         return editBones
 
