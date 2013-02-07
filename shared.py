@@ -143,6 +143,12 @@ def findBoneWithArmatureObject(scene, boneName):
             return (bone, armatureObject)
     return (None, None)
 
+def scaleVectorToMatrix(scaleVector):
+    matrix = mathutils.Matrix()
+    matrix[0][0] = scaleVector[0]
+    matrix[1][1] = scaleVector[1]
+    matrix[2][2] = scaleVector[2]
+    return matrix
 
 def locRotScaleMatrix(location, rotation, scale):
     """ Important: rotation must be a normalized quaternion """

@@ -492,10 +492,9 @@ class Importer:
                 # TODO perforamcne optimization: cache bindScaleMatrices[bone.parent].inverted()
                 # TODO find out why it's just the scale that need to be applied
                 leftCorrectionMatrix = relEditBoneMatrix.inverted() * shared.rotFixMatrixInverted * bindScaleMatrices[bone.parent].inverted()
-                rightCorrectionMatrix = bindMatrix * shared.rotFixMatrix
             else:
                 leftCorrectionMatrix = relEditBoneMatrix.inverted()
-                rightCorrectionMatrix = bindMatrix * shared.rotFixMatrix
+            rightCorrectionMatrix = bindMatrix * shared.rotFixMatrix
 
             poseBoneTransform = shared.locRotScaleMatrix(location, rotation, scale)
             poseBoneTransform = leftCorrectionMatrix * poseBoneTransform * rightCorrectionMatrix
@@ -519,12 +518,8 @@ class Importer:
     
     def scaleVectorsToMatrices(self, scaleVectors):
         scaleMatrices = []
-        for scale in scaleVectors:
-            matrix = mathutils.Matrix()
-            matrix[0][0] = scale[0]
-            matrix[1][1] = scale[1]
-            matrix[2][2] = scale[2]
-            scaleMatrices.append(matrix)
+        for scaleVector in scaleVectors:
+            scaleMatrices.append(shared.scaleVectorToMatrix(scaleVector))
         return scaleMatrices
     
     def fix180DegreeRotationsInMapWithKeys(self, timeToRotationMap, timeEntries):
@@ -1311,7 +1306,7 @@ class Importer:
                     if not animated:
                         editBone.use_connect = True
                 
-            editBone.m3_unapplied_scale = bindScales[index]
+            editBone.m3_bind_scale = bindScales[index]
             editBones.append(editBone)
         return editBones
 

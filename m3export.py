@@ -251,12 +251,16 @@ class Exporter:
                     
                 poseRotationNormalized = poseRotation.normalized()
                 poseMatrix = shared.locRotScaleMatrix(poseLocation, poseRotationNormalized, poseScale)
-                
+                bindScaleInverted = mathutils.Vector((1.0 / blenderBone.m3_bind_scale[i] for i in range(3)))
+                bindScaleMatrixInverted = shared.scaleVectorToMatrix(bindScaleInverted)
+
                 if blenderBone.parent != None:
-                    leftCorrectionMatrix = shared.rotFixMatrix * relRestPosMatrix
+                    parentBindMatrix = shared.scaleVectorToMatrix(blenderBone.parent.m3_bind_scale)
+                    leftCorrectionMatrix = parentBindMatrix * shared.rotFixMatrix * relRestPosMatrix
                 else:
                     leftCorrectionMatrix = relRestPosMatrix
-                rightCorrectionMatrix = shared.rotFixMatrixInverted
+                    
+                rightCorrectionMatrix = shared.rotFixMatrixInverted * bindScaleMatrixInverted
                 m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix
                 
                 m3SpaceLocation, m3SpaceRotation, m3SpaceScale = m3PoseMatrix.decompose()
@@ -384,16 +388,15 @@ class Exporter:
                             bone.scale.header.animFlags = shared.animFlagsForAnimatedProperty
                             bone.setNamedBit("flags", "animated", True)
                 
-                scaleMatrix = mathutils.Matrix()
-                #for i in range(3):
-                #    scaleMatrix[i][i] = blenderBone.m3_unapplied_scale[i]
-                absRestPosMatrixScaled = absRestPosMatrix * scaleMatrix
-                absRestPosMatrixFixed = absRestPosMatrixScaled * shared.rotFixMatrixInverted
-                
-                absoluteInverseRestPoseMatrixFixed = absRestPosMatrixFixed.inverted()
+                absRestPosMatrixFixed = absRestPosMatrix * shared.rotFixMatrixInverted
+                bindScale = blenderBone.m3_bind_scale
+                bindScaleMatrix = shared.scaleVectorToMatrix(bindScale)
+                absoluteInverseRestPoseMatrixFixed = absRestPosMatrixFixed.inverted() 
+                absoluteInverseRestPoseMatrixFixed = bindScaleMatrix * absoluteInverseRestPoseMatrixFixed
 
                 absoluteInverseBoneRestPos = self.createRestPositionFromBlender4x4Matrix(absoluteInverseRestPoseMatrixFixed)
                 model.absoluteInverseBoneRestPositions.append(absoluteInverseBoneRestPos)
+                
                 boneNameToAbsInvRestPoseMatrix[blenderBone.name] = absRestPosMatrix.inverted()
 
     def vectorArrayContainsNotOnly(self, vectorArray, vector):
