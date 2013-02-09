@@ -159,7 +159,32 @@ def handleParticleSystemCopyRename(self, context):
             particleSystemCopy.boneName = bone.name
         else:
             particleSystemCopy.boneName = calculatedBoneName
-        
+  
+  
+def handleRibbonBoneSuffixChange(self, context):
+    ribbon = self
+    scene = context.scene
+    
+    # no type yet to combine in the name
+    ribbon.name = ribbon.boneSuffix
+
+    if ribbon.updateBlenderBoneShapes:
+        currentBoneName = ribbon.boneName
+        calculatedBoneName = shared.boneNameForRibbon(ribbon)
+
+        if currentBoneName != calculatedBoneName:
+            bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
+            if bone != None:
+                bone.name = calculatedBoneName
+                ribbon.boneName = bone.name
+            else:
+                ribbon.boneName = calculatedBoneName
+
+            selectOrCreateBoneForRibbon(scene, ribbon)
+            #TODO for sub ribbons:
+            # updateBoenShapesOfSubRibbons(scene, ribbon)
+  
+  
 def handleParticleSystemAreaSizeChange(self, context):
     particleSystem = self
     scene = context.scene
@@ -322,6 +347,18 @@ def handleParticleSystemsVisiblityUpdate(self, context):
         for copy in particleSystem.copies:
             boneName = copy.boneName
             shared.setBoneVisibility(scene, boneName, self.showParticleSystems)
+
+def handleRibbonsVisiblityUpdate(self, context):
+    scene = context.scene
+    for ribbon in scene.m3_ribbons:
+        boneName = ribbon.boneName
+        shared.setBoneVisibility(scene, boneName, self.showRibbons)
+        
+        # TODO for sub ribbons:
+        #for subRibbon in ribbon.subRibbons:
+        #    boneName = subRibbon.boneName
+        #    shared.setBoneVisibility(scene, boneName, self.showRibbons)            
+
 
 def handleFuzzyHitTestVisiblityUpdate(self, context):
     scene = context.scene
@@ -486,6 +523,17 @@ def handlePartileSystemIndexChanged(self, context):
     particleSystem.copyIndex = -1
     selectOrCreateBoneForPartileSystem(scene, particleSystem)
 
+def handleRibbonIndexChanged(self, context):
+    scene = context.scene
+    if scene.m3_ribbon_index == -1:
+        return
+    ribbon = scene.m3_ribbons[scene.m3_ribbon_index]
+    #TODO sub ribbons:
+    # ribbon.subIndex = -1
+    selectOrCreateBoneForRibbon(scene, ribbon)
+
+
+
 def handleForceIndexChanged(self, context):
     scene = context.scene
     if scene.m3_force_index == -1:
@@ -602,6 +650,12 @@ def selectOrCreateBoneForPartileSystem(scene, particle_system):
     boneName = particle_system.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
+    
+def selectOrCreateBoneForRibbon(scene, ribbon):
+    scene.m3_bone_visiblity_options.showRibbons = True
+    boneName = ribbon.boneName
+    bone, poseBone = selectOrCreateBone(scene, boneName)
+    shared.updateBoneShapeOfRibbon(ribbon, bone, poseBone)
 
 def selectOrCreateBoneForShapeObject(scene, shapeObject):
     boneName = shapeObject.boneName
@@ -718,6 +772,12 @@ particleTypeList = [("0", "Square Billbords", "Quads always rotated towards came
                     ("8", "Unknown (Id 8)", "Code 8 with unknown meaning"),
                     ("9", "Ray from Spawn Location", "A billboard that reaches from the spawn location to the current position")
                     ]
+
+ribbonTypeList = [("0", "Planar Billboarded", "Planar Billboarded"), 
+                  ("1", "Planar", "Planar"),
+                  ("2", "Cylinder", "Cylinder"),
+                  ("3", "Star Shaped", "Star Shaped")
+                 ]
 
 forceTypeList = [("0", "Directional", "The particles get accelerated into one direction"), 
                     ("1", "Radial", "Particles get accelerated ayway from the force source"),
@@ -1062,6 +1122,45 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     simulateOnInit = bpy.props.BoolProperty(options=set())
     copy = bpy.props.BoolProperty(options=set())
 
+class M3Ribbon(bpy.types.PropertyGroup):
+    # name attribute seems to be needed for template_list but is not actually in the m3 file
+    # The name gets calculated like this: name = boneSuffix (type)
+    name = bpy.props.StringProperty(options=set())
+    boneSuffix = bpy.props.StringProperty(options=set(), update=handleRibbonBoneSuffixChange, default="Particle System")
+    boneName = bpy.props.StringProperty(options=set())
+    updateBlenderBoneShapes = bpy.props.BoolProperty(default=True, options=set())
+    materialName = bpy.props.StringProperty(options=set())
+    waveLength = bpy.props.FloatProperty(default=1.0, name="waveLength", options={"ANIMATABLE"})
+    tipOffsetZ = bpy.props.FloatProperty(default=0.0, name="tipOffsetZ", options=set())
+    centerBias = bpy.props.FloatProperty(default=0.5, name="centerBias", options=set())
+    radiusScale =  bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
+    twist = bpy.props.FloatProperty(default=0.0, name="twist", options=set())
+    baseColoring = bpy.props.FloatVectorProperty(name="color", default=(1.0, 1.0, 1.0, 1.0), min = 0.0, max = 1.0, size=4, subtype="COLOR", options={"ANIMATABLE"})
+    centerColoring = bpy.props.FloatVectorProperty(name="color", default=(1.0, 1.0, 1.0, 1.0), min = 0.0, max = 1.0, size=4, subtype="COLOR", options={"ANIMATABLE"})
+    tipColoring = bpy.props.FloatVectorProperty(name="color", default=(1.0, 1.0, 1.0, 1.0), min = 0.0, max = 1.0, size=4, subtype="COLOR", options={"ANIMATABLE"})
+    stretchAmount = bpy.props.FloatProperty(default=1.0, name="stretchAmount", options=set())
+    stretchLimit = bpy.props.FloatProperty(default=1.0, name="stretchLimit", options=set())
+    surfaceNoiseAmplitude = bpy.props.FloatProperty(default=0.0, name="surfaceNoiseAmplitude", options=set())
+    surfaceNoiseNumberOfWaves = bpy.props.FloatProperty(default=0.0, name="surfaceNoiseNumberOfWaves", options=set())
+    surfaceNoiseFrequency = bpy.props.FloatProperty(default=0.0, name="surfaceNoiseFrequency", options=set())
+    surfaceNoiseScale = bpy.props.FloatProperty(default=0.2, name="surfaceNoiseScale", options=set())
+    ribbonType = bpy.props.EnumProperty(default="0", items=ribbonTypeList, options=set())
+    ribbonDivisions = bpy.props.FloatProperty(default=20.0, name="ribbonDivisions", options=set())
+    ribbonSides = bpy.props.IntProperty(default=5, subtype="UNSIGNED",options=set())
+    ribbonLength = bpy.props.FloatProperty(default=1.0, name="ribbonLength", options={"ANIMATABLE"})
+    directionVariationBool = bpy.props.BoolProperty(default=False, options=set())
+    directionVariationAmount = bpy.props.FloatProperty(default=0.0, name="directionVariationAmount", options={"ANIMATABLE"})
+    directionVariationFrequency = bpy.props.FloatProperty(default=0.0, name="directionVariationFrequency", options={"ANIMATABLE"})
+    amplitudeVariationBool = bpy.props.BoolProperty(default=False, options=set())
+    amplitudeVariationAmount = bpy.props.FloatProperty(default=0.0, name="amplitudeVariationAmount", options={"ANIMATABLE"})
+    amplitudeVariationFrequency = bpy.props.FloatProperty(default=0.0, name="amplitudeVariationFrequency", options={"ANIMATABLE"})
+    lengthVariationBool = bpy.props.BoolProperty(default=False, options=set())
+    lengthVariationAmount = bpy.props.FloatProperty(default=0.0, name="lengthVariationAmount", options={"ANIMATABLE"})
+    lengthVariationFrequency = bpy.props.FloatProperty(default=0.0, name="lengthVariationFrequency", options={"ANIMATABLE"})
+    radiusVariationBool = bpy.props.BoolProperty(default=False, options=set())
+    radiusVariationAmount = bpy.props.FloatProperty(default=0.0, name="radiusVariationAmount", options={"ANIMATABLE"})
+    radiusVariationFrequency = bpy.props.FloatProperty(default=0.0, name="radiusVariationFrequency", options={"ANIMATABLE"})
+
 class M3Force(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
     # The name gets calculated like this: name = boneSuffix (type)
@@ -1143,6 +1242,7 @@ class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
     showTightHitTest = bpy.props.BoolProperty(default=True, options=set(), update=handleTightHitTestVisiblityUpdate)
     showAttachmentPoints = bpy.props.BoolProperty(default=True, options=set(), update=handleAttachmentPointVisibilityUpdate)
     showParticleSystems = bpy.props.BoolProperty(default=True, options=set(), update=handleParticleSystemsVisiblityUpdate)
+    showRibbons = bpy.props.BoolProperty(default=True, options=set(), update=handleRibbonsVisiblityUpdate)
     showLights = bpy.props.BoolProperty(default=True, options=set(), update=handleLightsVisiblityUpdate)
     showForces = bpy.props.BoolProperty(default=True, options=set(), update=handleForcesVisiblityUpdate)
     showCameras = bpy.props.BoolProperty(default=True, options=set(), update=handleCamerasVisiblityUpdate)
@@ -1230,6 +1330,7 @@ class BoneVisibilityPanel(bpy.types.Panel):
         layout.prop(scene.m3_bone_visiblity_options, "showTightHitTest", text="Tight Hit Test")
         layout.prop(scene.m3_bone_visiblity_options, "showAttachmentPoints", text="Attachment Points")
         layout.prop(scene.m3_bone_visiblity_options, "showParticleSystems", text="Particle Systems")
+        layout.prop(scene.m3_bone_visiblity_options, "showRibbons", text="Ribbons")
         layout.prop(scene.m3_bone_visiblity_options, "showLights", text="Lights")
         layout.prop(scene.m3_bone_visiblity_options, "showForces", text="Forces")
         layout.prop(scene.m3_bone_visiblity_options, "showCameras", text="Cameras")
@@ -1746,8 +1847,95 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(particle_system, 'simulateOnInit', text="Simulate On Init")
             layout.prop(particle_system, 'copy', text="Copy")
 
+class RibbonsPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_ribbons"
+    bl_label = "M3 Ribbons"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
 
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        col.template_list(scene, "m3_ribbons", scene, "m3_ribbon_index", rows=2)
 
+        col = row.column(align=True)
+        col.operator("m3.ribbons_add", icon='ZOOMIN', text="")
+        col.operator("m3.ribbons_remove", icon='ZOOMOUT', text="")
+        currentIndex = scene.m3_ribbon_index
+        if currentIndex >= 0 and currentIndex < len(scene.m3_ribbons):
+            ribbon = scene.m3_ribbons[currentIndex]
+            layout.separator()
+            layout.prop(ribbon, 'boneSuffix',text="Name")
+            layout.prop_search(ribbon, 'materialName', scene, 'm3_material_references', text="Material", icon='NONE')
+            layout.prop(ribbon, 'ribbonType',text="Type")
+            layout.prop(ribbon, 'ribbonDivisions',text="Divisions")
+            layout.prop(ribbon, 'ribbonSides',text="Sides")
+            layout.prop(ribbon, 'ribbonLength',text="Length")
+            layout.prop(ribbon, 'waveLength',text="Wave Length")
+            layout.prop(ribbon, 'tipOffsetZ',text="Tip Offset Z")
+            layout.prop(ribbon, 'centerBias',text="Center Bias")
+            
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Radius Scale")
+            sub.prop(ribbon, 'radiusScale', index=0, text="Start")
+            sub.prop(ribbon, 'radiusScale', index=1, text="Middle")
+            sub.prop(ribbon, 'radiusScale', index=2, text="End")
+            
+            layout.prop(ribbon, 'twist',text="Twist")
+            layout.prop(ribbon, 'baseColoring',text="Base Coloring")
+            layout.prop(ribbon, 'centerColoring',text="Center Coloring")
+            layout.prop(ribbon, 'tipColoring',text="Tip Coloring")
+            layout.prop(ribbon, 'stretchAmount',text="Stretch Amount")
+            layout.prop(ribbon, 'stretchLimit',text="Stretch Limit")
+            
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Surface Noice")
+            sub.prop(ribbon, 'surfaceNoiseAmplitude',text="Amplitude")
+            sub.prop(ribbon, 'surfaceNoiseNumberOfWaves',text="Number Of Waves")
+            sub.prop(ribbon, 'surfaceNoiseFrequency',text="Frequency")
+            sub.prop(ribbon, 'surfaceNoiseScale',text="Scale")
+
+            split = layout.split()
+            col = split.column()
+            col.prop(ribbon, "directionVariationBool", text="Direction Variation:")
+            sub = col.column(align=True)
+            sub.active = ribbon.directionVariationBool
+            sub.prop(ribbon, "directionVariationAmount", text="Amount")
+            sub.prop(ribbon, "directionVariationFrequency", text="Frequency")
+
+            split = layout.split()
+            col = split.column()
+            col.prop(ribbon, "amplitudeVariationBool", text="Amplitude Variation:")
+            sub = col.column(align=True)
+            sub.active = ribbon.amplitudeVariationBool
+            sub.prop(ribbon, "amplitudeVariationAmount", text="Amount")
+            sub.prop(ribbon, "amplitudeVariationFrequency", text="Frequency")
+
+            split = layout.split()
+            col = split.column()
+            col.prop(ribbon, "lengthVariationBool", text="Length Variation:")
+            sub = col.column(align=True)
+            sub.active = ribbon.lengthVariationBool
+            sub.prop(ribbon, "lengthVariationAmount", text="Amount")
+            sub.prop(ribbon, "lengthVariationAmount", text="Frequency")
+
+            split = layout.split()
+            col = split.column()
+            col.prop(ribbon, "radiusVariationBool", text="Radius Variation:")
+            sub = col.column(align=True)
+            sub.active = ribbon.radiusVariationBool
+            sub.prop(ribbon, "radiusVariationAmount", text="Amount")
+            sub.prop(ribbon, "radiusVariationFrequency", text="Frequency")
+      
+            
 class ForcePanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_forces"
     bl_label = "M3 Forces"
@@ -2352,6 +2540,10 @@ class M3_MATERIALS_OT_remove(bpy.types.Operator):
                 if particle_system.materialName == materialName:
                     self.report({"ERROR"}, "Can't delete: The particle system '%s' is using this material" % particle_system.name)
                     return {"CANCELLED"}
+            for ribbon in scene.m3_ribbons:
+                if ribbon.materialName == materialName:
+                    self.report({"ERROR"}, "Can't delete: The ribbon '%s' is using this material" % ribbon.name)
+                    return {"CANCELLED"}
             for projection in scene.m3_projections:
                 if projection.materialName == materialName:
                     self.report({"ERROR"}, "Can't delete: The projection '%s' is using this material" % projection.name)
@@ -2703,7 +2895,7 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
         scene.m3_particle_system_index = len(scene.m3_particle_systems)-1
         return{'FINISHED'}
 
-  
+
 
 class M3_PARTICLE_SYSTEMS_OT_remove(bpy.types.Operator):
     bl_idname      = 'm3.particle_systems_remove'
@@ -2777,6 +2969,58 @@ class M3_PARTICLE_SYSTEMS_COPIES_OT_remove(bpy.types.Operator):
         particleSystem.copyIndex -= 1
 
         
+        return{'FINISHED'}
+
+
+
+class M3_RIBBONS_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.ribbons_add'
+    bl_label       = "Add Ribbon"
+    bl_description = "Adds a ribbon for the export to the m3 model format"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        ribbon = scene.m3_ribbons.add()
+        ribbon.boneSuffix = self.findUnusedName(scene)
+        if len(scene.m3_material_references) >= 1:
+            ribbon.materialName = scene.m3_material_references[0].name
+
+        handleRibbonBoneSuffixChange(ribbon, context)
+        
+        # The following selection causes a new bone to be created:
+        scene.m3_ribbon_index = len(scene.m3_ribbons)-1
+        return{'FINISHED'}
+
+    def findUnusedName(self, scene):
+        usedNames = set()
+        for ribbon in scene.m3_ribbons:
+            usedNames.add(ribbon.boneSuffix)
+        unusedName = None
+        counter = 1
+        while unusedName == None:
+            suggestedName = "%02d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName 
+
+
+class M3_RIBBONS_OT_remove(bpy.types.Operator):
+    bl_idname      = 'm3.ribbons_remove'
+    bl_label       = "Remove Ribbon"
+    bl_description = "Removes the active M3 ribbon"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_ribbon_index >= 0:
+            ribbon = scene.m3_ribbons[scene.m3_particle_system_index]
+            removeBone(scene, ribbon.boneName)
+            # TODO for sub ribbons
+            #for subRibbon in ribbon.subRibbons:
+            #    removeBone(scene, subRibbon.boneName)
+            scene.m3_ribbons.remove(scene.m3_ribbon_index)
+            scene.m3_ribbon_index-= 1
+            
         return{'FINISHED'}
 
 class M3_FORCES_OT_add(bpy.types.Operator):
@@ -3224,6 +3468,8 @@ def register():
     bpy.types.Scene.m3_camera_index = bpy.props.IntProperty(options=set(), update=handleCameraIndexChanged)
     bpy.types.Scene.m3_particle_systems = bpy.props.CollectionProperty(type=M3ParticleSystem)
     bpy.types.Scene.m3_particle_system_index = bpy.props.IntProperty(options=set(), update=handlePartileSystemIndexChanged)
+    bpy.types.Scene.m3_ribbons = bpy.props.CollectionProperty(type=M3Ribbon)
+    bpy.types.Scene.m3_ribbon_index = bpy.props.IntProperty(options=set(), update=handleRibbonIndexChanged)
     bpy.types.Scene.m3_forces = bpy.props.CollectionProperty(type=M3Force)
     bpy.types.Scene.m3_force_index = bpy.props.IntProperty(options=set(), update=handleForceIndexChanged)
     bpy.types.Scene.m3_rigid_bodies = bpy.props.CollectionProperty(type=M3RigidBody)

@@ -78,6 +78,7 @@ rotFixMatrixInverted = rotFixMatrix.transposed()
 animFlagsForAnimatedProperty = 6
 
 star2ParticlePrefix = "Star2Part"
+star2RibbonPrefix = "Star2Ribbon"
 star2ForcePrefix = "Star2Force"
 # Ref_ is the bone prefix for attachment points without volume and
 # the prefix for all attachment point names (for volume attachment point names too)
@@ -103,6 +104,10 @@ def boneNameForAttachmentPoint(attachmentPoint):
 
 def boneNameForPartileSystem(particleSystem):
     return toValidBoneName(star2ParticlePrefix + particleSystem.boneSuffix)
+    
+def boneNameForRibbon(ribbon):
+    return toValidBoneName(star2RibbonPrefix + ribbon.boneSuffix)
+
     
 def boneNameForForce(force):
     return toValidBoneName(star2ForcePrefix + force.boneSuffix)
@@ -382,6 +387,15 @@ def updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone):
         height = particleSystem.emissionAreaSize[2]
         untransformedPositions, faces = createMeshDataForCylinder(radius, height)
        
+    boneName = particleSystem.boneName
+    meshName = boneName + 'Mesh'
+    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
+
+
+def updateBoneShapeOfRibbon(particleSystem, bone, poseBone):
+    untransformedPositions, faces = createMeshDataForSphere(0.02)
+    #TODO create the correct ribbon meshes
+    
     boneName = particleSystem.boneName
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
@@ -762,6 +776,38 @@ def transferParticleSystem(transferer):
 def transferParticleSystemCopy(transferer):
     transferer.transferAnimatableFloat("emissionRate")
     transferer.transferAnimatableInt16("partEmit")
+
+def transferRibbon(transferer):
+    transferer.transferAnimatableFloat("waveLength")
+    transferer.transferFloat("tipOffsetZ")
+    transferer.transferFloat("centerBias")
+    transferer.transferAnimatableVector3("radiusScale")
+    transferer.transferAnimatableFloat("twist")
+    transferer.transferAnimatableColor("baseColoring")
+    transferer.transferAnimatableColor("centerColoring")
+    transferer.transferAnimatableColor("tipColoring")
+    transferer.transferFloat("stretchAmount")
+    transferer.transferFloat("stretchLimit")
+    transferer.transferFloat("surfaceNoiseAmplitude")
+    transferer.transferFloat("surfaceNoiseNumberOfWaves")
+    transferer.transferFloat("surfaceNoiseFrequency")
+    transferer.transferFloat("surfaceNoiseScale")
+    transferer.transferEnum("ribbonType")
+    transferer.transferFloat("ribbonDivisions")
+    transferer.transferInt("ribbonSides")
+    transferer.transferAnimatableFloat("ribbonLength")
+    transferer.transferBoolean("directionVariationBool")
+    transferer.transferAnimatableFloat("directionVariationAmount")
+    transferer.transferAnimatableFloat("directionVariationFrequency")
+    transferer.transferBoolean("amplitudeVariationBool")
+    transferer.transferAnimatableFloat("amplitudeVariationAmount")
+    transferer.transferAnimatableFloat("amplitudeVariationFrequency")
+    transferer.transferBoolean("lengthVariationBool")
+    transferer.transferAnimatableFloat("lengthVariationAmount")
+    transferer.transferAnimatableFloat("lengthVariationFrequency")
+    transferer.transferBoolean("radiusVariationBool")
+    transferer.transferAnimatableFloat("radiusVariationAmount")
+    transferer.transferAnimatableFloat("radiusVariationFrequency")
 
 def transferProjection(transferer):
     transferer.transferAnimatableFloat("unknown59478ee7")

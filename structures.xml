@@ -1758,70 +1758,70 @@
             <field name="short1" type="uint8" expected-value="0"/>
             <field name="short2" type="uint8" expected-value="0"/>
             <field name="short3" type="uint8" expected-value="0"/>
-            <field name="materialIndex" type="uint32" />
+            <field name="materialReferenceIndex" type="uint32" />
             <field name="unknown1f9302c9" type="uint32" default-value="0" since-version="8" />
             <field name="waveLength" type="FloatAnimationReference" />
-            <field name="unkonwnAt28" type="AnimationReferenceHeader"/>
-            <field name="unkonwnAt36" size="4" default-value="0x00000000" />
-            <field name="unkonwnAt40" size="4" expected-value="0x00000000" />
-            <!-- unknownAt44 is the uninitalized field that terminated a animaation reference : -->
-            <field name="unknownAt44" type="uint32" default-value="0"/>
-            <field till-version="6" name="unknown7" type="int32" default-value="0"/>
-            <field name="unknown8" type="FloatAnimationReference" />
-            <field name="unknown9" type="FloatAnimationReference" />
-            <field name="unknown10" type="FloatAnimationReference" />
-            <field name="unknown11" type="FloatAnimationReference" />
-            <field name="unknown12" type="FloatAnimationReference" />
-            <field name="unknown13" type="FloatAnimationReference" />
-            <field name="unknown14" type="uint32" expected-value="0"/>
-            <field name="unknown15" type="uint32" expected-value="0" />
-            <field name="unknown16" type="float" expected-value="0"/>
-            <field name="unknown17" type="float" default-value="0"/>
+            <field name="unkonwne773692a" type="AnimationReferenceHeader"/>
+            <field name="unkonwne53650fa" size="4" default-value="0x00000000" />
+            <field name="unkonwne9c6b307" size="4" expected-value="0x00000000" />
+            <!-- unknown75e0b576 is the uninitalized field that terminated a animaation reference : -->
+            <field name="unknown75e0b576" type="uint32" default-value="0"/>
+            <field till-version="6" name="unknownd30655aa" type="int32" default-value="0"/>
+            <field name="unknown8940c27c" type="FloatAnimationReference" />
+            <field name="unknownc2ab76c5" type="FloatAnimationReference" />
+            <field name="unknownee00ae0a" type="FloatAnimationReference" />
+            <field name="unknown1686c0b7" type="FloatAnimationReference" />
+            <field name="unknowne48f8f84" type="FloatAnimationReference" />
+            <field name="unknown9eba8df8" type="FloatAnimationReference" />
+            <field name="unknown26271cbe" type="uint32" expected-value="0"/>
+            <field name="unknownda0542fa" type="uint32" expected-value="0" />
+            <field name="unknown76f48851" type="float" expected-value="0"/>
+            <field name="unknownfe32e718" type="float" default-value="0"/>
             <field name="tipOffsetZ" type="float" />
             <field name="centerBias" type="float" /> <!--middle point position-->
-            <field name="unknown19" type="float" />
-            <field name="unknown20" type="float" />
-            <field name="unknown21" type="float" />
+            <field name="unknowncae7b5f7" type="float" default-value="1.0" />
+            <field name="unknown8652c547" type="float" default-value="1.0" />
+            <field name="unknown6a1cb998" type="float" default-value="1.0" />
             <field name="unknownbca99a4e" size="12" since-version="8" />
             <field name="radiusScale" type="Vector3AnimationReferenceV0" /> <!--X=Start, Y=Middle, Z=END-->
             <field name="twist" type="FloatAnimationReference" />
-            <field name="unknown24" type="uint32" expected-value="0"/>
-            <field name="unknown25" type="uint32" expected-value="0"/>
-            <field name="unknown26" type="uint32" expected-value="0"/>
-            <field name="unknown27" type="uint32" default-value="0"/>
+            <field name="unknown504bc931" type="uint32" expected-value="0"/>
+            <field name="unknown8cfd3002" type="uint32" expected-value="0"/>
+            <field name="unknown2bfdc3e9" type="uint32" expected-value="0"/>
+            <field name="unknownb8fe150a" type="uint32" default-value="0"/>
             <field name="baseColoring" type="ColorAnimationReference" />
             <field name="centerColoring" type="ColorAnimationReference" />
             <field name="tipColoring" type="ColorAnimationReference" />
             <field name="stretchAmount" type="float" />
-            <field name="intShort6" type="float" />
+            <field name="unknownb41d7d03" type="float" expected-value="0.0"/>
             <field name="stretchLimit" type="float" />
             <field name="unknownc7004d01" type="float" default-value="0.0"/>
-            <field name="unknown31" type="float" default-value="0.0"/>
-            <field name="unknown32" type="uint32" default-value="1"/> <!-- gateway0-->
-            <field till-version="6" name="unknown33" type="uint32" default-value="0"/> <!--overseer2-->
-            <field till-version="6" name="unknown34" type="uint32" default-value="0"/> <!--overseer2-->
+            <field name="unknown44a749fe" type="float" default-value="0.0"/>
+            <field name="unknown64a0477a" type="uint32" default-value="1"/> <!-- gateway0-->
+            <field till-version="6" name="unknown20683e1b" type="uint32" default-value="0"/> <!--overseer2-->
+            <field till-version="6" name="unknowndf1a587b" type="uint32" default-value="0"/> <!--overseer2-->
             <field name="surfaceNoiseAmplitude" type="float" />
             <field name="surfaceNoiseNumberOfWaves" type="float" />
             <field name="surfaceNoiseFrequency" type="float" />
             <field name="surfaceNoiseScale" type="float" />
-            <field  name="unknown39" type="uint32" /> <!--corruptor3, corruption battlecruiser5-->
+            <field name="unknownafa854b0" type="uint32" /> <!--corruptor3, corruption battlecruiser5-->
             <field name="ribbonType" type="uint32" />
-            <field  name="unknown40" type="uint32" default-value="1"/>
+            <field name="unknownbf0eb4d1" type="uint32" default-value="1"/>
             <field name="ribbonDivisions" type="float" />
             <field name="ribbonSides" type="uint32" />
-            <field name="unknown42" type="uint32" />
+            <field name="unknowna5803a0e" type="float" default-value="0.5"/>
             <field name="ribbonLength" type="FloatAnimationReference" />
-            <field  till-version="6"  name="filler1" type="int32" default-value="0"/>
+            <field till-version="6"  name="filler1" type="int32" default-value="0"/>
             <field name="sribData" type="Reference" refTo="SRIB" />
-            <field name="unknownAt448" type="AnimationReferenceHeader" />
-            <field name="long1" type="uint32" default-value="1"/>
-            <field name="long2" type="int32" default-value="0"/>
-            <field name="long3" type="uint32" default-value="0"/>
+            <field name="unknown7e341928" type="AnimationReferenceHeader" />
+            <field name="unknown34b7bf34" type="uint32" default-value="1"/>
+            <field name="unknownf2b8c436" type="int32" default-value="0"/>
+            <field name="unknown96098e64" type="uint32" default-value="0"/>
             <field name="ribbonFlags" type="uint32" />
-            <field name="long5" type="uint32" default-value="0"/>
-            <field name="unknownAt476" type="float" default-value="0.0"/>
-            <field name="long7" type="uint32" default-value="2"/>
-            <field name="long8" type="uint32" default-value="0"/> <!--hydralisk death 2-->
+            <field name="unknown30e0264e" type="uint32" default-value="0"/>
+            <field name="unknown40ffe7f5" type="float" default-value="0.0"/>
+            <field name="unknown39b23b19" type="uint32" default-value="2"/>
+            <field name="unknown72f948ba" type="uint32" default-value="0"/> <!--hydralisk death 2-->
             <field name="unknownbccd0332" size="8" since-version="8" />
             <field name="directionVariationBool" type="uint32" />
             <field name="directionVariationAmount" type="FloatAnimationReference" />
@@ -1835,11 +1835,11 @@
             <field name="radiusVariationBool" type="uint32" />
             <field name="radiusVariationAmount" type="FloatAnimationReference" />
             <field name="radiusVariationFrequency" type="FloatAnimationReference" />
-            <field name="unknown60" type="int32" default-value="0"/>
-            <field name="unknown61" type="FloatAnimationReference" />
-            <field name="unknown62" type="FloatAnimationReference" />
-            <field name="unknown63" type="FloatAnimationReference" />
-            <field name="unknown64" type="FloatAnimationReference" />
+            <field name="unknown3e06cbc8" type="int32" default-value="0"/>
+            <field name="unknown4904046f" type="FloatAnimationReference" />
+            <field name="unknowna69b9387" type="FloatAnimationReference" />
+            <field name="unknown9a4a649a" type="FloatAnimationReference" />
+            <field name="unknown76569e33" type="FloatAnimationReference" />
         </fields>
     </structure>
 

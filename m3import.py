@@ -373,6 +373,7 @@ class Importer:
         self.createFuzzyHitTests()
         self.initTightHitTest()
         self.createParticleSystems()
+        self.createRibbons()
         self.createProjections()
         self.createForces()
         self.createRigidBodies()
@@ -896,6 +897,38 @@ class Importer:
                     print("Warning: A particle system copy was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                     copy.name = fullCopyBoneName
             particleSystem.updateBlenderBoneShapes = True
+
+
+    def createRibbons(self):
+        scene = bpy.context.scene
+        showRibbons = scene.m3_bone_visiblity_options.showRibbons
+        print("Loading particle systems")
+        for ribbonIndex, m3Ribbon in enumerate(self.model.ribbons):
+            ribbon = scene.m3_ribbons.add()
+            ribbon.updateBlenderBoneShapes = False
+            animPathPrefix = "m3_ribbons[%s]." % ribbonIndex
+            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=ribbon, m3Object=m3Ribbon)
+            shared.transferRibbon(transferer)
+            boneEntry = self.model.bones[m3Ribbon.boneIndex]
+            fullBoneName = boneEntry.name
+            ribbon.boneSuffix = fullBoneName
+            for ribbonPrefix in [shared.star2RibbonPrefix, "SC2SplRbn"]:
+                if fullBoneName.startswith(ribbonPrefix):
+                    ribbon.boneSuffix = fullBoneName[len(ribbonPrefix):]
+                
+            blenderBoneName = self.boneNames[m3Ribbon.boneIndex]
+            ribbon.boneName = blenderBoneName
+            
+            bone = self.armature.bones[blenderBoneName]
+            poseBone = self.armatureObject.pose.bones[blenderBoneName]
+            shared.updateBoneShapeOfRibbon(ribbon, bone, poseBone)
+            bone.hide = not showRibbons
+
+            ribbon.materialName = self.getNameOfMaterialWithReferenceIndex(m3Ribbon.materialReferenceIndex)
+
+            #TODO create sub ribbons
+            ribbon.updateBlenderBoneShapes = True
+
 
     def createProjections(self):
         scene = bpy.context.scene

@@ -131,6 +131,7 @@ class Exporter:
         self.structureVersionMap["SD2V"] = 0 
         self.structureVersionMap["FlagAnimationReference"] = 0
         self.structureVersionMap["PROJ"] = 4
+        self.structureVersionMap["RIB_"] = 6
 
     def getVersionOf(self, structureName):
         return self.structureVersionMap[structureName] 
@@ -152,6 +153,7 @@ class Exporter:
         self.initFuzzyHitTests(model)
         self.initTighHitTest(model)
         self.initParticles(model)
+        self.initRibbons(model)
         self.initProjections(model)
         self.initForces(model)
         self.initRigidBodies(model)
@@ -1017,6 +1019,43 @@ class Exporter:
                 copyIndex = len(model.particleCopies)
                 model.particleCopies.append(m3Copy)
                 m3ParticleSystem.copyIndices.append(copyIndex)
+    
+    def initRibbons(self, model):
+        scene = self.scene
+        for ribbonIndex, ribbon in enumerate(scene.m3_ribbons):
+            boneName = ribbon.boneName
+            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+            if boneIndex == None:
+                boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+            m3Ribbon = self.createInstanceOf("RIB_")
+            m3Ribbon.boneIndex = boneIndex
+            animPathPrefix = "m3_ribbons[%s]." % ribbonIndex
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Ribbon, blenderObject=ribbon, animPathPrefix=animPathPrefix, rootObject=self.scene)
+            shared.transferRibbon(transferer)            
+            m3Ribbon.unkonwne773692a = self.createNullAnimHeader(interpolationType=1)
+
+            m3Ribbon.unknown8940c27c = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3Ribbon.unknownc2ab76c5 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3Ribbon.unknownee00ae0a = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3Ribbon.unknown1686c0b7 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3Ribbon.unknowne48f8f84 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3Ribbon.unknown9eba8df8 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            
+            m3Ribbon.unknown7e341928 = self.createNullAnimHeader(interpolationType=1)
+
+            m3Ribbon.unknown4904046f = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3Ribbon.unknowna69b9387 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3Ribbon.unknown9a4a649a = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3Ribbon.unknown76569e33 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+
+            model.ribbons.append(m3Ribbon)
+       
+            materialReferenceIndex = self.materialNameToNewReferenceIndexMap.get(ribbon.materialName)
+            if materialReferenceIndex == None:
+                raise Exception("The ribbon %s uses '%s' as material, but no m3 material with that name exist!" % (ribbon.name, ribbon.materialName))
+            m3Ribbon.materialReferenceIndex = materialReferenceIndex
+
+            #TODO export sub ribbons
     
     def initProjections(self, model):
         scene = self.scene
