@@ -1817,7 +1817,22 @@
             <field name="unknown34b7bf34" type="uint32" default-value="1"/>
             <field name="unknownf2b8c436" type="int32" default-value="0"/>
             <field name="unknown96098e64" type="uint32" default-value="0"/>
-            <field name="ribbonFlags" type="uint32" />
+            <field name="flags" type="uint32" default-value="0" >
+                <bits>
+                    <bit mask="0x2" name="collideWithTerrain" />
+                    <bit mask="0x4" name="collideWithObjects" />
+                    <bit mask="0x8" name="edgeFalloff" />
+                    <bit mask="0x10" name="inheritParentVelocity" />
+                    <bit mask="0x20" name="smoothSize" />
+                    <bit mask="0x40" name="bezierSmoothSize" />
+                    <bit mask="0x80" name="useVertexAlpha" />
+                    <bit mask="0x100" name="scaleTimeByParent" />
+                    <bit mask="0x200" name="forceLegacy" />
+                    <bit mask="0x400" name="useLocaleTime" />
+                    <bit mask="0x800" name="simulateOnInitialization" />
+                    <bit mask="0x1000" name="useLengthAndTime" />
+                </bits>
+            </field>
             <field name="unknown30e0264e" type="uint32" default-value="0"/>
             <field name="unknown40ffe7f5" type="float" default-value="0.0"/>
             <field name="unknown39b23b19" type="uint32" default-value="2"/>

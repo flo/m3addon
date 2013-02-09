@@ -808,6 +808,18 @@ def transferRibbon(transferer):
     transferer.transferBoolean("radiusVariationBool")
     transferer.transferAnimatableFloat("radiusVariationAmount")
     transferer.transferAnimatableFloat("radiusVariationFrequency")
+    transferer.transferBit("flags", "collideWithTerrain")
+    transferer.transferBit("flags", "collideWithObjects")
+    transferer.transferBit("flags", "edgeFalloff")
+    transferer.transferBit("flags", "inheritParentVelocity")
+    transferer.transferBit("flags", "smoothSize")
+    transferer.transferBit("flags", "bezierSmoothSize")
+    transferer.transferBit("flags", "useVertexAlpha")
+    transferer.transferBit("flags", "scaleTimeByParent")
+    transferer.transferBit("flags", "forceLegacy")
+    transferer.transferBit("flags", "useLocaleTime")
+    transferer.transferBit("flags", "simulateOnInitialization")
+    transferer.transferBit("flags", "useLengthAndTime")
 
 def transferProjection(transferer):
     transferer.transferAnimatableFloat("unknown59478ee7")

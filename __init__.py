@@ -1160,6 +1160,18 @@ class M3Ribbon(bpy.types.PropertyGroup):
     radiusVariationBool = bpy.props.BoolProperty(default=False, options=set())
     radiusVariationAmount = bpy.props.FloatProperty(default=0.0, name="radiusVariationAmount", options={"ANIMATABLE"})
     radiusVariationFrequency = bpy.props.FloatProperty(default=0.0, name="radiusVariationFrequency", options={"ANIMATABLE"})
+    collideWithTerrain = bpy.props.BoolProperty(default=False, options=set())
+    collideWithObjects = bpy.props.BoolProperty(default=False, options=set())
+    edgeFalloff = bpy.props.BoolProperty(default=False, options=set())
+    inheritParentVelocity = bpy.props.BoolProperty(default=False, options=set())
+    smoothSize = bpy.props.BoolProperty(default=False, options=set())
+    bezierSmoothSize = bpy.props.BoolProperty(default=False, options=set())
+    useVertexAlpha = bpy.props.BoolProperty(default=False, options=set())
+    scaleTimeByParent = bpy.props.BoolProperty(default=False, options=set())
+    forceLegacy = bpy.props.BoolProperty(default=False, options=set())
+    useLocaleTime = bpy.props.BoolProperty(default=False, options=set())
+    simulateOnInitialization = bpy.props.BoolProperty(default=False, options=set())
+    useLengthAndTime = bpy.props.BoolProperty(default=False, options=set())
 
 class M3Force(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
@@ -1935,7 +1947,19 @@ class RibbonsPanel(bpy.types.Panel):
             sub.prop(ribbon, "radiusVariationAmount", text="Amount")
             sub.prop(ribbon, "radiusVariationFrequency", text="Frequency")
       
-            
+            layout.prop(ribbon, 'collideWithTerrain', text="Collide With Terrain")
+            layout.prop(ribbon, 'collideWithObjects', text="Collide With Objects")
+            layout.prop(ribbon, 'edgeFalloff', text="Edge Falloff")
+            layout.prop(ribbon, 'inheritParentVelocity', text="Inherit Parent Velocity")
+            layout.prop(ribbon, 'smoothSize', text="Smooth Size")
+            layout.prop(ribbon, 'bezierSmoothSize', text="Bezier Smooth Size")
+            layout.prop(ribbon, 'useVertexAlpha', text="Use Vertex Alpha")
+            layout.prop(ribbon, 'scaleTimeByParent', text="Scale Time By Parent")
+            layout.prop(ribbon, 'forceLegacy', text="Force Legacy")
+            layout.prop(ribbon, 'useLocaleTime', text="Use Locale Time")
+            layout.prop(ribbon, 'simulateOnInitialization', text="Simulate On Initialization")
+            layout.prop(ribbon, 'useLengthAndTime' ,text="Use Length And Time")
+
 class ForcePanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_forces"
     bl_label = "M3 Forces"
