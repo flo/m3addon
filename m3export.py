@@ -1339,7 +1339,7 @@ class Exporter:
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferCompositeMaterial(transferer)
         for sectionIndex, section in enumerate(material.sections):
-            m3Section = self.createInstanceOf("CMS")
+            m3Section = self.createInstanceOf("CMS_")
             m3Section.materialReferenceIndex = self.materialNameToNewReferenceIndexMap[section.name]
             sectionAnimPathPrefix = "m3_composite_materials[%s].sections[%s]." % (materialIndex, sectionIndex)
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Section, blenderObject=section, animPathPrefix=sectionAnimPathPrefix, rootObject=self.scene)
