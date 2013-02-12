@@ -1080,13 +1080,13 @@
             <field name="decalLayer" type="Reference" refTo="LAYR" />
             <field name="specularLayer" type="Reference" refTo="LAYR" />
             <field name="unknown90718bed" type="Reference" refTo="LAYR" since-version="17" />
-            <field name="selfIllumLayer" type="Reference" refTo="LAYR" />
             <field name="emissiveLayer" type="Reference" refTo="LAYR" />
-            <field name="reflectionLayer" type="Reference" refTo="LAYR" />
+            <field name="emissive2Layer" type="Reference" refTo="LAYR" />
             <field name="evioLayer" type="Reference" refTo="LAYR" />
             <field name="evioMaskLayer" type="Reference" refTo="LAYR" />
             <field name="alphaMaskLayer" type="Reference" refTo="LAYR" />
-            <field name="bumpLayer" type="Reference" refTo="LAYR" />
+            <field name="alphaMask2Layer" type="Reference" refTo="LAYR" />
+            <field name="normalLayer" type="Reference" refTo="LAYR" />
             <field name="heightLayer" type="Reference" refTo="LAYR" />
             <field name="layer12" type="Reference" refTo="LAYR" />
             <field name="layer13" type="Reference" refTo="LAYR" />

@@ -25,12 +25,12 @@ import random
 import math
 from bpy_extras import io_utils
 
-standardMaterialLayerFieldNames = ["diffuseLayer", "decalLayer", "specularLayer", "selfIllumLayer",
-    "emissiveLayer", "reflectionLayer", "evioLayer", "evioMaskLayer", "alphaMaskLayer", 
-    "bumpLayer", "heightLayer", "layer12", "layer13"]
+standardMaterialLayerFieldNames = ["diffuseLayer", "decalLayer", "specularLayer", "emissiveLayer",
+    "emissive2Layer", "evioLayer", "evioMaskLayer", "alphaMaskLayer", "alphaMask2Layer", 
+    "normalLayer", "heightLayer", "layer12", "layer13"]
 
-standardMaterialLayerNames = ["Diffuse", "Decal", "Specular", "Self Illumination", 
-    "Emissive", "Reflection", "Evio", "Evio Mask", "Alpha Mask", "Bump", "Height", "Layer 12", "Layer 13"]
+standardMaterialLayerNames = ["Diffuse", "Decal", "Specular", "Emissive", 
+    "Emissive 2", "Evio", "Evio Mask", "Alpha Mask", "Alpha Mask 2", "Normal", "Height", "Layer 12", "Layer 13"]
 
 displacementMaterialLayerFieldNames = ["normalLayer", "strengthLayer"]
 displacementMaterialLayerNames = ["Normal", "Strength"]
