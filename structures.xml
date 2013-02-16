@@ -969,6 +969,7 @@
         <description>Describes a layer of a material</description>
         <versions>
             <version number="22" size="356" />
+            <version number="24" size="436" />
             <version number="25" size="468" />
         </versions>
         <fields>
@@ -994,8 +995,8 @@
             <field name="brightMult" type="FloatAnimationReference" />
             <field name="midtoneOffset" type="FloatAnimationReference" />
             <field name="unknown3b61017a" type="uint32" expected-value="0" />
-            <field name="unknownba9fac78" type="float" default-value="0.8" since-version="25" />
-            <field name="unknownc77129b6" type="float" default-value="0.5" since-version="25" />
+            <field name="unknownba9fac78" type="float" default-value="0.8" since-version="24" />
+            <field name="unknownc77129b6" type="float" default-value="0.5" since-version="24" />
             <field name="rttChannel" type="int32" default-value="-1" />
             <field name="unknownfd48875c" size="8" expected-value="0x0000000000000000" />
             <field name="unknown63b7f7f2" type="int32" expected-value="0" />
@@ -1011,11 +1012,11 @@
             <field name="unknowna4ec0796" type="UInt32AnimationReference" />
             <field name="unknowna44bf452" type="FloatAnimationReference" />
             <field name="brightness" type="FloatAnimationReference" />            
-            <field name="unknown3c5929ac" type="AnimationReferenceHeader" since-version="25"/>
-            <field name="initOfUnknown3c5929ac" size="12" expected-value="0x000000000000000000000000" since-version="25" />
-            <field name="nullOfUnknown3c5929ac" size="12" expected-value="0x000000000000000000000000" since-version="25"/>
-            <field name="endOfUnknown3c5929ac" size="4" expected-value="0xffffffff" since-version="25"/>
-            <field name="unknownb52a8e82" type="Vector3AnimationReferenceV0" since-version="25"/> <!-- default (1.0, 1.0, 1.0)-->
+            <field name="unknown3c5929ac" type="AnimationReferenceHeader" since-version="24"/>
+            <field name="initOfUnknown3c5929ac" size="12" expected-value="0x000000000000000000000000" since-version="24" />
+            <field name="nullOfUnknown3c5929ac" size="12" expected-value="0x000000000000000000000000" since-version="24"/>
+            <field name="endOfUnknown3c5929ac" size="4" expected-value="0xffffffff" since-version="24"/>
+            <field name="unknownb52a8e82" type="Vector3AnimationReferenceV0" since-version="24"/> <!-- default (1.0, 1.0, 1.0)-->
             <field name="unknownbd3f7b5d" type="int32" default-value="-1" />
             <field name="tintFlags" type="uint32" default-value="0">
                 <bits>
