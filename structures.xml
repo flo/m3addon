@@ -1198,6 +1198,7 @@
         <description>Particle System</description>
         <versions>
             <version number="12" size="1316" />
+            <version number="17" size="1460" />
             <version number="21" size="1464" />
             <version number="22" size="1484" />
         </versions>
@@ -1207,7 +1208,7 @@
         <fields>
             <field name="bone" type="uint32" />
             <field name="materialReferenceIndex" type="uint32" />
-            <field name="randomizationFlags" type="uint32" default-value="0" since-version="21" >
+            <field name="randomizationFlags" type="uint32" default-value="0" since-version="17" >
                 <bits>
                     <bit mask="0x1" name="randomizeWithEmissionSpeed2" />
                     <bit mask="0x2" name="randomizeWithLifespan2" />
@@ -1224,15 +1225,15 @@
             <field name="lifespan2" type="FloatAnimationReference" />
             <field till-version="12" name="randomizeWithLifespan2" type="uint32" />
             <field name="unknownf21cc980" size="12" expected-value="0x000000000000000000000000" />
-            <field name="unknown82a208f7" size="4" default-value="0x00000000" since-version="21" />
+            <field name="unknown82a208f7" size="4" default-value="0x00000000" since-version="17" />
             <field name="zAcceleration" type="float" />
             <field name="unknownFloat1a" type="float" />
             <field name="unknownFloat1b" type="float" default-value="1.0" />
             <field name="unknownFloat1c" type="float" default-value="1.0" />
             <field name="unknownFloat1d" type="float" default-value="1.0" />
-            <field name="unknown0AddedV21" size="4" expected-value="0x00000000" since-version="21" />
-            <field name="unknown1AddedV21" type="float" default-value="0.25" since-version="21" />
-            <field name="unknown2AddedV21" size="4" expected-value="0x00000000" since-version="21" />
+            <field name="unknown0AddedV21" size="4" expected-value="0x00000000" since-version="17" />
+            <field name="unknown1AddedV21" type="float" default-value="0.25" since-version="17" />
+            <field name="unknown2AddedV21" size="4" expected-value="0x00000000" since-version="17" />
             <field name="particleSizes1" type="Vector3AnimationReferenceV0" />
             <field name="rotationValues1" type="Vector3AnimationReferenceV0" />
             <field name="initialColor1" type="ColorAnimationReference" />
@@ -1259,7 +1260,7 @@
             <field name="tailUnk1" type="Vector3AnimationReferenceV0" />
             <field name="emissionAreaRadius" type="FloatAnimationReference" />
             <field name="spreadUnk" type="FloatAnimationReference" />
-            <field name="unknown51fe79f5" size="12" expected-value="0x000000000000000000000000" since-version="21" />
+            <field name="unknown51fe79f5" size="12" expected-value="0x000000000000000000000000" since-version="17" />
             <field name="emissionType" type="uint32" />
             <field name="randomizeWithParticleSizes2" type="uint32" />
             <field name="particleSizes2" type="Vector3AnimationReferenceV0" />
@@ -1295,7 +1296,7 @@
             <field name="lengthWidthRatio" type="float" default-value="1.0" />
             <field name="unknown11" size="8" default-value="0x0000000000000000" />
             <field name="unknownFloat7" type="float" default-value="1.0"/>
-            <field name="unknown5AddedV21" type="float"  expected-value="1.0" since-version="21" />
+            <field name="unknown5AddedV21" type="float"  default-value="1.0" since-version="17" />
             <field name="unknown9ffad0f0" type="uint32" default-value="0" />
             <field name="unknowne0bd54c8" type="FloatAnimationReference" />
             <field name="unknowna2d44d80" type="FloatAnimationReference" />
@@ -1370,12 +1371,12 @@
             </field>
             <!-- unknowne51f8f9b  had the values 4 and  7-->
             <field name="unknowne51f8f9b" type="uint32" default-value="4" since-version="21" />
-            <field name="unknown25dac4d2"  type="uint32" default-value="3" since-version="21" />
-            <field name="unknown56dbedec" size="8"  expected-value="0x0000000000000000" since-version="21" />
-            <field name="unknown22856fde" type="FloatAnimationReference" since-version="21" />
-            <field name="unknownb35ad6e1" type="Vector2AnimationReferenceV0" since-version="21" />
-            <field name="unknown686e5943" type="Vector3AnimationReferenceV0" since-version="21" />
-            <field name="unknown18a90564" type="Vector2AnimationReferenceV0" since-version="21" /> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
+            <field name="unknown25dac4d2"  type="uint32" default-value="3" since-version="17" />
+            <field name="unknown56dbedec" size="8"  expected-value="0x0000000000000000" since-version="17" />
+            <field name="unknown22856fde" type="FloatAnimationReference" since-version="17" />
+            <field name="unknownb35ad6e1" type="Vector2AnimationReferenceV0" since-version="17" />
+            <field name="unknown686e5943" type="Vector3AnimationReferenceV0" since-version="17" />
+            <field name="unknown18a90564" type="Vector2AnimationReferenceV0" since-version="17" /> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
             <field name="unknown22fec01a" type="Reference" refTo="SVC3" />
             <field name="unknown105fd76d" size="4" expected-value="0x00000000"/>
             <!--unknown5156cf07 Observed values: 2 and 0 -->
