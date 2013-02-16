@@ -1116,7 +1116,7 @@ def loadSections(filename):
                     else:
                         break
                 guessedBytesPerEntry = float(len(section.rawBytes) - guessedUnusedSectionBytes) / indexEntry.repetitions
-                message = "ERROR: Unknown section at offset %s with tag=%s version=%s repetitions=%s sectionLengthInBytes=%s guessedUnusedSectionBytes=%s guessedBytesPerEntry=%s\\n" % (indexEntry.offset, indexEntry.tag, indexEntry.version, indexEntry.repetitions, len(section.rawBytes),guessedUnusedSectionBytes,guessedBytesPerEntry )
+                message = "ERROR: Unknown section at offset %s with tag=%s version=%s repetitions=%s sectionLengthInBytes=%s guessedUnusedSectionBytes=%s guessedBytesPerEntry=%s\n" % (indexEntry.offset, indexEntry.tag, indexEntry.version, indexEntry.repetitions, len(section.rawBytes),guessedUnusedSectionBytes,guessedBytesPerEntry )
                 stderr.write(message)
                 unknownSections.add("%sV%s" % (indexEntry.tag, indexEntry.version))
         if len(unknownSections) != 0:
