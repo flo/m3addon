@@ -859,6 +859,16 @@ matLayerAndEmisBlendModeList = [("0", "Mod", "no description yet"),
 matSpecularTypeList = [("0", "RGB", "no description yet"), 
                         ("1", 'Alpha Only', "no description yet")
                         ]
+                        
+rttChannelList = [("-1", "None", "None"),
+                  ("0", "Layer 1", "Render To Texture Layer 1"),
+                  ("1", "Layer 2", "Render To Texture Layer 2"),
+                  ("2", "Layer 3", "Render To Texture Layer 3"),
+                  ("3", "Layer 4", "Render To Texture Layer 4"),
+                  ("4", "Layer 5", "Render To Texture Layer 5"),
+                  ("5", "Layer 6", "Render To Texture Layer 6"),
+                  ("6", "Layer 7", "Render To Texture Layer 7"),
+]
 
 lightTypeList = [# directional light isn't supported yet: ("0", "Directional", ""),
                  (shared.lightTypePoint, "Point", "Light are generated around a point"),
@@ -914,6 +924,7 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     uvTiling = bpy.props.FloatVectorProperty(name="uv tiling", default=(1.0, 1.0), size=2, subtype="XYZ", options={"ANIMATABLE"})
     midtoneOffset = bpy.props.FloatProperty(name="midtone offset", options={"ANIMATABLE"}, description="Can be used to make dark areas even darker so that only the bright regions remain")
     brightness = bpy.props.FloatProperty(name="brightness", options={"ANIMATABLE"}, default=1.0)
+    rttChannel = bpy.props.EnumProperty(items=rttChannelList, options=set(), default="-1")
     alphaAsTeamColor = bpy.props.BoolProperty(options=set())
     alphaOnly = bpy.props.BoolProperty(options=set())
     alphaBasedShading = bpy.props.BoolProperty(options=set())
@@ -1597,6 +1608,9 @@ class MatrialLayersPanel(bpy.types.Panel):
                     sub.prop(layer, "brightness", text="")
                     sub.prop(layer, "brightMult", text="Multiplier")
                     sub.prop(layer, "midtoneOffset", text="Midtone Offset")
+                    
+                    layout.prop(layer, "rttChannel", text="RTT Channel")
+
         else:
             col.label(text="No properties to display")
 

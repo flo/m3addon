@@ -941,6 +941,7 @@ def transferMaterialLayer(transferer):
     transferer.transferAnimatableVector3("uvAngle")
     transferer.transferAnimatableVector2("uvTiling")
     transferer.transferAnimatableFloat("brightness")
+    transferer.transferEnum("rttChannel")
     transferer.transferBit("tintFlags", "useTint")
     transferer.transferBit("tintFlags", "tintAlpha")
     transferer.transferFloat("tintStrength")

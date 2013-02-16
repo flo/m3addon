@@ -996,7 +996,7 @@
             <field name="unknown3b61017a" type="uint32" expected-value="0" />
             <field name="unknownba9fac78" type="float" default-value="0.8" since-version="25" />
             <field name="unknownc77129b6" type="float" default-value="0.5" since-version="25" />
-            <field name="unknown4fce8921" type="int32" expected-value="-1" />
+            <field name="rttChannel" type="int32" default-value="-1" />
             <field name="unknownfd48875c" size="8" expected-value="0x0000000000000000" />
             <field name="unknown63b7f7f2" type="int32" expected-value="0" />
             <field name="unknowna56066e9" size="8" expected-value="0x0000000000000000" />
