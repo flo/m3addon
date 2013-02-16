@@ -1040,6 +1040,7 @@
         <versions>
             <version number="15" size="268" />
             <version number="17" size="280" />
+            <version number="18" size="280" />
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR" />
