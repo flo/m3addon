@@ -1913,6 +1913,7 @@
         <versions>
             <version number="23" size="784" />
             <version number="25" size="808" />
+            <version number="26" size="820" />
         </versions>
         <fields>
             <field name="modelName" type="Reference" refTo="CHAR"/>
@@ -1994,6 +1995,7 @@
             <field name="unknownbd5657bd" size="12" since-version="25" />
             <field name="patuData" type="Reference" refTo="PATU" />
             <field name="trgdData" type="Reference" refTo="TRGD" />
+            <field name="unknownfd74ca5e" size="12" since-version="26" expected-value="0x000000000000000000000000"/>
             <field name="absoluteInverseBoneRestPositions" type="Reference" refTo="IREF" />
             <field name="tightHitTest" type="SSGSV1" />
             <field name="fuzzyHitTestObjects" type="Reference" refTo="SSGS" />
