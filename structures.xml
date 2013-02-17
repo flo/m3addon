@@ -1814,7 +1814,8 @@
             <field name="centerColoring" type="ColorAnimationReference" />
             <field name="tipColoring" type="ColorAnimationReference" />
             <field name="stretchAmount" type="float" />
-            <field name="unknownb41d7d03" type="float" default-value="0.0"/>
+            <field till-version="6" name="unknownb41d7d03" type="float" expected-value="0.0"/>
+            <field name="unknownb41d7d03" type="float" expected-value="1.0" since-version="8"/>
             <field name="stretchLimit" type="float" />
             <field name="unknownc7004d01" type="float" default-value="0.0"/>
             <field name="unknown44a749fe" type="float" default-value="0.0"/>
