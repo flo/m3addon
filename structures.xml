@@ -1415,27 +1415,44 @@
         <description>Projections</description>
         <versions>
             <version number="4" size="388" />
+            <version number="5" size="388" />
         </versions>
         <fields>
             <field name="unknown5b4bb38c" type="uint32" expected-value="1" />
             <field name="boneIndex" type="uint32" />
             <field name="materialReferenceIndex" type="uint32" /><!-- maybe -->>
             <field name="unknownbbe33f90" type="AnimationReferenceHeader" />
-            <field name="unknownd18b890d" size="28" expected-value="0x00000000000000000000000000000000000000000000000000000000" />
+            <field name="initOfUnknowndbbe33f90" size="12" expected-value="0x000000000000000000000000" />
+            <field name="nullOfUnknowndbbe33f90" size="12" expected-value="0x000000000000000000000000" />
+            <field name="endOfUnknownbbe33f90" size="4" default-value="0xffffffff" />
             <field name="unknown9d264f5b" type="AnimationReferenceHeader" />
-            <field name="unknowndc3b29a3" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="initOfUnknown9d264f5b" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknown9d264f5b" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknown9d264f5b" size="4" default-value="0xffffffff" />
             <field name="unknown66ebe1e2" type="AnimationReferenceHeader" />
-            <field name="unknowndc3b29a3" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="initOfUnknown66ebe1e2" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknown66ebe1e2" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknown66ebe1e2" size="4" default-value="0xffffffff" />
             <field name="unknowndf06caf9" type="AnimationReferenceHeader" />
-            <field name="unknowncda1e09c" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="initOfUnknowncda1e09c" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknowncda1e09c" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknowncda1e09c" size="4" default-value="0xffffffff" />
             <field name="unknown7efe2497" type="AnimationReferenceHeader" />
-            <field name="unknown533fc1ee" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="initOfUnknown7efe2497" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknown7efe2497" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknown7efe2497" size="4" default-value="0xffffffff" />
             <field name="unknown8d88a239" type="AnimationReferenceHeader" />
-            <field name="unknownc96d9d28" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="initOfUnknown8d88a239" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknown8d88a239" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknown8d88a239" size="4" default-value="0xffffffff" />
             <field name="unknowne82404f6" type="AnimationReferenceHeader" />
-            <field name="unknown2069a0cf" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="initOfUnknowne82404f6" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknowne82404f6" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknowne82404f6" size="4" default-value="0xffffffff" />
             <field name="unknown13e470c5" type="AnimationReferenceHeader" />
-            <field name="unknown40bad0f2" size="12" expected-value="0x000000000000000000000000"/>
+            <field name="initOfUnknown13e470c5" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknown13e470c5" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknown13e470c5" size="4" default-value="0xffffffff" />
             <field name="unknown59478ee7" type="FloatAnimationReference" />
             <field name="unknowne0b23113" type="FloatAnimationReference" />
             <field name="unknown8d892963" type="FloatAnimationReference" />
