@@ -1797,7 +1797,7 @@
             <field name="centerColoring" type="ColorAnimationReference" />
             <field name="tipColoring" type="ColorAnimationReference" />
             <field name="stretchAmount" type="float" />
-            <field name="unknownb41d7d03" type="float" expected-value="0.0"/>
+            <field name="unknownb41d7d03" type="float" default-value="0.0"/>
             <field name="stretchLimit" type="float" />
             <field name="unknownc7004d01" type="float" default-value="0.0"/>
             <field name="unknown44a749fe" type="float" default-value="0.0"/>
@@ -1979,6 +1979,7 @@
             <field name="unknownMaybeRef0" type="Reference" />
             <field name="creepMaterials" type="Reference" refTo="CREP" />
             <field name="unknown82f8f7b2" size="12" since-version="25" />
+            <field name="unknownfd74ca5e" size="12" since-version="26" expected-value="0x000000000000000000000000"/>
             <field name="particles" type="Reference" refTo="PAR_" />
             <field name="particleCopies" type="Reference" refTo="PARC" />
             <field name="ribbons" type="Reference" refTo="RIB_" />
@@ -1998,7 +1999,6 @@
             <field name="unknownbd5657bd" size="12" since-version="25" />
             <field name="patuData" type="Reference" refTo="PATU" />
             <field name="trgdData" type="Reference" refTo="TRGD" />
-            <field name="unknownfd74ca5e" size="12" since-version="26" expected-value="0x000000000000000000000000"/>
             <field name="absoluteInverseBoneRestPositions" type="Reference" refTo="IREF" />
             <field name="tightHitTest" type="SSGSV1" />
             <field name="fuzzyHitTestObjects" type="Reference" refTo="SSGS" />
