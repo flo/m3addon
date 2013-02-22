@@ -2395,7 +2395,7 @@ class TightHitTestPanel(bpy.types.Panel):
             layout.operator("m3.tight_hit_test_select_or_create_bone", text="Create Bone")
         else:
             layout.operator("m3.tight_hit_test_select_or_create_bone", text="Select Bone")
-
+            layout.operator("m3.tight_hit_test_remove", text="Remove Tight Hit Test");
         split = layout.split()
         row = split.row()
         sub = row.column(align=False)
@@ -3350,6 +3350,23 @@ class M3_TIGHT_HIT_TESTS_OT_selectorcreatebone(bpy.types.Operator):
         tightHitTest = scene.m3_tight_hit_test
         tightHitTest.boneName = shared.tightHitTestBoneName
         selectOrCreateBoneForShapeObject(scene, tightHitTest)
+        return{'FINISHED'}
+
+
+class M3_TIGHT_HIT_TESTS_OT_selectorcreatebone(bpy.types.Operator):
+    bl_idname      = 'm3.tight_hit_test_remove'
+    bl_label       = "Select or create the HitTestFuzzy bone"
+    bl_description = "Adds a shape for the fuzzy hit test"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        tightHitTest = scene.m3_tight_hit_test
+        print("x")
+        if bpy.ops.object.mode_set.poll():
+            bpy.ops.object.mode_set(mode='EDIT')
+        removeBone(scene, tightHitTest.boneName)
+        tightHitTest.name = ""
+
         return{'FINISHED'}
 
 
