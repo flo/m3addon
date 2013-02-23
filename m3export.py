@@ -705,26 +705,27 @@ class Exporter:
         animHeader.animFlags = 0x0
         animHeader.animId = self.boundingAnimId # boudings seem to have always this id
         boundingsAnimRef.header = animHeader
-        boundingsAnimRef.initValue = self.calculateBoundings(model, m3Vertices, self.boneIndexToDefaultAbsoluteMatrixMap)
+        boundingsAnimRef.initValue = self.createBNDSFromVector(self.calculateBoundingsVector(model, m3Vertices, self.boneIndexToDefaultAbsoluteMatrixMap))
         boundingsAnimRef.nullValue = self.createBoundings(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         
         scene = self.scene
         for animation in scene.m3_animations:
             frameToBoneIndexToAbsoluteMatrixMap = self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap[animation.name]
-            boundingsList = []
+            boundingsVectorList = []
             frames = self.allFramesOfAnimation(animation)
             timeValuesInMS = self.allFramesToMSValues(frames)
             for frame in frames:
                 boneIndexToAbsoluteMatrixMap = frameToBoneIndexToAbsoluteMatrixMap[frame]
-                b = self.calculateBoundings(model, m3Vertices, boneIndexToAbsoluteMatrixMap)
-                boundingsList.append(b)
+                b = self.calculateBoundingsVector(model, m3Vertices, boneIndexToAbsoluteMatrixMap)
+                boundingsVectorList.append(b)
 
-                
+            timeValuesInMS, boundingsVectorList = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, boundingsVectorList)
+            boundingStructures = list(self.createBNDSFromVector(v) for v in boundingsVectorList)
             m3AnimBlock = self.createInstanceOf("SDMB")
             m3AnimBlock.frames = timeValuesInMS
             m3AnimBlock.flags = 0
             m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
-            m3AnimBlock.keys = boundingsList
+            m3AnimBlock.keys = boundingStructures
             
             animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
             animIdToAnimDataMap[self.boundingAnimId] = m3AnimBlock
@@ -737,8 +738,22 @@ class Exporter:
         
         # Conversion to bytes needs to be done ofter the boundings calculation
 
-        
-    def calculateBoundings(self, model, m3Vertices, boneIndexToAbsoluteMatrixMap):
+    def createBNDSFromVector(self,vector):
+        minX = vector[0]
+        minY = vector[1]
+        minZ = vector[2]
+        maxX = vector[3]
+        maxY = vector[4]
+        maxZ = vector[5]
+        radius = vector[6]
+        b = self.createInstanceOf("BNDS")
+        b.minBorder = self.createVector3(minX, minY, minZ)
+        b.maxBorder = self.createVector3(maxX, maxY, maxZ)
+        b.radius =radius
+        return b
+    
+    
+    def calculateBoundingsVector(self, model, m3Vertices, boneIndexToAbsoluteMatrixMap):
         #TODO case 0 vertices
         minX = float("inf")
         minY = float("inf")
@@ -780,13 +795,9 @@ class Exporter:
                     minX = min(minX, transformedPosition.x)
                     minY = min(minY, transformedPosition.y)
                     minZ = min(minZ, transformedPosition.z)
-        b = self.createInstanceOf("BNDS")
-        b.minBorder = self.createVector3(minX, minY, minZ)
-        b.maxBorder = self.createVector3(maxX, maxY, maxZ)
         diffV = mathutils.Vector(((maxX-minX),(maxY-minY), (maxZ - minZ)))
         radius = diffV.length / 2
-        b.radius =radius
-        return b
+        return mathutils.Vector((minX, minY, minZ, maxX, maxY, maxZ, radius))
 
     def findRootBoneIndex(self, model, boneIndices):
         boneIndexSet = set(boneIndices)
