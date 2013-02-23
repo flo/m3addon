@@ -51,6 +51,8 @@ class Exporter:
         self.boundingAnimId = 0x1f9bd2
         if scene.render.fps != 30:
             print("Warning: It's recommended to export models with a frame rate of 30 (current is %s)" % scene.render.fps)
+        self.boneIndexToDefaultAbsoluteMatrixMap = {}
+        self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap = {}
         self.prepareAnimIdMaps()
         self.nameToAnimIdToAnimDataMap = {}
         for animation in scene.m3_animations:
@@ -158,7 +160,8 @@ class Exporter:
         self.initForces(model)
         self.initRigidBodies(model)
         self.initLights(model)
-        self.initBoundings(model)
+        # TODO remove call and method:
+        #self.initBoundings(model)
         self.initAttachmentPoints(model)
         self.prepareAnimationEndEvents()
         self.initWithPreparedAnimationData(model)
@@ -194,7 +197,7 @@ class Exporter:
     def initBones(self, model):
         self.boneNameToBoneIndexMap = {} # map: bone name to index in model bone list
         boneNameToAbsInvRestPoseMatrix = {}
-
+        boneIndexToAbsoluteInverseRestPoseMatrixFixedMap = {}
         for armatureObject in self.findArmatureObjects():
             armature = armatureObject.data 
             for blenderBoneIndex, blenderBone in enumerate(armature.bones):
@@ -264,6 +267,8 @@ class Exporter:
                     
                 rightCorrectionMatrix = shared.rotFixMatrixInverted * bindScaleMatrixInverted
                 m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix
+               
+                
                 
                 m3SpaceLocation, m3SpaceRotation, m3SpaceScale = m3PoseMatrix.decompose()
                 bone.scale.initValue = self.createVector3FromBlenderVector(m3SpaceScale)
@@ -273,31 +278,42 @@ class Exporter:
                 bone.location.initValue = self.createVector3FromBlenderVector(m3SpaceLocation)
                 bone.location.nullValue = self.createVector3(0.0, 0.0, 0.0)              
 
+                # calculate the bind matrix / absoluteInverseRestPoseMatrixFixed
+                absRestPosMatrixFixed = absRestPosMatrix * shared.rotFixMatrixInverted
+                bindScale = blenderBone.m3_bind_scale
+                bindScaleMatrix = shared.scaleVectorToMatrix(bindScale)
+                absoluteInverseRestPoseMatrixFixed = absRestPosMatrixFixed.inverted() 
+                absoluteInverseRestPoseMatrixFixed = bindScaleMatrix * absoluteInverseRestPoseMatrixFixed
+                absoluteInverseBoneRestPos = self.createRestPositionFromBlender4x4Matrix(absoluteInverseRestPoseMatrixFixed)
+                model.absoluteInverseBoneRestPositions.append(absoluteInverseBoneRestPos)
+                
+                boneIndexToAbsoluteInverseRestPoseMatrixFixedMap[boneIndex] = absoluteInverseRestPoseMatrixFixed
+                
+                boneNameToAbsInvRestPoseMatrix[blenderBone.name] = absRestPosMatrix.inverted()
+
+                # Calculate the absolute matrix of this bone in default position
+                # for later default boundings calculation
+                absoluteBoneMatrix = m3PoseMatrix
+
+                if (bone.parent != -1):
+                    # The parent matrix has it's absoluteInverseRestPoseMatrixFixed multiplied to it. It needs to be undone:
+                    parentMatrix = self.boneIndexToDefaultAbsoluteMatrixMap[bone.parent] * boneIndexToAbsoluteInverseRestPoseMatrixFixedMap[bone.parent].inverted()
+                    absoluteBoneMatrix = parentMatrix * absoluteBoneMatrix
+
+                absoluteBoneMatrix = absoluteBoneMatrix * absoluteInverseRestPoseMatrixFixed
+
+                self.boneIndexToDefaultAbsoluteMatrixMap[boneIndex] = absoluteBoneMatrix
+
                 animationActionTuples = self.determineAnimationActionTuplesFor(armatureObject.name, actionTypeArmature)
+
                 for animation, action in animationActionTuples:
                     frames = set()
                     # For animated rotations all frames are needed,
                     # since Starcraft 2 isn't correcting the linearly interpolated values
+                    # In addition the bone matrices are needed for each frame
+                    # to calculate the mesh boundings in a later step
                     # 
-                    if self.fCurveExistsForPath(action, rotationAnimPath):
-                        # In Starcraft 2 there is one more key frame then there is usually in Blender:
-                        # 3 Blender key frames at the times 0, 33, 67 give a an animation for the time 0 to 100 (at 30 FPS)
-                        # For Starcraft 2 4 key frames are needed: 0, 33, 67 and 100.
-                        # For a smooth loop the key frame data of 0 and 100 need to be the same.
-                        frames = list(range(animation.startFrame, animation.exlusiveEndFrame+1))
-                    else:
-                        frames.update(self.getFramesFor(action, locationAnimPath, 0))
-                        frames.update(self.getFramesFor(action, locationAnimPath, 1))
-                        frames.update(self.getFramesFor(action, locationAnimPath, 2))
-                        frames.update(self.getFramesFor(action, rotationAnimPath, 0))
-                        frames.update(self.getFramesFor(action, rotationAnimPath, 1))
-                        frames.update(self.getFramesFor(action, rotationAnimPath, 2))
-                        frames.update(self.getFramesFor(action, rotationAnimPath, 3))                        
-                        frames.update(self.getFramesFor(action, scaleAnimPath, 0))
-                        frames.update(self.getFramesFor(action, scaleAnimPath, 1))
-                        frames.update(self.getFramesFor(action, scaleAnimPath, 2))
-                        frames = list(frames)
-                        frames.sort()
+                    frames = self.allFramesOfAnimation(animation)
                     timeValuesInMS = self.allFramesToMSValues(frames)
 
                     xLocValues = self.getNoneOrValuesFor(action, locationAnimPath, 0, frames)
@@ -314,43 +330,66 @@ class Exporter:
                     locAnimated = (xLocValues != None) or (yLocValues != None) or (zLocValues != None)
                     rotAnimated = (wRotValues != None) or (xRotValues != None) or (yRotValues != None) or (zRotValues != None)
                     scaAnimated = (xScaValues != None) or (yScaValues != None) or (zScaValues != None)
-                    if locAnimated or rotAnimated or scaAnimated:
-                        if xLocValues == None:
-                            xLocValues = len(timeValuesInMS) * [poseLocation.x]
-                        if yLocValues == None:
-                            yLocValues = len(timeValuesInMS) * [poseLocation.y]
-                        if zLocValues == None:
-                            zLocValues = len(timeValuesInMS) * [poseLocation.z]
-                                                    
-                        if wRotValues == None:
-                            wRotValues = len(timeValuesInMS) * [poseRotation.w]
-                        if xRotValues == None:
-                            xRotValues = len(timeValuesInMS) * [poseRotation.x]
-                        if yRotValues == None:
-                            yRotValues = len(timeValuesInMS) * [poseRotation.y]
-                        if zRotValues == None:
-                            zRotValues = len(timeValuesInMS) * [poseRotation.z]
-                            
-                        if xScaValues == None:
-                            xScaValues = len(timeValuesInMS) * [poseScale.x]
-                        if yScaValues == None:
-                            yScaValues = len(timeValuesInMS) * [poseScale.y]
-                        if zScaValues == None:
-                            zScaValues = len(timeValuesInMS) * [poseScale.z]
-                        locations = []
-                        rotations = []
-                        scales = []
-                        for xLoc, yLoc, zLoc, wRot, xRot, yRot, zRot, xSca, ySca, zSca in zip(xLocValues, yLocValues, zLocValues, wRotValues, xRotValues, yRotValues, zRotValues, xScaValues, yScaValues, zScaValues):
-                            loc = mathutils.Vector((xLoc, yLoc, zLoc))
-                            rot = mathutils.Quaternion((wRot, xRot, yRot, zRot)).normalized()
-                            sca = mathutils.Vector((xSca, ySca, zSca))
-                            poseMatrix = shared.locRotScaleMatrix(loc, rot, sca)
-                            m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix
-                            loc, rot, sca = m3PoseMatrix.decompose()
-                            locations.append(loc)
-                            rotations.append(rot)
-                            scales.append(sca)
 
+                    if xLocValues == None:
+                        xLocValues = len(timeValuesInMS) * [poseLocation.x]
+                    if yLocValues == None:
+                        yLocValues = len(timeValuesInMS) * [poseLocation.y]
+                    if zLocValues == None:
+                        zLocValues = len(timeValuesInMS) * [poseLocation.z]
+                                                
+                    if wRotValues == None:
+                        wRotValues = len(timeValuesInMS) * [poseRotation.w]
+                    if xRotValues == None:
+                        xRotValues = len(timeValuesInMS) * [poseRotation.x]
+                    if yRotValues == None:
+                        yRotValues = len(timeValuesInMS) * [poseRotation.y]
+                    if zRotValues == None:
+                        zRotValues = len(timeValuesInMS) * [poseRotation.z]
+                        
+                    if xScaValues == None:
+                        xScaValues = len(timeValuesInMS) * [poseScale.x]
+                    if yScaValues == None:
+                        yScaValues = len(timeValuesInMS) * [poseScale.y]
+                    if zScaValues == None:
+                        zScaValues = len(timeValuesInMS) * [poseScale.z]
+                        
+                    frameToBoneIndexToAbsoluteMatrixMap = self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap.get(animation.name)
+                    if frameToBoneIndexToAbsoluteMatrixMap == None:
+                        frameToBoneIndexToAbsoluteMatrixMap = {}
+                        self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap[animation.name] = frameToBoneIndexToAbsoluteMatrixMap
+                    locations = []
+                    rotations = []
+                    scales = []
+                    for xLoc, yLoc, zLoc, wRot, xRot, yRot, zRot, xSca, ySca, zSca, frame in zip(xLocValues, yLocValues, zLocValues, wRotValues, xRotValues, yRotValues, zRotValues, xScaValues, yScaValues, zScaValues, frames):
+                        loc = mathutils.Vector((xLoc, yLoc, zLoc))
+                        rot = mathutils.Quaternion((wRot, xRot, yRot, zRot)).normalized()
+                        sca = mathutils.Vector((xSca, ySca, zSca))
+                        poseMatrix = shared.locRotScaleMatrix(loc, rot, sca)
+                        m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix
+
+                        boneIndexToAbsoluteMatrixMap = frameToBoneIndexToAbsoluteMatrixMap.get(frame)
+                        if boneIndexToAbsoluteMatrixMap == None:
+                            boneIndexToAbsoluteMatrixMap = {}
+                            frameToBoneIndexToAbsoluteMatrixMap[frame] = boneIndexToAbsoluteMatrixMap
+                        
+                        absoluteBoneMatrix = m3PoseMatrix
+                        if (bone.parent != -1):
+                            # The parent matrix has it's absoluteInverseRestPoseMatrixFixed multiplied to it. It needs to be undone:
+                            parentMatrix = boneIndexToAbsoluteMatrixMap[bone.parent] * boneIndexToAbsoluteInverseRestPoseMatrixFixedMap[bone.parent].inverted()
+                            absoluteBoneMatrix = parentMatrix * absoluteBoneMatrix
+
+                        absoluteBoneMatrix = absoluteBoneMatrix * absoluteInverseRestPoseMatrixFixed
+
+                        boneIndexToAbsoluteMatrixMap[boneIndex] = absoluteBoneMatrix
+                                                
+                        loc, rot, sca = m3PoseMatrix.decompose()
+                        locations.append(loc)
+                        rotations.append(rot)
+                        scales.append(sca)
+                    
+                    
+                    if locAnimated or rotAnimated or scaAnimated:
                         self.makeQuaternionsInterpolatable(rotations)                                                
                         animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
                         
@@ -390,16 +429,13 @@ class Exporter:
                             bone.scale.header.animFlags = shared.animFlagsForAnimatedProperty
                             bone.setNamedBit("flags", "animated", True)
                 
-                absRestPosMatrixFixed = absRestPosMatrix * shared.rotFixMatrixInverted
-                bindScale = blenderBone.m3_bind_scale
-                bindScaleMatrix = shared.scaleVectorToMatrix(bindScale)
-                absoluteInverseRestPoseMatrixFixed = absRestPosMatrixFixed.inverted() 
-                absoluteInverseRestPoseMatrixFixed = bindScaleMatrix * absoluteInverseRestPoseMatrixFixed
 
-                absoluteInverseBoneRestPos = self.createRestPositionFromBlender4x4Matrix(absoluteInverseRestPoseMatrixFixed)
-                model.absoluteInverseBoneRestPositions.append(absoluteInverseBoneRestPos)
-                
-                boneNameToAbsInvRestPoseMatrix[blenderBone.name] = absRestPosMatrix.inverted()
+    def allFramesOfAnimation(self, animation):
+        # In Starcraft 2 there is one more key frame then there is usually in Blender:
+        # 3 Blender key frames at the times 0, 33, 67 give a an animation for the time 0 to 100 (at 30 FPS)
+        # For Starcraft 2 4 key frames are needed: 0, 33, 67 and 100.
+        # For a smooth loop the key frame data of 0 and 100 need to be the same.
+        return list(range(animation.startFrame, animation.exlusiveEndFrame+1))
 
     def vectorArrayContainsNotOnly(self, vectorArray, vector):
         for v in vectorArray:
@@ -645,22 +681,9 @@ class Exporter:
                 raise Exception("The mesh %s uses '%s' as material, but no m3 material with that name exist!" % (mesh.name, mesh.m3_material_name))
             m3Object.materialReferenceIndex = materialReferenceIndex
             
+            
             division.objects.append(m3Object)
         
-        
-        
-        
-        
-        minV = mathutils.Vector((float("inf"), float("inf") ,float("inf")))
-        maxV = mathutils.Vector((-float("inf"), -float("inf"), -float("inf")))
-        #TODO case 0 vertices
-        for blenderVertex in mesh.vertices:
-            for i in range(3):  
-                minV[i] = min(minV[i], blenderVertex.co[i])
-                maxV[i] = max(maxV[i], blenderVertex.co[i])
-        diffV = minV - maxV
-        radius = diffV.length / 2
-        division.msec.append(self.createEmptyMSec(minX=minV[0], minY=minV[1], minZ=minV[2], maxX=maxV[0], maxY=maxV[1], maxZ=maxV[2], radius=radius))
         
         numberOfBonesToCheckForSkin = 0
         for boneIndex, bone in enumerate(model.bones):
@@ -670,7 +693,100 @@ class Exporter:
         #Add tangents to the vertices used for bump/normal mapping:
         calculateTangents.recalculateTangentsOfDivisions(m3Vertices, model.divisions)
 
+
         model.vertices = m3VertexStructureDefinition.instancesToBytes(m3Vertices)
+
+        
+        # Create the MSEC
+        
+        boundingsAnimRef = self.createInstanceOf("BNDSV0AnimationReference")
+        animHeader = self.createInstanceOf("AnimationReferenceHeader")
+        animHeader.interpolationType = 0
+        animHeader.animFlags = 0x0
+        animHeader.animId = self.boundingAnimId # boudings seem to have always this id
+        boundingsAnimRef.header = animHeader
+        boundingsAnimRef.initValue = self.calculateBoundings(model, m3Vertices, self.boneIndexToDefaultAbsoluteMatrixMap)
+        boundingsAnimRef.nullValue = self.createBoundings(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        
+        scene = self.scene
+        for animation in scene.m3_animations:
+            frameToBoneIndexToAbsoluteMatrixMap = self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap[animation.name]
+            boundingsList = []
+            frames = self.allFramesOfAnimation(animation)
+            timeValuesInMS = self.allFramesToMSValues(frames)
+            for frame in frames:
+                boneIndexToAbsoluteMatrixMap = frameToBoneIndexToAbsoluteMatrixMap[frame]
+                b = self.calculateBoundings(model, m3Vertices, boneIndexToAbsoluteMatrixMap)
+                boundingsList.append(b)
+
+                
+            m3AnimBlock = self.createInstanceOf("SDMB")
+            m3AnimBlock.frames = timeValuesInMS
+            m3AnimBlock.flags = 0
+            m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
+            m3AnimBlock.keys = boundingsList
+            
+            animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
+            animIdToAnimDataMap[self.boundingAnimId] = m3AnimBlock
+            boundingsAnimRef.header.animFlags = shared.animFlagsForAnimatedProperty
+        
+        
+        msec = self.createInstanceOf("MSEC")
+        msec.boundingsAnimation = boundingsAnimRef
+        division.msec.append(msec)
+        
+        # Conversion to bytes needs to be done ofter the boundings calculation
+
+        
+    def calculateBoundings(self, model, m3Vertices, boneIndexToAbsoluteMatrixMap):
+        #TODO case 0 vertices
+        minX = float("inf")
+        minY = float("inf")
+        minZ = float("inf")
+        maxX = -float("inf")
+        maxY = -float("inf")
+        maxZ = -float("inf")
+        for division in model.divisions:
+            divisionFaceIndices = division.faces
+            for region in division.regions:
+                regionVertexIndices = range(region.firstVertexIndex,region.firstVertexIndex + region.numberOfVertices)
+                boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
+                boneMatrixLookup = []
+                for boneIndex in boneIndexLookup:
+                    boneMatrixLookup.append(boneIndexToAbsoluteMatrixMap[boneIndex])
+                for vertexIndex in regionVertexIndices:
+                    m3Vertex = m3Vertices[vertexIndex]
+                    boneWeightsAsInt = [m3Vertex.boneWeight0, m3Vertex.boneWeight1, m3Vertex.boneWeight2, m3Vertex.boneWeight3]
+                    boneLookupIndices = [m3Vertex.boneLookupIndex0, m3Vertex.boneLookupIndex1,  m3Vertex.boneLookupIndex2,  m3Vertex.boneLookupIndex3]
+                    untransformedPosition = mathutils.Vector((m3Vertex.position.x, m3Vertex.position.y, m3Vertex.position.z))
+                    boneWeights = []
+                    transformedPosition = mathutils.Vector((0, 0, 0))
+                    for boneWeightAsInt, boneLookupIndex in zip(boneWeightsAsInt, boneLookupIndices):
+                        if boneWeightAsInt != 0:
+                            boneMatrix = boneMatrixLookup[boneLookupIndex]
+                            boneWeight = boneWeightAsInt / 255.0
+                            positionTransformedByBone = boneMatrix * untransformedPosition
+                            positionPart = boneWeight * positionTransformedByBone
+                            transformedPosition += positionPart
+                    if round(transformedPosition.y) > 10:
+                        for boneWeightAsInt, boneLookupIndex in zip(boneWeightsAsInt, boneLookupIndices):
+                            if boneWeightAsInt != 0:
+                                boneMatrix = boneMatrixLookup[boneLookupIndex]
+                                boneWeight = boneWeightAsInt / 255.0
+                                boneIndex = boneIndexLookup[boneLookupIndex]
+                    maxX = max(maxX, transformedPosition.x)
+                    maxY = max(maxY, transformedPosition.y)
+                    maxZ = max(maxZ, transformedPosition.z)
+                    minX = min(minX, transformedPosition.x)
+                    minY = min(minY, transformedPosition.y)
+                    minZ = min(minZ, transformedPosition.z)
+        b = self.createInstanceOf("BNDS")
+        b.minBorder = self.createVector3(minX, minY, minZ)
+        b.maxBorder = self.createVector3(maxX, maxY, maxZ)
+        diffV = mathutils.Vector(((maxX-minX),(maxY-minY), (maxZ - minZ)))
+        radius = diffV.length / 2
+        b.radius =radius
+        return b
 
     def findRootBoneIndex(self, model, boneIndices):
         boneIndexSet = set(boneIndices)
@@ -1580,19 +1696,25 @@ class Exporter:
     
 
     def determineAnimationActionTuplesFor(self, actionOwnerName, actionOwnerType):
+        """ returns (animation, action) tuples for all animations. The action can be null!"""
         animationActionTuples = []
         scene = self.scene
         for animation in scene.m3_animations:
+            actions = []
             for assignedAction in animation.assignedActions:
                 action = shared.findActionOfAssignedAction(assignedAction, actionOwnerName, actionOwnerType)
                 if action != None:
-                    animationActionTuples.append((animation, action))
+                    actions.append(action)
+            if len(actions) == 0:
+                animationActionTuples.append((animation, None))
+            elif len(actions) == 1:
+                animationActionTuples.append((animation, actions[0]))
+            else:
+                raise Exception("Duplicate actions: %s" % (a.name for a in actions))
+            
+                
+                
         return animationActionTuples
-
-
-    def getAllFramesOf(self, animation):
-        # end frame is inclusve in blender
-        return range(animation.startFrame, animation.exlusiveEndFrame)
         
     def allFramesToMSValues(self, frames):
         timeValues = []
@@ -1602,7 +1724,10 @@ class Exporter:
         return timeValues
     
     def getNoneOrValuesFor(self, action, animPath, curveArrayIndex, frames):
+        """ returns None if action == None or the action does not contain the specified animation path"""
         values = []
+        if action == None:
+            return None
         curve = self.findFCurveWithPathAndIndex(action, animPath, curveArrayIndex)
         if curve == None:
             return None
@@ -1611,7 +1736,10 @@ class Exporter:
         return values
     
     def getFramesFor(self, action, animPath, curveArrayIndex):
+        """ action can be None in which case an empty frames list is returned"""
         frames = []
+        if action == None:
+            return frames
         curve = self.findFCurveWithPathAndIndex(action, animPath, curveArrayIndex)
         if curve == None:
             return frames
