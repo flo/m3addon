@@ -1322,7 +1322,7 @@ class M3Light(bpy.types.PropertyGroup):
     specular = bpy.props.BoolProperty(options=set())
     unknownFlag0x04 = bpy.props.BoolProperty(options=set())
     turnOn = bpy.props.BoolProperty(default=True,options=set())
-    
+        
 
 class ExportPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_quickExport"
@@ -1373,7 +1373,7 @@ class AnimationSequencesPanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_animations", scene, "m3_animation_index", rows=2)
+        col.template_list("UI_UL_list", "m3_animations", scene, "m3_animations", scene, "m3_animation_index", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.animations_add", icon='ZOOMIN', text="")
@@ -1414,7 +1414,7 @@ class AnimationSequenceTransformationCollectionsPanel(bpy.types.Panel):
         if animationIndex >= 0 and animationIndex < len(scene.m3_animations):
             animation = scene.m3_animations[animationIndex]
 
-            col.template_list(animation, "transformationCollections", animation, "transformationCollectionIndex", rows=2)
+            col.template_list("UI_UL_list", "m3_stcs", animation, "transformationCollections", animation, "transformationCollectionIndex", rows=2)
             
             col = row.column(align=True)
             col.operator("m3.stc_add", icon='ZOOMIN', text="")
@@ -1444,7 +1444,7 @@ class MaterialReferencesPanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_material_references", scene, "m3_material_reference_index", rows=2)
+        col.template_list("UI_UL_list", "m3_material_references", scene, "m3_material_references", scene, "m3_material_reference_index", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.materials_add", icon='ZOOMIN', text="")
@@ -1507,7 +1507,7 @@ class MaterialPropertiesPanel(bpy.types.Panel):
                 layout.label("Sections:")
                 row = layout.row()
                 col = row.column()
-                col.template_list(material, "sections", material, "sectionIndex", rows=2)
+                col.template_list("UI_UL_list", "m3_material_sections", material, "sections", material, "sectionIndex", rows=2)
                 
                 col = row.column(align=True)
                 col.operator("m3.composite_material_add_section", icon='ZOOMIN', text="")
@@ -1553,7 +1553,7 @@ class MatrialLayersPanel(bpy.types.Panel):
             
             material = shared.getMaterial(scene, materialType, materialIndex)
             if material != None:
-                col.template_list(material, "layers", scene, "m3_material_layer_index", rows=2)
+                col.template_list("UI_UL_list", "m3_material_layers", material, "layers", scene, "m3_material_layer_index", rows=2)
                 layerIndex = scene.m3_material_layer_index
                 if layerIndex >= 0 and layerIndex < len(material.layers):
                     layer = material.layers[layerIndex]
@@ -1627,7 +1627,7 @@ class CameraPanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_cameras", scene, "m3_camera_index", rows=2)
+        col.template_list("UI_UL_list", "m3_cameras", scene, "m3_cameras", scene, "m3_camera_index", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.cameras_add", icon='ZOOMIN', text="")
@@ -1660,7 +1660,7 @@ class ParticleSystemsPanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_particle_systems", scene, "m3_particle_system_index", rows=2)
+        col.template_list("UI_UL_list", "m3_particle_systems", scene, "m3_particle_systems", scene, "m3_particle_system_index", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.particle_systems_add", icon='ZOOMIN', text="")
@@ -1886,7 +1886,7 @@ class RibbonsPanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_ribbons", scene, "m3_ribbon_index", rows=2)
+        col.template_list("UI_UL_list", "m3_ribbons", scene, "m3_ribbons", scene, "m3_ribbon_index", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.ribbons_add", icon='ZOOMIN', text="")
@@ -1987,7 +1987,7 @@ class ForcePanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_forces", scene, "m3_force_index", rows=2)
+        col.template_list("UI_UL_list", "m3_forces", scene, "m3_forces", scene, "m3_force_index", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.forces_add", icon='ZOOMIN', text="")
@@ -2017,7 +2017,7 @@ class RigidBodyPanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_rigid_bodies", scene, "m3_rigid_body_index", rows=2)
+        col.template_list("UI_UL_list", "m3_rigid_bodies", scene, "m3_rigid_bodies", scene, "m3_rigid_body_index", rows=2)
         
         col = row.column(align=True)
         col.operator("m3.rigid_bodies_add", icon='ZOOMIN', text="")
@@ -2092,7 +2092,7 @@ class PhyscisShapePanel(bpy.types.Panel):
             return
         rigid_body = scene.m3_rigid_bodies[currentIndex]
         
-        col.template_list(rigid_body, "physicsShapes", rigid_body, "physicsShapeIndex", rows=2)
+        col.template_list("UI_UL_list", "m3_physics_sahpes", rigid_body, "physicsShapes", rigid_body, "physicsShapeIndex", rows=2)
         col = row.column(align=True)
         col.operator("m3.physics_shapes_add", icon='ZOOMIN', text="")
         col.operator("m3.physics_shapes_remove", icon='ZOOMOUT', text="")
@@ -2138,7 +2138,7 @@ class LightPanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_lights", scene, "m3_light_index", rows=2)
+        col.template_list("UI_UL_list", "m3_lights", scene, "m3_lights", scene, "m3_light_index", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.lights_add", icon='ZOOMIN', text="")
@@ -2189,7 +2189,7 @@ class ProjectionPanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_projections", scene, "m3_projection_index", rows=2)
+        col.template_list("UI_UL_list", "m3_projections", scene, "m3_projections", scene, "m3_projection_index", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.projections_add", icon='ZOOMIN', text="")
@@ -2244,7 +2244,7 @@ class ParticleSystemCopiesPanel(bpy.types.Panel):
             return
         particle_system = scene.m3_particle_systems[particleSystemIndex]
         copyIndex = particle_system.copyIndex            
-        col.template_list(particle_system, "copies", particle_system, "copyIndex", rows=2)
+        col.template_list("UI_UL_list", "m3_particle_system_copies", particle_system, "copies", particle_system, "copyIndex", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.particle_system_copies_add", icon='ZOOMIN', text="")
@@ -2288,7 +2288,7 @@ class AttachmentPointsPanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_attachment_points", scene, "m3_attachment_point_index", rows=2)
+        col.template_list("UI_UL_list", "m3_attachment_points", scene, "m3_attachment_points", scene, "m3_attachment_point_index", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.attachment_points_add", icon='ZOOMIN', text="")
@@ -2367,7 +2367,7 @@ class FuzzyHitTestPanel(bpy.types.Panel):
         scene = context.scene
         row = layout.row()
         col = row.column()
-        col.template_list(scene, "m3_fuzzy_hit_tests", scene, "m3_fuzzy_hit_test_index", rows=2)
+        col.template_list("UI_UL_list", "m3_fuzzy_hit_tests", scene, "m3_fuzzy_hit_tests", scene, "m3_fuzzy_hit_test_index", rows=2)
 
         col = row.column(align=True)
         col.operator("m3.fuzzy_hit_tests_add", icon='ZOOMIN', text="")
