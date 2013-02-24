@@ -1282,7 +1282,7 @@ class Importer:
 
     def containsToLongNames(nameList):
         for name in nameList:
-            if len(name) > 31:
+            if len(name) > 63:
                 return True
         return false
 
@@ -1291,8 +1291,8 @@ class Importer:
         nameSet = set()
         for index, m3Bone in enumerate(m3Bones):
             name = m3Bone.name
-            if len(name) > 31:
-                name = "Bone%06d%s" % (index, name[:21])
+            if len(name) > 63:
+                name = "Bone%06d%s" % (index, name[:53])
             if len(name) == 0:
                 name = "Bone%06d" % len(names)
             if name in nameSet:
