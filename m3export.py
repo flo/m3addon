@@ -603,7 +603,7 @@ class Exporter:
                             self.createBoneMatricesForStaticMeshBone(staticMeshBoneIndex)
                         if staticMeshBoneLookupIndex == None:
                             self.boneNameToBoneIndexMap[staticMeshBoneName] = staticMeshBoneIndex
-                            staticMeshBoneLookupIndex = len(model.boneLookup)
+                            staticMeshBoneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
                             model.boneLookup.append(staticMeshBoneIndex)
                             boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshBoneLookupIndex
                         m3Vertex.boneWeight0 = 255
