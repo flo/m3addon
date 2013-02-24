@@ -1324,14 +1324,7 @@ class Exporter:
             shared.transferLight(transferer)
             model.lights.append(m3Light)
 
-    def initBoundings(self, model):
-        scene = self.scene
-        animPathPrefix = "m3_boundings."
-        m3Boundings = model.divisions[0].msec[0].boundingsAnimation
-        boundingsObject = scene.m3_boundings
-        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Boundings, blenderObject=boundingsObject, animPathPrefix=animPathPrefix, rootObject=self.scene)
-        shared.transferBoundings(transferer)
-    
+
     def initAttachmentPoints(self, model):
         scene = self.scene
         for attachmentPointIndex, attachmentPoint in enumerate(scene.m3_attachment_points):

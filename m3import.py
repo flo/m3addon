@@ -380,7 +380,6 @@ class Importer:
         self.createLights()
         self.createAttachmentPoints()
         self.createMesh()
-        self.createBoundings()
         # init stcs of animations at last
         # when all animation properties are known
         self.initSTCsOfAnimations()
@@ -830,20 +829,6 @@ class Importer:
         for index, m3FuzzyHitTest in enumerate(self.model.fuzzyHitTestObjects):
             fuzzyHitTest = scene.m3_fuzzy_hit_tests.add()
             self.intShapeObject(fuzzyHitTest, m3FuzzyHitTest)
-    
-    def createBoundings(self):
-        scene = bpy.context.scene
-        if len(self.model.divisions) != 1:
-            raise Exception("Unsupported Model type: Model has %d divisions" % len(self.model.divisions))
-
-        if len(self.model.divisions[0].msec) != 1:
-            print("Warning the model has %d msec structures but only 1 can be imported for now" % len(self.model.divisions[0].msec))
-        m3Boundings = self.model.divisions[0].msec[0].boundingsAnimation
-        boundingsObject = scene.m3_boundings
-        animPathPrefix = "m3_boundings."
-        transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=boundingsObject, m3Object=m3Boundings)
-        shared.transferBoundings(transferer)
-
     
     def createParticleSystems(self):
         scene = bpy.context.scene

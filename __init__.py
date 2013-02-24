@@ -1028,12 +1028,6 @@ class M3ParticleSystemCopy(bpy.types.PropertyGroup):
     emissionRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
     partEmit = bpy.props.IntProperty(default=0, subtype="UNSIGNED", options={"ANIMATABLE"})
 
-  
-class M3Boundings(bpy.types.PropertyGroup):
-    minBorder = bpy.props.FloatVectorProperty(name="minBorder", default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
-    maxBorder = bpy.props.FloatVectorProperty(name="maxBorder", default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
-    radius = bpy.props.FloatProperty(name="radius", options={"ANIMATABLE"}, default=0.5)
-
 
 class M3ParticleSystem(bpy.types.PropertyGroup):
 
@@ -2402,34 +2396,6 @@ class TightHitTestPanel(bpy.types.Panel):
         sub.active = scene.m3_tight_hit_test.name != ""
         addUIForShapeProperties(sub, scene.m3_tight_hit_test)
 
-class BoundingsPanel(bpy.types.Panel):
-    bl_idname = "OBJECT_PT_M3_boundings"
-    bl_label = "M3 Boundings"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "scene"
-    bl_options = {'DEFAULT_CLOSED'}
-    
-    def draw(self, context):
-        layout = self.layout
-        scene = context.scene
-        
-        boundingsObject = scene.m3_boundings
-        
-        split = layout.split()
-        col = split.column()
-        sub = col.column(align=True)
-        sub.label(text="Min")
-        sub.prop(boundingsObject, 'minBorder', index=0, text="X")
-        sub.prop(boundingsObject, 'minBorder', index=1, text="Y")
-        sub.prop(boundingsObject, 'minBorder', index=2, text="Z")
-        col = split.column()
-        sub = col.column(align=True)
-        sub.label(text="Max")
-        sub.prop(boundingsObject, 'maxBorder', index=0, text="X")
-        sub.prop(boundingsObject, 'maxBorder', index=1, text="Y")
-        sub.prop(boundingsObject, 'maxBorder', index=2, text="Z")
-        layout.prop(boundingsObject, 'radius', text="Radius")
 
 class ExtraBonePropertiesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_bone_properties"
@@ -3541,7 +3507,6 @@ def register():
     bpy.types.Scene.m3_fuzzy_hit_tests = bpy.props.CollectionProperty(type=M3SimpleGeometricShape)
     bpy.types.Scene.m3_fuzzy_hit_test_index = bpy.props.IntProperty(options=set(), update=handleFuzzyHitTestIndexChanged)
     bpy.types.Scene.m3_tight_hit_test = bpy.props.PointerProperty(type=M3SimpleGeometricShape)
-    bpy.types.Scene.m3_boundings = bpy.props.PointerProperty(type=M3Boundings)
     bpy.types.Mesh.m3_material_name = bpy.props.StringProperty(options=set())
     bpy.types.Mesh.m3_physics_mesh = bpy.props.BoolProperty(default=False, options=set(), description="Mark mesh to be used for physics shape only (not exported).")
     bpy.types.INFO_MT_file_import.append(menu_func_import)

@@ -993,7 +993,3 @@ def transferLight(transferer):
     transferer.transferAnimatableFloat("hotSpot")
     transferer.transferAnimatableFloat("falloff")
     transferer.transferInt("unknownAt12")
-
-def transferBoundings(transferer):
-    transferer.transferAnimatableBoundings()
-
