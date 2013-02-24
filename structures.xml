@@ -1378,7 +1378,7 @@
             <field name="unknown686e5943" type="Vector3AnimationReferenceV0" since-version="17" />
             <field name="unknown18a90564" type="Vector2AnimationReferenceV0" since-version="17" /> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
             <field name="unknown22fec01a" type="Reference" refTo="SVC3" />
-            <field name="unknown105fd76d" size="4" expected-value="0x00000000"/>
+            <field name="unknown105fd76d" type="float" default-value="0.0"/>
             <!--unknown5156cf07 Observed values: 2 and 0 -->
             <field name="unknown5156cf07" type="uint32" default-value="2"/>
             <!-- unknown92dba6ab Observed values: 0 and 1 -->
