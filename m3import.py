@@ -844,6 +844,8 @@ class Importer:
             fullBoneName = boneEntry.name
             if fullBoneName.startswith(shared.star2ParticlePrefix):
                 particleSystem.boneSuffix = fullBoneName[len(shared.star2ParticlePrefix):]
+            elif fullBoneName.startswith("MR3_Particle_"):
+                particleSystem.boneSuffix = fullBoneName[len("MR3_Particle_"):]
             else:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
                 particleSystem.boneSuffix = fullBoneName
@@ -1038,6 +1040,8 @@ class Importer:
             lightPrefix =  shared.lightPrefixMap.get(str(m3Light.lightType))
             if fullBoneName.startswith(lightPrefix):
                 light.boneSuffix = fullBoneName[len(lightPrefix):]
+            elif fullBoneName.startswith("MR3_Light_"):
+                light.boneSuffix = fullBoneName[len("MR3_Light_"):]
             else:
                 print("Warning: A light was bound to bone %s which does not start with %s" %(fullBoneName, lightPrefix))
                 light.boneSuffix = fullBoneName
