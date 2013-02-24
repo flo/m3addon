@@ -19,8 +19,6 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-from generateM3Library import generateM3Library
-generateM3Library()
 
 import m3
 import sys
