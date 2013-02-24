@@ -600,6 +600,7 @@ class Exporter:
                         if staticMeshBoneIndex == None:
                             staticMeshBoneIndex = self.addBoneWithRestPosAndReturnIndex(model, staticMeshBoneName,  realBone=True)
                             model.bones[staticMeshBoneIndex].setNamedBit("flags", "skinned", True)
+                            self.createBoneMatricesForStaticMeshBone(staticMeshBoneIndex)
                         if staticMeshBoneLookupIndex == None:
                             self.boneNameToBoneIndexMap[staticMeshBoneName] = staticMeshBoneIndex
                             staticMeshBoneLookupIndex = len(model.boneLookup)
@@ -736,7 +737,21 @@ class Exporter:
         msec.boundingsAnimation = boundingsAnimRef
         division.msec.append(msec)
         
-        # Conversion to bytes needs to be done ofter the boundings calculation
+        # Conversion to bytes needs to be done after the boundings calculation
+
+    def createBoneMatricesForStaticMeshBone(self, staticMeshBoneIndex):
+        self.boneIndexToDefaultAbsoluteMatrixMap[staticMeshBoneIndex] = mathutils.Matrix()
+        for animation in self.scene.m3_animations:
+            frameToBoneIndexToAbsoluteMatrixMap = self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap.get(animation.name)
+            if frameToBoneIndexToAbsoluteMatrixMap == None:
+                frameToBoneIndexToAbsoluteMatrixMap = {}
+                self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap[animation.name] = frameToBoneIndexToAbsoluteMatrixMap
+            for frame in self.allFramesOfAnimation(animation):
+                boneIndexToAbsoluteMatrixMap = frameToBoneIndexToAbsoluteMatrixMap.get(frame)
+                if boneIndexToAbsoluteMatrixMap == None:
+                    boneIndexToAbsoluteMatrixMap = {}
+                    frameToBoneIndexToAbsoluteMatrixMap[frame] = boneIndexToAbsoluteMatrixMap
+                boneIndexToAbsoluteMatrixMap[staticMeshBoneIndex] = mathutils.Matrix()
 
     def createBNDSFromVector(self,vector):
         minX = vector[0]
