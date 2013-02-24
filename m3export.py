@@ -706,7 +706,8 @@ class Exporter:
         animHeader.animFlags = 0x0
         animHeader.animId = self.boundingAnimId # boudings seem to have always this id
         boundingsAnimRef.header = animHeader
-        boundingsAnimRef.initValue = self.createBNDSFromVector(self.calculateBoundingsVector(model, m3Vertices, self.boneIndexToDefaultAbsoluteMatrixMap))
+        defaultBoundingsVector = self.calculateBoundingsVector(model, m3Vertices, self.boneIndexToDefaultAbsoluteMatrixMap)
+        boundingsAnimRef.initValue = self.createBNDSFromVector(defaultBoundingsVector)
         boundingsAnimRef.nullValue = self.createBoundings(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         
         scene = self.scene
@@ -720,17 +721,19 @@ class Exporter:
                 b = self.calculateBoundingsVector(model, m3Vertices, boneIndexToAbsoluteMatrixMap)
                 boundingsVectorList.append(b)
 
-            timeValuesInMS, boundingsVectorList = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, boundingsVectorList)
-            boundingStructures = list(self.createBNDSFromVector(v) for v in boundingsVectorList)
-            m3AnimBlock = self.createInstanceOf("SDMB")
-            m3AnimBlock.frames = timeValuesInMS
-            m3AnimBlock.flags = 0
-            m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
-            m3AnimBlock.keys = boundingStructures
-            
-            animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
-            animIdToAnimDataMap[self.boundingAnimId] = m3AnimBlock
-            boundingsAnimRef.header.animFlags = shared.animFlagsForAnimatedProperty
+
+            if self.isAnimationExport or self.vectorArrayContainsNotOnly(boundingsVectorList, defaultBoundingsVector):
+                timeValuesInMS, boundingsVectorList = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, boundingsVectorList)
+                boundingStructures = list(self.createBNDSFromVector(v) for v in boundingsVectorList)
+                m3AnimBlock = self.createInstanceOf("SDMB")
+                m3AnimBlock.frames = timeValuesInMS
+                m3AnimBlock.flags = 0
+                m3AnimBlock.fend = self.frameToMS(animation.exlusiveEndFrame)
+                m3AnimBlock.keys = boundingStructures
+                
+                animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
+                animIdToAnimDataMap[self.boundingAnimId] = m3AnimBlock
+                boundingsAnimRef.header.animFlags = shared.animFlagsForAnimatedProperty
         
         
         msec = self.createInstanceOf("MSEC")
