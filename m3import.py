@@ -182,6 +182,15 @@ def determineTails(m3Bones, heads, boneDirectionVectors):
                     length = headToChildHead.length 
         tailOffset = length * boneDirectionVector
         tail = head + tailOffset
+        # At extreme high tail/head values a higher offset needs to be chosen
+        # since otherwise tail and head is the same due to rouding mistakes
+        # If head and tail are the same then the bone will be removed after leaving edit mode
+        # The length of tailOffset gets doubled each step in order to get in a reasonable amount of steps
+        # to a value that matters
+        while (tail -head).length == 0:
+            tailOffset *= 2 
+            tail = head + tailOffset
+
         tails.append(tail)
     return tails
 
