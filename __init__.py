@@ -408,61 +408,78 @@ def handleProjectionVisibilityUpdate(self, context):
         boneName = projection.boneName
         shared.setBoneVisibility(scene, boneName, self.showProjections)
 
+
+
+
+def handleAnimationChange(targetObject, oldAnimation, newAnimation):
+    animationData = targetObject.animation_data
+    oldAction = animationData.action
+    if oldAction != None and oldAnimation != None:
+        oldTrackName = oldAnimation.name + "_full"
+        oldTrack = shared.getOrCreateTrack(animationData, oldTrackName)
+        if len(oldTrack.strips) > 0:
+            oldStrip = oldTrack.strips[0]
+        else:
+            oldStripName = oldTrackName
+            oldStrip = oldTrack.strips.new(name=oldStripName, start=0,action=animationData.action)
+        oldStrip.action = animationData.action
+    
+        
+    newTrackName = newAnimation.name + "_full"
+    newTrack = animationData.nla_tracks.get(newTrackName)
+    if newTrack != None and len(newTrack.strips) > 0:
+        newStrip = newTrack.strips[0]
+        newAction = newStrip.action
+    else:
+        newAction = None
+        
+    prepareDefaultValuesForNewAction(targetObject, newAction)
+    animationData.action = newAction
+
+
 def handleAnimationSequenceIndexChange(self, context):
     scene = self
     newIndex = scene.m3_animation_index
     oldIndex = scene.m3_animation_old_index
     shared.setAnimationWithIndexToCurrentData(scene, oldIndex)
     if (newIndex >= 0) and (newIndex < len(scene.m3_animations)):
-        animation = scene.m3_animations[newIndex]
-        scene.frame_start = animation.startFrame
-        scene.frame_end = animation.exlusiveEndFrame - 1
-        newObjectNameToActionMap = {}
-        newSceneAction = None
-        for assignedAction in animation.assignedActions:
-            action = bpy.data.actions.get(assignedAction.actionName)
-            if action == None:
-                print("Warning: The action %s was referenced by name but does no longer exist" % assignedAction.actionName)
-            else:
-                if action.id_root == 'OBJECT':
-                    newObjectNameToActionMap[assignedAction.targetName] = action                
-                elif action.id_root == 'SCENE':
-                    newSceneAction = action
-        for targetObject in scene.objects:
-            newAction = newObjectNameToActionMap.get(targetObject.name)
-            prepareDefaultValuesForNewAction(scene, targetObject, 'OBJECT', newAction)
-            targetObject.animation_data_clear()
-            if newAction != None:
-                targetObject.animation_data_create()
-                targetObject.animation_data.action = newAction
+        newAnimation = scene.m3_animations[newIndex]
+        if oldIndex >= 0 and (oldIndex < len(scene.m3_animations)):
+            oldAnimation = scene.m3_animations[oldIndex]
+        else:
+            oldAnimation = None
 
-        prepareDefaultValuesForNewAction(scene, scene, 'SCENE', newSceneAction)
-        scene.animation_data_clear()
-        if newSceneAction != None:
-            scene.animation_data_create()
-            scene.animation_data.action = newSceneAction
-                
+        scene.frame_start = newAnimation.startFrame
+        scene.frame_end = newAnimation.exlusiveEndFrame - 1
+        for targetObject in scene.objects:
+            animationData = targetObject.animation_data
+            if animationData != None:
+                handleAnimationChange(targetObject, oldAnimation, newAnimation)
+        
+        if scene.animation_data != None:
+            handleAnimationChange(scene, oldAnimation, newAnimation)
+
     scene.m3_animation_old_index = newIndex
 
-def prepareDefaultValuesForNewAction(scene, targetObject, actionOwnerType, newAction):
+
+def prepareDefaultValuesForNewAction(objectWithAnimationData, newAction):
     oldAnimatedProperties = set()
-    if targetObject.animation_data != None:
-        oldAction = targetObject.animation_data.action
-        if oldAction != None:
-            for curve in oldAction.fcurves:
-                oldAnimatedProperties.add((curve.data_path, curve.array_index))
+    animationData = objectWithAnimationData.animation_data
+    if animationData == None:
+        raise Exception("Must have animation data")
+    oldAction = animationData.action
+    if oldAction != None:
+        for curve in oldAction.fcurves:
+            oldAnimatedProperties.add((curve.data_path, curve.array_index))
     newAnimatedProperties = set()
     if newAction != None:
         for curve in newAction.fcurves:
-            newAnimatedProperties.add((curve.data_path, curve.array_index))
-    actionOwnerName = targetObject.name
-    
-    defaultAction = shared.determineDefaultActionFor(scene, actionOwnerName, actionOwnerType)
-    if defaultAction == None:
-        defaultAction = shared.createDefaulValuesAction(scene, actionOwnerName, actionOwnerType)
+            newAnimatedProperties.add((curve.data_path, curve.array_index))    
+    defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
+
     propertiesBecomingAnimated = newAnimatedProperties.difference(oldAnimatedProperties)
     for prop in propertiesBecomingAnimated:
-        value = getAttribute(targetObject, prop[0],prop[1])
+        value = getAttribute(objectWithAnimationData, prop[0],prop[1])
         curve = None
         for c in defaultAction.fcurves:
             if c.data_path == prop[0] and c.array_index == prop[1]:
@@ -473,12 +490,12 @@ def prepareDefaultValuesForNewAction(scene, targetObject, actionOwnerType, newAc
         keyFrame = curve.keyframe_points.insert(0, value)
         keyFrame.interpolation = "CONSTANT"
     propertiesBecomingUnanimated = oldAnimatedProperties.difference(newAnimatedProperties)
-    if defaultAction != None:
-        for curve in defaultAction.fcurves:
-            prop = (curve.data_path, curve.array_index)
-            if prop in propertiesBecomingUnanimated:
-                defaultValue = curve.evaluate(0)
-                setAttribute(targetObject, curve.data_path, curve.array_index, defaultValue)
+    #TODO was checked with if defaultAction != None:
+    for curve in defaultAction.fcurves:
+        prop = (curve.data_path, curve.array_index)
+        if prop in propertiesBecomingUnanimated:
+            defaultValue = curve.evaluate(0)
+            setAttribute(objectWithAnimationData, curve.data_path, curve.array_index, defaultValue)
 
 
 def setAttribute(obj, curvePath, curveIndex, value):

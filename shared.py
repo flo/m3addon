@@ -274,25 +274,6 @@ def findMeshObjects(scene):
         if currentObject.type == 'MESH':
             yield currentObject
             
-def createDefaulValuesAction(scene, ownerName, actionIdRoot):
-    action = bpy.data.actions.new("DEFAULTS_FOR_" + ownerName)
-    action.id_root = actionIdRoot
-    actionAssignment = scene.m3_default_value_action_assignments.add()
-    actionAssignment.actionName = action.name
-    actionAssignment.targetName = ownerName
-    return action
-    
-
-def findActionOfAssignedAction(assignedAction, actionOwnerName, actionOwnerType):
-    if actionOwnerName == assignedAction.targetName:
-        actionName = assignedAction.actionName
-        action = bpy.data.actions.get(actionName)
-        if action == None:
-            print("Warning: The action %s was referenced by name but does no longer exist" % assignedAction.actionName)
-        else:
-            if action.id_root == actionOwnerType:
-                return action
-    return None
     
 def composeMatrix(location, rotation, scale):
     locMatrix= mathutils.Matrix.Translation(location)
@@ -301,12 +282,6 @@ def composeMatrix(location, rotation, scale):
     for i in range(3):
         scaleMatrix[i][i] = scale[i]
     return locMatrix * rotationMatrix * scaleMatrix
-
-def determineDefaultActionFor(scene, actionOwnerName, actionOwnerType):
-    for assignedAction in scene.m3_default_value_action_assignments:
-        action = findActionOfAssignedAction(assignedAction, actionOwnerName, actionOwnerType)
-        if action != None:
-            return action
             
 def getLongAnimIdOf(objectId, animPath):
     if objectId == animObjectIdScene and animPath.startswith("m3_boundings"):
@@ -687,6 +662,39 @@ def createMeshDataForCylinder(radius, height, numberOfSideFaces = 10):
         vertices.append((x,y,-halfHeight))
         vertices.append((x,y,+halfHeight))
     return (vertices, faces)
+
+def typeIdOfObject(obj):
+    objectType = type(obj)
+    if objectType == bpy.types.Scene:
+        return "SCENE"
+    elif objectType == bpy.types.Object:
+        return "OBJECT"
+    else:
+        raise Exception("Can't determine type id for type %s yet" % objectType)
+
+def getOrCreateTrack(animationData, trackName):
+    track = animationData.nla_tracks.get(trackName)
+    if track == None:
+        track = animationData.nla_tracks.new(prev=None)
+        track.name = trackName
+        track.mute = True
+    return track
+        
+        
+def getOrCreateDefaultActionFor(objectWithAnimationData):
+    if objectWithAnimationData.animation_data == None:
+        objectWithAnimationData.animation_data_create()
+    animationData = objectWithAnimationData.animation_data
+    defaultValuesTrack = getOrCreateTrack(animationData, "Default Values")
+    
+    if len(defaultValuesTrack.strips) > 0:
+        defaultAction = defaultValuesTrack.strips[0].action
+    else:
+        stripName = "Default Values"
+        defaultAction = bpy.data.actions.new("DEFAULTS_FOR_" + objectWithAnimationData.name)
+        defaultAction.id_root = typeIdOfObject(objectWithAnimationData)
+        strip = defaultValuesTrack.strips.new(name=stripName, start=0, action=defaultAction)
+    return defaultAction
 
 def transferParticleSystem(transferer):
     transferer.transferAnimatableFloat("emissionSpeed1")

@@ -220,12 +220,11 @@ def determineAbsoluteBoneRestPositions(model):
         matrices.append(matrix)
     return matrices
 
-ownerTypeScene = "Scene"
-ownerTypeArmature = "Armature"          
                 
 class M3ToBlenderDataTransferer:
-    def __init__(self, importer, animPathPrefix, blenderObject, m3Object):
+    def __init__(self, importer, objectWithAnimationData, animPathPrefix, blenderObject, m3Object):
         self.importer = importer
+        self.objectWithAnimationData = objectWithAnimationData
         self.animPathPrefix = animPathPrefix
         self.blenderObject = blenderObject
         self.m3Object = m3Object
@@ -238,7 +237,7 @@ class M3ToBlenderDataTransferer:
         animId = animationHeader.animId
         animPath = self.animPathPrefix +  fieldName
         defaultValue = animationReference.initValue
-        self.importer.animateFloat(ownerTypeScene, animPath, animId, defaultValue)
+        self.importer.animateFloat(self.objectWithAnimationData, animPath, animId, defaultValue)
         
     def transferAnimatableInteger(self, fieldName):
         """ Helper method"""
@@ -248,7 +247,7 @@ class M3ToBlenderDataTransferer:
         animId = animationHeader.animId
         animPath = self.animPathPrefix + fieldName
         defaultValue = animationReference.initValue
-        self.importer.animateInteger(ownerTypeScene, animPath, animId, defaultValue)
+        self.importer.animateInteger(self.objectWithAnimationData,  animPath, animId, defaultValue)
 
     def transferAnimatableInt16(self, fieldName):
         self.transferAnimatableInteger(fieldName)
@@ -308,7 +307,7 @@ class M3ToBlenderDataTransferer:
         animId = animationHeader.animId
         animPath = self.animPathPrefix + fieldName
         defaultValue = animationReference.initValue
-        self.importer.animateVector3(ownerTypeScene, animPath, animId, defaultValue)
+        self.importer.animateVector3(self.objectWithAnimationData,  animPath, animId, defaultValue)
 
     def transferAnimatableVector2(self, fieldName):
         animationReference = getattr(self.m3Object, fieldName)
@@ -317,7 +316,7 @@ class M3ToBlenderDataTransferer:
         animId = animationHeader.animId
         animPath = self.animPathPrefix + fieldName
         defaultValue = animationReference.initValue
-        self.importer.animateVector2(ownerTypeScene, animPath, animId, defaultValue)
+        self.importer.animateVector2(self.objectWithAnimationData,  animPath, animId, defaultValue)
 
         
     def transferAnimatableColor(self, fieldName):
@@ -327,7 +326,7 @@ class M3ToBlenderDataTransferer:
         animId = animationHeader.animId
         animPath = self.animPathPrefix + fieldName
         defaultValue = animationReference.initValue
-        self.importer.animateColor(ownerTypeScene, animPath, animId, defaultValue)
+        self.importer.animateColor(self.objectWithAnimationData,  animPath, animId, defaultValue)
         
         
     def transferAnimatableBoundings(self):
@@ -345,17 +344,16 @@ class M3ToBlenderDataTransferer:
         minBorderDefault = toBlenderVector3(m3InitValue.minBorder)
         maxBorderDefault = toBlenderVector3(m3InitValue.maxBorder)
         radiusDefault = m3InitValue.radius
-        self.importer.animateBoundings(ownerTypeScene, animPathMinBorder, animPathMaxBorder, animPathRadius, animId, minBorderDefault, maxBorderDefault, radiusDefault)
+        self.importer.animateBoundings(self.objectWithAnimationData,  animPathMinBorder, animPathMaxBorder, animPathRadius, animId, minBorderDefault, maxBorderDefault, radiusDefault)
 
 
     def transferEnum(self, fieldName):
         value = str(getattr(self.m3Object, fieldName))
         setattr(self.blenderObject, fieldName, value)
 
-class AnimationData:
-    def __init__(self, animIdToTimeValueMap, ownerTypeToActionMap, animationIndex):
+class AnimationTempData:
+    def __init__(self, animIdToTimeValueMap, animationIndex):
         self.animIdToTimeValueMap = animIdToTimeValueMap
-        self.ownerTypeToActionMap = ownerTypeToActionMap
         # The animation object can't be stored in this structure
         # as it seems to get invalid when the mode changes
         # To avoid a blender crash an index is used to obtain a valid instance of the animation
@@ -371,7 +369,6 @@ class Importer:
         self.armature = bpy.data.armatures.new(name="Armature")
         scene.render.fps = FRAME_RATE
         self.animations = []
-        self.ownerTypeToDefaultValuesActionMap = {}
         self.animIdToLongAnimIdMap = {}
         self.storeModelId()
         self.createAnimations()
@@ -512,7 +509,6 @@ class Importer:
             poseBone.scale = scale
             poseBone.rotation_quaternion = rotation
             poseBone.location = location
-            
             self.animateBone(index, bone, leftCorrectionMatrix, rightCorrectionMatrix, location, rotation, scale)
             index+=1
             
@@ -570,11 +566,11 @@ class Importer:
         scaleAnimPath = 'pose.bones["%s"].scale' % boneName
         self.addAnimIdData(scaleAnimId, objectId=shared.animObjectIdArmature, animPath=scaleAnimPath)
 
-        for animationData in self.animations:
+        for animationTempData in self.animations:
             scene = bpy.context.scene
-            animation =  scene.m3_animations[animationData.animationIndex]
-            animIdToTimeValueMap = animationData.animIdToTimeValueMap
-            action = self.createOrGetActionFor(animationData, ownerTypeArmature)
+            animation =  scene.m3_animations[animationTempData.animationIndex]
+            animIdToTimeValueMap = animationTempData.animIdToTimeValueMap
+            action = self.createOrGetActionFor(self.armatureObject, animationTempData)
 
             timeToLocationMap = animIdToTimeValueMap.get(locationAnimId,{0:m3Bone.location.initValue})
             timeToLocationMap = convertToBlenderVector3Map(timeToLocationMap)
@@ -647,7 +643,7 @@ class Importer:
         for materialIndex, m3Material in enumerate(self.model.standardMaterials):
             material = scene.m3_standard_materials.add()
             animPathPrefix = "m3_standard_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferStandardMaterial(materialTransferer)
             layerIndex = 0
             for (layerName, layerFieldName) in zip(shared.standardMaterialLayerNames, shared.standardMaterialLayerFieldNames):
@@ -655,7 +651,7 @@ class Importer:
                 materialLayer = material.layers.add()
                 materialLayer.name = layerName
                 animPathPrefix = "m3_standard_materials[%s].layers[%s]." % (materialIndex, layerIndex)
-                layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
+                layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
                 shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1
     
@@ -663,7 +659,7 @@ class Importer:
         for materialIndex, m3Material in enumerate(self.model.displacementMaterials):
             material = scene.m3_displacement_materials.add()
             animPathPrefix = "m3_displacement_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferDisplacementMaterial(materialTransferer)
             layerIndex = 0
             for (layerName, layerFieldName) in zip(shared.displacementMaterialLayerNames, shared.displacementMaterialLayerFieldNames):
@@ -671,7 +667,7 @@ class Importer:
                 materialLayer = material.layers.add()
                 materialLayer.name = layerName
                 animPathPrefix = "m3_displacement_materials[%s].layers[%s]." % (materialIndex, layerIndex)
-                layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
+                layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
                 shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1
 
@@ -679,12 +675,12 @@ class Importer:
         for materialIndex, m3Material in enumerate(self.model.compositeMaterials):
             material = scene.m3_composite_materials.add()
             animPathPrefix = "m3_composite_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            materialTransferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferCompositeMaterial(materialTransferer)
             for sectionIndex, m3Section in enumerate(m3Material.sections):
                 section = material.sections.add()
                 animPathPrefix = "m3_composite_materials[%s].sections[%s]." % (materialIndex, sectionIndex)
-                materialSectionTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=section, m3Object=m3Section)
+                materialSectionTransferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=section, m3Object=m3Section)
                 shared.transferCompositeMaterialSection(materialSectionTransferer)
                 section.name = self.getNameOfMaterialWithReferenceIndex(m3Section.materialReferenceIndex)
 
@@ -692,7 +688,7 @@ class Importer:
         for materialIndex, m3Material in enumerate(self.model.terrainMaterials):
             material = scene.m3_terrain_materials.add()
             animPathPrefix = "m3_terrain_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferTerrainMaterial(materialTransferer)
             layerIndex = 0
             for (layerName, layerFieldName) in zip(shared.terrainMaterialLayerNames, shared.terrainMaterialLayerFieldNames):
@@ -700,7 +696,7 @@ class Importer:
                 materialLayer = material.layers.add()
                 materialLayer.name = layerName
                 animPathPrefix = "m3_terrain_materials[%s].layers[%s]." % (materialIndex, layerIndex)
-                layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
+                layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
                 shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1
 
@@ -708,7 +704,7 @@ class Importer:
         for materialIndex, m3Material in enumerate(self.model.volumeMaterials):
             material = scene.m3_volume_materials.add()
             animPathPrefix = "m3_volume_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferVolumeMaterial(materialTransferer)
             layerIndex = 0
             for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
@@ -716,7 +712,7 @@ class Importer:
                 materialLayer = material.layers.add()
                 materialLayer.name = layerName
                 animPathPrefix = "m3_volume_materials[%s].layers[%s]." % (materialIndex, layerIndex)
-                layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
+                layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
                 shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1
                 
@@ -724,7 +720,7 @@ class Importer:
         for materialIndex, m3Material in enumerate(self.model.creepMaterials):
             material = scene.m3_creep_materials.add()
             animPathPrefix = "m3_creep_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferCreepMaterial(materialTransferer)
             layerIndex = 0
             for (layerName, layerFieldName) in zip(shared.creepMaterialLayerNames, shared.creepMaterialLayerFieldNames):
@@ -732,7 +728,7 @@ class Importer:
                 materialLayer = material.layers.add()
                 materialLayer.name = layerName
                 animPathPrefix = "m3_creep_materials[%s].layers[%s]." % (materialIndex, layerIndex)
-                layerTransferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
+                layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
                 shared.transferMaterialLayer(layerTransferer)
                 layerIndex += 1  
 
@@ -792,7 +788,7 @@ class Importer:
         for cameraIndex, m3Camera in enumerate(self.model.cameras):
             camera = scene.m3_cameras.add()
             animPathPrefix = "m3_cameras[%s]." % cameraIndex
-            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=camera, m3Object=m3Camera)
+            transferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=camera, m3Object=m3Camera)
             shared.transferCamera(transferer)
             m3Bone = self.model.bones[m3Camera.boneIndex]
             if m3Bone.name != camera.name:
@@ -805,7 +801,7 @@ class Importer:
     def intShapeObject(self, blenderShapeObject, m3ShapeObject):
         scene = bpy.context.scene
         blenderShapeObject.updateBlenderBone = False
-        transferer = M3ToBlenderDataTransferer(self, None, blenderObject=blenderShapeObject, m3Object=m3ShapeObject)
+        transferer = M3ToBlenderDataTransferer(self, None, None, blenderObject=blenderShapeObject, m3Object=m3ShapeObject)
         shared.transferFuzzyHitTest(transferer)
         matrix = toBlenderMatrix(m3ShapeObject.matrix)
         offset, rotation, scale = matrix.decompose()
@@ -847,7 +843,7 @@ class Importer:
             particleSystem = scene.m3_particle_systems.add()
             particleSystem.updateBlenderBoneShapes = False
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
-            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=particleSystem, m3Object=m3ParticleSystem)
+            transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=particleSystem, m3Object=m3ParticleSystem)
             shared.transferParticleSystem(transferer)
             boneEntry = self.model.bones[m3ParticleSystem.bone]
             fullBoneName = boneEntry.name
@@ -874,7 +870,7 @@ class Importer:
                 m3Copy = self.model.particleCopies[m3CopyIndex]
                 copy = particleSystem.copies.add()
                 copyAnimPathPrefix = animPathPrefix + "copies[%d]." % blenderCopyIndex
-                transferer = M3ToBlenderDataTransferer(self, copyAnimPathPrefix, blenderObject=copy, m3Object=m3Copy)
+                transferer = M3ToBlenderDataTransferer(self, scene,  copyAnimPathPrefix, blenderObject=copy, m3Object=m3Copy)
                 shared.transferParticleSystemCopy(transferer)
                 m3Bone = self.model.bones[m3Copy.bone]
                 fullCopyBoneName = m3Bone.name
@@ -903,7 +899,7 @@ class Importer:
             ribbon = scene.m3_ribbons.add()
             ribbon.updateBlenderBoneShapes = False
             animPathPrefix = "m3_ribbons[%s]." % ribbonIndex
-            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=ribbon, m3Object=m3Ribbon)
+            transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=ribbon, m3Object=m3Ribbon)
             shared.transferRibbon(transferer)
             boneEntry = self.model.bones[m3Ribbon.boneIndex]
             fullBoneName = boneEntry.name
@@ -934,7 +930,7 @@ class Importer:
             projection = scene.m3_projections.add()
             projection.updateBlenderBoneShapes = False
             animPathPrefix = "m3_projections[%s]." % projectionIndex
-            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=projection, m3Object=m3Projection)
+            transferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=projection, m3Object=m3Projection)
             shared.transferProjection(transferer)
             boneEntry = self.model.bones[m3Projection.boneIndex]
             fullBoneName = boneEntry.name
@@ -960,7 +956,7 @@ class Importer:
             force = scene.m3_forces.add()
             force.updateBlenderBoneShape = False
             animPathPrefix = "m3_forces[%s]." % forceIndex
-            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=force, m3Object=m3Force)
+            transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=force, m3Object=m3Force)
             shared.transferForce(transferer)
             boneEntry = self.model.bones[m3Force.boneIndex]
             fullBoneName = boneEntry.name
@@ -983,7 +979,7 @@ class Importer:
         for rigidBodyIndex, m3RigidBody in enumerate(self.model.rigidBodies):
             rigid_body = scene.m3_rigid_bodies.add()
             animPathPrefix = "m3_rigid_bodies[%s]." % rigidBodyIndex
-            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=rigid_body, m3Object=m3RigidBody)
+            transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=rigid_body, m3Object=m3RigidBody)
             shared.transferRigidBody(transferer)
             boneEntry = self.model.bones[m3RigidBody.boneIndex]
             rigid_body.name = boneEntry.name
@@ -994,7 +990,7 @@ class Importer:
                 physics_shape.updateBlenderBoneShapes = False
                 
                 animPathPrefix = "m3_physics_shapes[%s]." % physicsShapeIndex
-                transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=physics_shape, m3Object=m3PhysicsShape)
+                transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=physics_shape, m3Object=m3PhysicsShape)
                 shared.transferPhysicsShape(transferer)
                 
                 physics_shape.name = "%d" % (physicsShapeIndex + 1)
@@ -1042,7 +1038,7 @@ class Importer:
             light = scene.m3_lights.add()
             light.updateBlenderBone = False
             animPathPrefix = "m3_lights[%s]." % lightIndex
-            transferer = M3ToBlenderDataTransferer(self, animPathPrefix, blenderObject=light, m3Object=m3Light)
+            transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=light, m3Object=m3Light)
             shared.transferLight(transferer)
             boneEntry = self.model.bones[m3Light.boneIndex]
             fullBoneName = boneEntry.name
@@ -1361,46 +1357,26 @@ class Importer:
             animIdToTimeValueMap[animId] = timeValueMap
         return animIdToTimeValueMap
         
-    def createOrGetDefaultAction(self, ownerType):
-        action = self.ownerTypeToDefaultValuesActionMap.get(ownerType)
-        if action == None:
-            scene = bpy.context.scene
-            ownerName = self.actionTargetNameForOwnerType(ownerType)
-            actionIdRoot = self.actionIdRootFromOwnerType(ownerType)
-            action = shared.createDefaulValuesAction(scene, ownerName, actionIdRoot)
-            self.ownerTypeToDefaultValuesActionMap[ownerType] = action
-        return action
         
-    def createOrGetActionFor(self, animationData, ownerType):
-        ownerTypesToActionMap = animationData.ownerTypeToActionMap
+    def createOrGetActionFor(self, objectWithAnimationData, animationTempData):
         scene = bpy.context.scene
-        animation = scene.m3_animations[animationData.animationIndex]
-        action = ownerTypesToActionMap.get(ownerType)
-        if action == None:
-            action = bpy.data.actions.new(animation.name + ownerType)
-            action.id_root = self.actionIdRootFromOwnerType(ownerType)
-            ownerTypesToActionMap[ownerType] = action
-            actionAssignment = animation.assignedActions.add()
-            actionAssignment.actionName = action.name
-            actionAssignment.targetName = self.actionTargetNameForOwnerType(ownerType)
+        animation = scene.m3_animations[animationTempData.animationIndex]
+        
+        if objectWithAnimationData.animation_data == None:
+            objectWithAnimationData.animation_data_create()
+        animationData = objectWithAnimationData.animation_data
+        
+        trackName = animation.name + "_full"
+        track = shared.getOrCreateTrack(animationData, trackName)
+        if len(track.strips) > 0:
+            strip = track.strips[0]
+            action = strip.action
+        else:
+            stripName = trackName
+            action = bpy.data.actions.new(objectWithAnimationData.name + animation.name)
+            action.id_root = shared.typeIdOfObject(objectWithAnimationData)
+            strip = track.strips.new(name=stripName, start=0, action=action)
         return action
-        
-        
-    def actionIdRootFromOwnerType(self,ownerType):
-        if ownerType == ownerTypeArmature:
-            return "OBJECT"
-        elif ownerType == ownerTypeScene:
-            return "SCENE"
-        else:
-            raise Exception("Unhandled case")
-
-    def actionTargetNameForOwnerType(self, ownerType):
-        if ownerType == ownerTypeArmature:
-            return self.armatureObject.name
-        elif ownerType == ownerTypeScene:
-            return bpy.context.scene.name
-        else:
-            raise Exception("Unhandled case")
     
     def findSimulateFrame(self, animIdToTimeValueMap):
         # Hack:
@@ -1417,7 +1393,6 @@ class Importer:
     def createAnimations(self):
         print ("Creating actions(animation sequences)")
         scene = bpy.context.scene
-        ownerTypeToIdleActionMap = {}
         model = self.model
         numberOfSequences = len(model.sequences)
         if len(model.sequenceTransformationGroups) != numberOfSequences:
@@ -1433,11 +1408,10 @@ class Importer:
             animation = scene.m3_animations.add()
             animation.startFrame = msToFrame(sequence.animStartInMS)
             animation.exlusiveEndFrame = msToFrame(sequence.animEndInMS)
-            transferer = M3ToBlenderDataTransferer(self, None, blenderObject=animation, m3Object=sequence)
+            transferer = M3ToBlenderDataTransferer(self, None, None, blenderObject=animation, m3Object=sequence)
             shared.transferAnimation(transferer)
             
             animIdToTimeValueMap = {}
-            ownerTypeToActionMap = {}
             for m3STCIndex in stg.stcIndices:
                 stc = model.sequenceTransformationCollections[m3STCIndex]
                 animationSTCIndex = transformationCollection = len(animation.transformationCollections)
@@ -1449,7 +1423,7 @@ class Importer:
                 
                 transformationCollection.name = transformationCollectionName
                 
-                transferer = M3ToBlenderDataTransferer(self, None, blenderObject=transformationCollection, m3Object=stc)
+                transferer = M3ToBlenderDataTransferer(self, None, None, blenderObject=transformationCollection, m3Object=stc)
                 shared.transferSTC(transferer)
                 animIdsOfSTC = set()     
                 animIdToTimeValueMapForSTC = self.createAnimIdToKeyFramesMapFor(stc)
@@ -1468,7 +1442,7 @@ class Importer:
             
             animation.useSimulateFrame, animation.simulateFrame = self.findSimulateFrame(animIdToTimeValueMap)
             
-            self.animations.append(AnimationData(animIdToTimeValueMap, ownerTypeToActionMap, sequenceIndex))
+            self.animations.append(AnimationTempData(animIdToTimeValueMap, sequenceIndex))
 
 
     def initSTCsOfAnimations(self):
@@ -1514,39 +1488,39 @@ class Importer:
                     fieldPath = path + "." + fieldName
                     self.addAnimIdPathToMap(fieldPath, fieldValue, animIdToPathMap)
 
-    def actionAndTimeValueMapPairsFor(self, ownerType, animId):
-        for animationData in self.animations:
-            timeValueMap = animationData.animIdToTimeValueMap.get(animId)
+    def actionAndTimeValueMapPairsFor(self, animId):
+        for animationTempData in self.animations:
+            timeValueMap = animationTempData.animIdToTimeValueMap.get(animId)
             if timeValueMap != None:
-                action = self.createOrGetActionFor(animationData, ownerType)
+                action = self.createOrGetActionFor(self.scene, animationTempData)
                 yield (action, timeValueMap)
         
 
-    def animateFloat(self, ownerType, path, animId, defaultValue):
+    def animateFloat(self, objectWithAnimationData, path, animId, defaultValue):
         #TODO let animateFloat take objectId as argument
-        defaultAction = self.createOrGetDefaultAction(ownerType)
+        defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
         curve = defaultAction.fcurves.new(path, 0)
         insertConstantKeyFrame(curve, 0, defaultValue)
         
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
-        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
+        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
             curve = action.fcurves.new(path, 0)
             for frame, value in frameValuePairs(timeValueMap):
                 insertLinearKeyFrame(curve, frame, value)
     
-    def animateInteger(self, ownerType, path, animId, defaultValue):
-        defaultAction = self.createOrGetDefaultAction(ownerType)
+    def animateInteger(self, objectWithAnimationData, path, animId, defaultValue):
+        defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
         curve = defaultAction.fcurves.new(path, 0)
         insertConstantKeyFrame(curve, 0, defaultValue)
         
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
-        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
+        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
             curve = action.fcurves.new(path, 0)
             for frame, value in frameValuePairs(timeValueMap):
                 insertConstantKeyFrame(curve, frame, value)
 
-    def animateVector3(self, ownerType, path, animId, defaultValue):
-        defaultAction = self.createOrGetDefaultAction(ownerType)
+    def animateVector3(self, objectWithAnimationData, path, animId, defaultValue):
+        defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
         xCurve = defaultAction.fcurves.new(path, 0)
         yCurve = defaultAction.fcurves.new(path, 1)
         zCurve = defaultAction.fcurves.new(path, 2)
@@ -1555,7 +1529,7 @@ class Importer:
         insertConstantKeyFrame(zCurve, 0, defaultValue.z) 
         
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
-        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
+        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
             xCurve = action.fcurves.new(path, 0)
             yCurve = action.fcurves.new(path, 1)
             zCurve = action.fcurves.new(path, 2)
@@ -1568,15 +1542,15 @@ class Importer:
 
 
 
-    def animateVector2(self, ownerType, path, animId, defaultValue):
-        defaultAction = self.createOrGetDefaultAction(ownerType)
+    def animateVector2(self, objectWithAnimationData, path, animId, defaultValue):
+        defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
         xCurve = defaultAction.fcurves.new(path, 0)
         yCurve = defaultAction.fcurves.new(path, 1)
         insertConstantKeyFrame(xCurve, 0, defaultValue.x) 
         insertConstantKeyFrame(yCurve, 0, defaultValue.y) 
         
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
-        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
+        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
             xCurve = action.fcurves.new(path, 0)
             yCurve = action.fcurves.new(path, 1)
             
@@ -1584,15 +1558,15 @@ class Importer:
                 insertLinearKeyFrame(xCurve, frame, value.x)
                 insertLinearKeyFrame(yCurve, frame, value.y)
 
-    def animateColor(self, ownerType, path, animId, m3DefaultValue):
-        defaultAction = self.createOrGetDefaultAction(ownerType)
+    def animateColor(self, objectWithAnimationData, path, animId, m3DefaultValue):
+        defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
         defaultValue = toBlenderColorVector(m3DefaultValue)
         for i in range(4):
             curve = defaultAction.fcurves.new(path, i)
             insertConstantKeyFrame(curve, 0, defaultValue[i])
         
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
-        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
+        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
             redCurve = action.fcurves.new(path, 0)
             greenCurve = action.fcurves.new(path, 1)
             blueCurve = action.fcurves.new(path, 2)
@@ -1605,9 +1579,9 @@ class Importer:
                 insertLinearKeyFrame(blueCurve, frame, v[2])
                 insertLinearKeyFrame(alphaCurve, frame, v[3])
                 
-    def animateBoundings(self, ownerType, animPathMinBorder, animPathMaxBorder, animPathRadius, animId, minBorderDefault, maxBorderDefault, radiusDefault):
+    def animateBoundings(self, objectWithAnimationData, animPathMinBorder, animPathMaxBorder, animPathRadius, animId, minBorderDefault, maxBorderDefault, radiusDefault):
         #Store default values in an action:
-        defaultAction = self.createOrGetDefaultAction(ownerType)
+        defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
         for i in range(3):
             curve = defaultAction.fcurves.new(animPathMinBorder, i)
             insertConstantKeyFrame(curve, 0, minBorderDefault[i])
@@ -1620,7 +1594,7 @@ class Importer:
         #Which path we pass to addAnimIdData does not matter,
         # since they all would result in the same longAnimId (see getLongAnimIdOf):
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=animPathMinBorder)
-        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(ownerType, animId):
+        for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
             minXCurve = action.fcurves.new(animPathMinBorder, 0)
             minYCurve = action.fcurves.new(animPathMinBorder, 1)
             minZCurve = action.fcurves.new(animPathMinBorder, 2)

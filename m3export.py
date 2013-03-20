@@ -304,7 +304,7 @@ class Exporter:
 
                 self.boneIndexToDefaultAbsoluteMatrixMap[boneIndex] = absoluteBoneMatrix
 
-                animationActionTuples = self.determineAnimationActionTuplesFor(armatureObject.name, actionTypeArmature)
+                animationActionTuples = self.determineAnimationActionTuplesFor(armatureObject)
 
                 for animation, action in animationActionTuples:
                     frames = set()
@@ -1717,25 +1717,19 @@ class Exporter:
         return matrix
     
 
-    def determineAnimationActionTuplesFor(self, actionOwnerName, actionOwnerType):
+    def determineAnimationActionTuplesFor(self, objectWithAnimationData):
         """ returns (animation, action) tuples for all animations. The action can be null!"""
+        animationData = objectWithAnimationData.animation_data
+        
         animationActionTuples = []
         scene = self.scene
         for animation in scene.m3_animations:
-            actions = []
-            for assignedAction in animation.assignedActions:
-                action = shared.findActionOfAssignedAction(assignedAction, actionOwnerName, actionOwnerType)
-                if action != None:
-                    actions.append(action)
-            if len(actions) == 0:
-                animationActionTuples.append((animation, None))
-            elif len(actions) == 1:
-                animationActionTuples.append((animation, actions[0]))
-            else:
-                raise Exception("Duplicate actions: %s" % (a.name for a in actions))
+            action = None
+            track = animationData.nla_tracks.get(animation.name + "_full")
+            if track != None and len(track.strips) > 0:
+                action = track.strips[0].action
+            animationActionTuples.append((animation, action))
             
-                
-                
         return animationActionTuples
         
     def allFramesToMSValues(self, frames):
@@ -1795,21 +1789,20 @@ class Exporter:
         animatedPropertyToDefaultValueMap = self.objectToDefaultValuesMap.get(objectId)
         
         if animatedPropertyToDefaultValueMap == None:
-            animatedProperties = set()
+            animatedPropertyToDefaultValueMap = {}
             if rootObject.animation_data != None:
+                animatedProperties = set()
                 currentAction = rootObject.animation_data.action
                 if currentAction != None:
                     for curve in currentAction.fcurves:
                         animatedProperties.add((curve.data_path, curve.array_index))
-            rootObjectTypeId = self.typeIdOfObject(rootObject) 
-                
-            defaultAction = shared.determineDefaultActionFor(self.scene, rootObject.name, rootObjectTypeId)
-            animatedPropertyToDefaultValueMap = {}
-            if defaultAction != None and len(animatedProperties) > 0:
-                for curve in defaultAction.fcurves:
-                    prop = (curve.data_path, curve.array_index)
-                    if prop in animatedProperties:
-                        animatedPropertyToDefaultValueMap[prop] = curve.evaluate(0)
+            
+                defaultAction = shared.getOrCreateDefaultActionFor(rootObject)
+                if len(animatedProperties) > 0:
+                    for curve in defaultAction.fcurves:
+                        prop = (curve.data_path, curve.array_index)
+                        if prop in animatedProperties:
+                            animatedPropertyToDefaultValueMap[prop] = curve.evaluate(0)
             
             self.objectToDefaultValuesMap[objectId] = animatedPropertyToDefaultValueMap
         defaultValue = animatedPropertyToDefaultValueMap.get((path, index))
@@ -1818,15 +1811,6 @@ class Exporter:
         else:
             return currentValue
 
-    def typeIdOfObject(self, obj):
-        objectType = type(obj)
-        if objectType == bpy.types.Scene:
-            return "SCENE"
-        elif objectType == bpy.types.Object:
-            return "OBJECT"
-        else:
-            raise Exception("Can't determine type id for type %s yet" % objectType)
-
 class BlenderToM3DataTransferer:
     def __init__(self, exporter, m3Object, blenderObject, animPathPrefix,  rootObject):
         self.exporter = exporter
@@ -1834,9 +1818,7 @@ class BlenderToM3DataTransferer:
         self.blenderObject = blenderObject
         self.animPathPrefix = animPathPrefix
         self.objectIdForAnimId = shared.animObjectIdScene
-        actionOwnerType = self.exporter.typeIdOfObject(rootObject)
-        actionOwnerName = rootObject.name
-        self.animationActionTuples = self.exporter.determineAnimationActionTuplesFor(actionOwnerName, actionOwnerType)
+        self.animationActionTuples = self.exporter.determineAnimationActionTuplesFor(rootObject)
         self.rootObject = rootObject
         self.m3Version = m3Object.structureDescription.structureVersion
 
