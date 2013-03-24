@@ -1718,16 +1718,19 @@ class Exporter:
     
 
     def determineAnimationActionTuplesFor(self, objectWithAnimationData):
-        """ returns (animation, action) tuples for all animations. The action can be null!"""
+        """ returns (animation, action) tuples for all animations of the given object"""
+        
+        
         animationData = objectWithAnimationData.animation_data
         
         animationActionTuples = []
         scene = self.scene
         for animation in scene.m3_animations:
             action = None
-            track = animationData.nla_tracks.get(animation.name + "_full")
-            if track != None and len(track.strips) > 0:
-                action = track.strips[0].action
+            if animationData != None:
+                track = animationData.nla_tracks.get(animation.name + "_full")
+                if track != None and len(track.strips) > 0:
+                    action = track.strips[0].action
             animationActionTuples.append((animation, action))
             
         return animationActionTuples
