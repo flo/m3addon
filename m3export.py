@@ -50,7 +50,7 @@ class Exporter:
         self.scene = scene
         self.boundingAnimId = 0x1f9bd2
         if scene.render.fps != 30:
-            print("Warning: It's recommended to export models with a frame rate of 30 (current is %s)" % scene.render.fps)
+            print("Warning: The currently configured frame rate is %s. For compability the model will be exported with a frame rate of 30." % scene.render.fps)
         self.boneIndexToDefaultAbsoluteMatrixMap = {}
         self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap = {}
         self.prepareAnimIdMaps()
@@ -909,7 +909,7 @@ class Exporter:
 
 
     def frameToMS(self, frame):
-        frameRate = self.scene.render.fps
+        frameRate = 30 # Export always with frame rate 30 so that there is no compability issue
         return round((frame / frameRate) * 1000.0)
     
     def prepareAnimationEndEvents(self):
