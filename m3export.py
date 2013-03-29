@@ -318,52 +318,45 @@ class Exporter:
         print("Bone animation export took %s seconds" % duration)
 
 
-    def initBoneAnimations(self, model):
-        for armatureObjectName, boneNamesOfArmature in self.armatureObjectNameToBoneNamesMap.items():
-            armatureObject = bpy.data.objects[armatureObjectName]
-            armature = armatureObject.data
-            animationActionTuples = self.determineAnimationActionTuplesFor(armatureObject)
-            for boneName in boneNamesOfArmature:
-                boneIndex = self.boneNameToBoneIndexMap[boneName]
-                bone = model.bones[boneIndex]
-                poseBone = armatureObject.pose.bones[boneName]
-                
-                locationAnimPath = 'pose.bones["%s"].location' % boneName
-                rotationAnimPath = 'pose.bones["%s"].rotation_quaternion' % boneName
-                scaleAnimPath = 'pose.bones["%s"].scale' % boneName
-                
-                locationAnimId = self.getAnimIdFor(shared.animObjectIdArmature, locationAnimPath)
-                rotationAnimId = self.getAnimIdFor(shared.animObjectIdArmature, rotationAnimPath)
-                scaleAnimId = self.getAnimIdFor(shared.animObjectIdArmature, scaleAnimPath)
-                
-                leftCorrectionMatrix = self.boneNameToLeftCorrectionMatrix[boneName]
-                rightCorrectionMatrix = self.boneNameToRightCorrectionMatrix[boneName]
-                
-                m3SpaceLocation = self.boneNameToM3SpaceDefaultLocationMap[boneName]
-                m3SpaceRotation = self.boneNameToM3SpaceDefaultRotationMap[boneName]
-                m3SpaceScale = self.boneNameToM3SpaceDefaultScaleMap[boneName]
-                
-                animationIndex = 0
-                for animation, action in animationActionTuples:
-                    self.scene.m3_animation_index = animationIndex
-                    frames = set()
-                    # For animated rotations all frames are needed,
-                    # since Starcraft 2 isn't correcting the linearly interpolated values
-                    # In addition the bone matrices are needed for each frame
-                    # to calculate the mesh boundings in a later step
-                    # 
-                    frames = self.allFramesOfAnimation(animation)
-                    timeValuesInMS = self.allFramesToMSValues(frames)
+    def initBoneAnimations(self, model): 
+        for animationIndex, animation in enumerate(self.scene.m3_animations):
+            self.scene.m3_animation_index = animationIndex
+            frames = set()
+            # For animated rotations all frames are needed,
+            # since Starcraft 2 isn't correcting the linearly interpolated values
+            # In addition the bone matrices are needed for each frame
+            # to calculate the mesh boundings in a later step
+            # 
+            frames = self.allFramesOfAnimation(animation)
+            timeValuesInMS = self.allFramesToMSValues(frames)
 
-                    frameToBoneIndexToAbsoluteMatrixMap = self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap.get(animation.name)
-                    if frameToBoneIndexToAbsoluteMatrixMap == None:
-                        frameToBoneIndexToAbsoluteMatrixMap = {}
-                        self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap[animation.name] = frameToBoneIndexToAbsoluteMatrixMap
-                    locations = []
-                    rotations = []
-                    scales = []
-                    for frame in frames:
-                        self.scene.frame_set(frame)
+            frameToBoneIndexToAbsoluteMatrixMap = self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap.get(animation.name)
+            if frameToBoneIndexToAbsoluteMatrixMap == None:
+                frameToBoneIndexToAbsoluteMatrixMap = {}
+                self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap[animation.name] = frameToBoneIndexToAbsoluteMatrixMap
+
+            boneNameToLocations = {}
+            boneNameToRotations = {}
+            boneNameToScales = {}
+            for armatureObjectName, boneNamesOfArmature in self.armatureObjectNameToBoneNamesMap.items():
+                for boneName in boneNamesOfArmature:
+                    boneNameToLocations[boneName] = []  
+                    boneNameToRotations[boneName] = []  
+                    boneNameToScales[boneName] = []  
+            
+            for frame in frames:
+                self.scene.frame_set(frame)
+                for armatureObjectName, boneNamesOfArmature in self.armatureObjectNameToBoneNamesMap.items():
+                    armatureObject = bpy.data.objects[armatureObjectName]
+                    armature = armatureObject.data
+                    for boneName in boneNamesOfArmature:
+                        boneIndex = self.boneNameToBoneIndexMap[boneName]
+                        bone = model.bones[boneIndex]
+                        poseBone = armatureObject.pose.bones[boneName]  
+                        
+                        leftCorrectionMatrix = self.boneNameToLeftCorrectionMatrix[boneName]
+                        rightCorrectionMatrix = self.boneNameToRightCorrectionMatrix[boneName]
+                        
                         poseMatrix = armatureObject.convert_space(poseBone, poseBone.matrix, 'POSE', 'LOCAL')
                         
                         m3PoseMatrix = leftCorrectionMatrix * poseMatrix * rightCorrectionMatrix
@@ -385,14 +378,39 @@ class Exporter:
 
                         boneIndexToAbsoluteMatrixMap[boneIndex] = absoluteBoneMatrix
 
+                        locations = boneNameToLocations[boneName]
+                        rotations = boneNameToRotations[boneName]
+                        scales = boneNameToScales[boneName]
                         loc, rot, sca = m3PoseMatrix.decompose()
                         locations.append(loc)
                         rotations.append(rot)
                         scales.append(sca)
+            
+            
+            for armatureObjectName, boneNamesOfArmature in self.armatureObjectNameToBoneNamesMap.items():
+                for boneName in boneNamesOfArmature:
+                    boneIndex = self.boneNameToBoneIndexMap[boneName]
+                    bone = model.bones[boneIndex]
+                    locations = boneNameToLocations[boneName]
+                    rotations = boneNameToRotations[boneName]
+                    scales = boneNameToScales[boneName]
                     
                     self.makeQuaternionsInterpolatable(rotations)                                                
                     animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
+
+                    m3SpaceLocation = self.boneNameToM3SpaceDefaultLocationMap[boneName]
+                    m3SpaceRotation = self.boneNameToM3SpaceDefaultRotationMap[boneName]
+                    m3SpaceScale = self.boneNameToM3SpaceDefaultScaleMap[boneName]
                     
+                    locationAnimPath = 'pose.bones["%s"].location' % boneName
+                    rotationAnimPath = 'pose.bones["%s"].rotation_quaternion' % boneName
+                    scaleAnimPath = 'pose.bones["%s"].scale' % boneName
+                    
+                    locationAnimId = self.getAnimIdFor(shared.animObjectIdArmature, locationAnimPath)
+                    rotationAnimId = self.getAnimIdFor(shared.animObjectIdArmature, rotationAnimPath)
+                    scaleAnimId = self.getAnimIdFor(shared.animObjectIdArmature, scaleAnimPath)
+                    
+                        
                     if self.isAnimationExport or self.vectorArrayContainsNotOnly(locations, m3SpaceLocation):
                         locationTimeValuesInMS, locations = shared.simplifyVectorAnimationWithInterpolation(timeValuesInMS, locations)
                         m3Locs = self.createVector3sFromBlenderVectors(locations)
@@ -428,7 +446,6 @@ class Exporter:
                         animIdToAnimDataMap[scaleAnimId] = m3AnimBlock
                         bone.scale.header.animFlags = shared.animFlagsForAnimatedProperty
                         bone.setNamedBit("flags", "animated", True)
-                    animationIndex += 1
 
     def allFramesOfAnimation(self, animation):
         # In Starcraft 2 there is one more key frame then there is usually in Blender:
