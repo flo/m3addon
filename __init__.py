@@ -447,7 +447,6 @@ def handleAnimationSequenceIndexChange(self, context):
         newAnimation = scene.m3_animations[newIndex]
     else:
         newAnimation = None
-    print(newAnimation)
     if oldIndex >= 0 and (oldIndex < len(scene.m3_animations)):
         oldAnimation = scene.m3_animations[oldIndex]
     else:
