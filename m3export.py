@@ -36,6 +36,7 @@ import mathutils
 import os.path
 import random
 from . import calculateTangents
+import time     
 
 actionTypeScene = "SCENE"
 actionTypeArmature = "OBJECT"
@@ -310,7 +311,6 @@ class Exporter:
                 absoluteBoneMatrix = absoluteBoneMatrix * absoluteInverseRestPoseMatrixFixed
 
                 self.boneIndexToDefaultAbsoluteMatrixMap[boneIndex] = absoluteBoneMatrix
-        import time     
         startTime = time.time()
         self.initBoneAnimations(model)
         endTime = time.time()
@@ -714,9 +714,14 @@ class Exporter:
 
         model.vertices = m3VertexStructureDefinition.instancesToBytes(m3Vertices)
 
+        startTime = time.time()
+        self.initMeshBoundings(model, m3Vertices)
+        endTime = time.time()
+        duration = endTime - startTime
+        print("Mesh boundings animation export took %s seconds" % duration)
         
-        # Create the MSEC
-        
+
+    def initMeshBoundings(self, model, m3Vertices):
         boundingsAnimRef = self.createInstanceOf("BNDSV0AnimationReference")
         animHeader = self.createInstanceOf("AnimationReferenceHeader")
         animHeader.interpolationType = 0
@@ -755,10 +760,8 @@ class Exporter:
         
         msec = self.createInstanceOf("MSEC")
         msec.boundingsAnimation = boundingsAnimRef
-        division.msec.append(msec)
+        model.divisions[0].msec.append(msec)
         
-        # Conversion to bytes needs to be done after the boundings calculation
-
     def createBoneMatricesForStaticMeshBone(self, staticMeshBoneIndex):
         self.boneIndexToDefaultAbsoluteMatrixMap[staticMeshBoneIndex] = mathutils.Matrix()
         for animation in self.scene.m3_animations:
