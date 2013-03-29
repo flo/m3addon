@@ -310,9 +310,12 @@ class Exporter:
                 absoluteBoneMatrix = absoluteBoneMatrix * absoluteInverseRestPoseMatrixFixed
 
                 self.boneIndexToDefaultAbsoluteMatrixMap[boneIndex] = absoluteBoneMatrix
-                
-        
+        import time     
+        startTime = time.time()
         self.initBoneAnimations(model)
+        endTime = time.time()
+        duration = endTime - startTime
+        print("Bone animation export took %s seconds" % duration)
 
 
     def initBoneAnimations(self, model):
