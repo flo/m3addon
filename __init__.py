@@ -424,15 +424,16 @@ def handleAnimationChange(targetObject, oldAnimation, newAnimation):
             oldStrip = oldTrack.strips.new(name=oldStripName, start=0,action=animationData.action)
         oldStrip.action = animationData.action
     
-        
-    newTrackName = newAnimation.name + "_full"
-    newTrack = animationData.nla_tracks.get(newTrackName)
-    if newTrack != None and len(newTrack.strips) > 0:
-        newStrip = newTrack.strips[0]
-        newAction = newStrip.action
+    if newAnimation:   
+        newTrackName = newAnimation.name + "_full"
+        newTrack = animationData.nla_tracks.get(newTrackName)
+        if newTrack != None and len(newTrack.strips) > 0:
+            newStrip = newTrack.strips[0]
+            newAction = newStrip.action
+        else:
+            newAction = None
     else:
         newAction = None
-        
     prepareDefaultValuesForNewAction(targetObject, newAction)
     animationData.action = newAction
 
@@ -444,20 +445,25 @@ def handleAnimationSequenceIndexChange(self, context):
     shared.setAnimationWithIndexToCurrentData(scene, oldIndex)
     if (newIndex >= 0) and (newIndex < len(scene.m3_animations)):
         newAnimation = scene.m3_animations[newIndex]
-        if oldIndex >= 0 and (oldIndex < len(scene.m3_animations)):
-            oldAnimation = scene.m3_animations[oldIndex]
-        else:
-            oldAnimation = None
-
+    else:
+        newAnimation = None
+    print(newAnimation)
+    if oldIndex >= 0 and (oldIndex < len(scene.m3_animations)):
+        oldAnimation = scene.m3_animations[oldIndex]
+    else:
+        oldAnimation = None
+        
+    if newAnimation != None:
         scene.frame_start = newAnimation.startFrame
         scene.frame_end = newAnimation.exlusiveEndFrame - 1
-        for targetObject in scene.objects:
-            animationData = targetObject.animation_data
-            if animationData != None:
-                handleAnimationChange(targetObject, oldAnimation, newAnimation)
         
-        if scene.animation_data != None:
-            handleAnimationChange(scene, oldAnimation, newAnimation)
+    for targetObject in scene.objects:
+        animationData = targetObject.animation_data
+        if animationData != None:
+            handleAnimationChange(targetObject, oldAnimation, newAnimation)
+    
+    if scene.animation_data != None:
+        handleAnimationChange(scene, oldAnimation, newAnimation)
 
     scene.m3_animation_old_index = newIndex
 
@@ -1392,6 +1398,7 @@ class AnimationSequencesPanel(bpy.types.Panel):
         animationIndex = scene.m3_animation_index
         if animationIndex >= 0 and animationIndex < len(scene.m3_animations):
             animation = scene.m3_animations[animationIndex]
+            layout.operator("m3.animations_deselect", text="Edit Default Values")
             layout.separator()
             layout.prop(animation, 'name', text="Name")
             layout.prop(animation, 'movementSpeed', text="Mov. Speed")
@@ -1400,14 +1407,14 @@ class AnimationSequencesPanel(bpy.types.Panel):
             layout.prop(animation, 'alwaysGlobal', text="Always Global")
             layout.prop(animation, 'globalInPreviewer', text="Global In Previewer")
         
-        if not len(scene.m3_rigid_bodies) > 0:
-            return
-        
-        layout.separator()
-        layout.prop(animation, 'useSimulateFrame', text="Use physics")
-        if animation.useSimulateFrame:
-            layout.prop(animation, 'simulateFrame', text="Simulate after frame")
-
+            if not len(scene.m3_rigid_bodies) > 0:
+                return
+            
+            layout.separator()
+            layout.prop(animation, 'useSimulateFrame', text="Use physics")
+            if animation.useSimulateFrame:
+                layout.prop(animation, 'simulateFrame', text="Simulate after frame")
+            
 class AnimationSequenceTransformationCollectionsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_STCs"
     bl_label = "M3 Animation STCs"
@@ -2682,6 +2689,17 @@ class M3_ANIMATIONS_OT_remove(bpy.types.Operator):
                 scene.m3_animations.remove(scene.m3_animation_index)
                 scene.m3_animation_old_index = -1
                 scene.m3_animation_index -= 1
+        return{'FINISHED'}
+        
+        
+class M3_ANIMATIONS_OT_deselect(bpy.types.Operator):
+    bl_idname      = 'm3.animations_deselect'
+    bl_label       = "Edit Default Values"
+    bl_description = "Deselects the active M3 animation sequence so that the user can edit the default values"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        scene.m3_animation_index = -1
         return{'FINISHED'}
 
 class M3_ANIMATIONS_OT_STC_add(bpy.types.Operator):
