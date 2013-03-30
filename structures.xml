@@ -193,7 +193,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="VEC3V0" />
             <field name="nullValue" type="VEC3V0" />
-            <field name="unknown" type="uint32" default-value="0"  />
+            <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
         <structure name="SVC3" >
@@ -216,7 +216,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="VEC2V0" />
             <field name="nullValue" type="VEC2V0" />
-            <field name="unknown" type="uint32" default-value="0"  />
+            <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
     <structure name="QuaternionAnimationReference">
@@ -228,7 +228,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="QUATV0" />
             <field name="nullValue" type="QUATV0" />
-            <field name="unknown" type="uint32" default-value="0" />
+            <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
     <structure name="UInt32AnimationReference">
@@ -240,7 +240,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="uint32" />
             <field name="nullValue" type="uint32" />
-            <field name="unknown" type="uint32" default-value="0" />
+            <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
     <structure name="UInt16AnimationReference">
@@ -252,7 +252,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="uint16" />
             <field name="nullValue" type="uint16" />
-            <field name="unknown" type="uint32" default-value="0" />
+            <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
     <structure name="Int16AnimationReference">
@@ -264,7 +264,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="int16" />
             <field name="nullValue" type="int16" />
-            <field name="unknown" type="uint32" default-value="0" />
+            <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
     <structure name="FloatAnimationReference">
@@ -276,7 +276,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="float" />
             <field name="nullValue" type="float" />
-            <field name="unknown" type="uint32" default-value="0" />
+            <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
     <structure name="ColorAnimationReference">
@@ -288,7 +288,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="COLV0" />
             <field name="nullValue" type="COLV0" />
-            <field name="unknown" type="uint32" default-value="0" />
+            <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
     <structure name="FlagAnimationReference">
@@ -300,7 +300,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="FLAGV0" />
             <field name="nullValue" type="FLAGV0" />
-            <field name="unknown" type="uint32" default-value="0" />
+            <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
     <structure name="BNDSV0AnimationReference">
@@ -312,7 +312,7 @@
             <field name="header" type="AnimationReferenceHeader" />
             <field name="initValue" type="BNDSV0" />
             <field name="nullValue" type="BNDSV0" />
-            <field name="unknown" type="uint32" default-value="0" />
+            <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
     <structure name="REAL">
@@ -1305,33 +1305,49 @@
             <field name="unknown54f4ae30" type="FloatAnimationReference" />
             <field name="unknownf8b3d529" type="uint32" default-value="0" />
             <field name="unknown5f54fb02" type="FloatAnimationReference"/>           
-            <field name="unknown84d843d6" type="AnimationReferenceHeader" />
-            <field name="unknown1fe6b6c0" type="float" default-value="0.0" />
-            <field name="unknown6b3b9f9" size="12" default-value="0x000000000000000000000000" />
+            <field name="unknown84d843d6" type="FloatAnimationReference" />
+            <field name="unknown6b3b9f9" size="4" expected-value="0x00000000" />
             <field name="unknown9cb3dd18" type="FloatAnimationReference" />
-            <field name="unknown2e01be90" type="AnimationReferenceHeader" />
-            <field name="unknownf189d66c" type="float" default-value="0.0" />
-            <field name="unknowneff4c5be" size="12" default-value="0x000000000000000000000000"  />
+            <field name="unknown2e01be90" type="FloatAnimationReference" />
+            <field name="unknowneff4c5be" size="4" expected-value="0x00000000"  />
             <field name="unknownf6193fc0" type="FloatAnimationReference" />
-            <field name="unknowna5e2260a" type="AnimationReferenceHeader" />
-            <field name="unknowne99e5180" type="float" default-value="0.0" />
-            <field name="unknown9aa3bbb9" size="12" default-value="0x000000000000000000000000" />
+            <field name="unknowna5e2260a" type="FloatAnimationReference" />
+            <field name="unknown9aa3bbb9" size="4" expected-value="0x00000000" />
             <field name="unknown485f7eea" type="AnimationReferenceHeader" />
-            <field name="unknownd4fe9c0a" size="12" default-value="0x000000000000000000000000" />
+            <field name="initOfUnknown485f7eea" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknown485f7eea" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknown485f7eea" size="4" default-value="0xffffffff" />  
             <field name="unknown34b6f141" type="AnimationReferenceHeader" />
-            <field name="unknownb69653a4" size="16" default-value="0x00000000000000000000000000000000" />
+            <field name="initOfUnknown34b6f141" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknown34b6f141" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknown34b6f141" size="4" default-value="0xffffffff" />  
+            <field name="unknownb69653a4" size="4" expected-value="0x00000000" />
             <field name="unknown89cdf966" type="AnimationReferenceHeader" />
-            <field name="unknowne64de22e" size="12" default-value="0x000000000000000000000000" />
+            <field name="initOfUnknown89cdf966" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknown89cdf966" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknown89cdf966" size="4" default-value="0xffffffff" />
             <field name="unknown4eefdfc1" type="AnimationReferenceHeader" />
-            <field name="unknownb47e5f82" size="16" default-value="0x00000000000000000000000000000000" />
+            <field name="initOfUnknown4eefdfc1" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknown4eefdfc1" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknown4eefdfc1" size="4" default-value="0xffffffff" />
+            <field name="unknownb47e5f82" size="4" default-value="0x00000000" />
             <field name="unknownab37a1d5" type="AnimationReferenceHeader" />
-            <field name="unknownc4a5ef0e" size="12" default-value="0x000000000000000000000000" />
+            <field name="initOfUnknownab37a1d5" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknownab37a1d5" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknownab37a1d5" size="4" default-value="0xffffffff" />
             <field name="unknownbef7f4d3" type="AnimationReferenceHeader" />
-            <field name="unknown8262f69c" size="16" default-value="0x00000000000000000000000000000000" />
+            <field name="initOfUnknownbef7f4d3" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknownbef7f4d3" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknownbef7f4d3" size="4" default-value="0xffffffff" />
+            <field name="unknown8262f69c" size="4" default-value="0x00000000" />
             <field name="unknownb2dbf2f3" type="AnimationReferenceHeader"  />
-            <field name="unknown6b54677b" size="12" default-value="0x000000000000000000000000" />
+            <field name="initOfUnknownb2dbf2f3" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknownb2dbf2f3" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknownb2dbf2f3" size="4" default-value="0xffffffff" />
             <field name="unknown3c76d64c" type="AnimationReferenceHeader" />
-            <field name="unknown22534a8a" size="12" default-value="0x000000000000000000000000" />
+            <field name="initOfUnknown3c76d64c" size="4" expected-value="0x00000000" />
+            <field name="nullOfUnknown3c76d64c" size="4" expected-value="0x00000000" />
+            <field name="endOfUnknown3c76d64c" size="4" default-value="0xffffffff" />
             <field name="unknownbc151e17" type="FloatAnimationReference" />
             <field name="unknown8f507b52" type="AnimationReferenceHeader" since-version="22" />
             <field name="initOfUnknown8f507b52" size="4" expected-value="0x00000000" since-version="22" />
