@@ -1226,19 +1226,19 @@
             <field till-version="12" name="randomizeWithLifespan2" type="uint32" />
             <field name="unknownf21cc980" size="12" expected-value="0x000000000000000000000000" />
             <field name="unknown82a208f7" size="4" default-value="0x00000000" since-version="17" />
-            <field name="zAcceleration" type="float" />
-            <field name="unknownFloat1a" type="float" />
-            <field name="unknownFloat1b" type="float" default-value="1.0" />
-            <field name="unknownFloat1c" type="float" default-value="1.0" />
-            <field name="unknownFloat1d" type="float" default-value="1.0" />
             <field name="unknown93aad73b" type="float" default-value="0.0" since-version="17" />
+            <field name="zAcceleration" type="float" />
+            <field name="sizeAnimationMiddle" type="float" default-value="0.5" />
+            <field name="colorAnimationMiddle" type="float" default-value="0.5" />
+            <field name="alphaAnimationMiddle" type="float" default-value="0.5" />
+            <field name="rotationAnimationMiddle" type="float" default-value="0.5" />
             <field name="unknown74620ffe" type="float" default-value="0.0" since-version="17" />
             <field name="unknown1525cb58" type="float" default-value="0.0" since-version="17" />
             <field name="particleSizes1" type="Vector3AnimationReferenceV0" />
             <field name="rotationValues1" type="Vector3AnimationReferenceV0" />
             <field name="initialColor1" type="ColorAnimationReference" />
+            <field name="middleColor1" type="ColorAnimationReference" />
             <field name="finalColor1" type="ColorAnimationReference" />
-            <field name="unknownColor1" type="ColorAnimationReference" />
             <field name="slowdown" type="float" />
             <field name="unknownFloat2a" type="float" default-value="0.0" />
             <field name="unknownFloat2b" type="float" default-value="1.0"/> <!-- external force strength?-->
@@ -1268,8 +1268,8 @@
             <field name="rotationValues2" type="Vector3AnimationReferenceV0" />
             <field name="randomizeWithColor2" type="uint32" />
             <field name="initialColor2" type="ColorAnimationReference" />
+            <field name="middleColor2" type="ColorAnimationReference" />
             <field name="finalColor2" type="ColorAnimationReference" />
-            <field name="unknownColor2" type="ColorAnimationReference" />
             <field name="unknown7" type="uint32" default-value="0" />
             <field name="partEmit" type="Int16AnimationReference" />
             <field name="phase1StartImageIndex" type="uint8"  default-value="0" />
