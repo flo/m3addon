@@ -167,6 +167,7 @@ class Exporter:
         self.prepareAnimationEndEvents()
         self.initWithPreparedAnimationData(model)
         model.uniqueUnknownNumber = self.getAnimIdFor(shared.animObjectIdModel, "")
+        self.updateAnimationIdsOfBlendFile()
         return model
     
     def prepareAnimIdMaps(self):
@@ -186,6 +187,14 @@ class Exporter:
             self.usedAnimIds.add(animId)
             self.longAnimIdToAnimIdMap[longAnimId] = animId
         return animId
+    
+    def updateAnimationIdsOfBlendFile(self):
+        self.scene.m3_animation_ids.clear()
+        for longAnimId, animId in self.longAnimIdToAnimIdMap.items():
+            if animId in self.usedAnimIds:
+                animIdData = self.scene.m3_animation_ids.add()
+                animIdData.animIdMinus2147483648 = animId - 2147483648
+                animIdData.longAnimId = longAnimId
     
     def getAnimIdFor(self, objectId, animPath):
         longAnimId = shared.getLongAnimIdOf(objectId, animPath)
