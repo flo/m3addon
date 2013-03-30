@@ -892,6 +892,7 @@ rttChannelList = [("-1", "None", "None"),
                   ("6", "Layer 7", "Render To Texture Layer 7"),
 ]
 
+
 lightTypeList = [# directional light isn't supported yet: ("0", "Directional", ""),
                  (shared.lightTypePoint, "Point", "Light are generated around a point"),
                  (shared.lightTypeSpot, "Spot", "")
@@ -1290,7 +1291,7 @@ class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
 
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
-
+    testPatch20Format = bpy.props.BoolProperty(default=False, options=set())
 
 class M3Projection(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
@@ -1351,8 +1352,10 @@ class ExportPanel(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
 
-        layout.prop(scene.m3_export_options,"path", text="")
+        layout.prop(scene.m3_export_options, "path", text="")
         layout.operator("m3.quick_export", text="Export As M3")
+        layout.prop(scene.m3_export_options, "testPatch20Format", text="Use new experimental format")
+
 
 class BoneVisibilityPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_bone_visibility"

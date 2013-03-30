@@ -43,12 +43,12 @@ actionTypeArmature = "OBJECT"
 
 class Exporter:
     def export(self, scene, m3FileName):
+        self.scene = scene
         self.initStructureVersionMap()
         self.isAnimationExport = m3FileName.endswith(".m3a")
         if bpy.ops.object.mode_set.poll():
             bpy.ops.object.mode_set(mode='OBJECT')
         self.generatedAnimIdCounter = 0
-        self.scene = scene
         self.boundingAnimId = 0x1f9bd2
         if scene.render.fps != 30:
             print("Warning: The currently configured frame rate is %s. For compability the model will be exported with a frame rate of 30." % scene.render.fps)
@@ -66,7 +66,29 @@ class Exporter:
 
     def initStructureVersionMap(self):
         self.structureVersionMap = {}
-        self.structureVersionMap["MODL"] = 23
+        if self.scene.m3_export_options.testPatch20Format:
+            self.structureVersionMap["MODL"] = 26
+            self.structureVersionMap["EVNT"] = 2
+            self.structureVersionMap["SEQS"] = 2
+            self.structureVersionMap["LAYR"] = 25
+            self.structureVersionMap["MAT_"] = 18
+            self.structureVersionMap["PAR_"] = 22
+            self.structureVersionMap["PROJ"] = 5
+            self.structureVersionMap["PHSH"] = 3
+            self.structureVersionMap["PHRB"] = 4
+            self.structureVersionMap["RIB_"] = 8
+        else:
+            self.structureVersionMap["MODL"] = 23
+            self.structureVersionMap["EVNT"] = 1
+            self.structureVersionMap["SEQS"] = 1
+            self.structureVersionMap["LAYR"] = 22
+            self.structureVersionMap["MAT_"] = 15
+            self.structureVersionMap["PAR_"] = 12
+            self.structureVersionMap["PROJ"] = 4
+            self.structureVersionMap["PHSH"] = 1
+            self.structureVersionMap["PHRB"] = 2
+            self.structureVersionMap["RIB_"] = 6
+            
         self.structureVersionMap["BONE"] = 1
         self.structureVersionMap["Vector3AnimationReference"] = 0
         self.structureVersionMap["QuaternionAnimationReference"] = 0
@@ -85,32 +107,25 @@ class Exporter:
         self.structureVersionMap["BAT_"] = 1
         self.structureVersionMap["Vector3As3Fixed8"] = 0
         self.structureVersionMap["Vector2As2int16"] = 0
-        self.structureVersionMap["EVNT"] = 1
-        self.structureVersionMap["SEQS"] = 1
         self.structureVersionMap["STG_"] = 0
         self.structureVersionMap["STC_"] = 4
         self.structureVersionMap["STS_"] = 0
         self.structureVersionMap["CAM_"] = 3
         self.structureVersionMap["SSGS"] = 1
-        self.structureVersionMap["PAR_"] = 12
         self.structureVersionMap["PARC"] = 0
         self.structureVersionMap["FOR_"] = 1
-        self.structureVersionMap["PHRB"] = 2
-        self.structureVersionMap["PHSH"] = 1
         self.structureVersionMap["LITE"] = 7
         self.structureVersionMap["ATT_"] = 1
         self.structureVersionMap["ATVL"] = 0
         self.structureVersionMap["COL"] = 0
         self.structureVersionMap["Matrix44"] = 0
         self.structureVersionMap["IREF"] = 0
-        self.structureVersionMap["MAT_"] = 15
         self.structureVersionMap["DIS_"] = 4
         self.structureVersionMap["CMP_"] = 2
         self.structureVersionMap["CMS_"] = 0 
         self.structureVersionMap["TER_"] = 0
         self.structureVersionMap["VOL_"] = 0
         self.structureVersionMap["CREP"] = 0
-        self.structureVersionMap["LAYR"] = 22
         self.structureVersionMap["Vector2AnimationReference"] = 0
         self.structureVersionMap["Int16AnimationReference"] = 0
         self.structureVersionMap["UInt16AnimationReference"] = 0
@@ -133,8 +148,9 @@ class Exporter:
         self.structureVersionMap["SDMB"] = 0
         self.structureVersionMap["SD2V"] = 0 
         self.structureVersionMap["FlagAnimationReference"] = 0
-        self.structureVersionMap["PROJ"] = 4
-        self.structureVersionMap["RIB_"] = 6
+        
+        
+        
 
     def getVersionOf(self, structureName):
         return self.structureVersionMap[structureName] 
