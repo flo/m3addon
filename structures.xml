@@ -1082,7 +1082,7 @@
             <field name="diffuseLayer" type="Reference" refTo="LAYR" />
             <field name="decalLayer" type="Reference" refTo="LAYR" />
             <field name="specularLayer" type="Reference" refTo="LAYR" />
-            <field name="unknown90718bed" type="Reference" refTo="LAYR" since-version="16" />
+            <field name="glossLayer" type="Reference" refTo="LAYR" since-version="16" />
             <field name="emissiveLayer" type="Reference" refTo="LAYR" />
             <field name="emissive2Layer" type="Reference" refTo="LAYR" />
             <field name="evioLayer" type="Reference" refTo="LAYR" />
@@ -1388,7 +1388,8 @@
             <!-- unknowne51f8f9b  had the values 4 and  7-->
             <field name="unknowne51f8f9b" type="uint32" default-value="4" since-version="21" />
             <field name="unknown25dac4d2"  type="uint32" default-value="3" since-version="17" />
-            <field name="unknown56dbedec" size="8"  expected-value="0x0000000000000000" since-version="17" />
+            <field name="sizeSmoothing" type="uint8" default-alue="0" since-version="17" />
+            <field name="unknown56dbedec" size="7"  expected-value="0x00000000000000" since-version="17" />
             <field name="unknown22856fde" type="FloatAnimationReference" since-version="17" />
             <field name="unknownb35ad6e1" type="Vector2AnimationReferenceV0" since-version="17" />
             <field name="unknown686e5943" type="Vector3AnimationReferenceV0" since-version="17" />

@@ -1497,9 +1497,10 @@ class Exporter:
 
         layerIndex = 0
         for layer, layerFieldName in zip(material.layers, shared.standardMaterialLayerFieldNames):
-            animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
-            m3Layer = self.createMaterialLayer(layer, animPathPrefix)
-            setattr(m3Material, layerFieldName, [m3Layer])
+            if m3Material.structureDescription.hasField(layerFieldName):
+                animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
+                m3Layer = self.createMaterialLayer(layer, animPathPrefix)
+                setattr(m3Material, layerFieldName, [m3Layer])
             layerIndex += 1
 
         m3Material.unknownAnimationRef1 = self.createNullUInt32AnimationReference(0)
