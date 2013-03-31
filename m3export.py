@@ -1544,6 +1544,7 @@ class Exporter:
             
     def createStandardMaterial(self, materialIndex, material):
         m3Material = self.createInstanceOf("MAT_")
+        m3Material.setNamedBit("flags", "visible", True)
         materialAnimPathPrefix = "m3_standard_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferStandardMaterial(transferer)
