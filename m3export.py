@@ -270,6 +270,10 @@ class Exporter:
                 bone.scale.header = self.createNullAnimHeader(animId=scaleAnimId, interpolationType=1)
                 bone.ar1 = self.createNullUInt32AnimationReference(1)
                 model.bones.append(bone)
+                if not blenderBone.use_inherit_rotation:
+                    raise Exception("The setting inhertRotation=false of bone %s is not exportable!" % boneName)
+                if not blenderBone.use_inherit_scale:
+                    raise Exception("The setting inhertScale=false of bone %s is not exportable!" % boneName)
 
                 absRestPosMatrix = blenderBone.matrix_local    
                 if blenderBone.parent != None:
