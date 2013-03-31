@@ -636,24 +636,25 @@ class Importer:
                     scale = timeToScaleMap.get(timeInMS)
                     insertLinearKeyFrame(scaXCurve, frame, scale.x)
                     insertLinearKeyFrame(scaYCurve, frame, scale.y)
-                    insertLinearKeyFrame(scaZCurve, frame, scale.z)
+                    insertLinearKeyFrame(scaZCurve, frame, scale.z)    
     
-    
+    def createLayers(self, scene, material, m3Material, materialAnimPathPrefix):
+        for layerFieldName in shared.layerFieldNamesOfM3Material(m3Material):
+            m3Layer = getattr(m3Material, layerFieldName)[0]
+            layerIndex = len(material.layers)
+            materialLayer = material.layers.add()
+            materialLayer.name = shared.layerFieldNameToNameMap[layerFieldName]
+            animPathPrefix = "%slayers[%s]." % (materialAnimPathPrefix, layerIndex)
+            layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=m3Layer)
+            shared.transferMaterialLayer(layerTransferer)
+                    
     def createStandardMaterials(self, scene):
         for materialIndex, m3Material in enumerate(self.model.standardMaterials):
             material = scene.m3_standard_materials.add()
             animPathPrefix = "m3_standard_materials[%s]." % materialIndex
             materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferStandardMaterial(materialTransferer)
-            layerIndex = 0
-            for (layerName, layerFieldName) in zip(shared.standardMaterialLayerNames, shared.standardMaterialLayerFieldNames):
-                materialLayersEntry = getattr(m3Material, layerFieldName)[0]
-                materialLayer = material.layers.add()
-                materialLayer.name = layerName
-                animPathPrefix = "m3_standard_materials[%s].layers[%s]." % (materialIndex, layerIndex)
-                layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
-                shared.transferMaterialLayer(layerTransferer)
-                layerIndex += 1
+            self.createLayers(scene, material, m3Material, animPathPrefix)
     
     def createDisplacementMaterials(self, scene):
         for materialIndex, m3Material in enumerate(self.model.displacementMaterials):
@@ -661,15 +662,7 @@ class Importer:
             animPathPrefix = "m3_displacement_materials[%s]." % materialIndex
             materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferDisplacementMaterial(materialTransferer)
-            layerIndex = 0
-            for (layerName, layerFieldName) in zip(shared.displacementMaterialLayerNames, shared.displacementMaterialLayerFieldNames):
-                materialLayersEntry = getattr(m3Material, layerFieldName)[0]
-                materialLayer = material.layers.add()
-                materialLayer.name = layerName
-                animPathPrefix = "m3_displacement_materials[%s].layers[%s]." % (materialIndex, layerIndex)
-                layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
-                shared.transferMaterialLayer(layerTransferer)
-                layerIndex += 1
+            self.createLayers(scene, material, m3Material, animPathPrefix)
 
     def createCompositeMaterials(self, scene):
         for materialIndex, m3Material in enumerate(self.model.compositeMaterials):
@@ -677,12 +670,7 @@ class Importer:
             animPathPrefix = "m3_composite_materials[%s]." % materialIndex
             materialTransferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferCompositeMaterial(materialTransferer)
-            for sectionIndex, m3Section in enumerate(m3Material.sections):
-                section = material.sections.add()
-                animPathPrefix = "m3_composite_materials[%s].sections[%s]." % (materialIndex, sectionIndex)
-                materialSectionTransferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=section, m3Object=m3Section)
-                shared.transferCompositeMaterialSection(materialSectionTransferer)
-                section.name = self.getNameOfMaterialWithReferenceIndex(m3Section.materialReferenceIndex)
+            self.createLayers(scene, material, m3Material, animPathPrefix)
 
     def createTerrainMaterials(self, scene):
         for materialIndex, m3Material in enumerate(self.model.terrainMaterials):
@@ -690,15 +678,7 @@ class Importer:
             animPathPrefix = "m3_terrain_materials[%s]." % materialIndex
             materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferTerrainMaterial(materialTransferer)
-            layerIndex = 0
-            for (layerName, layerFieldName) in zip(shared.terrainMaterialLayerNames, shared.terrainMaterialLayerFieldNames):
-                materialLayersEntry = getattr(m3Material, layerFieldName)[0]
-                materialLayer = material.layers.add()
-                materialLayer.name = layerName
-                animPathPrefix = "m3_terrain_materials[%s].layers[%s]." % (materialIndex, layerIndex)
-                layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
-                shared.transferMaterialLayer(layerTransferer)
-                layerIndex += 1
+            self.createLayers(scene, material, m3Material, animPathPrefix)
 
     def createVolumeMaterials(self, scene):
         for materialIndex, m3Material in enumerate(self.model.volumeMaterials):
@@ -706,15 +686,7 @@ class Importer:
             animPathPrefix = "m3_volume_materials[%s]." % materialIndex
             materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferVolumeMaterial(materialTransferer)
-            layerIndex = 0
-            for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
-                materialLayersEntry = getattr(m3Material, layerFieldName)[0]
-                materialLayer = material.layers.add()
-                materialLayer.name = layerName
-                animPathPrefix = "m3_volume_materials[%s].layers[%s]." % (materialIndex, layerIndex)
-                layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
-                shared.transferMaterialLayer(layerTransferer)
-                layerIndex += 1
+            self.createLayers(scene, material, m3Material, animPathPrefix)
                 
     def createCreepMaterials(self, scene):
         for materialIndex, m3Material in enumerate(self.model.creepMaterials):
@@ -722,15 +694,7 @@ class Importer:
             animPathPrefix = "m3_creep_materials[%s]." % materialIndex
             materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
             shared.transferCreepMaterial(materialTransferer)
-            layerIndex = 0
-            for (layerName, layerFieldName) in zip(shared.creepMaterialLayerNames, shared.creepMaterialLayerFieldNames):
-                materialLayersEntry = getattr(m3Material, layerFieldName)[0]
-                materialLayer = material.layers.add()
-                materialLayer.name = layerName
-                animPathPrefix = "m3_creep_materials[%s].layers[%s]." % (materialIndex, layerIndex)
-                layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=materialLayersEntry)
-                shared.transferMaterialLayer(layerTransferer)
-                layerIndex += 1  
+            self.createLayers(scene, material, m3Material, animPathPrefix)
 
     def createMaterialReferences(self, scene):
         for m3MaterialReference in self.model.materialReferences:

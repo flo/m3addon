@@ -305,6 +305,10 @@ def handleMaterialNameChange(self, context):
             mesh = meshObject.data
             if mesh.m3_material_name == oldMaterialName:     
                 mesh.m3_material_name = materialName
+
+
+def handleMaterialLayerFieldNameChange(self, context):
+    self.name = layerFieldNameToNameMap.get(fieldName, fieldName)
     
 def handleAttachmentVolumeTypeChange(self, context):
     handleAttachmentPointTypeOrBoneSuffixChange(self, context)
@@ -771,7 +775,8 @@ def selectOrCreateBone(scene, boneName):
     bone = armatureObject.data.bones[boneName]
     return (bone, poseBone)
 
-
+ 
+    
 emissionAreaTypesWithRadius = [shared.emssionAreaTypeSphere, shared.emssionAreaTypeCylinder]
 emissionAreaTypesWithWidth = [shared.emssionAreaTypePlane, shared.emssionAreaTypeCuboid]
 emissionAreaTypesWithLength = [shared.emssionAreaTypePlane, shared.emssionAreaTypeCuboid]
@@ -932,7 +937,7 @@ class M3Animation(bpy.types.PropertyGroup):
     globalInPreviewer = bpy.props.BoolProperty(options=set())
 
 class M3MaterialLayer(bpy.types.PropertyGroup):
-    name = bpy.props.StringProperty(options={"SKIP_SAVE"}, default="Material Layer")
+    name = bpy.props.StringProperty(default="Material Layer")
     imagePath = bpy.props.StringProperty(name="image path", default="", options=set())
     unknownbd3f7b5d = bpy.props.IntProperty(name="unknownbd3f7b5d", default=-1, options=set())
     color = bpy.props.FloatVectorProperty(name="color", default=(1.0, 1.0, 1.0, 1.0), min = 0.0, max = 1.0, size=4, subtype="COLOR", options={"ANIMATABLE"})
@@ -2453,29 +2458,38 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
         layout.prop(self, "defaultSetting", text="Default Settings") 
         layout.prop(self, "name", text="Name") 
   
+    def determineLayerNames(self):
+        from . import m3
+        settingToStructureNameMap = {
+            defaultSettingMesh: "MAT_", 
+            defaultSettingParticle: "MAT_", 
+            defaultSettingCreep: "CREP",
+            defaultSettingDisplacement: "DIS_",
+            defaultSettingComposite: "CMP_",
+            defaultSettingVolume: "VOL_",
+            defaultSettingTerrain: "TER_"
+        }
+        structureName = settingToStructureNameMap[self.defaultSetting]
+        structureDescription = m3.structures[structureName].getNewestVersion()
+        for field in structureDescription.fields:
+            if hasattr(field, "referenceStructureDescription"):
+                if field.historyOfReferencedStructures.name == "LAYR":
+                    yield shared.getLayerNameFromFieldName(field.name)
+  
     def execute(self, context):
         scene = context.scene
-
+        layerNames = self.determineLayerNames()
+                        
         if self.defaultSetting in [defaultSettingMesh, defaultSettingParticle]:
             materialType = shared.standardMaterialTypeIndex
             materialIndex = len(scene.m3_standard_materials)
             material = scene.m3_standard_materials.add()
-            for (layerName, layerFieldName) in zip(shared.standardMaterialLayerNames, shared.standardMaterialLayerFieldNames):
+            for layerName in layerNames:
                 layer = material.layers.add()
                 layer.name = layerName
-                if layerFieldName == "diffuseLayer":
+                if layerName == "Diffuse":
                     if self.defaultSetting != defaultSettingParticle:
                         layer.alphaAsTeamColor = True
-                if layerFieldName == "evioMaskLayer":
-                    layer.alphaOnly = True
-                elif layerFieldName in ["alphaMaskLayer", "layer12", "layer13"]:
-                    layer.textureWrapX = False
-                    layer.textureWrapY = False
-                    layer.alphaAsTeamColor = True
-                elif layerFieldName == "heightLayer":
-                    layer.textureWrapX = False
-                    layer.textureWrapY = False
-                    layer.alphaOnly = True
             
             if self.defaultSetting == defaultSettingParticle:
                 material.unfogged = True
@@ -2493,32 +2507,33 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
             materialType = shared.displacementMaterialTypeIndex
             materialIndex = len(scene.m3_displacement_materials)
             material = scene.m3_displacement_materials.add()
-            for (layerName, layerFieldName) in zip(shared.displacementMaterialLayerNames, shared.displacementMaterialLayerFieldNames):
+            for layerName in layerNames:
                 layer = material.layers.add()
                 layer.name = layerName
         elif self.defaultSetting == defaultSettingComposite:
             materialType = shared.compositeMaterialTypeIndex
             materialIndex = len(scene.m3_composite_materials)
             material = scene.m3_composite_materials.add()
+            # has no layers
         elif self.defaultSetting == defaultSettingTerrain:
             materialType = shared.terrainMaterialTypeIndex
             materialIndex = len(scene.m3_terrain_materials)
             material = scene.m3_terrain_materials.add()
-            for (layerName, layerFieldName) in zip(shared.terrainMaterialLayerNames, shared.terrainMaterialLayerFieldNames):
+            for layerName in layerNames:
                 layer = material.layers.add()
                 layer.name = layerName
         elif self.defaultSetting == defaultSettingVolume:
             materialType = shared.volumeMaterialTypeIndex
             materialIndex = len(scene.m3_volume_materials)
             material = scene.m3_volume_materials.add()
-            for (layerName, layerFieldName) in zip(shared.volumeMaterialLayerNames, shared.volumeMaterialLayerFieldNames):
+            for layerName in layerNames:
                 layer = material.layers.add()
                 layer.name = layerName
         elif self.defaultSetting == defaultSettingCreep:
             materialType = shared.creepMaterialTypeIndex
             materialIndex = len(scene.m3_creep_materials)
             material = scene.m3_creep_materials.add()
-            for (layerName, layerFieldName) in zip(shared.creepMaterialLayerNames, shared.creepMaterialLayerFieldNames):
+            for layerName in layerNames:
                 layer = material.layers.add()
                 layer.name = layerName
                 

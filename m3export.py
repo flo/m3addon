@@ -1488,20 +1488,66 @@ class Exporter:
 
         for materialIndex, material in enumerate(scene.m3_creep_materials):
             model.creepMaterials.append(self.createCreepMaterial(materialIndex, material))
-
+    
+    def createMaterialLayer(self, layer, animPathPrefix):
+        m3Layer =  self.createInstanceOf("LAYR")
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, rootObject=self.scene)
+        shared.transferMaterialLayer(transferer)            
+        m3Layer.unknownbc0c14e5 = self.createNullUInt32AnimationReference(0)
+        m3Layer.unknowne740df12 = self.createNullFloatAnimationReference(0.0, interpolationType=1)
+        m3Layer.unknown39ade219 = self.createNullUInt16AnimationReference(0)
+        m3Layer.unknowna4ec0796 = self.createNullUInt32AnimationReference(0, interpolationType=1)
+        m3Layer.unknowna44bf452 = self.createNullFloatAnimationReference(1.0, interpolationType=1)
+        return m3Layer
+    
+        
+    def indexOfNameInCollection(self, name, collection):
+        for index, element in enumerate(collection):
+            if element.name == name:
+                return index
+        return -1
+    
+    def createMaterialLayers(self, material, m3Material, materialAnimPathPrefix):
+        orderedListOfFieldNames = list(shared.layerFieldNamesOfM3Material(m3Material))
+        
+        orderedListOfLayerNames = list()
+        for layerFieldName in orderedListOfFieldNames:
+            layerName = shared.getLayerNameFromFieldName(layerFieldName)
+            orderedListOfLayerNames.append(layerName)
+            
+        # Add mising layers. They get added for real since:
+        # 1. this way animation ids can be saved for them
+        # 2. New layers get added automatically that way
+        layersAdded = False
+        for layerName in orderedListOfLayerNames:
+            if not layerName in material.layers:
+                newLayer = material.layers.add()
+                newLayer.name = layerName
+                layersAdded = True
+                print("Adding missing layer %s to material %s" % (layerName,material.name ))
+        
+        if layersAdded:
+            # Sort the layers, so that the layers are
+            # after an initial phase always at the same position.
+            # This makes it easier to find layers in models of other players
+            # Don't sort if no layer has been added -> downgrade situation
+            for targetIndex, layerName in enumerate(orderedListOfLayerNames):
+                currentIndex = self.indexOfNameInCollection(layerName, material.layers)
+                if targetIndex != currentIndex:
+                    material.layers.move(currentIndex, targetIndex)
+            
+        for layerIndex, layerFieldName, layerName in zip(range(len(orderedListOfFieldNames)), orderedListOfFieldNames, orderedListOfLayerNames):
+            layer = material.layers[layerIndex]
+            animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
+            m3Layer = self.createMaterialLayer(layer, animPathPrefix)
+            setattr(m3Material, layerFieldName, [m3Layer])
+            
     def createStandardMaterial(self, materialIndex, material):
         m3Material = self.createInstanceOf("MAT_")
         materialAnimPathPrefix = "m3_standard_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferStandardMaterial(transferer)
-
-        layerIndex = 0
-        for layer, layerFieldName in zip(material.layers, shared.standardMaterialLayerFieldNames):
-            if m3Material.structureDescription.hasField(layerFieldName):
-                animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
-                m3Layer = self.createMaterialLayer(layer, animPathPrefix)
-                setattr(m3Material, layerFieldName, [m3Layer])
-            layerIndex += 1
+        self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
 
         m3Material.unknownAnimationRef1 = self.createNullUInt32AnimationReference(0)
         m3Material.unknownAnimationRef2 = self.createNullUInt32AnimationReference(0)
@@ -1512,13 +1558,7 @@ class Exporter:
         materialAnimPathPrefix = "m3_displacement_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferDisplacementMaterial(transferer)
-
-        layerIndex = 0
-        for layer, layerFieldName in zip(material.layers, shared.displacementMaterialLayerFieldNames):
-            animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
-            m3Layer = self.createMaterialLayer(layer, animPathPrefix)
-            setattr(m3Material, layerFieldName, [m3Layer])
-            layerIndex += 1
+        self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
         return m3Material
 
     def createCompositeMaterial(self, materialIndex, material):
@@ -1541,13 +1581,7 @@ class Exporter:
         materialAnimPathPrefix = "m3_terrain_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferTerrainMaterial(transferer)
-
-        layerIndex = 0
-        for layer, layerFieldName in zip(material.layers, shared.terrainMaterialLayerFieldNames):
-            animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
-            m3Layer = self.createMaterialLayer(layer, animPathPrefix)
-            setattr(m3Material, layerFieldName, [m3Layer])
-            layerIndex += 1
+        self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
         return m3Material
 
     def createVolumeMaterial(self, materialIndex, material):
@@ -1555,13 +1589,7 @@ class Exporter:
         materialAnimPathPrefix = "m3_volume_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferVolumeMaterial(transferer)
-
-        layerIndex = 0
-        for layer, layerFieldName in zip(material.layers, shared.volumeMaterialLayerFieldNames):
-            animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
-            m3Layer = self.createMaterialLayer(layer, animPathPrefix)
-            setattr(m3Material, layerFieldName, [m3Layer])
-            layerIndex += 1
+        self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
         return m3Material
 
     def createCreepMaterial(self, materialIndex, material):
@@ -1569,25 +1597,9 @@ class Exporter:
         materialAnimPathPrefix = "m3_creep_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferCreepMaterial(transferer)
-
-        layerIndex = 0
-        for layer, layerFieldName in zip(material.layers, shared.creepMaterialLayerFieldNames):
-            animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
-            m3Layer = self.createMaterialLayer(layer, animPathPrefix)
-            setattr(m3Material, layerFieldName, [m3Layer])
-            layerIndex += 1
+        self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
         return m3Material
 
-    def createMaterialLayer(self, layer, animPathPrefix):
-        m3Layer =  self.createInstanceOf("LAYR")
-        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, rootObject=self.scene)
-        shared.transferMaterialLayer(transferer)
-        m3Layer.unknownbc0c14e5 = self.createNullUInt32AnimationReference(0)
-        m3Layer.unknowne740df12 = self.createNullFloatAnimationReference(0.0, interpolationType=1)
-        m3Layer.unknown39ade219 = self.createNullUInt16AnimationReference(0)
-        m3Layer.unknowna4ec0796 = self.createNullUInt32AnimationReference(0, interpolationType=1)
-        m3Layer.unknowna44bf452 = self.createNullFloatAnimationReference(1.0, interpolationType=1)
-        return m3Layer
 
     def createNullVector2AnimationReference(self, x, y, interpolationType=1):
         animRef = self.createInstanceOf("Vector2AnimationReference")

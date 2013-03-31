@@ -1091,8 +1091,8 @@
             <field name="alphaMask2Layer" type="Reference" refTo="LAYR" />
             <field name="normalLayer" type="Reference" refTo="LAYR" />
             <field name="heightLayer" type="Reference" refTo="LAYR" />
-            <field name="layer12" type="Reference" refTo="LAYR" />
-            <field name="layer13" type="Reference" refTo="LAYR" />
+            <field name="unknownLayer1" type="Reference" refTo="LAYR" />
+            <field name="unknownLayer2" type="Reference" refTo="LAYR" />
             <field name="unknown3" type="uint32" default-value="0"/>
             <field name="layerBlendType" type="uint32" />
             <field name="emisBlendType" type="uint32" />
@@ -1151,7 +1151,7 @@
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR" />
-            <field name="layer" type="Reference" refTo="LAYR" />
+            <field name="terrainLayer" type="Reference" refTo="LAYR" />
         </fields>
     </structure>
     
@@ -1166,8 +1166,8 @@
             <field name="unknown1" type="uint32" default-value="0" /> <!--Mar Sara bar -->
             <field name="volumeDensity" type="FloatAnimationReference" />
             <field name="colorDefiningLayer" type="Reference" refTo="LAYR" />
+            <field name="unknownLayer1" type="Reference" refTo="LAYR" />
             <field name="unknownLayer2" type="Reference" refTo="LAYR" />
-            <field name="unknownLayer3" type="Reference" refTo="LAYR" />
             <field name="unknown2" type="uint32" expected-value="0" />
             <field name="unknown3" type="uint32" expected-value="0x20" />
         </fields>
@@ -1180,7 +1180,7 @@
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR" />
-            <field name="layer" type="Reference" refTo="LAYR" />
+            <field name="creepLayer" type="Reference" refTo="LAYR" />
         </fields>
     </structure>
 

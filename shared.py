@@ -25,24 +25,6 @@ import random
 import math
 from bpy_extras import io_utils
 
-standardMaterialLayerFieldNames = ["diffuseLayer", "decalLayer", "specularLayer", "glossLayer", "emissiveLayer",
-    "emissive2Layer", "evioLayer", "evioMaskLayer", "alphaMaskLayer", "alphaMask2Layer", 
-    "normalLayer", "heightLayer", "layer12", "layer13"]
-
-standardMaterialLayerNames = ["Diffuse", "Decal", "Specular", "Gloss", "Emissive", 
-    "Emissive 2", "Evio", "Evio Mask", "Alpha Mask", "Alpha Mask 2", "Normal", "Height", "Layer 12", "Layer 13"]
-
-displacementMaterialLayerFieldNames = ["normalLayer", "strengthLayer"]
-displacementMaterialLayerNames = ["Normal", "Strength"]
-
-terrainMaterialLayerFieldNames = ["layer"]
-terrainMaterialLayerNames = ["Terrain"]
-
-volumeMaterialLayerFieldNames = ["colorDefiningLayer", "unknownLayer2", "unknownLayer3"]
-volumeMaterialLayerNames = ["Color Defining Layer", "Layer 2", "Layer 3"]
-
-creepMaterialLayerFieldNames = ["layer"]
-creepMaterialLayerNames = ["Creep"]
 
 materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume", "Unknown", "Creep"]
 standardMaterialTypeIndex = 1
@@ -90,6 +72,38 @@ animObjectIdArmature = "ARMATURE"
 animObjectIdScene = "SCENE"
 lightPrefixMap = {"1": "Star2Omni", "2": "Star2Spot"}
 
+layerFieldNameToNameMap = {
+    "diffuseLayer": "Diffuse",
+    "decalLayer": "Decal",
+    "specularLayer": "Specular",
+    "glossLayer": "Gloss",
+    "emissiveLayer": "Emissive",
+    "emissive2Layer": "Emissive 2",
+    "evioLayer": "Evio",
+    "evioMaskLayer": "Evio Mask",
+    "alphaMaskLayer": "Alpha Mask",
+    "alphaMask2Layer": "Alpha Mask 2", 
+    "normalLayer": "Normal",
+    "heightLayer": "Height",
+    "colorDefiningLayer": "Color Defining Layer",
+    "unknownLayer1": "Unknown Layer 1",
+    "unknownLayer2": "Unknown Layer 2",
+    "strengthLayer": "Strength",
+    "terrainLayer": "Terrain",
+    "creepLayer": "Creep"
+}
+
+def getLayerNameFromFieldName(fieldName):
+    name = layerFieldNameToNameMap.get(fieldName)
+    if name == None:
+        name = fieldName
+    return name
+
+def layerFieldNamesOfM3Material(m3Material):
+    for field in m3Material.structureDescription.fields:
+        if hasattr(field, "referenceStructureDescription"):
+            if field.historyOfReferencedStructures.name == "LAYR":
+                yield field.name
 
 def toValidBoneName(name):
     maxLength = 31

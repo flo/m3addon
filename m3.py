@@ -105,6 +105,13 @@ class M3StructureHistory:
             self.versionToStructureDescriptionMap[version] = structure
         return structure
     
+    def getNewestVersion(self):
+        newestVersion = None
+        for version in self.versionToSizeMap.keys():
+            if newestVersion == None or version > newestVersion:
+                newestVersion = version
+        return self.getVersion(newestVersion)
+    
     def createEmptyArray(self):
         if self.name == "CHAR":
             return None # even no terminating character
