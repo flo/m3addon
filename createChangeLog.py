@@ -87,10 +87,16 @@ class ChangeLogCreator:
                     
                 if currentFieldContent != previousFieldContent:
                     if field.name != "animId" and field.name != "uniqueUnknownNumber" :
-                        self.log("%s changed from %s to %s" % (fieldPath, previousFieldContent, currentFieldContent))
+                        if isinstance(field, m3.IntField):
+                            previousFieldContentStr = hex(previousFieldContent)
+                            currentFieldContentStr = hex(currentFieldContent) 
+                        else:
+                            previousFieldContentStr = str(previousFieldContent)
+                            currentFieldContentStr = str(currentFieldContent)
+                        self.log("%s changed from %s to %s" % (fieldPath, previousFieldContentStr, currentFieldContentStr))
                     else:
                         self.changedAnimationIds += 1
-            
+
             
     
     def log(self, message):
