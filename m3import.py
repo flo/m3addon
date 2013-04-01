@@ -836,6 +836,12 @@ class Importer:
             if hasattr(m3ParticleSystem, "forceChannelsCopy") and m3ParticleSystem.forceChannelsCopy != m3ParticleSystem.forceChannels:
                 print("Warning: Unexpected model content: forceChannels != forceChannelsCopy")
 
+            for spawnPointIndex, m3SpawnPoint in enumerate(m3ParticleSystem.spawnPoints):
+                spawnPoint = particleSystem.spawnPoints.add()
+                spawnPointAnimPathPrefix = animPathPrefix + "spawnPoints[%d]." % spawnPointIndex
+                transferer = M3ToBlenderDataTransferer(self, scene, spawnPointAnimPathPrefix, blenderObject=spawnPoint, m3Object=m3SpawnPoint)
+                shared.transferSpawnPoint(transferer)
+
             if m3ParticleSystem.trailingParticlesIndex != -1:
                 particleSystem.trailingParticlesName = m3IndexToParticleSystemMap.get(m3ParticleSystem.trailingParticlesIndex )
                 

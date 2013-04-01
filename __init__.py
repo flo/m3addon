@@ -770,15 +770,18 @@ def selectOrCreateBone(scene, boneName):
 
  
     
-emissionAreaTypesWithRadius = [shared.emssionAreaTypeSphere, shared.emssionAreaTypeCylinder]
-emissionAreaTypesWithWidth = [shared.emssionAreaTypePlane, shared.emssionAreaTypeCuboid]
-emissionAreaTypesWithLength = [shared.emssionAreaTypePlane, shared.emssionAreaTypeCuboid]
-emissionAreaTypesWithHeight = [shared.emssionAreaTypeCuboid, shared.emssionAreaTypeCylinder]
-emissionAreaTypeList =  [(shared.emssionAreaTypePoint, "Point", "Particles spawn at a certain point"), 
-                        (shared.emssionAreaTypePlane, 'Plane', "Particles spawn in a rectangle"), 
-                        (shared.emssionAreaTypeSphere, 'Sphere', 'Particles spawn in a sphere'),
-                        (shared.emssionAreaTypeCuboid, 'Cuboid', 'Particles spawn in a cuboid'),
-                        (shared.emssionAreaTypeCylinder, 'Cylinder', 'Particles spawn in a cylinder')
+emissionAreaTypesWithRadius = [shared.emissionAreaTypeSphere, shared.emissionAreaTypeCylinder]
+emissionAreaTypesWithWidth = [shared.emissionAreaTypePlane, shared.emissionAreaTypeCuboid]
+emissionAreaTypesWithLength = [shared.emissionAreaTypePlane, shared.emissionAreaTypeCuboid]
+emissionAreaTypesWithHeight = [shared.emissionAreaTypeCuboid, shared.emissionAreaTypeCylinder]
+emissionAreaTypeList =  [(shared.emissionAreaTypePoint, "Point", "Particles spawn at a certain point"), 
+                        (shared.emissionAreaTypePlane, 'Plane', "Particles spawn in a rectangle"), 
+                        (shared.emissionAreaTypeSphere, 'Sphere', 'Particles spawn in a sphere'),
+                        (shared.emissionAreaTypeCuboid, 'Cuboid', 'Particles spawn in a cuboid'),
+                        (shared.emissionAreaTypeCylinder, 'Cylinder', 'Particles spawn in a cylinder'),
+                        (shared.emissionAreaTypeDisc, 'Disc', 'Particles spawn in a cylinder of height 0'),
+                        (shared.emissionAreaTypeMesh, 'Mesh', 'Spawn location are the vertices of a mesh')
+                        
                         ]
 
 particleTypeList = [("0", "Square Billbords", "Quads always rotated towards camera (id 0)"), 
@@ -1043,6 +1046,10 @@ class M3Camera(bpy.types.PropertyGroup):
     falloffEnd = bpy.props.FloatProperty(name="falloffEnd", options={"ANIMATABLE"}, default=2.0)
     depthOfField = bpy.props.FloatProperty(name="depthOfField", options={"ANIMATABLE"}, default=0.5)
 
+class M3ParticleSpawnPoint(bpy.types.PropertyGroup):
+    location = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), name="location", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first two values are the initial and final size of particles")
+
+
 class M3ParticleSystemCopy(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set(), update=handleParticleSystemCopyRename)
     boneName = bpy.props.StringProperty(options=set())
@@ -1091,6 +1098,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     emissionAreaCutoutSize = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), name="tail unk.", size=3, subtype="XYZ", options={"ANIMATABLE"})
     emissionAreaRadius = bpy.props.FloatProperty(default=2.0, name="emis. area radius", update=handleParticleSystemAreaSizeChange, options={"ANIMATABLE"})
     emissionAreaCutoutRadius = bpy.props.FloatProperty(default=0.0, name="spread unk.", options={"ANIMATABLE"})
+    spawnPoints = bpy.props.CollectionProperty(type=M3ParticleSpawnPoint)
     emissionType = bpy.props.EnumProperty(default="0", items=particleEmissionTypeList, options=set())
     randomizeWithParticleSizes2 = bpy.props.BoolProperty(default=False, options=set(), description="Specifies if particles have random sizes")
     particleSizes2 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), name="particle sizes 2", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first two values are used to determine a random initial and final size for a particle")
@@ -1718,12 +1726,19 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.active = particle_system.cutoutEmissionArea and particle_system.emissionAreaType in emissionAreaTypesWithWidth
             sub.prop(particle_system, 'emissionAreaCutoutSize', index=1, text="Width")
             sub = subcol.row()
-            sub.active = particle_system.cutoutEmissionArea and particle_system.emissionAreaType == shared.emssionAreaTypeCuboid
+            sub.active = particle_system.cutoutEmissionArea and particle_system.emissionAreaType == shared.emissionAreaTypeCuboid
             # property has no effect on cylinder cutout
             sub.prop(particle_system, 'emissionAreaCutoutSize', index=2, text="Height")
             sub = subcol.row()
             sub.active = particle_system.cutoutEmissionArea and particle_system.emissionAreaType in emissionAreaTypesWithRadius
             sub.prop(particle_system, 'emissionAreaCutoutRadius',text="Radius")
+            subcol = col.row().column(align=True)
+            subcol.active = particle_system.emissionAreaType == shared.emissionAreaTypeMesh
+            # FIXME Add button to set mesh
+            #subcol.prop_search(particle_system, 'spawnPointsMesh', bpy.data, 'objects' ,text="Spawn Points Mesh", icon='NONE')
+            col.operator("m3.create_spawn_points_from_mesh", text="Spawn Points From Mesh")
+
+            
             
             split = layout.split()
             col = split.column()
@@ -2260,7 +2275,10 @@ class ProjectionPanel(bpy.types.Panel):
             layout.prop(projection, 'unknownbf38195c', text="Unk. bf38195c")
             layout.prop(projection, 'unknown1c58f255', text="Unk. 1c58f255")
             layout.prop(projection, 'unknown15aa6267', text="Unk. 15aa6267")
-            
+    
+    
+    
+    
 class ParticleSystemCopiesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_particle_copies"
     bl_label = "M3 Particle Systems Copies"
@@ -2943,8 +2961,31 @@ class M3_CAMERAS_OT_remove(bpy.types.Operator):
             scene.m3_camera_index-= 1
         return{'FINISHED'}
 
- 
+class M3_PARTICLE_SYSTEMS_OT_create_spawn_points_from_mesh(bpy.types.Operator):
+    bl_idname      = 'm3.create_spawn_points_from_mesh'
+    bl_label       = "Create Spawn Points From Mesh"
+    bl_description = "Uses the vertices of the current mesh as spawn points for particles"
 
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_particle_system_index >= 0:
+            particleSystem = scene.m3_particle_systems[scene.m3_particle_system_index]
+            particleSystem.spawnPoints.clear()
+            activeObject = context.active_object 
+            if activeObject != None and activeObject.type == 'MESH':
+                mesh = activeObject.data
+                mesh.update(calc_tessface=True)
+                particleSystem.spawnPoints.clear()
+                for vertex in mesh.vertices:
+                    spawnPoint = particleSystem.spawnPoints.add()
+                    spawnPoint.location = vertex.co.copy()
+                selectOrCreateBoneForPartileSystem(scene, particleSystem)
+                updateBoenShapesOfParticleSystemCopies(scene, particleSystem)
+                return{'FINISHED'}
+            else:
+                raise Exception("No mesh selected")
+
+        
 class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.particle_systems_add'
     bl_label       = "Add Particle System"

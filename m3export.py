@@ -148,8 +148,7 @@ class Exporter:
         self.structureVersionMap["SDMB"] = 0
         self.structureVersionMap["SD2V"] = 0 
         self.structureVersionMap["FlagAnimationReference"] = 0
-        
-        
+        self.structureVersionMap["SVC3"] = 0
         
 
     def getVersionOf(self, structureName):
@@ -1207,6 +1206,13 @@ class Exporter:
             if m3ParticleSystem.trailingParticlesIndex == -1 and particleSystem.trailingParticlesName != "":
                 raise Exception("The particle system %s has configured a particle system called %s as trailing parameters but it does not exist." % (particleSystem.name, m3ParticleSystem.trailingParticlesName))
             
+            
+            for spawnPointIndex, spawnPoint in enumerate(particleSystem.spawnPoints):
+                m3SpawnPoint = self.createInstanceOf("SVC3")
+                spawnPointAnimPathPrefix = animPathPrefix + "spawnPoints[%d]." % spawnPointIndex
+                transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3SpawnPoint, blenderObject=spawnPoint, animPathPrefix=spawnPointAnimPathPrefix, rootObject=self.scene)
+                shared.transferSpawnPoint(transferer)
+                m3ParticleSystem.spawnPoints.append(m3SpawnPoint)
             for blenderCopyIndex, copy in enumerate(particleSystem.copies):
                 m3Copy = self.createInstanceOf("PARC")
                 boneName = copy.boneName

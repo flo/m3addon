@@ -34,11 +34,13 @@ terrainMaterialTypeIndex = 4
 volumeMaterialTypeIndex = 5
 creepMaterialTypeIndex = 7
 
-emssionAreaTypePoint = "0"
-emssionAreaTypePlane = "1"
-emssionAreaTypeSphere = "2"
-emssionAreaTypeCuboid = "3"
-emssionAreaTypeCylinder = "4"
+emissionAreaTypePoint = "0"
+emissionAreaTypePlane = "1"
+emissionAreaTypeSphere = "2"
+emissionAreaTypeCuboid = "3"
+emissionAreaTypeCylinder = "4"
+emissionAreaTypeDisc = "5"
+emissionAreaTypeMesh = "6"
 
 attachmentVolumeNone = "-1"
 attachmentVolumeCuboid = "0"
@@ -356,26 +358,49 @@ def updateBoneShapeOfShapeObject(shapeObject, bone, poseBone):
 
 def updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone):
     emissionAreaType = particleSystem.emissionAreaType
-    if emissionAreaType == emssionAreaTypePoint:
+    if emissionAreaType == emissionAreaTypePoint:
         untransformedPositions, faces = createMeshDataForSphere(0.02)
-    elif emissionAreaType == emssionAreaTypePlane:
+    elif emissionAreaType == emissionAreaTypePlane:
         length = particleSystem.emissionAreaSize[0]
         width = particleSystem.emissionAreaSize[1]
         height = 0
         untransformedPositions, faces = createMeshDataForCuboid(length, width, height)
-    elif emissionAreaType == emssionAreaTypeSphere:
+    elif emissionAreaType == emissionAreaTypeSphere:
         radius = particleSystem.emissionAreaRadius
         untransformedPositions, faces = createMeshDataForSphere(radius)
-    elif emissionAreaType == emssionAreaTypeCuboid:
+    elif emissionAreaType == emissionAreaTypeCuboid:
         length = particleSystem.emissionAreaSize[0]
         width = particleSystem.emissionAreaSize[1]
         height = particleSystem.emissionAreaSize[2]
         untransformedPositions, faces = createMeshDataForCuboid(length, width, height)
-    else:
+    elif emissionAreaType == emissionAreaTypeCylinder:
         radius = particleSystem.emissionAreaRadius
         height = particleSystem.emissionAreaSize[2]
         untransformedPositions, faces = createMeshDataForCylinder(radius, height)
-       
+    elif emissionAreaType == emissionAreaTypeDisc:
+        radius = particleSystem.emissionAreaRadius
+        height = 0.0
+        untransformedPositions, faces = createMeshDataForCylinder(radius, height)
+    elif emissionAreaType == emissionAreaTypeMesh:
+        untransformedPositions, faces = [], []
+        # Create a sphere for each point:
+        for spawnPoint in particleSystem.spawnPoints:
+            loc = spawnPoint.location
+            size = 0.01
+            subPositions, subFaces = createMeshDataForCuboid(size, size, size)
+            #subPositions = [(0.0, 0.0, 0.0), (0.0, 0.02, 0.0), (0.02, 0.0, 0.0)]
+            #subFaces = [(0,1,2)]
+            subPositionsAtLoc = []
+            for subPos in subPositions:
+                subPositionsAtLoc.append((subPos[0] + loc.x, subPos[1] + loc.y, subPos[2] + loc.z))
+            subFacesFixed = [[fe + len(untransformedPositions) for fe in f] for f in subFaces]
+            untransformedPositions.extend(subPositionsAtLoc)
+            faces.extend(subFacesFixed)
+        print(faces)
+
+    else:
+        untransformedPositions, faces = createMeshDataForSphere(0.02)
+
     boneName = particleSystem.boneName
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
@@ -709,6 +734,9 @@ def getOrCreateDefaultActionFor(objectWithAnimationData):
         defaultAction.id_root = typeIdOfObject(objectWithAnimationData)
         strip = defaultValuesTrack.strips.new(name=stripName, start=0, action=defaultAction)
     return defaultAction
+
+def transferSpawnPoint(transferer):
+    transferer.transferAnimatableVector3("location")
 
 def transferParticleSystem(transferer):
     transferer.transferAnimatableFloat("emissionSpeed1")

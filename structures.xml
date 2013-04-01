@@ -204,7 +204,7 @@
             <version number="0" size="36" />
         </versions>
         <fields>
-            <field name="unknown" type="Vector3AnimationReferenceV0" />
+            <field name="location" type="Vector3AnimationReferenceV0" />
         </fields>
     </structure>
     <structure name="Vector2AnimationReference">
@@ -1398,7 +1398,7 @@
             <field name="unknownb35ad6e1" type="Vector2AnimationReferenceV0" since-version="17" />
             <field name="unknown686e5943" type="Vector3AnimationReferenceV0" since-version="17" />
             <field name="unknown18a90564" type="Vector2AnimationReferenceV0" since-version="17" /> <!-- with init=(1.0, 1.0) and null=(1.0, 1.0)-->
-            <field name="unknown22fec01a" type="Reference" refTo="SVC3" />
+            <field name="spawnPoints" type="Reference" refTo="SVC3" />
             <field name="unknown105fd76d" type="float" default-value="0.0"/>
             <!--unknown5156cf07 Observed values: 2 and 0 -->
             <field name="unknown5156cf07" type="uint32" default-value="2"/>
@@ -1836,7 +1836,7 @@
             <field name="tipColoring" type="ColorAnimationReference" />
             <field name="stretchAmount" type="float" />
             <field till-version="6" name="unknownb41d7d03" type="float" expected-value="0.0"/>
-            <field name="unknownb41d7d03" type="float" expected-value="1.0" since-version="8"/>
+            <field name="unknownb41d7d03" type="float" default-value="1.0" since-version="8"/>
             <field name="stretchLimit" type="float" />
             <field name="unknownc7004d01" type="float" default-value="0.0"/>
             <field name="unknown44a749fe" type="float" default-value="0.0"/>
