@@ -803,23 +803,29 @@ class Importer:
         scene = bpy.context.scene
         showParticleSystems = scene.m3_bone_visiblity_options.showParticleSystems
         print("Loading particle systems")
+        m3IndexToParticleSystemMap = {}
+        for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
+            boneEntry = self.model.bones[m3ParticleSystem.bone]
+            fullBoneName = boneEntry.name
+            if fullBoneName.startswith(shared.star2ParticlePrefix):
+                name = fullBoneName[len(shared.star2ParticlePrefix):]
+            elif fullBoneName.startswith("MR3_Particle_"):
+                name = fullBoneName[len("MR3_Particle_"):]
+            else:
+                print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
+                name = fullBoneName
+            m3IndexToParticleSystemMap[particleSystemIndex] = name
+
         for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
             particleSystem = scene.m3_particle_systems.add()
             particleSystem.updateBlenderBoneShapes = False
             animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
             transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=particleSystem, m3Object=m3ParticleSystem)
             shared.transferParticleSystem(transferer)
-            boneEntry = self.model.bones[m3ParticleSystem.bone]
-            fullBoneName = boneEntry.name
-            if fullBoneName.startswith(shared.star2ParticlePrefix):
-                particleSystem.boneSuffix = fullBoneName[len(shared.star2ParticlePrefix):]
-            elif fullBoneName.startswith("MR3_Particle_"):
-                particleSystem.boneSuffix = fullBoneName[len("MR3_Particle_"):]
-            else:
-                print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
-                particleSystem.boneSuffix = fullBoneName
+
             blenderBoneName = self.boneNames[m3ParticleSystem.bone]
             particleSystem.boneName = blenderBoneName
+            particleSystem.name = m3IndexToParticleSystemMap[particleSystemIndex]
             
             bone = self.armature.bones[blenderBoneName]
             poseBone = self.armatureObject.pose.bones[blenderBoneName]
@@ -830,6 +836,9 @@ class Importer:
             if hasattr(m3ParticleSystem, "forceChannelsCopy") and m3ParticleSystem.forceChannelsCopy != m3ParticleSystem.forceChannels:
                 print("Warning: Unexpected model content: forceChannels != forceChannelsCopy")
 
+            if m3ParticleSystem.trailingParticlesIndex != -1:
+                particleSystem.trailingParticlesName = m3IndexToParticleSystemMap.get(m3ParticleSystem.trailingParticlesIndex )
+                
             for blenderCopyIndex, m3CopyIndex in enumerate(m3ParticleSystem.copyIndices):
                 m3Copy = self.model.particleCopies[m3CopyIndex]
                 copy = particleSystem.copies.add()

@@ -119,16 +119,9 @@ def handleGeometicShapeTypeOrBoneNameUpdate(self, context):
     if shapeObject.updateBlenderBone:
         selectOrCreateBoneForShapeObject(scene, shapeObject)
 
-def handleParticleSystemTypeOrBoneSuffixChange(self, context):
+def handleParticleSystemTypeOrNameChange(self, context):
     particleSystem = self
     scene = context.scene
-    typeName = "Unknown"
-    for typeId, name, description in emissionAreaTypeList:
-        if typeId == particleSystem.emissionAreaType:
-            typeName = name
-    
-    boneSuffix = particleSystem.boneSuffix
-    particleSystem.name = "%s (%s)" % (boneSuffix, typeName)
 
     if particleSystem.updateBlenderBoneShapes:
         currentBoneName = particleSystem.boneName
@@ -529,7 +522,7 @@ def getAttribute(obj, curvePath, curveIndex):
 def findUnusedParticleSystemName(scene):
     usedNames = set()
     for particle_system in scene.m3_particle_systems:
-        usedNames.add(particle_system.boneSuffix)
+        usedNames.add(particle_system.name)
         for copy in particle_system.copies:
             usedNames.add(copy.name)
     unusedName = None
@@ -1061,8 +1054,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
 
     # name attribute seems to be needed for template_list but is not actually in the m3 file
     # The name gets calculated like this: name = boneSuffix (type)
-    name = bpy.props.StringProperty(options=set())
-    boneSuffix = bpy.props.StringProperty(options=set(), update=handleParticleSystemTypeOrBoneSuffixChange, default="Particle System")
+    name = bpy.props.StringProperty(options=set(), update=handleParticleSystemTypeOrNameChange)
     boneName = bpy.props.StringProperty(options=set())
     updateBlenderBoneShapes = bpy.props.BoolProperty(default=True, options=set())
     materialName = bpy.props.StringProperty(options=set())
@@ -1093,7 +1085,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     unknownFloat2c = bpy.props.FloatProperty(default=2.0, name="unknownFloat2c",options=set())
     trailingEnabled = bpy.props.BoolProperty(default=True, options=set(), description="If trailing is enabled then particles don't follow the particle emitter")
     emissionRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
-    emissionAreaType = bpy.props.EnumProperty(default="2", items=emissionAreaTypeList, update=handleParticleSystemTypeOrBoneSuffixChange, options=set())
+    emissionAreaType = bpy.props.EnumProperty(default="2", items=emissionAreaTypeList, update=handleParticleSystemTypeOrNameChange, options=set())
     emissionAreaSize = bpy.props.FloatVectorProperty(default=(0.1, 0.1, 0.1), name="emis. area size", update=handleParticleSystemAreaSizeChange, size=3, subtype="XYZ", options={"ANIMATABLE"})
     tailUnk1 = bpy.props.FloatVectorProperty(default=(0.05, 0.05, 0.05), name="tail unk.", size=3, subtype="XYZ", options={"ANIMATABLE"})
     emissionAreaRadius = bpy.props.FloatProperty(default=2.0, name="emis. area radius", update=handleParticleSystemAreaSizeChange, options={"ANIMATABLE"})
@@ -1112,7 +1104,7 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     phase1EndImageIndex = bpy.props.IntProperty(default=0, min=0, max=255, subtype="UNSIGNED", options=set(), description="Specifies the cell index shown at end of phase 1 when the image got divided into rows and collumns")
     phase2StartImageIndex = bpy.props.IntProperty(default=0, min=0, max=255, subtype="UNSIGNED", options=set(), description="Specifies the cell index shown at start of phase 2 when the image got divided into rows and collumns")
     phase2EndImageIndex = bpy.props.IntProperty(default=0, min=0, max=255, subtype="UNSIGNED", options=set(), description="Specifies the cell index shown at end of phase 2 when the image got divided into rows and collumns")
-    relativePhase1Length = bpy.props.FloatProperty(default=1.0, min=0.0, max=1.0, subtype="FACTOR" ,name="relative phase 1 length", options=set(), description="A value of 0.4 means that 40% of the lifetime of the particle the phase 1 image animation will play")
+    relativePhase1Length = bpy.props.FloatProperty(default=1.0, min=0.0, max=1.0, subtype="FACTOR", name="relative phase 1 length", options=set(), description="A value of 0.4 means that 40% of the lifetime of the particle the phase 1 image animation will play")
     numberOfColumns = bpy.props.IntProperty(default=0, min=0, subtype="UNSIGNED", name="columns", options=set(), description="Specifies in how many columns the image gets divided")
     numberOfRows = bpy.props.IntProperty(default=0, min=0, subtype="UNSIGNED", name="rows", options=set(), description="Specifies in how many rows the image gets divided")
     columnWidth = bpy.props.FloatProperty(default=float("inf"), min=0.0, max=1.0, name="columnWidth", options=set(), description="Specifies the width of one column, relative to an image with width 1")
@@ -1127,6 +1119,9 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     worldForceChannels = bpy.props.BoolVectorProperty(default=tuple(16*[False]), size=16, subtype="LAYER", options=set(), description="If a force shares a force channel with a particle system then it affects it")
     copies = bpy.props.CollectionProperty(type=M3ParticleSystemCopy)
     copyIndex = bpy.props.IntProperty(options=set(), update=handlePartileSystemCopyIndexChanged)
+    trailingParticlesName = bpy.props.StringProperty(options=set())
+    trailingParticlesChance = bpy.props.FloatProperty(default=0.0, min=0.0, max=1.0, subtype="FACTOR", name="trailingParticlesChance",options=set())
+    trailingParticlesRate = bpy.props.FloatProperty(default=10.0, name="trail. emiss. rate", options={"ANIMATABLE"})
     sort = bpy.props.BoolProperty(options=set())
     collideTerrain = bpy.props.BoolProperty(options=set())
     collideObjects = bpy.props.BoolProperty(options=set())
@@ -1695,7 +1690,7 @@ class ParticleSystemsPanel(bpy.types.Panel):
         if currentIndex >= 0 and currentIndex < len(scene.m3_particle_systems):
             particle_system = scene.m3_particle_systems[currentIndex]
             layout.separator()
-            layout.prop(particle_system, 'boneSuffix',text="Name")
+            layout.prop(particle_system, 'name',text="Name")
             layout.prop_search(particle_system, 'materialName', scene, 'm3_material_references', text="Material", icon='NONE')
             split = layout.split()
             col = split.column()
@@ -1862,6 +1857,14 @@ class ParticleSystemsPanel(bpy.types.Panel):
             
             layout.prop(particle_system, 'localForceChannels', text="Local Force Channels")
             layout.prop(particle_system, 'worldForceChannels', text="World Force Channels")
+
+            split = layout.split()
+            col = split.column()
+            col.prop_search(particle_system, 'trailingParticlesName', scene, 'm3_particle_systems', text="Trailing Particles", icon='NONE')
+            sub = col.column(align=True)
+            sub.active = particle_system.trailingParticlesName != ""
+            sub.prop(particle_system, "trailingParticlesChance", text="Chance to trail")
+            sub.prop(particle_system, "trailingParticlesRate", text="Tailing  Rate")
 
             layout.prop(particle_system, "unknownFloat4", text="Unknown Float 4")
             layout.prop(particle_system, "unknownFloat5", text="Unknown Float 5")
@@ -2938,11 +2941,11 @@ class M3_PARTICLE_SYSTEMS_OT_add(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         particle_system = scene.m3_particle_systems.add()
-        particle_system.boneSuffix = findUnusedParticleSystemName(scene)
+        particle_system.name = findUnusedParticleSystemName(scene)
         if len(scene.m3_material_references) >= 1:
             particle_system.materialName = scene.m3_material_references[0].name
 
-        handleParticleSystemTypeOrBoneSuffixChange(particle_system, context)
+        handleParticleSystemTypeOrNameChange(particle_system, context)
         
         # The following selection causes a new bone to be created:
         scene.m3_particle_system_index = len(scene.m3_particle_systems)-1

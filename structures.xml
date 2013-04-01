@@ -1409,9 +1409,9 @@
             <field name="nullOfUnknown21ca0cea" size="4" expected-value="0x00000000" />
             <field name="endOfUnknown21ca0cea" size="4" default-value="0xffffffff" />
             <field name="unknown1e97145f" type="FloatAnimationReference" /> <!-- default 1.0 -->
-            <field name="unknown1b8e6ea3" size="4" expected-value="0xffffffff"/>
-            <field name="unknown19a25d40" type="float" default-value="0.0"/>
-            <field name="unknownd3bfa169" type="FloatAnimationReference" />
+            <field name="trailingParticlesIndex" type="int32" default-value="-1" />
+            <field name="trailingParticlesChance" type="float" default-value="0.0"/>
+            <field name="trailingParticlesRate" type="FloatAnimationReference" />
             <field name="unknownfdab7ff3" size="8" expected-value="0xffffffff00000000"/>
             <field name="usedModel" size="12" type="Reference" refTo="SCHR" /> 
             <field name="copyIndices" size="12" type="Reference"  refTo="U32_" />

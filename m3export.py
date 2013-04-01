@@ -1152,6 +1152,11 @@ class Exporter:
 
     def initParticles(self, model):
         scene = self.scene
+
+        particleSystemNameToIndexMap = {}
+        for particleSystemIndex, particleSystem in enumerate(scene.m3_particle_systems):
+            particleSystemNameToIndexMap[particleSystem.name] = particleSystemIndex
+        
         for particleSystemIndex, particleSystem in enumerate(scene.m3_particle_systems):
             boneName = particleSystem.boneName
             boneIndex = self.boneNameToBoneIndexMap.get(boneName)
@@ -1191,7 +1196,6 @@ class Exporter:
                 m3ParticleSystem.unknown18a90564 = self.createNullVector2AnimationReference(x=0.0, y=0.0, interpolationType=1)
             m3ParticleSystem.unknown21ca0cea = self.createNullAnimHeader(interpolationType=1)
             m3ParticleSystem.unknown1e97145f = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
-            m3ParticleSystem.unknownd3bfa169 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
             model.particles.append(m3ParticleSystem)
             
             materialReferenceIndex = self.materialNameToNewReferenceIndexMap.get(particleSystem.materialName)
@@ -1199,6 +1203,10 @@ class Exporter:
                 raise Exception("The particle system %s uses '%s' as material, but no m3 material with that name exist!" % (particleSystem.name, particleSystem.materialName))
             m3ParticleSystem.materialReferenceIndex = materialReferenceIndex
             m3ParticleSystem.worldForceChannelsCopy = m3ParticleSystem.worldForceChannels
+            m3ParticleSystem.trailingParticlesIndex = particleSystemNameToIndexMap.get(particleSystem.trailingParticlesName, -1)
+            if m3ParticleSystem.trailingParticlesIndex == -1 and particleSystem.trailingParticlesName != "":
+                raise Exception("The particle system %s has configured a particle system called %s as trailing parameters but it does not exist." % (particleSystem.name, m3ParticleSystem.trailingParticlesName))
+            
             for blenderCopyIndex, copy in enumerate(particleSystem.copies):
                 m3Copy = self.createInstanceOf("PARC")
                 boneName = copy.boneName

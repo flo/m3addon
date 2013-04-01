@@ -570,7 +570,7 @@ class IntField(PrimitiveField):
         
     def validateContent(self, fieldContent, fieldPath):
         if (type(fieldContent) != int):
-            raise Exception("%s is not an int but a %s!" % (fieldPath), type(fieldContent))
+            raise Exception("%s is not an int but a %s!" % (fieldPath, type(fieldContent)))
         if (fieldContent < self.minValue) or (fieldContent > self.maxValue):
             raise Exception("%s has value %d which is not in range [%d, %d]"  % (fieldPath, fieldContent, self.minValue, self.maxValue))
 

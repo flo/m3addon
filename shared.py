@@ -117,7 +117,7 @@ def boneNameForAttachmentPoint(attachmentPoint):
     return bonePrefix + attachmentPoint.boneSuffix
 
 def boneNameForPartileSystem(particleSystem):
-    return toValidBoneName(star2ParticlePrefix + particleSystem.boneSuffix)
+    return toValidBoneName(star2ParticlePrefix + particleSystem.name)
     
 def boneNameForRibbon(ribbon):
     return toValidBoneName(star2RibbonPrefix + ribbon.boneSuffix)
@@ -769,6 +769,8 @@ def transferParticleSystem(transferer):
     transferer.transferFloat("lengthWidthRatio")
     transferer.transfer16Bits("localForceChannels")
     transferer.transfer16Bits("worldForceChannels")
+    transferer.transferFloat("trailingParticlesChance")
+    transferer.transferAnimatableFloat("trailingParticlesRate")
     transferer.transferBit("flags", "sort")
     transferer.transferBit("flags", "collideTerrain")
     transferer.transferBit("flags", "collideObjects")
