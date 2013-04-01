@@ -1086,10 +1086,11 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     trailingEnabled = bpy.props.BoolProperty(default=True, options=set(), description="If trailing is enabled then particles don't follow the particle emitter")
     emissionRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
     emissionAreaType = bpy.props.EnumProperty(default="2", items=emissionAreaTypeList, update=handleParticleSystemTypeOrNameChange, options=set())
+    cutoutEmissionArea = bpy.props.BoolProperty(options=set())
     emissionAreaSize = bpy.props.FloatVectorProperty(default=(0.1, 0.1, 0.1), name="emis. area size", update=handleParticleSystemAreaSizeChange, size=3, subtype="XYZ", options={"ANIMATABLE"})
-    tailUnk1 = bpy.props.FloatVectorProperty(default=(0.05, 0.05, 0.05), name="tail unk.", size=3, subtype="XYZ", options={"ANIMATABLE"})
+    emissionAreaCutoutSize = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), name="tail unk.", size=3, subtype="XYZ", options={"ANIMATABLE"})
     emissionAreaRadius = bpy.props.FloatProperty(default=2.0, name="emis. area radius", update=handleParticleSystemAreaSizeChange, options={"ANIMATABLE"})
-    spreadUnk = bpy.props.FloatProperty(default=0.05, name="spread unk.", options={"ANIMATABLE"})
+    emissionAreaCutoutRadius = bpy.props.FloatProperty(default=0.0, name="spread unk.", options={"ANIMATABLE"})
     emissionType = bpy.props.EnumProperty(default="0", items=particleEmissionTypeList, options=set())
     randomizeWithParticleSizes2 = bpy.props.BoolProperty(default=False, options=set(), description="Specifies if particles have random sizes")
     particleSizes2 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), name="particle sizes 2", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first two values are used to determine a random initial and final size for a particle")
@@ -1126,7 +1127,6 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     collideTerrain = bpy.props.BoolProperty(options=set())
     collideObjects = bpy.props.BoolProperty(options=set())
     spawnOnBounce = bpy.props.BoolProperty(options=set())
-    useInnerShape = bpy.props.BoolProperty(options=set())
     inheritEmissionParams = bpy.props.BoolProperty(options=set())
     inheritParentVel = bpy.props.BoolProperty(options=set())
     sortByZHeight = bpy.props.BoolProperty(options=set())
@@ -1695,20 +1695,35 @@ class ParticleSystemsPanel(bpy.types.Panel):
             split = layout.split()
             col = split.column()
             col.row().label("Emis. Area:")
-            col = col.row().column(align=True)
-            col.prop(particle_system, 'emissionAreaType', text="")
-            sub = col.row()
+            subcol = col.row().column(align=True)
+            subcol.prop(particle_system, 'emissionAreaType', text="")
+            sub = subcol.row()
             sub.active = particle_system.emissionAreaType in emissionAreaTypesWithLength
             sub.prop(particle_system, 'emissionAreaSize', index=0, text="Length")
-            sub =  col.row()
+            sub =  subcol.row()
             sub.active = particle_system.emissionAreaType in emissionAreaTypesWithWidth
             sub.prop(particle_system, 'emissionAreaSize', index=1, text="Width")
-            sub = col.row()
+            sub = subcol.row()
             sub.active = particle_system.emissionAreaType in emissionAreaTypesWithHeight
             sub.prop(particle_system, 'emissionAreaSize', index=2, text="Height")
-            sub = col.row()
+            sub = subcol.row()
             sub.active = particle_system.emissionAreaType in emissionAreaTypesWithRadius
             sub.prop(particle_system, 'emissionAreaRadius',text="Radius")
+            col.row().prop(particle_system, 'cutoutEmissionArea', text="Cutout Emission Area:")
+            subcol = col.row().column(align=True)
+            sub = subcol.row()
+            sub.active = particle_system.cutoutEmissionArea and particle_system.emissionAreaType in emissionAreaTypesWithLength
+            sub.prop(particle_system, 'emissionAreaCutoutSize', index=0, text="Length")
+            sub =  subcol.row()
+            sub.active = particle_system.cutoutEmissionArea and particle_system.emissionAreaType in emissionAreaTypesWithWidth
+            sub.prop(particle_system, 'emissionAreaCutoutSize', index=1, text="Width")
+            sub = subcol.row()
+            sub.active = particle_system.cutoutEmissionArea and particle_system.emissionAreaType == shared.emssionAreaTypeCuboid
+            # property has no effect on cylinder cutout
+            sub.prop(particle_system, 'emissionAreaCutoutSize', index=2, text="Height")
+            sub = subcol.row()
+            sub.active = particle_system.cutoutEmissionArea and particle_system.emissionAreaType in emissionAreaTypesWithRadius
+            sub.prop(particle_system, 'emissionAreaCutoutRadius',text="Radius")
             
             split = layout.split()
             col = split.column()
@@ -1843,8 +1858,6 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.prop(particle_system, "unknownFloat2b", text="Y")
             sub.prop(particle_system, "unknownFloat2c", text="Z")
                         
-            layout.prop(particle_system, 'tailUnk1', text="Tail Unk1")
-            layout.prop(particle_system, 'spreadUnk', text="Spread Unk")
             layout.prop(particle_system, 'partEmit', text="Part. Emit.")
 
 
@@ -1874,7 +1887,6 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(particle_system, 'collideTerrain', text="Collide Terrain")
             layout.prop(particle_system, 'collideObjects', text="Collide Objects")
             layout.prop(particle_system, 'spawnOnBounce', text="Spawn On Bounce")
-            layout.prop(particle_system, 'useInnerShape', text="Use Inner Shape")
             layout.prop(particle_system, 'inheritEmissionParams', text="Inherit Emission Params")
             layout.prop(particle_system, 'inheritParentVel', text="Inherit Parent Vel")
             layout.prop(particle_system, 'sortByZHeight', text="Sort By Z Height")

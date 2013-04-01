@@ -1261,9 +1261,9 @@
             <field name="emissionRate" type="FloatAnimationReference" />
             <field name="emissionAreaType" type="uint32" />
             <field name="emissionAreaSize" type="Vector3AnimationReferenceV0" />
-            <field name="tailUnk1" type="Vector3AnimationReferenceV0" />
+            <field name="emissionAreaCutoutSize" type="Vector3AnimationReferenceV0" /> <!-- was tailUnk1 -->
             <field name="emissionAreaRadius" type="FloatAnimationReference" />
-            <field name="spreadUnk" type="FloatAnimationReference" />
+            <field name="emissionAreaCutoutRadius" type="FloatAnimationReference" /> <!-- was spreadUnk -->
             <field name="unknown51fe79f5" size="12" expected-value="0x000000000000000000000000" since-version="17" />
             <field name="emissionType" type="uint32" />
             <field name="randomizeWithParticleSizes2" type="uint32" />
@@ -1363,7 +1363,7 @@
                     <bit mask="0x2" name="collideTerrain" />
                     <bit mask="0x4" name="collideObjects" />
                     <bit mask="0x8" name="spawnOnBounce" />
-                    <bit mask="0x10" name="useInnerShape" />
+                    <bit mask="0x10" name="cutoutEmissionArea" />
                     <bit mask="0x20" name="inheritEmissionParams" />
                     <bit mask="0x40" name="inheritParentVel"/>
                     <bit mask="0x80" name="sortByZHeight"/>
