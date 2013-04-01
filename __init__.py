@@ -1123,7 +1123,8 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     unknownFloat7 = bpy.props.FloatProperty(default=1.0, name="unknownFloat7",options=set())
     particleType = bpy.props.EnumProperty(default="0", items=particleTypeList, options=set())
     lengthWidthRatio = bpy.props.FloatProperty(default=1.0, name="lengthWidthRatio",options=set())
-    forceChannels = bpy.props.BoolVectorProperty(default=tuple(32*[False]), size=32, subtype="LAYER", options=set(), description="If a force shares a force channel with a particle system then it affects it")
+    localForceChannels = bpy.props.BoolVectorProperty(default=tuple(16*[False]), size=16, subtype="LAYER", options=set(), description="If a model internal force shares a local force channel with a particle system then it affects it")
+    worldForceChannels = bpy.props.BoolVectorProperty(default=tuple(16*[False]), size=16, subtype="LAYER", options=set(), description="If a force shares a force channel with a particle system then it affects it")
     copies = bpy.props.CollectionProperty(type=M3ParticleSystemCopy)
     copyIndex = bpy.props.IntProperty(options=set(), update=handlePartileSystemCopyIndexChanged)
     sort = bpy.props.BoolProperty(options=set())
@@ -1859,7 +1860,8 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.active = particle_system.particleType in ["1", "6"]
             sub.prop(particle_system, 'lengthWidthRatio', text="Length/Width Ratio")
             
-            layout.prop(particle_system, 'forceChannels', text="Force Channels")
+            layout.prop(particle_system, 'localForceChannels', text="Local Force Channels")
+            layout.prop(particle_system, 'worldForceChannels', text="World Force Channels")
 
             layout.prop(particle_system, "unknownFloat4", text="Unknown Float 4")
             layout.prop(particle_system, "unknownFloat5", text="Unknown Float 5")

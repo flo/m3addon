@@ -1198,8 +1198,7 @@ class Exporter:
             if materialReferenceIndex == None:
                 raise Exception("The particle system %s uses '%s' as material, but no m3 material with that name exist!" % (particleSystem.name, particleSystem.materialName))
             m3ParticleSystem.materialReferenceIndex = materialReferenceIndex
-            m3ParticleSystem.forceChannelsCopy = m3ParticleSystem.forceChannels
-
+            m3ParticleSystem.worldForceChannelsCopy = m3ParticleSystem.worldForceChannels
             for blenderCopyIndex, copy in enumerate(particleSystem.copies):
                 m3Copy = self.createInstanceOf("PARC")
                 boneName = copy.boneName

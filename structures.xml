@@ -1248,9 +1248,10 @@
             <field name="unknownFloat2c" type="float" default-value="1.0"/>
             <field till-version="12" name="unknown4" type="float" default-value="0.0" />
             <field till-version="12" name="trailingEnabled" type="uint32" />
-            <field name="forceChannels" type="uint32" default-value="0" />
-            <!-- forceChannelsCopy seems to have the same value as forceChannels --> 
-            <field name="forceChannelsCopy" type="uint32" default-value="0" />
+            <field name="localForceChannels" type="uint16" default-value="0" />
+            <field name="worldForceChannels" type="uint16" default-value="0" />
+            <field name="forceChannelsFillerBytes" type="uint16" default-value="0" />
+            <field name="worldForceChannelsCopy" type="uint16" default-value="0" />
             <field name="unknownFloat3a" type="float" default-value="0.0" />
             <field name="unknownFloat3b" type="float" default-value="0.0" />
             <field name="unknownFloat3c" type="float" default-value="0.0" />
