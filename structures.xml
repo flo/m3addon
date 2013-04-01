@@ -1209,10 +1209,11 @@
         <fields>
             <field name="bone" type="uint32" />
             <field name="materialReferenceIndex" type="uint32" />
-            <field name="randomizationFlags" type="uint32" default-value="0" since-version="17" >
+            <field name="additionalFlags" type="uint32" default-value="0" since-version="17" >
                 <bits>
                     <bit mask="0x1" name="randomizeWithEmissionSpeed2" />
                     <bit mask="0x2" name="randomizeWithLifespan2" />
+                    <bit mask="0x8" name="trailingEnabled" />
                 </bits>
             </field>
             <field name="emissionSpeed1" type="FloatAnimationReference" />
@@ -1245,15 +1246,15 @@
             <field name="unknownFloat2a" type="float" default-value="0.0" />
             <field name="unknownFloat2b" type="float" default-value="1.0"/> <!-- external force strength?-->
             <field name="unknownFloat2c" type="float" default-value="1.0"/>
-            <field name="unknown4" type="float" default-value="0.0" />
-            <field name="trailingEnabled" type="uint32" />
+            <field till-version="12" name="unknown4" type="float" default-value="0.0" />
+            <field till-version="12" name="trailingEnabled" type="uint32" />
             <field name="forceChannels" type="uint32" default-value="0" />
             <!-- forceChannelsCopy seems to have the same value as forceChannels --> 
-            <field till-version="12" name="forceChannelsCopy" type="uint32" default-value="0" />
+            <field name="forceChannelsCopy" type="uint32" default-value="0" />
             <field name="unknownFloat3a" type="float" default-value="0.0" />
             <field name="unknownFloat3b" type="float" default-value="0.0" />
             <field name="unknownFloat3c" type="float" default-value="0.0" />
-            <field till-version="12" name="unknownFloat3d" type="float" default-value="0.1" />
+            <field name="unknownFloat3d" type="float" default-value="0.1" />
             <field name="indexPlusHighestIndex" type="uint32" />
             <field name="maxParticles" type="uint32" />
             <field name="emissionRate" type="FloatAnimationReference" />
