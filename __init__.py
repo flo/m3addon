@@ -127,7 +127,7 @@ def handleParticleSystemTypeOrNameChange(self, context):
         currentBoneName = particleSystem.boneName
         calculatedBoneName = shared.boneNameForPartileSystem(particleSystem)
 
-        if currentBoneName != calculatedBoneName:
+        if currentBoneName!= calculatedBoneName:
             bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
             if bone != None:
                 bone.name = calculatedBoneName
@@ -135,8 +135,8 @@ def handleParticleSystemTypeOrNameChange(self, context):
             else:
                 particleSystem.boneName = calculatedBoneName
 
-            selectOrCreateBoneForPartileSystem(scene, particleSystem)
-            updateBoenShapesOfParticleSystemCopies(scene, particleSystem)
+        selectOrCreateBoneForPartileSystem(scene, particleSystem)
+        updateBoenShapesOfParticleSystemCopies(scene, particleSystem)
         
 def handleParticleSystemCopyRename(self, context):
     scene = context.scene
