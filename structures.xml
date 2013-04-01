@@ -1227,14 +1227,14 @@
             <field name="lifespan2" type="FloatAnimationReference" />
             <field till-version="12" name="randomizeWithLifespan2" type="uint32" />
             <field name="unknownf21cc980" size="12" expected-value="0x000000000000000000000000" />
-            <field name="unknown82a208f7" size="4" default-value="0x00000080" since-version="17" />
-            <!-- it seems unknown93aad73b must be > 0 or otherwise nothing can be seen-->
-            <field name="unknown93aad73b" type="float" default-value="0.5" since-version="17" />
             <field name="zAcceleration" type="float" />
             <field name="sizeAnimationMiddle" type="float" default-value="0.5" />
             <field name="colorAnimationMiddle" type="float" default-value="0.5" />
             <field name="alphaAnimationMiddle" type="float" default-value="0.5" />
             <field name="rotationAnimationMiddle" type="float" default-value="0.5" />
+            <field name="unknown82a208f7" size="4" default-value="0x00000080" since-version="17" />
+            <!-- it seems unknown93aad73b must be > 0 or otherwise nothing can be seen-->
+            <field name="unknown93aad73b" type="float" default-value="0.5" since-version="17" />
             <field name="unknown74620ffe" type="float" default-value="0.0" since-version="17" />
             <field name="unknown1525cb58" type="float" default-value="0.0" since-version="17" />
             <field name="particleSizes1" type="Vector3AnimationReferenceV0" />
