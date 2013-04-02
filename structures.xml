@@ -1029,7 +1029,7 @@
             <field name="tintCutout" type="float" default-value="1.0" />
             <field name="unknown15" type="float" default-value="1.0" />
             <field name="unknown763da0ad" size="8" expected-value="0x0000000000000000" since-version="25" />
-            <field name="unknowncb2ee9e9" type="float" expected-value="1.0" since-version="25" />
+            <field name="unknowncb2ee9e9" type="float" default-value="1.0" since-version="25" />
             <field name="unknown84f66a3e" type="float" expected-value="1.0" since-version="25" />
             <field name="unknownf3e2933a" type="float" expected-value="1.0" since-version="25" />
             <field name="unknowned0e748d" size="12" expected-value="0x000000000000000000000000" since-version="25" />
