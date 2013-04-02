@@ -1518,7 +1518,7 @@
         </versions>
         <fields>
             <field name="forceType" type="uint32" />
-            <field name="unknownAt4" type="uint32" expected-value="0" />
+            <field name="unknownAt4" type="uint32" default-value="0" />
             <field name="unknownAt8" type="uint32" default-value="0" />
             <field name="boneIndex" type="uint32" />
             <field name="unknownAt16" type="uint32" default-value="0" />
