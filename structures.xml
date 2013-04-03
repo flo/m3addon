@@ -1209,10 +1209,11 @@
         <fields>
             <field name="bone" type="uint32" />
             <field name="materialReferenceIndex" type="uint32" />
-            <field name="additionalFlags" type="uint32" default-value="0" since-version="17" >
+            <field name="additionalFlags" type="uint32" default-value="4" since-version="17" >
                 <bits>
                     <bit mask="0x1" name="randomizeWithEmissionSpeed2" />
                     <bit mask="0x2" name="randomizeWithLifespan2" />
+                    <bit mask="0x4" name="randomizeWithMass2" />
                     <bit mask="0x8" name="trailingEnabled" />
                 </bits>
             </field>
@@ -1243,10 +1244,10 @@
             <field name="middleColor1" type="ColorAnimationReference" />
             <field name="finalColor1" type="ColorAnimationReference" />
             <field name="slowdown" type="float" />
-            <field name="unknownFloat2a" type="float" default-value="0.0" />
-            <field name="unknownFloat2b" type="float" default-value="1.0"/> <!-- external force strength?-->
+            <field name="mass" type="float" default-value="0.001" /> <!-- was unknownFloat2a -->
+            <field name="mass2" type="float" default-value="1.0"/> <!-- was unknownFloat2b -->
             <field name="unknownFloat2c" type="float" default-value="1.0"/>
-            <field till-version="12" name="unknown4" type="float" default-value="0.0" />
+            <field till-version="12" name="unknown4" type="uint32" default-value="0" />
             <field till-version="12" name="trailingEnabled" type="uint32" />
             <field name="localForceChannels" type="uint16" default-value="0" />
             <field name="worldForceChannels" type="uint16" default-value="0" />

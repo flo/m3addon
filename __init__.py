@@ -1087,8 +1087,9 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     middleColor1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 1.0), min = 0.0, max = 1.0, name="unknown color 1", size=4, subtype="COLOR", options={"ANIMATABLE"})
     finalColor1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 0.5), min = 0.0, max = 1.0, name="final color 1", size=4, subtype="COLOR", options={"ANIMATABLE"}, description="The color the particle will have when it vanishes")
     slowdown = bpy.props.FloatProperty(default=1.0, min=0.0, name="slowdown" ,options=set(), description="The amounth of speed reduction in the particles lifetime")
-    unknownFloat2a = bpy.props.FloatProperty(default=0.0, name="unknownFloat2a",options=set())
-    unknownFloat2b = bpy.props.FloatProperty(default=1.0, name="unknownFloat2b",options=set())
+    mass = bpy.props.FloatProperty(default=0.001, name="mass",options=set())
+    mass2 = bpy.props.FloatProperty(default=1.0, name="mass2",options=set())
+    randomizeWithMass2 = bpy.props.BoolProperty(options=set(),default=True, description="Specifies if the second mass value should be used to generate random mass values")
     unknownFloat2c = bpy.props.FloatProperty(default=2.0, name="unknownFloat2c",options=set())
     trailingEnabled = bpy.props.BoolProperty(default=True, options=set(), description="If trailing is enabled then particles don't follow the particle emitter")
     emissionRate = bpy.props.FloatProperty(default=10.0, name="emiss. rate", options={"ANIMATABLE"})
@@ -1862,16 +1863,25 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.prop(particle_system, 'phase2EndImageIndex', text="Final")
             layout.prop(particle_system, 'relativePhase1Length', text="Relative Phase 1 Length")
 
-            
             layout.prop(particle_system, 'slowdown', text="Slowdown")
+
+            split = layout.split()
+            col = split.column()
+            col.label(text="Mass:")
+            sub = col.column(align=True)
+            sub.prop(particle_system, "mass", text="")
+            col = split.column()
+            col.prop(particle_system, "randomizeWithMass2", text="Randomize With:")
+            sub = col.column(align=True)
+            sub.active = particle_system.randomizeWithMass2
+            sub.prop(particle_system, "mass2", text="")
             
+
             split = layout.split()
             col = split.column()
             sub = col.column(align=True)
-            sub.label(text="Unknown Floats 2:")
-            sub.prop(particle_system, "unknownFloat2a", text="X")
-            sub.prop(particle_system, "unknownFloat2b", text="Y")
-            sub.prop(particle_system, "unknownFloat2c", text="Z")
+
+            layout.prop(particle_system, "unknownFloat2c", text="Unknown f2c")
                         
             layout.prop(particle_system, 'partEmit', text="Part. Emit.")
 
