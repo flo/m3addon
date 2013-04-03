@@ -1095,11 +1095,9 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     colorHoldTime = bpy.props.FloatProperty(default=0.3, min=0.0, max=1.0, name="colorHoldTime", options=set(), description="Factor of particle lifetime to hold the middle color and alpha value")
     alphaHoldTime = bpy.props.FloatProperty(default=0.3, min=0.0, max=1.0, name="alphaHoldTime", options=set(), description="Factor of particle lifetime to hold the middle rotation value")    
     rotationHoldTime = bpy.props.FloatProperty(default=0.3, min=0.0, max=1.0, name="rotationHoldTime", options=set(), description="Factor of particle lifetime to hold the middle rotation value")    
-    
     sizeSmoothingType = bpy.props.EnumProperty(default="0", items=particleAnimationSmoothTypeList, options=set(), description="Determines the shape of the size curve based on the intial, middle , final and hold time value")    
     colorSmoothingType = bpy.props.EnumProperty(default="0", items=particleAnimationSmoothTypeList, options=set(), description="Determines the shape of the color curve based on the intial, middle , final and hold time value")    
     rotationSmoothingType = bpy.props.EnumProperty(default="0", items=particleAnimationSmoothTypeList, options=set(), description="Determines the shape of the rotation curve based on the intial, middle , final and hold time value")    
-    
     particleSizes1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), name="particle sizes 1", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first two values are the initial and final size of particles")
     rotationValues1 = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), name="rotation values 1", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first value is the inital rotation and the second value is the rotation speed")
     initialColor1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 1.0), min = 0.0, max = 1.0, name="initial color 1", size=4, subtype="COLOR", options={"ANIMATABLE"}, description="Color of the particle when it gets emitted")
@@ -1151,6 +1149,10 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     trailingParticlesName = bpy.props.StringProperty(options=set())
     trailingParticlesChance = bpy.props.FloatProperty(default=0.0, min=0.0, max=1.0, subtype="FACTOR", name="trailingParticlesChance",options=set())
     trailingParticlesRate = bpy.props.FloatProperty(default=10.0, name="trail. emiss. rate", options={"ANIMATABLE"})
+    noiseAmplitude = bpy.props.FloatProperty(default=0.0, name="noiseAmplitude",options=set())
+    noiseFrequency = bpy.props.FloatProperty(default=0.0, name="noiseFrequency",options=set())
+    noiseCohesion = bpy.props.FloatProperty(default=0.0, name="noiseCohesion",options=set(), description="Prevents the particles from spreading to far from noise")
+    noiseEdge = bpy.props.FloatProperty(default=0.0, min=0.0, max=0.5, subtype="FACTOR", name="noiseEdge", options=set(), description="The closer the value is to 0.5 the less noise will be at the start of particles life time")
     sort = bpy.props.BoolProperty(options=set())
     collideTerrain = bpy.props.BoolProperty(options=set())
     collideObjects = bpy.props.BoolProperty(options=set())
@@ -1912,7 +1914,12 @@ class ParticleSystemsPanel(bpy.types.Panel):
 
             split = layout.split()
             col = split.column()
+            col.label("Noise:")
             sub = col.column(align=True)
+            sub.prop(particle_system, "noiseAmplitude", text="Amplitude")
+            sub.prop(particle_system, "noiseFrequency", text="Frequency")
+            sub.prop(particle_system, "noiseCohesion", text="Cohesion")
+            sub.prop(particle_system, "noiseEdge", text="Edge")
 
             layout.prop(particle_system, "unknownFloat2c", text="Unknown f2c")
                         

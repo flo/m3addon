@@ -1252,10 +1252,10 @@
             <field name="worldForceChannels" type="uint16" default-value="0" />
             <field name="forceChannelsFillerBytes" type="uint16" default-value="0" />
             <field name="worldForceChannelsCopy" type="uint16" default-value="0" />
-            <field name="unknownFloat3a" type="float" default-value="0.0" />
-            <field name="unknownFloat3b" type="float" default-value="0.0" />
-            <field name="unknownFloat3c" type="float" default-value="0.0" />
-            <field name="unknownFloat3d" type="float" default-value="0.1" />
+            <field name="noiseAmplitude" type="float" default-value="0.0" />
+            <field name="noiseFrequency" type="float" default-value="0.0" />
+            <field name="noiseCohesion" type="float" default-value="0.0" />
+            <field name="noiseEdge" type="float" default-value="0.0" />
             <field name="indexPlusHighestIndex" type="uint32" />
             <field name="maxParticles" type="uint32" />
             <field name="emissionRate" type="FloatAnimationReference" />
