@@ -834,6 +834,15 @@ particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a c
                         ("2", 'Unknown', 'Particles spawn in a sphere')]
 
 
+particleAnimationSmoothTypeList = [
+    ("0", "Linear", "Linear transitions without usage of hold time"),
+    ("1", "Smooth", "Smooth transitions without usage of hold time"),
+    ("2", "Bezier", "Bezier transitions without usage of hold time"),
+    ("3", "Linear Hold", "Linear transitions with usage of hold time"),
+    ("4", "Bezier Hold", "Bezier transitions with usage of hold time")
+    ]
+
+
 attachmentVolumeTypeList = [(shared.attachmentVolumeNone, "None", "No Volume, it's a simple attachment point"), 
                             (shared.attachmentVolumeCuboid, 'Cuboid', "Volume with the shape of a cuboid with the given width, length and height"),
                             (shared.attachmentVolumeSphere, 'Sphere', "Volume with the shape of a sphere with the given radius"), 
@@ -892,6 +901,7 @@ rttChannelList = [("-1", "None", "None"),
                   ("5", "Layer 6", "Render To Texture Layer 6"),
                   ("6", "Layer 7", "Render To Texture Layer 7"),
 ]
+
 
 
 lightTypeList = [# directional light isn't supported yet: ("0", "Directional", ""),
@@ -1081,6 +1091,15 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     colorAnimationMiddle = bpy.props.FloatProperty(default=0.5, min=0.0, max=1.0, subtype="FACTOR", name="colorAnimationMiddle", options=set(), description="Percentage of lifetime when the color animation (without alpha) reaches reaches its middle value")
     alphaAnimationMiddle = bpy.props.FloatProperty(default=0.5, min=0.0, max=1.0, subtype="FACTOR", name="alphaAnimationMiddle", options=set(), description="Percentage of lifetime when the alpha animation reaches reaches its middle value")
     rotationAnimationMiddle = bpy.props.FloatProperty(default=0.5, min=0.0, max=1.0, subtype="FACTOR", name="rotationAnimationMiddle", options=set(), description="Percentage of lifetime when the scale animation reaches reaches its middle value")
+    sizeHoldTime = bpy.props.FloatProperty(default=0.3, min=0.0, max=1.0, name="sizeHoldTime", options=set(), description="Factor of particle liftime to hold the middle size value")
+    colorHoldTime = bpy.props.FloatProperty(default=0.3, min=0.0, max=1.0, name="colorHoldTime", options=set(), description="Factor of particle lifetime to hold the middle color and alpha value")
+    alphaHoldTime = bpy.props.FloatProperty(default=0.3, min=0.0, max=1.0, name="alphaHoldTime", options=set(), description="Factor of particle lifetime to hold the middle rotation value")    
+    rotationHoldTime = bpy.props.FloatProperty(default=0.3, min=0.0, max=1.0, name="rotationHoldTime", options=set(), description="Factor of particle lifetime to hold the middle rotation value")    
+    
+    sizeSmoothingType = bpy.props.EnumProperty(default="0", items=particleAnimationSmoothTypeList, options=set(), description="Determines the shape of the size curve based on the intial, middle , final and hold time value")    
+    colorSmoothingType = bpy.props.EnumProperty(default="0", items=particleAnimationSmoothTypeList, options=set(), description="Determines the shape of the color curve based on the intial, middle , final and hold time value")    
+    rotationSmoothingType = bpy.props.EnumProperty(default="0", items=particleAnimationSmoothTypeList, options=set(), description="Determines the shape of the rotation curve based on the intial, middle , final and hold time value")    
+    
     particleSizes1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), name="particle sizes 1", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first two values are the initial and final size of particles")
     rotationValues1 = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0), name="rotation values 1", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first value is the inital rotation and the second value is the rotation speed")
     initialColor1 = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0, 1.0), min = 0.0, max = 1.0, name="initial color 1", size=4, subtype="COLOR", options={"ANIMATABLE"}, description="Color of the particle when it gets emitted")
@@ -1140,12 +1159,6 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     inheritParentVel = bpy.props.BoolProperty(options=set())
     sortByZHeight = bpy.props.BoolProperty(options=set())
     reverseIteration = bpy.props.BoolProperty(options=set())
-    smoothRotation = bpy.props.BoolProperty(options=set())
-    bezSmoothRotation = bpy.props.BoolProperty(options=set())
-    smoothSize = bpy.props.BoolProperty(options=set())
-    bezSmoothSize = bpy.props.BoolProperty(options=set())
-    smoothColor = bpy.props.BoolProperty(options=set())
-    bezSmoothColor = bpy.props.BoolProperty(options=set())
     litParts = bpy.props.BoolProperty(options=set())
     randFlipBookStart = bpy.props.BoolProperty(options=set())
     multiplyByGravity = bpy.props.BoolProperty(options=set())
@@ -1803,6 +1816,14 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.prop(particle_system, "finalColor2", text="Final")
             layout.prop(particle_system, "colorAnimationMiddle", text="Color Middle")
             layout.prop(particle_system, "alphaAnimationMiddle", text="Alpha Middle")
+            split = layout.split()
+            col = split.column()
+            col.label(text="Color & Alpha Smooth Type:")
+            col.prop(particle_system, "colorSmoothingType", text="")
+            sub = col.column(align=True)
+            sub.active = particle_system.colorSmoothingType in ["3", "4"]
+            sub.prop(particle_system, "colorHoldTime", text="Color Hold Time")
+            sub.prop(particle_system, "alphaHoldTime", text="Alpha Hold Time")
 
             split = layout.split()
             col = split.column()
@@ -1819,7 +1840,13 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.prop(particle_system, 'particleSizes2', index=1, text="Middle")
             sub.prop(particle_system, 'particleSizes2', index=2, text="Final")
             layout.prop(particle_system, 'sizeAnimationMiddle', text="Size Middle")
-
+            split = layout.split()
+            col = split.column()
+            col.label(text="Size Smooth Type:")
+            col.prop(particle_system, "sizeSmoothingType", text="")
+            sub = col.column(align=True)
+            sub.active = particle_system.sizeSmoothingType in ["3", "4"]
+            sub.prop(particle_system, "sizeHoldTime", text="Hold Time")
 
             split = layout.split()
             col = split.column()
@@ -1836,7 +1863,13 @@ class ParticleSystemsPanel(bpy.types.Panel):
             sub.prop(particle_system, 'rotationValues2', index=1, text="Middle")
             sub.prop(particle_system, 'rotationValues2', index=2, text="Final")
             layout.prop(particle_system, "rotationAnimationMiddle", text="Rotation Middle")
-
+            split = layout.split()
+            col = split.column()
+            col.label(text="Rotation Smooth Type:")
+            col.prop(particle_system, "rotationSmoothingType", text="")
+            sub = col.column(align=True)
+            sub.active = particle_system.rotationSmoothingType in ["3", "4"]
+            sub.prop(particle_system, "rotationHoldTime", text="Hold Time")
 
             split = layout.split()
             row = split.row()
@@ -1916,11 +1949,6 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(particle_system, 'inheritParentVel', text="Inherit Parent Vel")
             layout.prop(particle_system, 'sortByZHeight', text="Sort By Z Height")
             layout.prop(particle_system, 'reverseIteration', text="Reverse Iteration")
-            layout.prop(particle_system, 'smoothRotation', text="Smooth Rotation")
-            layout.prop(particle_system, 'bezSmoothRotation', text="Bez Smooth Rotation")
-            layout.prop(particle_system, 'smoothSize', text="Smooth Size")
-            layout.prop(particle_system, 'bezSmoothSize', text="Bez Smooth Size")
-            layout.prop(particle_system, 'smoothColor', text="Smooth Color")
             layout.prop(particle_system, 'litParts', text="Lit Parts")
             layout.prop(particle_system, 'randFlipBookStart', text="Rand Flip Book Start")
             layout.prop(particle_system, 'multiplyByGravity', text="Multiply By Gravity")

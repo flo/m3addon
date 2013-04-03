@@ -1167,7 +1167,12 @@ class Exporter:
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3ParticleSystem, blenderObject=particleSystem, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferParticleSystem(transferer)
             m3ParticleSystem.indexPlusHighestIndex = len(scene.m3_particle_systems) -1 + particleSystemIndex
-            
+            m3ParticleSystem.setNamedBit("flags", "smoothSize", particleSystem.sizeSmoothingType == "1");
+            m3ParticleSystem.setNamedBit("flags", "smoothColor", particleSystem.colorSmoothingType == "1");
+            m3ParticleSystem.setNamedBit("flags", "smoothRotation", particleSystem.rotationSmoothingType == "1");
+            m3ParticleSystem.setNamedBit("flags", "bezSmoothSize", particleSystem.sizeSmoothingType in ["2", "4"]);
+            m3ParticleSystem.setNamedBit("flags", "bezSmoothColor", particleSystem.colorSmoothingType in ["2", "4"]);
+            m3ParticleSystem.setNamedBit("flags", "bezSmoothRotation", particleSystem.rotationSmoothingType in ["2", "4"]);
             m3ParticleSystem.unknowne0bd54c8 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
             m3ParticleSystem.unknowna2d44d80 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
             m3ParticleSystem.unknownf8e2b3d0 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
@@ -2219,8 +2224,10 @@ class BlenderToM3DataTransferer:
                 integerValue |= mask
         setattr(self.m3Object, fieldName, integerValue)
 
-    def transferFloat(self, fieldName, tillVersion=None):
+    def transferFloat(self, fieldName, sinceVersion=None, tillVersion=None):
         if (tillVersion != None) and (self.m3Version > tillVersion):
+            return
+        if (sinceVersion != None) and (self.m3Version < sinceVersion):
             return
         value = getattr(self.blenderObject, fieldName)
         setattr(self.m3Object, fieldName , value)
@@ -2229,7 +2236,9 @@ class BlenderToM3DataTransferer:
         value = getattr(self.blenderObject, fieldName)
         setattr(self.m3Object, fieldName , value)
         
-    def transferEnum(self, fieldName):
+    def transferEnum(self, fieldName, sinceVersion = None):
+        if (sinceVersion != None) and (self.m3Version < sinceVersion):
+            return
         value = getattr(self.blenderObject, fieldName)
         setattr(self.m3Object, fieldName , int(value))
 

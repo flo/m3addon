@@ -256,8 +256,10 @@ class M3ToBlenderDataTransferer:
         self.transferAnimatableInteger(fieldName)
 
     
-    def transferFloat(self, fieldName, tillVersion=None):
+    def transferFloat(self, fieldName, sinceVersion=None, tillVersion=None):
         if (tillVersion != None) and (self.m3Version > tillVersion):
+            return
+        if (sinceVersion != None) and (self.m3Version < sinceVersion):
             return
         setattr(self.blenderObject, fieldName, getattr(self.m3Object, fieldName))
         
@@ -347,7 +349,9 @@ class M3ToBlenderDataTransferer:
         self.importer.animateBoundings(self.objectWithAnimationData,  animPathMinBorder, animPathMaxBorder, animPathRadius, animId, minBorderDefault, maxBorderDefault, radiusDefault)
 
 
-    def transferEnum(self, fieldName):
+    def transferEnum(self, fieldName, sinceVersion=None):
+        if (sinceVersion != None) and (self.m3Version < sinceVersion):
+            return
         value = str(getattr(self.m3Object, fieldName))
         setattr(self.blenderObject, fieldName, value)
 
@@ -836,6 +840,32 @@ class Importer:
             if hasattr(m3ParticleSystem, "forceChannelsCopy") and m3ParticleSystem.forceChannelsCopy != m3ParticleSystem.forceChannels:
                 print("Warning: Unexpected model content: forceChannels != forceChannelsCopy")
 
+            if m3ParticleSystem.structureDescription.structureVersion < 17:
+                # in >= 17 there is a field which specifies the exact type
+                # the flags are then redundant
+                
+                if m3ParticleSystem.getNamedBit("flags", "bezSmoothSize"):
+                    particleSystem.sizeSmoothingType = "2"
+                elif m3ParticleSystem.getNamedBit("flags", "smoothSize"):
+                    particleSystem.sizeSmoothingType = "1"
+                else:
+                    particleSystem.sizeSmoothingType = "0"
+                    
+                if m3ParticleSystem.getNamedBit("flags", "bezSmoothColor"):
+                    particleSystem.colorSmoothingType = "2"
+                elif m3ParticleSystem.getNamedBit("flags", "smoothColor"):
+                    particleSystem.colorSmoothingType = "1"
+                else:
+                    particleSystem.colorSmoothingType = "0"
+                    
+                    
+                if m3ParticleSystem.getNamedBit("flags", "bezSmoothRotation"):
+                    particleSystem.rotationSmoothingType = "2"
+                elif m3ParticleSystem.getNamedBit("flags", "smoothRotation"):
+                    particleSystem.rotationSmoothingType = "1"
+                else:
+                    particleSystem.rotationSmoothingType = "0"
+                    
             for spawnPointIndex, m3SpawnPoint in enumerate(m3ParticleSystem.spawnPoints):
                 spawnPoint = particleSystem.spawnPoints.add()
                 spawnPointAnimPathPrefix = animPathPrefix + "spawnPoints[%d]." % spawnPointIndex

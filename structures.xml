@@ -1233,11 +1233,10 @@
             <field name="colorAnimationMiddle" type="float" default-value="0.5" />
             <field name="alphaAnimationMiddle" type="float" default-value="0.5" />
             <field name="rotationAnimationMiddle" type="float" default-value="0.5" />
-            <field name="unknown82a208f7" size="4" default-value="0x00000080" since-version="17" />
-            <!-- it seems unknown93aad73b must be > 0 or otherwise nothing can be seen-->
-            <field name="unknown93aad73b" type="float" default-value="0.5" since-version="17" />
-            <field name="unknown74620ffe" type="float" default-value="0.0" since-version="17" />
-            <field name="unknown1525cb58" type="float" default-value="0.0" since-version="17" />
+            <field name="sizeHoldTime" type="float" default-value="0.0" since-version="17" /> <!-- was unknown82a208f7 -->
+            <field name="colorHoldTime" type="float" default-value="0.0" since-version="17" /><!-- was unknown93aad73b -->
+            <field name="alphaHoldTime" type="float" default-value="0.0" since-version="17" /><!-- was unknown74620ffe -->
+            <field name="rotationHoldTime" type="float" default-value="0.0" since-version="17" /><!-- was unknown1525cb58 -->
             <field name="particleSizes1" type="Vector3AnimationReferenceV0" />
             <field name="rotationValues1" type="Vector3AnimationReferenceV0" />
             <field name="initialColor1" type="ColorAnimationReference" />
@@ -1390,11 +1389,22 @@
                     <bit mask="0x8000000" name="copy"/>
                 </bits>
             </field>
-            <!-- unknowne51f8f9b  had the values 4 and  7-->
-            <field name="unknowne51f8f9b" type="uint32" default-value="4" since-version="21" />
-            <field name="unknown25dac4d2"  type="uint32" default-value="3" since-version="17" />
-            <field name="sizeSmoothing" type="uint8" default-alue="0" since-version="17" />
-            <field name="unknown56dbedec" size="7"  expected-value="0x00000000000000" since-version="17" />
+            <field name="rotationFlags" type="uint32" default-value="4" since-version="21" >
+                <bits>
+                    <bit mask="0x2" name="relativeRotation" />
+                    <bit mask="0x4" name="alwaysSet" />
+                </bits>
+            </field>
+            <!-- smoothingTypes:
+                0: Linear
+                1: Smooth
+                2: Bezier
+                3: Linear Hold
+                4: Bezier Hold
+            -->
+            <field name="colorSmoothingType"  type="uint32" default-value="0" since-version="17" />
+            <field name="sizeSmoothingType" type="uint32" default-alue="0" since-version="17" />
+            <field name="rotationSmoothingType" type="uint32"  default-value="0" since-version="17" />
             <field name="unknown22856fde" type="FloatAnimationReference" since-version="17" />
             <field name="unknownb35ad6e1" type="Vector2AnimationReferenceV0" since-version="17" />
             <field name="unknown686e5943" type="Vector3AnimationReferenceV0" since-version="17" />
