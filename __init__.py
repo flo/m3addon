@@ -780,7 +780,8 @@ emissionAreaTypeList =  [(shared.emissionAreaTypePoint, "Point", "Particles spaw
                         (shared.emissionAreaTypeCuboid, 'Cuboid', 'Particles spawn in a cuboid'),
                         (shared.emissionAreaTypeCylinder, 'Cylinder', 'Particles spawn in a cylinder'),
                         (shared.emissionAreaTypeDisc, 'Disc', 'Particles spawn in a cylinder of height 0'),
-                        (shared.emissionAreaTypeMesh, 'Mesh', 'Spawn location are the vertices of a mesh')
+                        (shared.emissionAreaTypeMesh, 'Mesh', 'Spawn location are the vertices of a mesh'),
+                        ("7", 'Unknown', 'Unknown')
                         
                         ]
 
