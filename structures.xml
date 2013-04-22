@@ -407,7 +407,7 @@
             <field name="boneLookupIndex3" type="uint8" default-value="0" />
             <field name="normal" type="Vector3As3Fixed8V0" />
             <field name="sign" type="fixed8" />
-            <field name="unknown" type="uint32" expected-value="0xffffffff"/>
+            <field name="unknown" type="uint32" default-value="0xffffffff"/>
             <field name="uv0" type="Vector2As2int16V0" />
             <field name="tangent" type="Vector3As3Fixed8V0" />
             <field name="unused" type="fixed8" default-value="1.0" /> <!-- Can be -1.0 in old 3ds max exporter files -->
