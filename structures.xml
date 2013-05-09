@@ -1200,6 +1200,7 @@
         <versions>
             <version number="12" size="1316" />
             <version number="17" size="1460" />
+            <version number="18" size="1464" />
             <version number="21" size="1464" />
             <version number="22" size="1484" />
         </versions>
@@ -1389,7 +1390,7 @@
                     <bit mask="0x8000000" name="copy"/>
                 </bits>
             </field>
-            <field name="rotationFlags" type="uint32" default-value="4" since-version="21" >
+            <field name="rotationFlags" type="uint32" default-value="4" since-version="18" >
                 <bits>
                     <bit mask="0x2" name="relativeRotation" />
                     <bit mask="0x4" name="alwaysSet" />
