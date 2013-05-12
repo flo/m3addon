@@ -1956,7 +1956,27 @@
             <field name="depthOfField" type="FloatAnimationReference" />
         </fields>
     </structure>
-
+    
+    <structure name="WRP_">
+        <description>
+            Warp
+        </description>
+        <versions>
+            <version number="1" size="132" />
+        </versions>
+        <fields>
+            <field name="unknown861f507b" size="4" expected-value="0x00000000"/>
+            <field name="boneIndex" type="uint32" />
+            <field name="unknowncf03b856" size="4" expected-value="0x00000000" />
+            <field name="unknown785ccf9a" type="FloatAnimationReference" />
+            <field name="unknown9306aac0" type="FloatAnimationReference" />
+            <field name="unknown4332efb2" type="FloatAnimationReference" />
+            <field name="unknown50c7f2b4" type="FloatAnimationReference" />
+            <field name="unknown8d9c977c" type="FloatAnimationReference" />
+            <field name="unknownca6025a2" type="FloatAnimationReference" />
+        </fields>
+    </structure>
+    
     <structure name="MODL" >
         <description>
             Describes the content of the file.
@@ -2034,7 +2054,7 @@
             <field name="ribbons" type="Reference" refTo="RIB_" />
             <field name="projections" type="Reference" refTo="PROJ" />
             <field name="forces" type="Reference" refTo="FOR_" />
-            <field name="wrpData" type="Reference" />
+            <field name="warps" type="Reference" refTo ="WRP_" />
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
             <field name="unknownMaybeRef1" type="Reference" />
             <field name="rigidBodies" type="Reference" refTo="PHRB"/>
@@ -2060,6 +2080,7 @@
             <field name="unknown45" type="Reference" refTo="U32_" />
         </fields>
     </structure>
+    
     
     <structure name="MD34" version="11" size="24">
         <description>Header of a M3 file: Can be found at the start of the file.</description>
