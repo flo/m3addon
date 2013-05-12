@@ -651,66 +651,31 @@ class Importer:
             animPathPrefix = "%slayers[%s]." % (materialAnimPathPrefix, layerIndex)
             layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=m3Layer)
             shared.transferMaterialLayer(layerTransferer)
-                    
-    def createStandardMaterials(self, scene):
-        for materialIndex, m3Material in enumerate(self.model.standardMaterials):
-            material = scene.m3_standard_materials.add()
-            animPathPrefix = "m3_standard_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
-            shared.transferStandardMaterial(materialTransferer)
-            self.createLayers(scene, material, m3Material, animPathPrefix)
-    
-    def createDisplacementMaterials(self, scene):
-        for materialIndex, m3Material in enumerate(self.model.displacementMaterials):
-            material = scene.m3_displacement_materials.add()
-            animPathPrefix = "m3_displacement_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
-            shared.transferDisplacementMaterial(materialTransferer)
-            self.createLayers(scene, material, m3Material, animPathPrefix)
 
-    def createCompositeMaterials(self, scene):
-        for materialIndex, m3Material in enumerate(self.model.compositeMaterials):
-            material = scene.m3_composite_materials.add()
-            animPathPrefix = "m3_composite_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=material, m3Object=m3Material)
-            shared.transferCompositeMaterial(materialTransferer)
-            self.createLayers(scene, material, m3Material, animPathPrefix)
-
-    def createTerrainMaterials(self, scene):
-        for materialIndex, m3Material in enumerate(self.model.terrainMaterials):
-            material = scene.m3_terrain_materials.add()
-            animPathPrefix = "m3_terrain_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
-            shared.transferTerrainMaterial(materialTransferer)
-            self.createLayers(scene, material, m3Material, animPathPrefix)
-
-    def createVolumeMaterials(self, scene):
-        for materialIndex, m3Material in enumerate(self.model.volumeMaterials):
-            material = scene.m3_volume_materials.add()
-            animPathPrefix = "m3_volume_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
-            shared.transferVolumeMaterial(materialTransferer)
-            self.createLayers(scene, material, m3Material, animPathPrefix)
-                
-    def createCreepMaterials(self, scene):
-        for materialIndex, m3Material in enumerate(self.model.creepMaterials):
-            material = scene.m3_creep_materials.add()
-            animPathPrefix = "m3_creep_materials[%s]." % materialIndex
-            materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
-            shared.transferCreepMaterial(materialTransferer)
-            self.createLayers(scene, material, m3Material, animPathPrefix)
-
-    def createMaterialReferences(self, scene):
+    def createMaterials(self):
+        print("Loading materials")
+        scene = self.scene
+        self.initMaterialReferenceIndexToNameMap()
+        
         for m3MaterialReference in self.model.materialReferences:
             materialType = m3MaterialReference.materialType
-            materialIndex = m3MaterialReference.materialIndex
-            material = shared.getMaterial(scene, materialType, materialIndex)
-            if material == None:
-                raise Exception("Model contains unsupported material type %s" % materialType)
+            m3MaterialIndex = m3MaterialReference.materialIndex
+            m3MaterialFieldName = shared.m3MaterialFieldNames[materialType]
+            blenderMaterialsFieldName = shared.blenderMaterialsFieldNames[materialType]
+            transferMethod = shared.materialTransferMethods[materialType]
+            
+            m3Material = getattr(self.model, m3MaterialFieldName)[m3MaterialIndex]
+            blenderMaterialCollection = getattr(scene, blenderMaterialsFieldName)
+            blenderMaterialIndex = len(blenderMaterialCollection)
+            material = blenderMaterialCollection.add()
+            animPathPrefix = blenderMaterialsFieldName + "[%s]." % blenderMaterialIndex
+            materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
+            transferMethod(materialTransferer)
+            self.createLayers(scene, material, m3Material, animPathPrefix)
             materialReference = scene.m3_material_references.add()
             materialReference.name = material.name
             materialReference.materialType = materialType
-            materialReference.materialIndex = materialIndex
+            materialReference.materialIndex = blenderMaterialIndex
     
     def initMaterialReferenceIndexToNameMap(self):
         self.materialReferenceIndexToNameMap = {}
@@ -737,18 +702,6 @@ class Importer:
         else:
             return None
         
-    def createMaterials(self):
-        print("Loading materials")
-        scene = bpy.context.scene
-        self.initMaterialReferenceIndexToNameMap()
-        self.createStandardMaterials(scene)
-        self.createDisplacementMaterials(scene)
-        self.createCompositeMaterials(scene)
-        self.createTerrainMaterials(scene)
-        self.createVolumeMaterials(scene)
-        self.createCreepMaterials(scene)
-        self.createMaterialReferences(scene)
-
     def createCameras(self):
         scene = bpy.context.scene
         showCameras = scene.m3_bone_visiblity_options.showCameras

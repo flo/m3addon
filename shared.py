@@ -74,6 +74,8 @@ animObjectIdArmature = "ARMATURE"
 animObjectIdScene = "SCENE"
 lightPrefixMap = {"1": "Star2Omni", "2": "Star2Spot"}
 
+
+
 layerFieldNameToNameMap = {
     "diffuseLayer": "Diffuse",
     "decalLayer": "Decal",
@@ -1060,3 +1062,30 @@ def transferLight(transferer):
     transferer.transferAnimatableFloat("hotSpot")
     transferer.transferAnimatableFloat("falloff")
     transferer.transferInt("unknownAt12")
+
+
+
+blenderMaterialsFieldNames = {
+    standardMaterialTypeIndex: "m3_standard_materials", 
+    displacementMaterialTypeIndex: "m3_displacement_materials", 
+    compositeMaterialTypeIndex: "m3_composite_materials", 
+    terrainMaterialTypeIndex: "m3_terrain_materials", 
+    volumeMaterialTypeIndex: "m3_volume_materials",  
+    creepMaterialTypeIndex: "m3_creep_materials"
+    }
+m3MaterialFieldNames = { 
+    standardMaterialTypeIndex: "standardMaterials", 
+    displacementMaterialTypeIndex: "displacementMaterials", 
+    compositeMaterialTypeIndex: "compositeMaterials", 
+    terrainMaterialTypeIndex: "terrainMaterials", 
+    volumeMaterialTypeIndex: "volumeMaterials",  
+    creepMaterialTypeIndex: "creepMaterials"
+    }
+materialTransferMethods = {
+        standardMaterialTypeIndex: transferStandardMaterial, 
+        displacementMaterialTypeIndex: transferDisplacementMaterial, 
+        compositeMaterialTypeIndex: transferCompositeMaterial, 
+        terrainMaterialTypeIndex: transferTerrainMaterial, 
+        volumeMaterialTypeIndex: transferVolumeMaterial,  
+        creepMaterialTypeIndex: transferCreepMaterial
+    }
