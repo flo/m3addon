@@ -1532,7 +1532,6 @@ class Exporter:
         for layerFieldName in orderedListOfFieldNames:
             layerName = shared.getLayerNameFromFieldName(layerFieldName)
             orderedListOfLayerNames.append(layerName)
-            
         # Add mising layers. They get added for real since:
         # 1. this way animation ids can be saved for them
         # 2. New layers get added automatically that way
@@ -1544,6 +1543,11 @@ class Exporter:
                 layersAdded = True
                 print("Adding missing layer %s to material %s" % (layerName,material.name ))
         
+        layerIndicex = []
+        for layerIndex, layer in enumerate(material.layers):
+            if layer.name in orderedListOfLayerNames:
+                layerIndicex.append(layerIndex)
+        
         if layersAdded:
             # Sort the layers, so that the layers are
             # after an initial phase always at the same position.
@@ -1554,7 +1558,7 @@ class Exporter:
                 if targetIndex != currentIndex:
                     material.layers.move(currentIndex, targetIndex)
             
-        for layerIndex, layerFieldName, layerName in zip(range(len(orderedListOfFieldNames)), orderedListOfFieldNames, orderedListOfLayerNames):
+        for layerIndex, layerFieldName, layerName in zip(layerIndicex, orderedListOfFieldNames, orderedListOfLayerNames):
             layer = material.layers[layerIndex]
             animPathPrefix = materialAnimPathPrefix + "layers[%s]." % layerIndex
             m3Layer = self.createMaterialLayer(layer, animPathPrefix)
