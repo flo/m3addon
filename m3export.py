@@ -149,6 +149,7 @@ class Exporter:
         self.structureVersionMap["SD2V"] = 0 
         self.structureVersionMap["FlagAnimationReference"] = 0
         self.structureVersionMap["SVC3"] = 0
+        self.structureVersionMap["WRP_"] = 1
         
 
     def getVersionOf(self, structureName):
@@ -173,6 +174,7 @@ class Exporter:
         self.initParticles(model)
         self.initRibbons(model)
         self.initProjections(model)
+        self.initWarps(model)
         self.initForces(model)
         self.initRigidBodies(model)
         self.initLights(model)
@@ -1304,6 +1306,21 @@ class Exporter:
             m3Projection.materialReferenceIndex = materialReferenceIndex
             
             model.projections.append(m3Projection)
+
+
+    def initWarps(self, model):
+        scene = self.scene
+        for warpIndex, warp in enumerate(scene.m3_warps):
+            boneName = warp.boneName
+            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+            if boneIndex == None:
+                boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
+            m3Warp = self.createInstanceOf("WRP_")
+            m3Warp.bone = boneIndex
+            animPathPrefix = "m3_warps[%s]." % warpIndex
+            transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Warp, blenderObject=warp, animPathPrefix=animPathPrefix, rootObject=self.scene)
+            shared.transferWarp(transferer)            
+            model.warps.append(m3Warp)
 
     
     def initForces(self, model):

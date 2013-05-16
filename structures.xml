@@ -1968,9 +1968,9 @@
             <field name="unknown861f507b" size="4" expected-value="0x00000000"/>
             <field name="boneIndex" type="uint32" />
             <field name="unknowncf03b856" size="4" expected-value="0x00000000" />
-            <field name="unknown785ccf9a" type="FloatAnimationReference" />
+            <field name="radius" type="FloatAnimationReference" />
             <field name="unknown9306aac0" type="FloatAnimationReference" />
-            <field name="unknown4332efb2" type="FloatAnimationReference" />
+            <field name="compressionStrength" type="FloatAnimationReference" />
             <field name="unknown50c7f2b4" type="FloatAnimationReference" />
             <field name="unknown8d9c977c" type="FloatAnimationReference" />
             <field name="unknownca6025a2" type="FloatAnimationReference" />

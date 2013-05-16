@@ -69,6 +69,7 @@ star2ForcePrefix = "Star2Force"
 attachmentPointPrefix = "Ref_" 
 attachmentVolumePrefix = "Vol_"
 projectionPrefix = "Star2 projector"
+warpPrefix = "SC2VertexWarp"
 animObjectIdModel = "MODEL"
 animObjectIdArmature = "ARMATURE"
 animObjectIdScene = "SCENE"
@@ -142,6 +143,8 @@ def boneNameForLight(light):
 def boneNameForProjection(projection):    
     return projectionPrefix + projection.boneSuffix
 
+def boneNameForWarp(warp):    
+    return warpPrefix + warp.boneSuffix
 
 def boneNameForPartileSystemCopy(copy):
     return toValidBoneName(star2ParticlePrefix + copy.name)
@@ -467,6 +470,13 @@ def updateBoneShapeOfProjection(projection, bone, poseBone):
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
+def updateBoneShapeOfWarp(warp, bone, poseBone):
+    radius = warp.radius
+    untransformedPositions, faces = createMeshDataForSphere(radius)
+
+    boneName = boneNameForProjection(warp)
+    meshName = boneName + 'Mesh'
+    updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
 def updateBoneShapeOfForce(force, bone, poseBone):
     untransformedPositions, faces = createMeshDataForSphere(force.forceRange)
@@ -904,6 +914,15 @@ def transferProjection(transferer):
     transferer.transferFloat("unknownbf38195c")
     transferer.transferFloat("unknown1c58f255")
     transferer.transferFloat("unknown15aa6267")
+
+
+def transferWarp(transferer):
+    transferer.transferAnimatableFloat("radius")
+    transferer.transferAnimatableFloat("unknown9306aac0")
+    transferer.transferAnimatableFloat("compressionStrength")
+    transferer.transferAnimatableFloat("unknown50c7f2b4")
+    transferer.transferAnimatableFloat("unknown8d9c977c")
+    transferer.transferAnimatableFloat("unknownca6025a2")
 
 def transferForce(transferer):
     transferer.transferEnum("forceType")

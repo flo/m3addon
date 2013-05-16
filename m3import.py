@@ -384,11 +384,12 @@ class Importer:
         self.initTightHitTest()
         self.createParticleSystems()
         self.createRibbons()
-        self.createProjections()
         self.createForces()
         self.createRigidBodies()
         self.createLights()
         self.createAttachmentPoints()
+        self.createProjections()
+        self.createWarps()
         self.createMesh()
         # init stcs of animations at last
         # when all animation properties are known
@@ -887,7 +888,7 @@ class Importer:
     def createProjections(self):
         scene = bpy.context.scene
         showProjections = scene.m3_bone_visiblity_options.showProjections
-        print("Loading particle systems")
+        print("Loading projections")
         for projectionIndex, m3Projection in enumerate(self.model.projections):
             projection = scene.m3_projections.add()
             projection.updateBlenderBoneShapes = False
@@ -909,6 +910,33 @@ class Importer:
             bone.hide = not showProjections
 
             projection.materialName = self.getNameOfMaterialWithReferenceIndex(m3Projection.materialReferenceIndex)
+
+
+
+    def createWarps(self):
+        scene = bpy.context.scene
+        showWarps = scene.m3_bone_visiblity_options.showWarps
+        print("Loading warps")
+        for warpIndex, m3Warp in enumerate(self.model.warps):
+            warp = scene.m3_warps.add()
+            warp.updateBlenderBoneShapes = False
+            animPathPrefix = "m3_warps[%s]." % warpIndex
+            transferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=warp, m3Object=m3Warp)
+            shared.transferWarp(transferer)
+            boneEntry = self.model.bones[m3Warp.boneIndex]
+            fullBoneName = boneEntry.name
+            if fullBoneName.startswith(shared.warpPrefix):
+                warp.boneSuffix = fullBoneName[len(shared.warpPrefix):]
+            else:
+                warp.boneSuffix = fullBoneName
+            blenderBoneName = self.boneNames[m3Warp.boneIndex]
+            warp.boneName = blenderBoneName
+            
+            bone = self.armature.bones[blenderBoneName]
+            poseBone = self.armatureObject.pose.bones[blenderBoneName]
+            shared.updateBoneShapeOfWarp(warp, bone, poseBone)
+            bone.hide = not showWarps
+
 
     def createForces(self):
         scene = bpy.context.scene

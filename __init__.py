@@ -247,6 +247,11 @@ def handleLightSizeChange(self, context):
     if light.updateBlenderBone:
         selectOrCreateBoneForLight(scene, light)
 
+def handleWarpRadiusChange(self, context):
+    scene = context.scene
+    warp = self
+    if warp.updateBlenderBone:
+        selectOrCreateBoneForWarp(scene, warp)
 
 def handleProjectionTypeOrBoneSuffixChange(self, context):
     scene = context.scene
@@ -266,6 +271,26 @@ def handleProjectionTypeOrBoneSuffixChange(self, context):
             else:
                 projection.boneName = calculatedBoneName
         selectOrCreateBoneForProjection(scene, projection)
+
+
+def handleWarpBoneSuffixChange(self, context):
+    scene = context.scene
+    warp = self
+    
+    warp.name = warp.boneSuffix
+    
+    currentBoneName = warp.boneName
+    calculatedBoneName = shared.boneNameForWarp(warp)
+
+    if warp.updateBlenderBone:
+        if currentBoneName != calculatedBoneName:
+            bone, armatureObject = shared.findBoneWithArmatureObject(scene, currentBoneName)
+            if bone != None:
+                bone.name = calculatedBoneName
+                warp.boneName = bone.name
+            else:
+                warp.boneName = calculatedBoneName
+        selectOrCreateBoneForWarp(scene, warp)
 
 def handleCameraNameChange(self, context):
     scene = context.scene
@@ -405,8 +430,11 @@ def handleProjectionVisibilityUpdate(self, context):
         boneName = projection.boneName
         shared.setBoneVisibility(scene, boneName, self.showProjections)
 
-
-
+def handleWarpVisibilityUpdate(self, context):
+    scene = context.scene
+    for warp in scene.m3_warps:
+        boneName = warp.boneName
+        shared.setBoneVisibility(scene, boneName, self.showWarps)
 
 def handleAnimationChange(targetObject, oldAnimation, newAnimation):
     animationData = targetObject.animation_data
@@ -601,6 +629,13 @@ def handleProjectionIndexChanged(self, context):
     projection = scene.m3_projections[scene.m3_projection_index]
     selectOrCreateBoneForProjection(scene, projection)
     
+def handleWarpIndexChanged(self, context):
+    scene = context.scene
+    if scene.m3_warp_index == -1:
+        return
+    warp = scene.m3_warps[scene.m3_warp_index]
+    selectOrCreateBoneForProjection(scene, warp)
+   
 def handleAttachmentPointIndexChanged(self, context):
     scene = context.scene
     if scene.m3_attachment_point_index == -1:
@@ -659,6 +694,12 @@ def selectOrCreateBoneForProjection(scene, projection):
     boneName = projection.boneName
     bone, poseBone = selectOrCreateBone(scene, boneName)
     shared.updateBoneShapeOfProjection(projection, bone, poseBone)
+
+def selectOrCreateBoneForWarp(scene, projection):
+    scene.m3_bone_visiblity_options.showWarps = True
+    boneName = projection.boneName
+    bone, poseBone = selectOrCreateBone(scene, boneName)
+    shared.updateBoneShapeOfWarp(projection, bone, poseBone)
 
 def selectOrCreateBoneForCamera(scene, camera):
     scene.m3_bone_visiblity_options.showCameras = True
@@ -1314,6 +1355,7 @@ class M3BoneVisiblityOptions(bpy.types.PropertyGroup):
     showCameras = bpy.props.BoolProperty(default=True, options=set(), update=handleCamerasVisiblityUpdate)
     showPhysicsShapes = bpy.props.BoolProperty(default=True, options=set(), update=handlePhysicsShapeVisibilityUpdate)
     showProjections = bpy.props.BoolProperty(default=True, options=set(), update=handleProjectionVisibilityUpdate)
+    showWarps = bpy.props.BoolProperty(default=True, options=set(), update=handleWarpVisibilityUpdate)
 
 class M3ExportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="ExportedModel.m3", options=set())
@@ -1341,6 +1383,24 @@ class M3Projection(bpy.types.PropertyGroup):
     unknownbf38195c = bpy.props.FloatProperty(default=10.0, name="unknownbf38195c", options=set())
     unknown1c58f255 = bpy.props.FloatProperty(default=5.0, name="unknown1c58f255", options=set())
     unknown15aa6267 = bpy.props.FloatProperty(default=5.0, name="unknown15aa6267", options=set())
+
+
+class M3Warp(bpy.types.PropertyGroup):
+    # name attribute seems to be needed for template_list but is not actually in the m3 file
+    # The name gets calculated like this: name = boneSuffix (type)
+    name = bpy.props.StringProperty(options=set())
+    updateBlenderBone = bpy.props.BoolProperty(default=True, options=set())
+    boneSuffix = bpy.props.StringProperty(options=set(), update=handleWarpBoneSuffixChange, default="01")
+    boneName = bpy.props.StringProperty(options=set())
+    materialName = bpy.props.StringProperty(options=set())
+
+    radius = bpy.props.FloatProperty(default=1.0, min=0.0, name="radius", update=handleWarpRadiusChange, options={"ANIMATABLE"})
+    unknown9306aac0 = bpy.props.FloatProperty(default=10.0, name="unknown9306aac0", options={"ANIMATABLE"})
+    compressionStrength = bpy.props.FloatProperty(default=1.0, name="compressionStrength", options={"ANIMATABLE"})
+    unknown50c7f2b4 = bpy.props.FloatProperty(default=1.0, name="unknown50c7f2b4", options={"ANIMATABLE"})
+    unknown8d9c977c = bpy.props.FloatProperty(default=1.0, name="unknown8d9c977c", options={"ANIMATABLE"})
+    unknownca6025a2 = bpy.props.FloatProperty(default=1.0, name="unknownca6025a2", options={"ANIMATABLE"})
+
 
 class M3Light(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
@@ -1404,6 +1464,7 @@ class BoneVisibilityPanel(bpy.types.Panel):
         layout.prop(scene.m3_bone_visiblity_options, "showCameras", text="Cameras")
         layout.prop(scene.m3_bone_visiblity_options, "showPhysicsShapes", text="Physics Shapes")
         layout.prop(scene.m3_bone_visiblity_options, "showProjections", text="Projections")
+        layout.prop(scene.m3_bone_visiblity_options, "showWarps", text="Warps")
 
 class AnimationSequencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_animations"
@@ -2323,7 +2384,36 @@ class ProjectionPanel(bpy.types.Panel):
             layout.prop(projection, 'unknown15aa6267', text="Unk. 15aa6267")
     
     
-    
+
+class WarpPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_warps"
+    bl_label = "M3 Warp Fields"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        col.template_list("UI_UL_list", "m3_warps", scene, "m3_warps", scene, "m3_warp_index", rows=2)
+
+        col = row.column(align=True)
+        col.operator("m3.warps_add", icon='ZOOMIN', text="")
+        col.operator("m3.warps_remove", icon='ZOOMOUT', text="")
+        currentIndex = scene.m3_warp_index
+        if currentIndex >= 0 and currentIndex < len(scene.m3_warps):
+            warp = scene.m3_warps[currentIndex]
+            layout.separator()
+            layout.prop(warp, 'boneSuffix', text="Name")
+            layout.prop(warp, 'radius', text="Radius")
+            layout.prop(warp, 'unknown9306aac0', text="Unk. 9306aac0")
+            layout.prop(warp, 'compressionStrength', text="Compression Strength")
+            layout.prop(warp, 'unknown50c7f2b4', text="Unk. 50c7f2b4")
+            layout.prop(warp, 'unknown8d9c977c', text="Unk. 8d9c977c")
+            layout.prop(warp, 'unknownca6025a2', text="Unk. ca6025a2'")
     
 class ParticleSystemCopiesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_particle_copies"
@@ -3418,6 +3508,54 @@ class M3_PROJECTIONS_OT_remove(bpy.types.Operator):
             scene.m3_projections.remove(scene.m3_projection_index)
             scene.m3_projection_index-= 1
         return{'FINISHED'}
+        
+        
+class M3_WARPS_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.warps_add'
+    bl_label       = "Add Warp Field"
+    bl_description = "Adds a warp field for the export to the m3 model format"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        warp = scene.m3_warps.add()
+        warp.updateBlenderBone = False
+        warp.boneSuffix = self.findUnusedName(scene)
+        warp.boneName = shared.boneNameForWarp(warp)
+        handleWarpBoneSuffixChange(warp, context)
+        warp.updateBlenderBone = True
+        
+        # The following selection causes a new bone to be created:
+        scene.m3_warp_index = len(scene.m3_warps)-1
+        
+        return{'FINISHED'}
+
+    def findUnusedName(self, scene):
+        usedNames = set()
+        for warp in scene.m3_warps:
+            usedNames.add(warp.boneSuffix)
+        unusedName = None
+        counter = 1
+        while unusedName == None:
+            suggestedName = "%02d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName 
+        
+class M3_WARPS_OT_remove(bpy.types.Operator):
+    bl_idname      = 'm3.warps_remove'
+    bl_label       = "Remove M3 Warp Field"
+    bl_description = "Removes the active M3 warp field"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_warp_index >= 0:
+            warp = scene.m3_warps[scene.m3_warp_index]
+            removeBone(scene, warp.boneName)
+            scene.m3_warps.remove(scene.m3_warp_index)
+            scene.m3_warp_index-= 1
+        return{'FINISHED'}
+        
 
 class M3_ATTACHMENT_POINTS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.attachment_points_add'
@@ -3650,6 +3788,8 @@ def register():
     bpy.types.Scene.m3_light_index = bpy.props.IntProperty(options=set(), update=handleLightIndexChanged)
     bpy.types.Scene.m3_projections = bpy.props.CollectionProperty(type=M3Projection)
     bpy.types.Scene.m3_projection_index = bpy.props.IntProperty(options=set(), update=handleProjectionIndexChanged)
+    bpy.types.Scene.m3_warps = bpy.props.CollectionProperty(type=M3Warp)
+    bpy.types.Scene.m3_warp_index = bpy.props.IntProperty(options=set(), update=handleWarpIndexChanged)
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty(options=set(), update=handleAttachmentPointIndexChanged)
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
