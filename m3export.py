@@ -616,8 +616,7 @@ class Exporter:
                     m3Vertex = m3VertexStructureDefinition.createInstance()
                     m3Vertex.position = self.blenderToM3Vector(blenderVertex.co)
                     
-                    usedBoneWeightSlots = 0
-                    totalWeight = 0
+                    weightLookupIndexPairs = []
                     for gIndex, g in enumerate(blenderVertex.groups):
                         vertexGroupIndex = g.group
                         vertexGroup = meshObject.vertex_groups[vertexGroupIndex]
@@ -632,16 +631,36 @@ class Exporter:
                             bone.setNamedBit("flags", "skinned", True)
                             boneWeight = round(g.weight * 255)
                             if boneWeight != 0:
-                                if usedBoneWeightSlots == 4:
-                                    raise Exception("The m3 format supports at maximum 4 bone weights per vertex")
-                                boneWeightSlot = usedBoneWeightSlots
-                                setattr(m3Vertex, "boneWeight%d" % boneWeightSlot, boneWeight)
-                                setattr(m3Vertex, "boneLookupIndex%d" % boneWeightSlot, boneLookupIndex)
-                                totalWeight += boneWeight
-                                usedBoneWeightSlots += 1
+                                if len(weightLookupIndexPairs) < 4:
+                                    weightLookupIndexPairs.append((g.weight, boneLookupIndex))
+                                
+                    totalWeight = 0
+                    for weight, lookupIndex in weightLookupIndexPairs:
+                        totalWeight += weight
+                    
+                    # This algorithm is aiming at ensuring that roundedWeightSum is 255 at the end
+                    # Since correctedWeightSum is  1.0000XXXXX at the end,
+                    # roundedWeightSum will be exactly 255.
+                    roundedWeightLookupIndexPairs = []
+                    correctedWeightSum = 0.0
+                    roundedWeightSum = 0
+                    for weight, lookupIndex in weightLookupIndexPairs:
+                        correctedWeight = weight / totalWeight
+                        correctedWeightSum += correctedWeight
+                        newRoundedWeithSum = round(correctedWeightSum * 255.0)
+                        roundedWeight = newRoundedWeithSum - roundedWeightSum
+                        roundedWeightSum = newRoundedWeithSum
+                        roundedWeightLookupIndexPairs.append((roundedWeight, lookupIndex))
+                    
+                    
+                    weightIndex = 0
+                    for roundedWeight, lookupIndex in roundedWeightLookupIndexPairs:
+                        setattr(m3Vertex, "boneWeight%d" % weightIndex, roundedWeight)
+                        setattr(m3Vertex, "boneLookupIndex%d" % weightIndex, lookupIndex)
+                        weightIndex += 1
                                                                             
 
-                    isStaticVertex = (usedBoneWeightSlots == 0)
+                    isStaticVertex = (len(roundedWeightLookupIndexPairs) == 0)
                     if isStaticVertex:                    
                         staticMeshBoneIndex = self.boneNameToBoneIndexMap.get(staticMeshBoneName)
                         if staticMeshBoneIndex == None:
@@ -653,15 +672,9 @@ class Exporter:
                             staticMeshBoneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
                             model.boneLookup.append(staticMeshBoneIndex)
                             boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshBoneLookupIndex
-                        m3Vertex.boneWeight0 = 255
-                        m3Vertex.boneLookupIndex0 = staticMeshBoneLookupIndex
-                        usedBoneWeightSlots = 1
-                        totalWeight = m3Vertex.boneWeight0
+                        roundedWeightLookupIndexPairs.append((255, staticMeshBoneLookupIndex))
                     
-                    #Fix small rounding errors by adjusting the first weight:
-                    if totalWeight != 255:
-                        m3Vertex.boneWeight0 += (255 - totalWeight) 
-                    
+                    usedBoneWeightSlots = len(roundedWeightLookupIndexPairs)
                     if usedBoneWeightSlots > numberOfBoneWeightPairsPerVertex:
                         numberOfBoneWeightPairsPerVertex = usedBoneWeightSlots
                     
