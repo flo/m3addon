@@ -183,8 +183,10 @@ class M3StructureDescription:
             if instances == None:
                 return 0
             return len(instances)+1 # +1 terminating null character
-        else: # either a list or an array of bytes
+        elif hasattr(instances,"__len__"):# either a list or an array of bytes
             return len(instances) 
+        else: 
+            raise Exception("Can't measure the length of %s which is a %s" % (instances, self.structureName))
     
     def validateInstance(self, instance, instanceName):
         for field in self.fields:
