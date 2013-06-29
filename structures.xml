@@ -535,6 +535,7 @@
     <structure name="EVNT">
         <description>An animation sequence event</description>
         <versions>
+            <version number="0" size="96" />
             <version number="1" size="104" />
             <version number="2" size="108" />
         </versions>
@@ -547,8 +548,8 @@
             <field name="unknown3" type="uint32" default-value="4" />
             <field name="unknown4" type="uint32" expected-value="0" />
             <field name="unknown5" type="uint32" expected-value="0" />
-            <field name="unknown6" type="uint32" expected-value="0" />
-            <field name="unknown7" type="uint32" expected-value="0" />
+            <field name="unknown6" type="uint32" expected-value="0" since-version="1"/>
+            <field name="unknown7" type="uint32" expected-value="0" since-version="1"/>
             <field name="unknown8" type="uint32" expected-value="0" since-version="2"/>
         </fields>
     </structure>
