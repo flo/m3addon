@@ -57,6 +57,8 @@ class Exporter:
         self.prepareAnimIdMaps()
         self.nameToAnimIdToAnimDataMap = {}
         for animation in scene.m3_animations:
+            if animation.name in self.nameToAnimIdToAnimDataMap:
+                raise Exception("Animations must have unique names. Use number suffixes like 'Stand 01' and 'Stand 02'")
             self.nameToAnimIdToAnimDataMap[animation.name] = {}
         self.initOldReferenceIndicesInCorrectedOrder()
         self.initMaterialNameToNewReferenceIndexMap()
