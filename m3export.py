@@ -45,6 +45,7 @@ class Exporter:
     def export(self, scene, m3FileName):
         self.scene = scene
         self.initStructureVersionMap()
+        self.selectAnimationsForExport()
         self.isAnimationExport = m3FileName.endswith(".m3a")
         if bpy.ops.object.mode_set.poll():
             bpy.ops.object.mode_set(mode='OBJECT')
@@ -56,7 +57,8 @@ class Exporter:
         self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap = {}
         self.prepareAnimIdMaps()
         self.nameToAnimIdToAnimDataMap = {}
-        for animation in scene.m3_animations:
+        for animationIndex in self.animationIndicesToExport:
+            animation = self.scene.m3_animations[animationIndex]
             if animation.name in self.nameToAnimIdToAnimDataMap:
                 raise Exception("Animations must have unique names. Use number suffixes like 'Stand 01' and 'Stand 02'")
             self.nameToAnimIdToAnimDataMap[animation.name] = {}
@@ -162,6 +164,17 @@ class Exporter:
         structureHistory = m3.structures[structureName]
         structureDescription = m3.structures[structureName].getVersion(version)
         return structureDescription.createInstance()
+
+
+    def selectAnimationsForExport(self):
+        scene = self.scene
+        animationExportAmount = scene.m3_export_options.animationExportAmount
+        if animationExportAmount == shared.exportAmountAllAnimations:
+            self.animationIndicesToExport = range(len(scene.m3_animations))
+        elif animationExportAmount == shared.exportAmountCurrentAnimation:
+            self.animationIndicesToExport = [scene.m3_animation_index]
+        else:
+            raise Exception("Unsupported export amount option: %s" % scene.m3_export_options)
 
     def createModel(self, m3FileName):
         model = self.createInstanceOf("MODL")
@@ -351,7 +364,8 @@ class Exporter:
 
 
     def initBoneAnimations(self, model): 
-        for animationIndex, animation in enumerate(self.scene.m3_animations):
+        for animationIndex in self.animationIndicesToExport:
+            animation = self.scene.m3_animations[animationIndex]
             self.scene.m3_animation_index = animationIndex
             frames = set()
             # For animated rotations all frames are needed,
@@ -778,7 +792,8 @@ class Exporter:
         boundingsAnimRef.nullValue = self.createBoundings(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         
         scene = self.scene
-        for animation in scene.m3_animations:
+        for animationIndex in self.animationIndicesToExport:
+            animation = self.scene.m3_animations[animationIndex]
             frameToBoneIndexToAbsoluteMatrixMap = self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap[animation.name]
             boundingsVectorList = []
             frames = self.allFramesOfAnimation(animation)
@@ -809,7 +824,8 @@ class Exporter:
         
     def createBoneMatricesForStaticMeshBone(self, staticMeshBoneIndex):
         self.boneIndexToDefaultAbsoluteMatrixMap[staticMeshBoneIndex] = mathutils.Matrix()
-        for animation in self.scene.m3_animations:
+        for animationIndex in self.animationIndicesToExport:
+            animation = self.scene.m3_animations[animationIndex]
             frameToBoneIndexToAbsoluteMatrixMap = self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap.get(animation.name)
             if frameToBoneIndexToAbsoluteMatrixMap == None:
                 frameToBoneIndexToAbsoluteMatrixMap = {}
@@ -962,7 +978,8 @@ class Exporter:
     
     def prepareAnimationEndEvents(self):
         scene = self.scene
-        for animation in scene.m3_animations:
+        for animationIndex in self.animationIndicesToExport:
+            animation = self.scene.m3_animations[animationIndex]
             animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
             animEndId = 0x65bd3215
             animIdToAnimDataMap[animEndId] = self.createAnimationEvents(animation)
@@ -1003,7 +1020,8 @@ class Exporter:
     def initWithPreparedAnimationData(self, model):
         scene = self.scene
         self.animIdListToSTSIndexMap = {} 
-        for animation in scene.m3_animations:
+        for animationIndex in self.animationIndicesToExport:
+            animation = self.scene.m3_animations[animationIndex]
             animIdToAnimDataMap = self.nameToAnimIdToAnimDataMap[animation.name]
             animIds = list(animIdToAnimDataMap.keys())
             animIds.sort()
@@ -1842,7 +1860,8 @@ class Exporter:
         
         animationActionTuples = []
         scene = self.scene
-        for animation in scene.m3_animations:
+        for animationIndex in self.animationIndicesToExport:
+            animation = self.scene.m3_animations[animationIndex]
             action = None
             if animationData != None:
                 track = animationData.nla_tracks.get(animation.name + "_full")

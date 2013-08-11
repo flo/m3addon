@@ -98,6 +98,9 @@ layerFieldNameToNameMap = {
     "creepLayer": "Creep"
 }
 
+exportAmountAllAnimations="ALL_ANIMATIONS"
+exportAmountCurrentAnimation="CURRENT_ANIMATION"
+
 def getLayerNameFromFieldName(fieldName):
     name = layerFieldNameToNameMap.get(fieldName)
     if name == None:
