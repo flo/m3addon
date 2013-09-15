@@ -677,7 +677,14 @@ class Importer:
             materialReference.name = material.name
             materialReference.materialType = materialType
             materialReference.materialIndex = blenderMaterialIndex
-    
+            if hasattr(m3Material,"sections"): # Currently only composite materials have sections
+                for sectionIndex, m3Section in enumerate(m3Material.sections):
+                    section = material.sections.add()
+                    sectionAnimPathPrefix = animPathPrefix + ".sections[%s]." % sectionIndex
+                    materialSectionTransferer = M3ToBlenderDataTransferer(self, scene, sectionAnimPathPrefix, blenderObject=section, m3Object=m3Section)
+                    shared.transferCompositeMaterialSection(materialSectionTransferer)
+                    section.name = self.getNameOfMaterialWithReferenceIndex(m3Section.materialReferenceIndex)
+
     def initMaterialReferenceIndexToNameMap(self):
         self.materialReferenceIndexToNameMap = {}
         for materialReferenceIndex, materialReference in enumerate(self.model.materialReferences):
