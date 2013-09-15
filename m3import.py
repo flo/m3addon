@@ -1031,10 +1031,12 @@ class Importer:
         scene = bpy.context.scene
         showLights = scene.m3_bone_visiblity_options.showLights
         print("Loading lights")
-        for lightIndex, m3Light in enumerate(self.model.lights):
+        for m3Light in self.model.lights:
+            # The index of the light in model.lights can't be used since some lights may already exist
+            blenderLightIndex = len(scene.m3_lights)
             light = scene.m3_lights.add()
             light.updateBlenderBone = False
-            animPathPrefix = "m3_lights[%s]." % lightIndex
+            animPathPrefix = "m3_lights[%s]." % blenderLightIndex
             transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=light, m3Object=m3Light)
             shared.transferLight(transferer)
             boneEntry = self.model.bones[m3Light.boneIndex]
