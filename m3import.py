@@ -1292,19 +1292,32 @@ class Importer:
                 return True
         return false
 
+    def determineListOfUsedBoneNames(self):
+        usedBoneNames = []
+        for currentObject in self.scene.objects:
+            if currentObject.type == 'ARMATURE':
+                armatureObject = currentObject
+                armature = armatureObject.data 
+                for blenderBoneIndex, blenderBone in enumerate(armature.bones):
+                    boneName = blenderBone.name
+                    usedBoneNames.append(boneName)
+        return usedBoneNames
+    
     def determineBoneNameList(self, m3Bones):
         names = []
-        nameSet = set()
-        for index, m3Bone in enumerate(m3Bones):
-            name = m3Bone.name
-            if len(name) > 31:
-                name = "Bone%06d%s" % (index, name[:21])
-            if len(name) == 0:
-                name = "Bone%06d" % len(names)
-            if name in nameSet:
-                raise Exception("Failed to generate an unique bone name for %s" % name)
-            nameSet.add(name)
+        usedBoneNames = self.determineListOfUsedBoneNames()
+        for m3Bone in m3Bones:
+            wantedName = m3Bone.name
+            if len(wantedName) == 0:
+                wantedName = "Bone"
+            name = wantedName
+            numberOfTries = 2
+            while (len(name) > 31) or (name in usedBoneNames):
+                name = "%s %02d" % (wantedName[:21], numberOfTries)
+                numberOfTries += 1
+            usedBoneNames.append(name)
             names.append(name)
+         
         return names
 
     def createEditBones(self, m3Bones, heads, tails, rolls, bindScales):
