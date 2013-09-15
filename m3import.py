@@ -1417,6 +1417,7 @@ class Importer:
             stg = model.sequenceTransformationGroups[sequenceIndex]
             if (sequence.name != stg.name):
                 raise Exception("Name of sequence and it's transformation group does not match")
+            animationIndex = len(scene.m3_animations)
             animation = scene.m3_animations.add()
             animation.startFrame = msToFrame(sequence.animStartInMS)
             animation.exlusiveEndFrame = msToFrame(sequence.animEndInMS)
@@ -1454,7 +1455,7 @@ class Importer:
             
             animation.useSimulateFrame, animation.simulateFrame = self.findSimulateFrame(animIdToTimeValueMap)
             
-            self.animations.append(AnimationTempData(animIdToTimeValueMap, sequenceIndex))
+            self.animations.append(AnimationTempData(animIdToTimeValueMap, animationIndex))
 
 
     def initSTCsOfAnimations(self):
