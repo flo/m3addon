@@ -1040,7 +1040,6 @@ def transferMaterialLayer(transferer):
     transferer.transferFloat("tintCutout")
 
 def transferAnimation(transferer):
-    transferer.transferString("name")
     transferer.transferFloat("movementSpeed")
     transferer.transferInt("frequency")
     transferer.transferBit("flags", "notLooping")

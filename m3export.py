@@ -1030,6 +1030,7 @@ class Exporter:
             m3Sequence.animStartInMS = self.frameToMS(animation.startFrame)
             m3Sequence.animEndInMS = self.frameToMS(animation.exlusiveEndFrame)
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Sequence, blenderObject=animation, animPathPrefix=None, rootObject=self.scene)
+            m3Sequence.name = animation.name
             shared.transferAnimation(transferer)
             m3Sequence.boundingSphere = self.createAlmostEmptyBoundingsWithRadius(2)
             model.sequences.append(m3Sequence)
