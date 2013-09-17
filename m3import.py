@@ -374,6 +374,8 @@ class Importer:
         scene.render.fps = FRAME_RATE
         self.animations = []
         self.animIdToLongAnimIdMap = {}
+        # clear existing animation ids so that they can't conflict with new ones:
+        self.scene.m3_animation_ids.clear()
         self.storeModelId()
         self.createAnimations()
         self.createArmatureObject()
