@@ -776,17 +776,25 @@ class Importer:
         scene = bpy.context.scene
         showParticleSystems = scene.m3_bone_visiblity_options.showParticleSystems
         print("Loading particle systems")
+        
+        
+        
+        uniqueNameFinder = shared.UniqueNameFinder()
+        uniqueNameFinder.markNamesOfCollectionAsUsed(self.scene.m3_particle_systems)
+        for particleSystem in self.scene.m3_particle_systems:
+            uniqueNameFinder.markNamesOfCollectionAsUsed(particleSystem.copies)
+        
         m3IndexToParticleSystemMap = {}
         for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
-            boneEntry = self.model.bones[m3ParticleSystem.bone]
-            fullBoneName = boneEntry.name
-            if fullBoneName.startswith(shared.star2ParticlePrefix):
-                name = fullBoneName[len(shared.star2ParticlePrefix):]
-            elif fullBoneName.startswith("MR3_Particle_"):
-                name = fullBoneName[len("MR3_Particle_"):]
+            blenderBoneName = self.boneNames[m3ParticleSystem.bone]
+            if blenderBoneName.startswith(shared.star2ParticlePrefix):
+                wantedName = blenderBoneName[len(shared.star2ParticlePrefix):]
+            elif blenderBoneName.startswith("MR3_Particle_"):
+                wantedName = blenderBoneName[len("MR3_Particle_"):]
             else:
                 print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
-                name = fullBoneName
+                wantedName = blenderBoneName
+            name = uniqueNameFinder.findNameAndMarkAsUsedLike(wantedName)
             m3IndexToParticleSystemMap[particleSystemIndex] = name
 
         for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
@@ -862,11 +870,14 @@ class Importer:
                 shared.updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone)
                 bone.hide = not showParticleSystems
                 
-                if fullCopyBoneName.startswith(shared.star2ParticlePrefix):
-                    copy.name = fullCopyBoneName[len(shared.star2ParticlePrefix):]
+                if blenderBoneName.startswith(shared.star2ParticlePrefix):
+                    wantedName = blenderBoneName[len(shared.star2ParticlePrefix):]
                 else:
                     print("Warning: A particle system copy was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
-                    copy.name = fullCopyBoneName
+                    wantedName = blenderBoneName
+                copy.name = uniqueNameFinder.findNameAndMarkAsUsedLike(wantedName)
+
+                    
             particleSystem.updateBlenderBoneShapes = True
 
 
