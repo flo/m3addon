@@ -716,9 +716,10 @@ class Importer:
         scene = bpy.context.scene
         showCameras = scene.m3_bone_visiblity_options.showCameras
         print("Loading cameras")
-        for cameraIndex, m3Camera in enumerate(self.model.cameras):
+        for m3Camera in self.model.cameras:
+            blenderCameraIndex = len(scene.m3_cameras)
             camera = scene.m3_cameras.add()
-            animPathPrefix = "m3_cameras[%s]." % cameraIndex
+            animPathPrefix = "m3_cameras[%s]." % blenderCameraIndex
             transferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=camera, m3Object=m3Camera)
             shared.transferCamera(transferer)
             m3Bone = self.model.bones[m3Camera.boneIndex]
@@ -784,9 +785,10 @@ class Importer:
             m3IndexToParticleSystemMap[particleSystemIndex] = name
 
         for particleSystemIndex, m3ParticleSystem in enumerate(self.model.particles):
+            blenderParticleSystemIndex = len(scene.m3_particle_systems)
             particleSystem = scene.m3_particle_systems.add()
             particleSystem.updateBlenderBoneShapes = False
-            animPathPrefix = "m3_particle_systems[%s]." % particleSystemIndex
+            animPathPrefix = "m3_particle_systems[%s]." % blenderParticleSystemIndex
             transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=particleSystem, m3Object=m3ParticleSystem)
             shared.transferParticleSystem(transferer)
 
@@ -867,10 +869,11 @@ class Importer:
         scene = bpy.context.scene
         showRibbons = scene.m3_bone_visiblity_options.showRibbons
         print("Loading particle systems")
-        for ribbonIndex, m3Ribbon in enumerate(self.model.ribbons):
+        for m3Ribbon in self.model.ribbons:
+            blenderRibbonIndex = len(scene.m3_ribbons)
             ribbon = scene.m3_ribbons.add()
             ribbon.updateBlenderBoneShapes = False
-            animPathPrefix = "m3_ribbons[%s]." % ribbonIndex
+            animPathPrefix = "m3_ribbons[%s]." % blenderRibbonIndex
             transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=ribbon, m3Object=m3Ribbon)
             shared.transferRibbon(transferer)
             boneEntry = self.model.bones[m3Ribbon.boneIndex]
@@ -898,10 +901,11 @@ class Importer:
         scene = bpy.context.scene
         showProjections = scene.m3_bone_visiblity_options.showProjections
         print("Loading projections")
-        for projectionIndex, m3Projection in enumerate(self.model.projections):
+        for m3Projection in self.model.projections:
+            blenderProjectionIndex = len(scene.m3_projections)
             projection = scene.m3_projections.add()
             projection.updateBlenderBoneShapes = False
-            animPathPrefix = "m3_projections[%s]." % projectionIndex
+            animPathPrefix = "m3_projections[%s]." % blenderProjectionIndex
             transferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=projection, m3Object=m3Projection)
             shared.transferProjection(transferer)
             boneEntry = self.model.bones[m3Projection.boneIndex]
@@ -926,10 +930,11 @@ class Importer:
         scene = bpy.context.scene
         showWarps = scene.m3_bone_visiblity_options.showWarps
         print("Loading warps")
-        for warpIndex, m3Warp in enumerate(self.model.warps):
+        for m3Warp in self.model.warps:
+            blenderWarpIndex = len(scene.m3_warps)
             warp = scene.m3_warps.add()
             warp.updateBlenderBoneShapes = False
-            animPathPrefix = "m3_warps[%s]." % warpIndex
+            animPathPrefix = "m3_warps[%s]." % blenderWarpIndex
             transferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=warp, m3Object=m3Warp)
             shared.transferWarp(transferer)
             boneEntry = self.model.bones[m3Warp.boneIndex]
@@ -951,10 +956,11 @@ class Importer:
         scene = bpy.context.scene
         showForces = scene.m3_bone_visiblity_options.showForces
         print("Loading forces")
-        for forceIndex, m3Force in enumerate(self.model.forces):
+        for m3Force in self.model.forces:
+            blenderForceIndex = len(scene.m3_forces)
             force = scene.m3_forces.add()
             force.updateBlenderBoneShape = False
-            animPathPrefix = "m3_forces[%s]." % forceIndex
+            animPathPrefix = "m3_forces[%s]." % blenderForceIndex
             transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=force, m3Object=m3Force)
             shared.transferForce(transferer)
             boneEntry = self.model.bones[m3Force.boneIndex]
@@ -975,9 +981,10 @@ class Importer:
     def createRigidBodies(self):
         scene = bpy.context.scene
         print("Loading rigid bodies")
-        for rigidBodyIndex, m3RigidBody in enumerate(self.model.rigidBodies):
+        for m3RigidBody in self.model.rigidBodies:
+            blenderRigidBodyIndex = len(scene.m3_rigid_bodies)
             rigid_body = scene.m3_rigid_bodies.add()
-            animPathPrefix = "m3_rigid_bodies[%s]." % rigidBodyIndex
+            animPathPrefix = "m3_rigid_bodies[%s]." % blenderRigidBodyIndex
             transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=rigid_body, m3Object=m3RigidBody)
             shared.transferRigidBody(transferer)
             boneEntry = self.model.bones[m3RigidBody.boneIndex]
