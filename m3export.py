@@ -1156,6 +1156,7 @@ class Exporter:
             if boneIndex == None:
                 boneIndex = self.addBoneWithRestPosAndReturnIndex(model, boneName, realBone=False)
             m3Camera.boneIndex = boneIndex
+            m3Camera.name = camera.name
             animPathPrefix = "m3_cameras[%s]." % cameraIndex
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Camera, blenderObject=camera, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferCamera(transferer)

@@ -721,6 +721,7 @@ class Importer:
         scene = bpy.context.scene
         showCameras = scene.m3_bone_visiblity_options.showCameras
         print("Loading cameras")
+        
         for m3Camera in self.model.cameras:
             blenderCameraIndex = len(scene.m3_cameras)
             camera = scene.m3_cameras.add()
@@ -729,8 +730,9 @@ class Importer:
             shared.transferCamera(transferer)
             blenderBoneName = self.boneNames[m3Camera.boneIndex]
             m3Bone = self.model.bones[m3Camera.boneIndex]
-            if m3Bone.name != camera.name:
+            if m3Bone.name != m3Camera.name:
                 raise Exception("Bone of camera '%s' had different name: '%s'" % (camera.name, m3Bone.name))
+            camera.name = blenderBoneName
             bone = self.armature.bones[blenderBoneName]
             poseBone = self.armatureObject.pose.bones[blenderBoneName]
             bone.hide = not showCameras

@@ -1082,7 +1082,6 @@ def transferSTC(transferer):
     transferer.transferBoolean("runsConcurrent")
 
 def transferCamera(transferer):
-    transferer.transferString("name")
     transferer.transferAnimatableFloat("fieldOfView")
     transferer.transferAnimatableFloat("farClip")
     transferer.transferAnimatableFloat("nearClip")
