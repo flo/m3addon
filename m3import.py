@@ -660,7 +660,7 @@ class Importer:
         scene = self.scene
         self.initMaterialReferenceIndexToNameMap()
         
-        for m3MaterialReference in self.model.materialReferences:
+        for materialReferenceIndex, m3MaterialReference in enumerate(self.model.materialReferences):
             materialType = m3MaterialReference.materialType
             m3MaterialIndex = m3MaterialReference.materialIndex
             m3MaterialFieldName = shared.m3MaterialFieldNames[materialType]
@@ -674,6 +674,7 @@ class Importer:
             animPathPrefix = blenderMaterialsFieldName + "[%s]." % blenderMaterialIndex
             materialTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=material, m3Object=m3Material)
             transferMethod(materialTransferer)
+            material.name = self.materialReferenceIndexToNameMap[materialReferenceIndex]
             self.createLayers(scene, material, m3Material, animPathPrefix)
             materialReference = scene.m3_material_references.add()
             materialReference.name = material.name
@@ -688,10 +689,14 @@ class Importer:
                     section.name = self.getNameOfMaterialWithReferenceIndex(m3Section.materialReferenceIndex)
 
     def initMaterialReferenceIndexToNameMap(self):
+        uniqueNameFinder = shared.UniqueNameFinder()
+        uniqueNameFinder.markNamesOfCollectionAsUsed(self.scene.m3_material_references)
+        
         self.materialReferenceIndexToNameMap = {}
         for materialReferenceIndex, materialReference in enumerate(self.model.materialReferences):
-            materialName = self.getMaterialNameByM3MaterialReference(materialReference)
-            self.materialReferenceIndexToNameMap[materialReferenceIndex] = materialName
+            wantedName = self.getMaterialNameByM3MaterialReference(materialReference)
+            freeName = uniqueNameFinder.findNameAndMarkAsUsedLike(wantedName)
+            self.materialReferenceIndexToNameMap[materialReferenceIndex] = freeName
                 
             
     def getMaterialNameByM3MaterialReference(self, materialReference):
@@ -1411,35 +1416,6 @@ class Importer:
         
         return False, 0
     
-    
-    def removeNumberSuffix(self, name):
-        lastIndex = len(name) -1
-        index = lastIndex
-        while(index > 0 and name[index] in ["0","1","2","3","4","5","6","7","9","9"]):
-            index -= 1
-        name = name[:index+1]
-        if name.endswith(" "):
-            name = name[:-1]
-        return name
-
-    
-    def determineUniqueAnimationNames(self):
-        usedNames = set()
-        for animation in self.scene.m3_animations:
-            usedNames.add(animation.name)
-        
-        newAnimationNames = list()
-        for sequence in self.model.sequences:
-            nameWithoutNumberSuffix = self.removeNumberSuffix(sequence.name)
-            namePrefix = nameWithoutNumberSuffix[:25]
-            name = sequence.name
-            suffixNumber = 1 # Suffixes of sc2 animations start with 01 
-            while name in usedNames:
-                name = "%s %02d" % (namePrefix, suffixNumber)
-                suffixNumber += 1
-            usedNames.add(name)
-            newAnimationNames.append(name)
-        return newAnimationNames       
                 
     def createAnimations(self):
         print ("Creating actions(animation sequences)")
@@ -1449,7 +1425,9 @@ class Importer:
         if len(model.sequenceTransformationGroups) != numberOfSequences:
             raise Exception("The model has not the same amounth of stg elements as it has sequences")
 
-        uniqueAnimationNames = self.determineUniqueAnimationNames()
+        uniqueNameFinder = shared.UniqueNameFinder()
+        uniqueNameFinder.markNamesOfCollectionAsUsed(self.scene.m3_animations)
+        
         self.sequenceNameAndSTCIndexToAnimIdSet = {}
         for sequenceIndex in range(numberOfSequences):
             sequence = model.sequences[sequenceIndex]
@@ -1458,7 +1436,7 @@ class Importer:
                 raise Exception("Name of sequence and it's transformation group does not match")
             animationIndex = len(scene.m3_animations)
             animation = scene.m3_animations.add()
-            animation.name = uniqueAnimationNames[sequenceIndex]
+            animation.name = uniqueNameFinder.findNameAndMarkAsUsedLike(sequence.name)
             animation.startFrame = msToFrame(sequence.animStartInMS)
             animation.exlusiveEndFrame = msToFrame(sequence.animEndInMS)
             transferer = M3ToBlenderDataTransferer(self, None, None, blenderObject=animation, m3Object=sequence)

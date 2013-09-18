@@ -189,6 +189,40 @@ def locRotScaleMatrix(location, rotation, scale):
     result.translation = location
     return result
 
+class UniqueNameFinder:
+    
+    def __init__(self):
+        self.usedNames = set()
+    
+    def markNamesOfCollectionAsUsed(self, collection):
+        for item in collection:
+            self.usedNames.add(item.name)
+            
+    def findNameAndMarkAsUsedLike(self, wantedName):
+        nameWithoutNumberSuffix = self.removeNumberSuffix(wantedName)
+        namePrefix = nameWithoutNumberSuffix[:25]
+        # Suffixes of sc2 animations most often start with 01
+        # For other objects it doesn't hurt do it the same, and often it is even like that
+        suffixNumber = 1 
+        name = wantedName
+        while name in self.usedNames:
+            name = "%s %02d" % (namePrefix, suffixNumber)
+            suffixNumber += 1
+        self.usedNames.add(name)
+        return name   
+
+    
+    def removeNumberSuffix(self, name):
+        lastIndex = len(name) -1
+        index = lastIndex
+        while(index > 0 and name[index] in ["0","1","2","3","4","5","6","7","9"]):
+            index -= 1
+        name = name[:index+1]
+        if name.endswith(" ") or name.endswith("_"):
+            name = name[:-1]
+        return name
+
+
 def setAnimationWithIndexToCurrentData(scene, animationIndex):
     if (animationIndex < 0) or (animationIndex >= len(scene.m3_animations)):
         return
@@ -966,7 +1000,6 @@ def transferPhysicsShape(transferer):
     transferer.transferFloat("size2")
 
 def transferStandardMaterial(transferer):
-    transferer.transferString("name")
     transferer.transferBit("flags", "unfogged")
     transferer.transferBit("flags", "twoSided")
     transferer.transferBit("flags", "unshaded")
@@ -994,25 +1027,24 @@ def transferStandardMaterial(transferer):
     transferer.transferEnum("specType")
     
 def transferDisplacementMaterial(transferer):
-    transferer.transferString("name")
     transferer.transferAnimatableFloat("strengthFactor")
     transferer.transferInt("priority")
 
 def transferCompositeMaterial(transferer):
-    transferer.transferString("name")
+    pass
 
 def transferCompositeMaterialSection(transferer):
     transferer.transferAnimatableFloat("alphaFactor")
 
 def transferTerrainMaterial(transferer):
-    transferer.transferString("name")
+    pass
 
 def transferVolumeMaterial(transferer):
-    transferer.transferString("name")
+    pass
     transferer.transferAnimatableFloat("volumeDensity")
 
 def transferCreepMaterial(transferer):
-    transferer.transferString("name")
+    pass
 
 def transferMaterialLayer(transferer):
     transferer.transferString("imagePath")

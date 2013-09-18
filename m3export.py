@@ -1621,6 +1621,7 @@ class Exporter:
         materialAnimPathPrefix = "m3_standard_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferStandardMaterial(transferer)
+        m3Material.name = material.name
         self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
 
         m3Material.unknownAnimationRef1 = self.createNullUInt32AnimationReference(0)
@@ -1632,6 +1633,7 @@ class Exporter:
         materialAnimPathPrefix = "m3_displacement_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferDisplacementMaterial(transferer)
+        m3Material.name = material.name
         self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
         return m3Material
 
@@ -1640,6 +1642,7 @@ class Exporter:
         materialAnimPathPrefix = "m3_composite_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferCompositeMaterial(transferer)
+        m3Material.name = material.name
         for sectionIndex, section in enumerate(material.sections):
             m3Section = self.createInstanceOf("CMS_")
             m3Section.materialReferenceIndex = self.materialNameToNewReferenceIndexMap[section.name]
@@ -1655,6 +1658,7 @@ class Exporter:
         materialAnimPathPrefix = "m3_terrain_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferTerrainMaterial(transferer)
+        m3Material.name = material.name
         self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
         return m3Material
 
@@ -1663,6 +1667,7 @@ class Exporter:
         materialAnimPathPrefix = "m3_volume_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferVolumeMaterial(transferer)
+        m3Material.name = material.name
         self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
         return m3Material
 
@@ -1671,6 +1676,7 @@ class Exporter:
         materialAnimPathPrefix = "m3_creep_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferCreepMaterial(transferer)
+        m3Material.name = material.name
         self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
         return m3Material
 
