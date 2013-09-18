@@ -727,10 +727,10 @@ class Importer:
             animPathPrefix = "m3_cameras[%s]." % blenderCameraIndex
             transferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=camera, m3Object=m3Camera)
             shared.transferCamera(transferer)
+            blenderBoneName = self.boneNames[m3Camera.boneIndex]
             m3Bone = self.model.bones[m3Camera.boneIndex]
             if m3Bone.name != camera.name:
                 raise Exception("Bone of camera '%s' had different name: '%s'" % (camera.name, m3Bone.name))
-            blenderBoneName = self.boneNames[m3Camera.boneIndex]
             bone = self.armature.bones[blenderBoneName]
             poseBone = self.armatureObject.pose.bones[blenderBoneName]
             bone.hide = not showCameras
@@ -893,13 +893,11 @@ class Importer:
             transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=ribbon, m3Object=m3Ribbon)
             shared.transferRibbon(transferer)
             boneEntry = self.model.bones[m3Ribbon.boneIndex]
-            fullBoneName = boneEntry.name
-            ribbon.boneSuffix = fullBoneName
-            for ribbonPrefix in [shared.star2RibbonPrefix, "SC2SplRbn"]:
-                if fullBoneName.startswith(ribbonPrefix):
-                    ribbon.boneSuffix = fullBoneName[len(ribbonPrefix):]
-                
             blenderBoneName = self.boneNames[m3Ribbon.boneIndex]
+            ribbon.boneSuffix = blenderBoneName
+            for ribbonPrefix in [shared.star2RibbonPrefix, "SC2SplRbn"]:
+                if blenderBoneName.startswith(ribbonPrefix):
+                    ribbon.boneSuffix = blenderBoneName[len(ribbonPrefix):]  
             ribbon.boneName = blenderBoneName
             
             bone = self.armature.bones[blenderBoneName]
@@ -925,12 +923,11 @@ class Importer:
             transferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=projection, m3Object=m3Projection)
             shared.transferProjection(transferer)
             boneEntry = self.model.bones[m3Projection.boneIndex]
-            fullBoneName = boneEntry.name
-            if fullBoneName.startswith(shared.projectionPrefix):
-                projection.boneSuffix = fullBoneName[len(shared.projectionPrefix):]
-            else:
-                projection.boneSuffix = fullBoneName
             blenderBoneName = self.boneNames[m3Projection.boneIndex]
+            if blenderBoneName.startswith(shared.projectionPrefix):
+                projection.boneSuffix = blenderBoneName[len(shared.projectionPrefix):]
+            else:
+                projection.boneSuffix = blenderBoneName
             projection.boneName = blenderBoneName
             
             bone = self.armature.bones[blenderBoneName]
@@ -954,12 +951,11 @@ class Importer:
             transferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=warp, m3Object=m3Warp)
             shared.transferWarp(transferer)
             boneEntry = self.model.bones[m3Warp.boneIndex]
-            fullBoneName = boneEntry.name
-            if fullBoneName.startswith(shared.warpPrefix):
-                warp.boneSuffix = fullBoneName[len(shared.warpPrefix):]
-            else:
-                warp.boneSuffix = fullBoneName
             blenderBoneName = self.boneNames[m3Warp.boneIndex]
+            if blenderBoneName.startswith(shared.warpPrefix):
+                warp.boneSuffix = blenderBoneName[len(shared.warpPrefix):]
+            else:
+                warp.boneSuffix = blenderBoneName
             warp.boneName = blenderBoneName
             
             bone = self.armature.bones[blenderBoneName]
@@ -980,13 +976,12 @@ class Importer:
             transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=force, m3Object=m3Force)
             shared.transferForce(transferer)
             boneEntry = self.model.bones[m3Force.boneIndex]
-            fullBoneName = boneEntry.name
-            if fullBoneName.startswith(shared.star2ForcePrefix):
-                force.boneSuffix = fullBoneName[len(shared.star2ForcePrefix):]
-            else:
-                print("Warning: A force was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ForcePrefix))
-                force.boneSuffix = fullBoneName
             blenderBoneName = self.boneNames[m3Force.boneIndex]
+            if blenderBoneName.startswith(shared.star2ForcePrefix):
+                force.boneSuffix = blenderBoneName[len(shared.star2ForcePrefix):]
+            else:
+                print("Warning: A force was bound to bone %s which does not start with %s" %(blenderBoneName, shared.star2ForcePrefix))
+                force.boneSuffix = blenderBoneName
             force.boneName = blenderBoneName
             bone = self.armature.bones[blenderBoneName]
             poseBone = self.armatureObject.pose.bones[blenderBoneName]
@@ -1003,9 +998,9 @@ class Importer:
             animPathPrefix = "m3_rigid_bodies[%s]." % blenderRigidBodyIndex
             transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=rigid_body, m3Object=m3RigidBody)
             shared.transferRigidBody(transferer)
-            boneEntry = self.model.bones[m3RigidBody.boneIndex]
-            rigid_body.name = boneEntry.name
-            rigid_body.boneName = boneEntry.name
+            blenderBoneName = self.boneNames[m3Force.boneIndex]
+            rigid_body.name = blenderBoneName
+            rigid_body.boneName = blenderBoneName
             
             for physicsShapeIndex, m3PhysicsShape in enumerate(m3RigidBody.physicsShapes):
                 physics_shape = rigid_body.physicsShapes.add()
@@ -1066,15 +1061,17 @@ class Importer:
             shared.transferLight(transferer)
             boneEntry = self.model.bones[m3Light.boneIndex]
             fullBoneName = boneEntry.name
+            blenderBoneName = self.boneNames[m3Light.boneIndex]
             lightPrefix =  shared.lightPrefixMap.get(str(m3Light.lightType))
-            if fullBoneName.startswith(lightPrefix):
-                light.boneSuffix = fullBoneName[len(lightPrefix):]
-            elif fullBoneName.startswith("MR3_Light_"):
-                light.boneSuffix = fullBoneName[len("MR3_Light_"):]
+            if blenderBoneName.startswith(lightPrefix):
+                light.boneSuffix = blenderBoneName[len(lightPrefix):]
+            elif blenderBoneName.startswith("MR3_Light_"):
+                light.boneSuffix = blenderBoneName[len("MR3_Light_"):]
             else:
                 print("Warning: A light was bound to bone %s which does not start with %s" %(fullBoneName, lightPrefix))
-                light.boneSuffix = fullBoneName
-            blenderBoneName = self.boneNames[m3Light.boneIndex]
+                light.boneSuffix = blenderBoneName
+            # TODO ensure that boneSuffix/name is unique; unique bone is not always enough
+            # needs to be fixed for other objects too
             light.boneName = blenderBoneName
             bone = self.armature.bones[blenderBoneName]
             poseBone = self.armatureObject.pose.bones[blenderBoneName]
