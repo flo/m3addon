@@ -676,6 +676,8 @@ class Importer:
             transferMethod(materialTransferer)
             material.name = self.materialReferenceIndexToNameMap[materialReferenceIndex]
             self.createLayers(scene, material, m3Material, animPathPrefix)
+            blenderMaterialReferenceIndex = len(scene.m3_material_references)
+            material.materialReferenceIndex = blenderMaterialReferenceIndex
             materialReference = scene.m3_material_references.add()
             materialReference.name = material.name
             materialReference.materialType = materialType
