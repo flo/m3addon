@@ -1113,15 +1113,23 @@ class Importer:
             if not prefixedName.startswith(shared.attachmentPointPrefix):
                 print("Warning: The name of the attachment %s does not start with %s" %(prefixedName, shared.attachmentPointPrefix))
             attachmentName = prefixedName[len(shared.attachmentPointPrefix):]
-            attachmentPoint.boneSuffix = attachmentName
+            
             boneEntry = self.model.bones[boneIndex]
             expectedBoneName = shared.boneNameForAttachmentPoint(attachmentPoint)
+            
+            boneNameInBlender = self.boneNames[boneIndex]
+
             if boneEntry.name != expectedBoneName:
                 print("Warning: The attachment bone %s did not have the name %s as expected" %(boneEntry.name, expectedBoneName))
-            # Some long bones need to be renamed. 
-            # The adjusted bone names get stored in self.boneNames:
-            boneNameInBlender = self.boneNames[boneIndex]
+
+            if boneEntry.name == boneNameInBlender:
+                attachmentPoint.boneSuffix = attachmentName
+            else:
+                # If the bone name was to long, or when there was already a bone with that name
+                # Use the new boen name to determine the bone suffix
+                attachmentPoint.boneSuffix = shared.attachmentPointNameFromBoneName(boneNameInBlender)
             attachmentPoint.boneName = boneNameInBlender
+
             
             bone = self.armature.bones[boneNameInBlender]
             poseBone = self.armatureObject.pose.bones[boneNameInBlender]

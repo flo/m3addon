@@ -124,6 +124,15 @@ def boneNameForAttachmentPoint(attachmentPoint):
         bonePrefix = attachmentVolumePrefix
     return bonePrefix + attachmentPoint.boneSuffix
 
+def attachmentPointNameFromBoneName(boneName):
+    if boneName.startswith(attachmentPointPrefix):
+        return boneName[len(attachmentPointPrefix):]
+    elif boneName.startswith(attachmentVolumePrefix):
+        return boneName[len(attachmentVolumePrefix):]
+    else:
+        return boneName
+    
+
 def boneNameForPartileSystem(particleSystem):
     return toValidBoneName(star2ParticlePrefix + particleSystem.name)
     
