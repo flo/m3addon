@@ -1325,31 +1325,19 @@ class Importer:
             if len(name) > 31:
                 return True
         return false
-
-    def determineListOfUsedBoneNames(self):
-        usedBoneNames = []
+    
+    def determineBoneNameList(self, m3Bones):
+        uniqueNameFinder = shared.UniqueNameFinder()        
         for currentObject in self.scene.objects:
             if currentObject.type == 'ARMATURE':
                 armatureObject = currentObject
                 armature = armatureObject.data 
-                for blenderBoneIndex, blenderBone in enumerate(armature.bones):
-                    boneName = blenderBone.name
-                    usedBoneNames.append(boneName)
-        return usedBoneNames
-    
-    def determineBoneNameList(self, m3Bones):
+                uniqueNameFinder.markNamesOfCollectionAsUsed(armature.bones)
+
         names = []
-        usedBoneNames = self.determineListOfUsedBoneNames()
         for m3Bone in m3Bones:
             wantedName = m3Bone.name
-            if len(wantedName) == 0:
-                wantedName = "Bone"
-            name = wantedName
-            numberOfTries = 2
-            while (len(name) > 31) or (name in usedBoneNames):
-                name = "%s %02d" % (wantedName[:21], numberOfTries)
-                numberOfTries += 1
-            usedBoneNames.append(name)
+            name = uniqueNameFinder.findNameAndMarkAsUsedLike(wantedName)
             names.append(name)
          
         return names
