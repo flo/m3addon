@@ -1565,6 +1565,95 @@ class MaterialReferencesPanel(bpy.types.Panel):
         col.operator("m3.materials_add", icon='ZOOMIN', text="")
         col.operator("m3.materials_remove", icon='ZOOMOUT', text="")
 
+
+
+
+class MaterialSelectionPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_material_selection"
+    bl_label = "M3 Material Selection"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "material"
+ 
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        return o and (o.data != None) and (o.type == 'MESH')
+ 
+    def draw(self, context):
+        scene = context.scene
+        layout = self.layout
+        meshObject = context.object
+        mesh = meshObject.data
+        layout.prop_search(mesh, 'm3_material_name', scene, 'm3_material_references', text="M3 Material", icon='NONE')
+
+def displayMaterialPropertiesUI(scene, layout, materialReference):
+        materialType = materialReference.materialType
+        materialIndex = materialReference.materialIndex
+        
+        if materialType == shared.standardMaterialTypeIndex:
+            material = scene.m3_standard_materials[materialIndex]
+            layout.prop(material, 'name', text="Name")
+            layout.prop(material, 'blendMode', text="Blend Mode")
+            layout.prop(material, 'priority', text="Priority")
+            layout.prop(material, 'specularity', text="Specularity")
+            layout.prop(material, 'cutoutThresh', text="Cutout Thresh.", slider=True)
+            layout.prop(material, 'specMult', text="Spec. Mult.")
+            layout.prop(material, 'emisMult', text="Emis. Mult.")
+            layout.prop(material, 'layerBlendType', text="Layer Blend Type")
+            layout.prop(material, 'emisBlendType', text="Emis. Blend Type")
+            layout.prop(material, 'specType', text="Spec. Type")
+            layout.prop(material, 'unknownFlag0x1', text="unknownFlag0x1")
+            layout.prop(material, 'unknownFlag0x4', text="unknownFlag0x4")
+            layout.prop(material, 'unknownFlag0x8', text="unknownFlag0x8")
+            layout.prop(material, 'unknownFlag0x200', text="unknownFlag0x200")
+            layout.prop(material, 'unfogged', text="Unfogged")
+            layout.prop(material, 'twoSided', text="Two Sided")
+            layout.prop(material, 'unshaded', text="Unshaded")
+            layout.prop(material, 'noShadowsCast', text="No Shadows Cast")
+            layout.prop(material, 'noHitTest', text="No Hit Test")
+            layout.prop(material, 'noShadowsReceived', text="No Shadows Received")
+            layout.prop(material, 'depthPrepass', text="Depth Prepass")
+            layout.prop(material, 'useTerrainHDR', text="Use Terrain HDR")
+            layout.prop(material, 'splatUVfix', text="Splat UV Fix")
+            layout.prop(material, 'softBlending', text="Soft Blending")
+            layout.prop(material, 'forParticles', text="For Particles (?)")
+            layout.prop(material, 'darkNormalMapping', text="Dark Normal Mapping")
+        elif materialType == shared.displacementMaterialTypeIndex:
+            material = scene.m3_displacement_materials[materialIndex]
+            layout.prop(material, 'name', text="Name")
+            layout.prop(material, 'strengthFactor', text="Strength Factor")
+            layout.prop(material, 'priority', text="Priority")
+        elif materialType == shared.compositeMaterialTypeIndex:
+            material = scene.m3_composite_materials[materialIndex]
+            layout.prop(material, 'name', text="Name")
+            layout.label("Sections:")
+            row = layout.row()
+            col = row.column()
+            col.template_list("UI_UL_list", "m3_material_sections", material, "sections", material, "sectionIndex", rows=2)
+            
+            col = row.column(align=True)
+            col.operator("m3.composite_material_add_section", icon='ZOOMIN', text="")
+            col.operator("m3.composite_material_remove_section", icon='ZOOMOUT', text="")
+            sectionIndex = material.sectionIndex
+            if (sectionIndex >= 0) and (sectionIndex < len(material.sections)):
+                section = material.sections[sectionIndex]
+                layout.prop_search(section, 'name', scene, 'm3_material_references', text="Material", icon='NONE')
+                layout.prop(section, "alphaFactor", text="Alpha Factor")
+            
+        elif materialType == shared.terrainMaterialTypeIndex:
+            material = scene.m3_terrain_materials[materialIndex]
+            layout.prop(material, 'name', text="Name")
+        elif materialType == shared.volumeMaterialTypeIndex:
+            material = scene.m3_volume_materials[materialIndex]
+            layout.prop(material, 'name', text="Name")
+            layout.prop(material, 'volumeDensity', text="Volume Density")
+        elif materialType == shared.creepMaterialTypeIndex:
+            material = scene.m3_creep_materials[materialIndex]
+            layout.prop(material, 'name', text="Name")
+        else:
+            layout.label(text=("Unsupported material type %d" % materialType))
+
 class MaterialPropertiesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_properties"
     bl_label = "M3 Material Properties"
@@ -1576,82 +1665,102 @@ class MaterialPropertiesPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-
         materialReferenceIndex = scene.m3_material_reference_index
+
         if materialReferenceIndex >= 0 and materialReferenceIndex < len(scene.m3_material_references):
             materialReference = scene.m3_material_references[materialReferenceIndex]
-            materialType = materialReference.materialType
-            materialIndex = materialReference.materialIndex
+            displayMaterialPropertiesUI(scene, layout, materialReference)
+
+
+class ObjectMaterialPropertiesPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_object_material_properties"
+    bl_label = "M3 Material Properties"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "material"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        meshObject = context.object
+        mesh = meshObject.data
+        materialName = mesh.m3_material_name
+        materialReference = scene.m3_material_references.get(materialName)
+        if materialReference != None:
+            displayMaterialPropertiesUI(scene, layout, materialReference)
+        
+def displayMaterialLayersUI(scene, layout, materialReference):
+    materialType = materialReference.materialType
+    materialIndex = materialReference.materialIndex
+    row = layout.row()
+    col = row.column()
+    material = shared.getMaterial(scene, materialType, materialIndex)
+    if material != None:
+        col.template_list("UI_UL_list", "m3_material_layers", material, "layers", scene, "m3_material_layer_index", rows=2)
+        layerIndex = scene.m3_material_layer_index
+        if layerIndex >= 0 and layerIndex < len(material.layers):
+            layer = material.layers[layerIndex]
+            layout.prop(layer, 'imagePath', text="Image Path")
+            layout.prop(layer, 'uvSource', text="UV Source")
+            layout.prop(layer, 'unknownbd3f7b5d', text="Unknown (id: bd3f7b5d)")
+            layout.prop(layer, 'textureWrapX', text="Tex. Wrap X")
+            layout.prop(layer, 'textureWrapY', text="Tex. Wrap Y")
+            layout.prop(layer, 'invertColor', text="Invert Color")
+            layout.prop(layer, 'alphaAsTeamColor', text="Alpha As Team Color")
+            layout.prop(layer, 'alphaOnly', text="Alpha Only")
+            layout.prop(layer, 'alphaBasedShading', text="Alpha Based Shading")
+            layout.prop(layer, 'useTint', text="Use Tint")
+            layout.prop(layer, 'tintAlpha', text="Tint Alpha")
+            layout.prop(layer, 'tintStrength', text="Tint Strength")
+            layout.prop(layer, 'tintStart', text="Tint Start")
+            layout.prop(layer, 'tintCutout', text="Tint Cutout")
+            split = layout.split()
+            row = split.row()
+            row.prop(layer, 'colorEnabled', text="Color:")
+            sub = row.column(align=True)
+            sub.active = layer.colorEnabled
+            sub.prop(layer, 'color', text="")
             
-            if materialType == shared.standardMaterialTypeIndex:
-                material = scene.m3_standard_materials[materialIndex]
-                layout.prop(material, 'name', text="Name")
-                layout.prop(material, 'blendMode', text="Blend Mode")
-                layout.prop(material, 'priority', text="Priority")
-                layout.prop(material, 'specularity', text="Specularity")
-                layout.prop(material, 'cutoutThresh', text="Cutout Thresh.", slider=True)
-                layout.prop(material, 'specMult', text="Spec. Mult.")
-                layout.prop(material, 'emisMult', text="Emis. Mult.")
-                layout.prop(material, 'layerBlendType', text="Layer Blend Type")
-                layout.prop(material, 'emisBlendType', text="Emis. Blend Type")
-                layout.prop(material, 'specType', text="Spec. Type")
-                layout.prop(material, 'unknownFlag0x1', text="unknownFlag0x1")
-                layout.prop(material, 'unknownFlag0x4', text="unknownFlag0x4")
-                layout.prop(material, 'unknownFlag0x8', text="unknownFlag0x8")
-                layout.prop(material, 'unknownFlag0x200', text="unknownFlag0x200")
-                layout.prop(material, 'unfogged', text="Unfogged")
-                layout.prop(material, 'twoSided', text="Two Sided")
-                layout.prop(material, 'unshaded', text="Unshaded")
-                layout.prop(material, 'noShadowsCast', text="No Shadows Cast")
-                layout.prop(material, 'noHitTest', text="No Hit Test")
-                layout.prop(material, 'noShadowsReceived', text="No Shadows Received")
-                layout.prop(material, 'depthPrepass', text="Depth Prepass")
-                layout.prop(material, 'useTerrainHDR', text="Use Terrain HDR")
-                layout.prop(material, 'splatUVfix', text="Splat UV Fix")
-                layout.prop(material, 'softBlending', text="Soft Blending")
-                layout.prop(material, 'forParticles', text="For Particles (?)")
-                layout.prop(material, 'darkNormalMapping', text="Dark Normal Mapping")
-            elif materialType == shared.displacementMaterialTypeIndex:
-                material = scene.m3_displacement_materials[materialIndex]
-                layout.prop(material, 'name', text="Name")
-                layout.prop(material, 'strengthFactor', text="Strength Factor")
-                layout.prop(material, 'priority', text="Priority")
-            elif materialType == shared.compositeMaterialTypeIndex:
-                material = scene.m3_composite_materials[materialIndex]
-                layout.prop(material, 'name', text="Name")
-                layout.label("Sections:")
-                row = layout.row()
-                col = row.column()
-                col.template_list("UI_UL_list", "m3_material_sections", material, "sections", material, "sectionIndex", rows=2)
-                
-                col = row.column(align=True)
-                col.operator("m3.composite_material_add_section", icon='ZOOMIN', text="")
-                col.operator("m3.composite_material_remove_section", icon='ZOOMOUT', text="")
-                sectionIndex = material.sectionIndex
-                if (sectionIndex >= 0) and (sectionIndex < len(material.sections)):
-                    section = material.sections[sectionIndex]
-                    layout.prop_search(section, 'name', scene, 'm3_material_references', text="Material", icon='NONE')
-                    layout.prop(section, "alphaFactor", text="Alpha Factor")
-                
-            elif materialType == shared.terrainMaterialTypeIndex:
-                material = scene.m3_terrain_materials[materialIndex]
-                layout.prop(material, 'name', text="Name")
-            elif materialType == shared.volumeMaterialTypeIndex:
-                material = scene.m3_volume_materials[materialIndex]
-                layout.prop(material, 'name', text="Name")
-                layout.prop(material, 'volumeDensity', text="Volume Density")
-            elif materialType == shared.creepMaterialTypeIndex:
-                material = scene.m3_creep_materials[materialIndex]
-                layout.prop(material, 'name', text="Name")
-            else:
-                layout.label(text=("Unsupported material type %d" % materialType))
+                                
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="UV Offset:")
+            sub.prop(layer, "uvOffset", text="X", index=0)
+            sub.prop(layer, "uvOffset", text="Y", index=1)
+
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="UV Angle:")
+            sub.prop(layer, "uvAngle", text="X", index=0)
+            sub.prop(layer, "uvAngle", text="Y", index=1)
+            sub.prop(layer, "uvAngle", text="Z", index=2)
+
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="UV Tiling:")
+            sub.prop(layer, "uvTiling", text="X", index=0)
+            sub.prop(layer, "uvTiling", text="Y", index=1)
+            
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Brightness:")
+            sub.prop(layer, "brightness", text="")
+            sub.prop(layer, "brightMult", text="Multiplier")
+            sub.prop(layer, "midtoneOffset", text="Midtone Offset")
+            
+            layout.prop(layer, "rttChannel", text="RTT Channel")
 
 class MatrialLayersPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_layers"
     bl_label = "M3 Material Layers"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = "scene"
+    bl_context = "material"
     bl_options = {'DEFAULT_CLOSED'}
     
     def draw(self, context):
@@ -1663,69 +1772,30 @@ class MatrialLayersPanel(bpy.types.Panel):
         materialIndex = scene.m3_material_reference_index
         if materialIndex >= 0 and materialIndex < len(scene.m3_material_references):
             materialReference = scene.m3_material_references[materialIndex]
-            materialType = materialReference.materialType
-            materialIndex = materialReference.materialIndex
-            
-            material = shared.getMaterial(scene, materialType, materialIndex)
-            if material != None:
-                col.template_list("UI_UL_list", "m3_material_layers", material, "layers", scene, "m3_material_layer_index", rows=2)
-                layerIndex = scene.m3_material_layer_index
-                if layerIndex >= 0 and layerIndex < len(material.layers):
-                    layer = material.layers[layerIndex]
-                    layout.prop(layer, 'imagePath', text="Image Path")
-                    layout.prop(layer, 'uvSource', text="UV Source")
-                    layout.prop(layer, 'unknownbd3f7b5d', text="Unknown (id: bd3f7b5d)")
-                    layout.prop(layer, 'textureWrapX', text="Tex. Wrap X")
-                    layout.prop(layer, 'textureWrapY', text="Tex. Wrap Y")
-                    layout.prop(layer, 'invertColor', text="Invert Color")
-                    layout.prop(layer, 'alphaAsTeamColor', text="Alpha As Team Color")
-                    layout.prop(layer, 'alphaOnly', text="Alpha Only")
-                    layout.prop(layer, 'alphaBasedShading', text="Alpha Based Shading")
-                    layout.prop(layer, 'useTint', text="Use Tint")
-                    layout.prop(layer, 'tintAlpha', text="Tint Alpha")
-                    layout.prop(layer, 'tintStrength', text="Tint Strength")
-                    layout.prop(layer, 'tintStart', text="Tint Start")
-                    layout.prop(layer, 'tintCutout', text="Tint Cutout")
-                    split = layout.split()
-                    row = split.row()
-                    row.prop(layer, 'colorEnabled', text="Color:")
-                    sub = row.column(align=True)
-                    sub.active = layer.colorEnabled
-                    sub.prop(layer, 'color', text="")
-                    
-                                        
-                    split = layout.split()
-                    col = split.column()
-                    sub = col.column(align=True)
-                    sub.label(text="UV Offset:")
-                    sub.prop(layer, "uvOffset", text="X", index=0)
-                    sub.prop(layer, "uvOffset", text="Y", index=1)
+            displayMaterialLayersUI(scene, layout, materialReference)
 
-                    split = layout.split()
-                    col = split.column()
-                    sub = col.column(align=True)
-                    sub.label(text="UV Angle:")
-                    sub.prop(layer, "uvAngle", text="X", index=0)
-                    sub.prop(layer, "uvAngle", text="Y", index=1)
-                    sub.prop(layer, "uvAngle", text="Z", index=2)
+        else:
+            col.label(text="No properties to display")
 
-                    split = layout.split()
-                    col = split.column()
-                    sub = col.column(align=True)
-                    sub.label(text="UV Tiling:")
-                    sub.prop(layer, "uvTiling", text="X", index=0)
-                    sub.prop(layer, "uvTiling", text="Y", index=1)
-                    
-                    split = layout.split()
-                    col = split.column()
-                    sub = col.column(align=True)
-                    sub.label(text="Brightness:")
-                    sub.prop(layer, "brightness", text="")
-                    sub.prop(layer, "brightMult", text="Multiplier")
-                    sub.prop(layer, "midtoneOffset", text="Midtone Offset")
-                    
-                    layout.prop(layer, "rttChannel", text="RTT Channel")
 
+class ObjectMatrialLayersPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_object_material_layers"
+    bl_label = "M3 Material Layers"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+
+        meshObject = context.object
+        mesh = meshObject.data
+        materialName = mesh.m3_material_name
+        materialReference = scene.m3_material_references.get(materialName)
+        if materialReference != None:
+            displayMaterialLayersUI(scene, layout, materialReference)
         else:
             col.label(text="No properties to display")
 
@@ -2455,24 +2525,6 @@ class ParticleSystemCopiesPanel(bpy.types.Panel):
             layout.prop(copy, 'emissionRate', text="Particles Per Second")
             layout.prop(copy, 'partEmit', text="Part. Emit.")
 
-class MaterialSelectionPanel(bpy.types.Panel):
-    bl_idname = "OBJECT_PT_M3_material_selection"
-    bl_label = "M3 Material Settings"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "material"
- 
-    @classmethod
-    def poll(cls, context):
-        o = context.object
-        return o and (o.data != None) and (o.type == 'MESH')
- 
-    def draw(self, context):
-        scene = context.scene
-        layout = self.layout
-        meshObject = context.object
-        mesh = meshObject.data
-        layout.prop_search(mesh, 'm3_material_name', scene, 'm3_material_references', text="M3 Material", icon='NONE')
 
 class AttachmentPointsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_attachments"
