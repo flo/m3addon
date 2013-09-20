@@ -1760,7 +1760,7 @@ class MatrialLayersPanel(bpy.types.Panel):
     bl_label = "M3 Material Layers"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = "material"
+    bl_context = "scene"
     bl_options = {'DEFAULT_CLOSED'}
     
     def draw(self, context):
@@ -1783,7 +1783,7 @@ class ObjectMatrialLayersPanel(bpy.types.Panel):
     bl_label = "M3 Material Layers"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = "scene"
+    bl_context = "material"
     bl_options = {'DEFAULT_CLOSED'}
     
     def draw(self, context):
@@ -1791,6 +1791,8 @@ class ObjectMatrialLayersPanel(bpy.types.Panel):
         scene = context.scene
 
         meshObject = context.object
+        if meshObject == None:
+            return
         mesh = meshObject.data
         materialName = mesh.m3_material_name
         materialReference = scene.m3_material_references.get(materialName)
