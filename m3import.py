@@ -32,6 +32,8 @@ import bpy
 import mathutils
 import math
 from bpy_extras import io_utils
+from os import path
+from bpy_extras import image_utils
 
 def toBlenderQuaternion(m3Quaternion):
     return mathutils.Quaternion((m3Quaternion.w, m3Quaternion.x, m3Quaternion.y, m3Quaternion.z))
@@ -368,6 +370,7 @@ class Importer:
     
     def importFile(self, filename):
         scene = bpy.context.scene
+        self.filename = filename
         self.scene = scene
         self.model = m3.loadModel(filename)
         self.armature = bpy.data.armatures.new(name="Armature")
@@ -718,7 +721,86 @@ class Importer:
             return self.model.creepMaterials[materialIndex].name
         else:
             return None
+    
+    def createClassicBlenderMaterialForMeshObject(self, meshObject):
+        scene = self.scene
+        modelDirectory = path.dirname(self.filename)
+        mesh = meshObject.data
+        mesh.m3_material_name
+        materialReference = scene.m3_material_references[mesh.m3_material_name]
+        materialType = materialReference.materialType
+        materialIndex = materialReference.materialIndex 
+        if materialType != shared.standardMaterialTypeIndex:
+            return
         
+        realMaterial = bpy.data.materials.new('Material')
+
+        standardMaterial = self.scene.m3_standard_materials[materialIndex]
+        diffuseLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("diffuseLayer")]
+        specularLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("specularLayer")]
+        if diffuseLayer.colorEnabled:
+            realMaterial.diffuse_color = diffuseLayer.color# vector with red green blue values in range 0.0-1.0 
+        realMaterial.diffuse_shader = 'FRESNEL' #gave most similar result. Another option would be 'LAMBERT' 
+        realMaterial.diffuse_intensity = diffuseLayer.brightMult
+        
+        if specularLayer.colorEnabled:
+            realMaterial.specular_color = specularLayer.color
+        realMaterial.specular_shader = 'COOKTORR'
+        realMaterial.specular_intensity = specularLayer.brightMult
+        
+        # unsued so far:
+        #realMaterial.alpha = 1 # 0.0 - 1.0
+        #realMaterial.ambient = 1
+
+        if diffuseLayer.imagePath != "" and diffuseLayer.imagePath != None:
+            absoluteImagePath = path.join(modelDirectory, diffuseLayer.imagePath)
+
+            textureSlot = realMaterial.texture_slots.add()
+            texture = bpy.data.textures.new(diffuseLayer.name, type='IMAGE')
+            image = image_utils.load_image(absoluteImagePath)
+            texture.image = image
+            #TODO make use of textureWrapX and textureWrapY
+            texture.extension = 'REPEAT' # or 'CLIP'
+            textureSlot.texture = texture
+            textureSlot.texture_coords = 'UV'
+            textureSlot.use_map_color_diffuse = True
+            # There is no known scale field, but there might be one:
+            # textureSlot.scale = (scaleX, scaleY, 1.0)
+            textureSlot.offset = (diffuseLayer.uvOffset[0], diffuseLayer.uvOffset[1], 0.0)
+
+        if specularLayer.imagePath != "" and specularLayer.imagePath != None:
+            absoluteImagePath = path.join(modelDirectory, specularLayer.imagePath)
+
+            textureSlot = realMaterial.texture_slots.add()
+            texture = bpy.data.textures.new(specularLayer.name, type='IMAGE')
+            image = image_utils.load_image(absoluteImagePath)
+            #TODO make use of textureWrapX and textureWrapY
+            texture.image = image
+            texture.extension = 'REPEAT' # or 'CLIP'
+            textureSlot.texture = texture
+            textureSlot.texture_coords = 'UV'
+            textureSlot.use_map_color_diffuse = False
+            textureSlot.use_map_specular = True
+            # There is no known scale field, but there might be one:
+            # textureSlot.scale = (scaleX, scaleY, 1.0)
+            textureSlot.offset = (specularLayer.uvOffset[0], specularLayer.uvOffset[1], 0.0)
+
+
+        mesh.materials.append(realMaterial)
+
+
+
+        # only one should be true:
+        # - textureSlot.use_map_color_diffuse = True # True is default for this one
+        # - 
+        # - textureSlot.use_map_alpha = True
+        # - textureSlot.use_map_normal = True
+
+
+
+        
+    
+    
     def createCameras(self):
         scene = bpy.context.scene
         showCameras = scene.m3_bone_visiblity_options.showCameras
@@ -1183,7 +1265,7 @@ class Importer:
                 bpy.context.scene.objects.link(meshObject)
                 
                 mesh.m3_material_name = self.getNameOfMaterialWithReferenceIndex(m3Object.materialReferenceIndex)
-                
+                self.createClassicBlenderMaterialForMeshObject(meshObject)
                 
                 # merge vertices together which have always the same position and normal:
                 # This way there are not only fewer vertices to edit,
