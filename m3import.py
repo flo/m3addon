@@ -738,8 +738,12 @@ class Importer:
         standardMaterial = self.scene.m3_standard_materials[materialIndex]
         diffuseLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("diffuseLayer")]
         specularLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("specularLayer")]
+        normalLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("normalLayer")]
         if diffuseLayer.colorEnabled:
             realMaterial.diffuse_color = diffuseLayer.color# vector with red green blue values in range 0.0-1.0 
+        else:
+            # Use red for areas which where transparent
+            realMaterial.diffuse_color = (1,0,0)
         realMaterial.diffuse_shader = 'FRESNEL' #gave most similar result. Another option would be 'LAMBERT' 
         realMaterial.diffuse_intensity = diffuseLayer.brightMult
         
@@ -785,20 +789,29 @@ class Importer:
             # textureSlot.scale = (scaleX, scaleY, 1.0)
             textureSlot.offset = (specularLayer.uvOffset[0], specularLayer.uvOffset[1], 0.0)
 
+        if normalLayer.imagePath != "" and normalLayer.imagePath != None:
+            absoluteImagePath = path.join(modelDirectory, normalLayer.imagePath)
+            
+            textureSlot = realMaterial.texture_slots.add()
+            texture = bpy.data.textures.new(normalLayer.name, type='IMAGE')
+            image = image_utils.load_image(absoluteImagePath)
+            #TODO make use of textureWrapX and textureWrapY
+            texture.image = image
+            texture.extension = 'REPEAT' # or 'CLIP'
+            texture.use_normal_map = True
+            textureSlot.texture = texture
+            textureSlot.texture_coords = 'UV'
+            print(dir(textureSlot))
+            textureSlot.use_map_color_diffuse = False
+            textureSlot.use_map_normal = True
+            textureSlot.normal_map_space = 'WORLD'
+            textureSlot.use_stencil = True # Not sure why but this option seems necessary
+            # There is no known scale field, but there might be one:
+            # textureSlot.scale = (scaleX, scaleY, 1.0)
+            textureSlot.offset = (normalLayer.uvOffset[0], normalLayer.uvOffset[1], 0.0)
 
         mesh.materials.append(realMaterial)
 
-
-
-        # only one should be true:
-        # - textureSlot.use_map_color_diffuse = True # True is default for this one
-        # - 
-        # - textureSlot.use_map_alpha = True
-        # - textureSlot.use_map_normal = True
-
-
-
-        
     
     
     def createCameras(self):
