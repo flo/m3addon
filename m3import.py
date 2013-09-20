@@ -1361,8 +1361,11 @@ class Importer:
                             faceUV.uv3 = getUVsFor(tessFace.vertices[2], vertexUVAttribute, setOfOldVertexIndicesOfFace)
 
 
+                    
                 mesh.update(calc_edges=True)
-                
+                for polygon in mesh.polygons:
+                    polygon.use_smooth = True
+                    
                 boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
                 vertexGroupLookup = []
                 for boneIndex in boneIndexLookup:
