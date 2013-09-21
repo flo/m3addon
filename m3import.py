@@ -737,6 +737,7 @@ class Importer:
 
         standardMaterial = self.scene.m3_standard_materials[materialIndex]
         diffuseLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("diffuseLayer")]
+        decalLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("decalLayer")]
         specularLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("specularLayer")]
         normalLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("normalLayer")]
         if diffuseLayer.colorEnabled:
@@ -779,6 +780,23 @@ class Importer:
             # There is no known scale field, but there might be one:
             # textureSlot.scale = (scaleX, scaleY, 1.0)
             textureSlot.offset = (diffuseLayer.uvOffset[0], diffuseLayer.uvOffset[1], 0.0)
+
+
+        if decalLayer.imagePath != "" and decalLayer.imagePath != None:
+            absoluteImagePath = path.join(modelDirectory, decalLayer.imagePath)
+
+            textureSlot = realMaterial.texture_slots.add()
+            texture = bpy.data.textures.new(decalLayer.name, type='IMAGE')
+            image = image_utils.load_image(absoluteImagePath)
+            texture.image = image
+            #TODO make use of textureWrapX and textureWrapY
+            texture.extension = 'REPEAT' # or 'CLIP'
+            textureSlot.texture = texture
+            textureSlot.texture_coords = 'UV'
+            textureSlot.use_map_color_diffuse = True
+            # There is no known scale field, but there might be one:
+            # textureSlot.scale = (scaleX, scaleY, 1.0)
+            textureSlot.offset = (decalLayer.uvOffset[0], decalLayer.uvOffset[1], 0.0)
 
         if specularLayer.imagePath != "" and specularLayer.imagePath != None:
             absoluteImagePath = path.join(modelDirectory, specularLayer.imagePath)
