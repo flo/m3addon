@@ -347,45 +347,53 @@ def findMeshObjects(scene):
 def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3Material, layerFieldName , modelDirectory):
     blenderM3Layer = blenderM3Material.layers[getLayerNameFromFieldName(layerFieldName)]
 
-    if blenderM3Layer != None and blenderM3Layer.imagePath != "" and blenderM3Layer.imagePath != None:
-        absoluteImagePath = path.join(modelDirectory, blenderM3Layer.imagePath)
+    if blenderM3Layer == None:
+        return
+    
+    if (blenderM3Layer.imagePath == "") or (blenderM3Layer.imagePath == None):
+        return
+    
+    absoluteImagePath = path.join(modelDirectory, blenderM3Layer.imagePath)
+    image = image_utils.load_image(absoluteImagePath)
+    if not image:
+        return
 
-        textureSlot = classicBlenderMaterial.texture_slots.add()
-        texture = bpy.data.textures.new(blenderM3Layer.name, type='IMAGE')
-        image = image_utils.load_image(absoluteImagePath)
-        # Clamp options seem not to work
-        # might be related to the following bug:
-        # https://projects.blender.org/tracker/?func=detail&atid=306&aid=27624&group_id=9
-        image.use_clamp_x = not blenderM3Layer.textureWrapX 
-        image.use_clamp_y = not blenderM3Layer.textureWrapY
-        texture.image = image
-        if blenderM3Layer.textureWrapX and blenderM3Layer.textureWrapY:
-            texture.extension = 'REPEAT'
-        else:
-            texture.extension = 'CLIP'
-        textureSlot.texture = texture
-        textureSlot.texture_coords = 'UV'
-        # There is no known scale field, but there might be one:
-        # textureSlot.scale = (scaleX, scaleY, 1.0)
-        textureSlot.offset = (blenderM3Layer.uvOffset[0], blenderM3Layer.uvOffset[1], 0.0)
-        textureSlot.use_map_color_diffuse = False
 
-        if blenderM3Layer.uvSource in ["0","1","2", "3"]:
-            uvIndex = int(blenderM3Layer.uvSource)
-            if uvIndex < len(mesh.uv_layers): 
-                textureSlot.uv_layer = mesh.uv_layers[uvIndex].name
+    textureSlot = classicBlenderMaterial.texture_slots.add()
+    texture = bpy.data.textures.new(blenderM3Layer.name, type='IMAGE')
+    # Clamp options seem not to work
+    # might be related to the following bug:
+    # https://projects.blender.org/tracker/?func=detail&atid=306&aid=27624&group_id=9
+    image.use_clamp_x = not blenderM3Layer.textureWrapX 
+    image.use_clamp_y = not blenderM3Layer.textureWrapY
+    texture.image = image
+    if blenderM3Layer.textureWrapX and blenderM3Layer.textureWrapY:
+        texture.extension = 'REPEAT'
+    else:
+        texture.extension = 'CLIP'
+    textureSlot.texture = texture
+    textureSlot.texture_coords = 'UV'
+    # There is no known scale field, but there might be one:
+    # textureSlot.scale = (scaleX, scaleY, 1.0)
+    textureSlot.offset = (blenderM3Layer.uvOffset[0], blenderM3Layer.uvOffset[1], 0.0)
+    textureSlot.use_map_color_diffuse = False
 
-        if layerFieldName == "diffuseLayer":
-            textureSlot.use_map_color_diffuse = True
-        elif layerFieldName == "decalLayer":
-            textureSlot.use_map_color_diffuse = True
-        elif layerFieldName == "specularLayer":
-            textureSlot.use_map_specular = True  
-        elif layerFieldName == "normalLayer":
-            texture.use_normal_map = True
-            textureSlot.use_map_normal = True
-            textureSlot.normal_map_space = 'WORLD'
-            textureSlot.use_stencil = True # Not sure why but this option seems necessary
+    if blenderM3Layer.uvSource in ["0","1","2", "3"]:
+        uvIndex = int(blenderM3Layer.uvSource)
+        if uvIndex < len(mesh.uv_layers): 
+            textureSlot.uv_layer = mesh.uv_layers[uvIndex].name
+
+    if layerFieldName == "diffuseLayer":
+        textureSlot.use_map_color_diffuse = True
+    elif layerFieldName == "decalLayer":
+        textureSlot.use_map_color_diffuse = True
+    elif layerFieldName == "specularLayer":
+        textureSlot.use_map_specular = True  
+    elif layerFieldName == "normalLayer":
+        texture.use_normal_map = True
+        textureSlot.use_map_normal = True
+        textureSlot.normal_map_space = 'WORLD'
+        textureSlot.use_stencil = True # Not sure why but this option seems necessary
 
 
 def createClassicBlenderMaterialForMeshObject(scene, meshObject, modelDirectory):
