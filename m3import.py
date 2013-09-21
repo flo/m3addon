@@ -740,7 +740,11 @@ class Importer:
         specularLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("specularLayer")]
         normalLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("normalLayer")]
         if diffuseLayer.colorEnabled:
-            realMaterial.diffuse_color = diffuseLayer.color# vector with red green blue values in range 0.0-1.0 
+            red = diffuseLayer.color[0]
+            green = diffuseLayer.color[1]
+            blue = diffuseLayer.color[2]
+            alpha =  diffuseLayer.color[3] # no known blender equivalent
+            realMaterial.diffuse_color = (red, green, blue)
         else:
             # Use red for areas which where transparent
             realMaterial.diffuse_color = (1,0,0)
@@ -748,7 +752,11 @@ class Importer:
         realMaterial.diffuse_intensity = diffuseLayer.brightMult
         
         if specularLayer.colorEnabled:
-            realMaterial.specular_color = specularLayer.color
+            red = specularLayer.color[0]
+            green = specularLayer.color[1]
+            blue = specularLayer.color[2]
+            alpha =  specularLayer.color[3] # no known blender equivalent
+            realMaterial.specular_color = (red, green, blue)
         realMaterial.specular_shader = 'COOKTORR'
         realMaterial.specular_intensity = specularLayer.brightMult
         
