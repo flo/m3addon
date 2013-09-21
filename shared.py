@@ -394,7 +394,8 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
         textureSlot.use_map_normal = True
         textureSlot.normal_map_space = 'WORLD'
         textureSlot.use_stencil = True # Not sure why but this option seems necessary
-
+    elif layerFieldName in ["emissiveLayer", "emissive2Layer"]:
+        textureSlot.use_map_emit = True
 
 def createClassicBlenderMaterialForMeshObject(scene, meshObject, modelDirectory):
     mesh = meshObject.data
@@ -435,7 +436,7 @@ def createClassicBlenderMaterialForMeshObject(scene, meshObject, modelDirectory)
     #realMaterial.alpha = 1 # 0.0 - 1.0
     #realMaterial.ambient = 1
     
-    for layerFieldName in ["diffuseLayer", "decalLayer", "specularLayer", "normalLayer"]:
+    for layerFieldName in ["diffuseLayer", "decalLayer", "specularLayer", "normalLayer","emissiveLayer", "emissive2Layer"]:
         addTextureSlotBasedOnM3MaterialLayer(mesh, realMaterial, standardMaterial, layerFieldName, modelDirectory)
     
     # TODO remove previous materials
