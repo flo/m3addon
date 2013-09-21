@@ -32,6 +32,7 @@ import bpy
 import mathutils
 import math
 from bpy_extras import io_utils
+from os import path
 
 
 def toBlenderQuaternion(m3Quaternion):
