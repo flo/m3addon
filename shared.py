@@ -353,9 +353,16 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
         textureSlot = classicBlenderMaterial.texture_slots.add()
         texture = bpy.data.textures.new(blenderM3Layer.name, type='IMAGE')
         image = image_utils.load_image(absoluteImagePath)
+        # Clamp options seem not to work
+        # might be related to the following bug:
+        # https://projects.blender.org/tracker/?func=detail&atid=306&aid=27624&group_id=9
+        image.use_clamp_x = not blenderM3Layer.textureWrapX 
+        image.use_clamp_y = not blenderM3Layer.textureWrapY
         texture.image = image
-        #TODO make use of textureWrapX and textureWrapY
-        texture.extension = 'REPEAT' # or 'CLIP'
+        if blenderM3Layer.textureWrapX and blenderM3Layer.textureWrapY:
+            texture.extension = 'REPEAT'
+        else:
+            texture.extension = 'CLIP'
         textureSlot.texture = texture
         textureSlot.texture_coords = 'UV'
         # There is no known scale field, but there might be one:
