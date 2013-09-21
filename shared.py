@@ -344,7 +344,7 @@ def findMeshObjects(scene):
             
             
 
-def addTextureSlotBasedOnM3MaterialLayer(classicBlenderMaterial, blenderM3Material, layerFieldName , modelDirectory):
+def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3Material, layerFieldName , modelDirectory):
     blenderM3Layer = blenderM3Material.layers[getLayerNameFromFieldName(layerFieldName)]
 
     if blenderM3Layer != None and blenderM3Layer.imagePath != "" and blenderM3Layer.imagePath != None:
@@ -362,6 +362,11 @@ def addTextureSlotBasedOnM3MaterialLayer(classicBlenderMaterial, blenderM3Materi
         # textureSlot.scale = (scaleX, scaleY, 1.0)
         textureSlot.offset = (blenderM3Layer.uvOffset[0], blenderM3Layer.uvOffset[1], 0.0)
         textureSlot.use_map_color_diffuse = False
+
+        if blenderM3Layer.uvSource in ["0","1","2", "3"]:
+            uvIndex = int(blenderM3Layer.uvSource)
+            if uvIndex < len(mesh.uv_layers): 
+                textureSlot.uv_layer = mesh.uv_layers[uvIndex].name
 
         if layerFieldName == "diffuseLayer":
             textureSlot.use_map_color_diffuse = True
@@ -416,7 +421,7 @@ def createClassicBlenderMaterialForMeshObject(scene, meshObject, modelDirectory)
     #realMaterial.ambient = 1
     
     for layerFieldName in ["diffuseLayer", "decalLayer", "specularLayer", "normalLayer"]:
-        addTextureSlotBasedOnM3MaterialLayer(realMaterial, standardMaterial, layerFieldName, modelDirectory)
+        addTextureSlotBasedOnM3MaterialLayer(mesh, realMaterial, standardMaterial, layerFieldName, modelDirectory)
     
     # TODO remove previous materials
     mesh.materials.append(realMaterial)

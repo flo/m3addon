@@ -1189,8 +1189,6 @@ class Importer:
                 bpy.context.scene.objects.link(meshObject)
                 
                 mesh.m3_material_name = self.getNameOfMaterialWithReferenceIndex(m3Object.materialReferenceIndex)
-
-                shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject, self.modelDirectory)
                 
                 # merge vertices together which have always the same position and normal:
                 # This way there are not only fewer vertices to edit,
@@ -1315,7 +1313,8 @@ class Importer:
                 modifier.object = self.armatureObject
                 modifier.use_bone_envelopes = False
                 modifier.use_vertex_groups = True
-        
+                shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject, self.modelDirectory)
+
     def determineRelEditBoneMatrices(self, m3Bones, editBones):
         absEditBoneMatrices = []
         relEditBoneMatrices = []
