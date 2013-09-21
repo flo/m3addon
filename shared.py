@@ -24,7 +24,8 @@ import mathutils
 import random
 import math
 from bpy_extras import io_utils
-
+from os import path
+from bpy_extras import image_utils
 
 materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume", "Unknown", "Creep"]
 standardMaterialTypeIndex = 1
@@ -341,7 +342,89 @@ def findMeshObjects(scene):
         if currentObject.type == 'MESH':
             yield currentObject
             
+            
+
+def addTextureSlotBasedOnM3MaterialLayer(classicBlenderMaterial, blenderM3Material, layerFieldName , modelDirectory):
+    blenderM3Layer = blenderM3Material.layers[getLayerNameFromFieldName(layerFieldName)]
+
+    if blenderM3Layer != None and blenderM3Layer.imagePath != "" and blenderM3Layer.imagePath != None:
+        absoluteImagePath = path.join(modelDirectory, blenderM3Layer.imagePath)
+
+        textureSlot = classicBlenderMaterial.texture_slots.add()
+        texture = bpy.data.textures.new(blenderM3Layer.name, type='IMAGE')
+        image = image_utils.load_image(absoluteImagePath)
+        texture.image = image
+        #TODO make use of textureWrapX and textureWrapY
+        texture.extension = 'REPEAT' # or 'CLIP'
+        textureSlot.texture = texture
+        textureSlot.texture_coords = 'UV'
+        # There is no known scale field, but there might be one:
+        # textureSlot.scale = (scaleX, scaleY, 1.0)
+        textureSlot.offset = (blenderM3Layer.uvOffset[0], blenderM3Layer.uvOffset[1], 0.0)
+        textureSlot.use_map_color_diffuse = False
+
+        if layerFieldName == "diffuseLayer":
+            textureSlot.use_map_color_diffuse = True
+        elif layerFieldName == "decalLayer":
+            textureSlot.use_map_color_diffuse = True
+        elif layerFieldName == "specularLayer":
+            textureSlot.use_map_specular = True  
+        elif layerFieldName == "normalLayer":
+            texture.use_normal_map = True
+            textureSlot.use_map_normal = True
+            textureSlot.normal_map_space = 'WORLD'
+            textureSlot.use_stencil = True # Not sure why but this option seems necessary
+
+
+def createClassicBlenderMaterialForMeshObject(scene, meshObject, modelDirectory):
+    mesh = meshObject.data
+    mesh.m3_material_name
+    materialReference = scene.m3_material_references[mesh.m3_material_name]
+    materialType = materialReference.materialType
+    materialIndex = materialReference.materialIndex 
+    if materialType != standardMaterialTypeIndex:
+        return
     
+    realMaterial = bpy.data.materials.new('Material')
+
+    standardMaterial = scene.m3_standard_materials[materialIndex]
+    diffuseLayer = standardMaterial.layers[getLayerNameFromFieldName("diffuseLayer")]
+    specularLayer = standardMaterial.layers[getLayerNameFromFieldName("specularLayer")]
+    if diffuseLayer.colorEnabled:
+        red = diffuseLayer.color[0]
+        green = diffuseLayer.color[1]
+        blue = diffuseLayer.color[2]
+        alpha =  diffuseLayer.color[3] # no known blender equivalent
+        realMaterial.diffuse_color = (red, green, blue)
+    else:
+        # Use red for areas which where transparent
+        realMaterial.diffuse_color = (1,0,0)
+    realMaterial.diffuse_shader = 'FRESNEL' #gave most similar result. Another option would be 'LAMBERT' 
+    realMaterial.diffuse_intensity = diffuseLayer.brightMult
+    
+    if specularLayer.colorEnabled:
+        red = specularLayer.color[0]
+        green = specularLayer.color[1]
+        blue = specularLayer.color[2]
+        alpha =  specularLayer.color[3] # no known blender equivalent
+        realMaterial.specular_color = (red, green, blue)
+    realMaterial.specular_shader = 'COOKTORR'
+    realMaterial.specular_intensity = specularLayer.brightMult
+    
+    # unsued so far:
+    #realMaterial.alpha = 1 # 0.0 - 1.0
+    #realMaterial.ambient = 1
+    
+    for layerFieldName in ["diffuseLayer", "decalLayer", "specularLayer", "normalLayer"]:
+        addTextureSlotBasedOnM3MaterialLayer(realMaterial, standardMaterial, layerFieldName, modelDirectory)
+    
+    # TODO remove previous materials
+    mesh.materials.append(realMaterial)
+
+def createClassicBlenderMaterialsFromM3Materials(scene, modelDirectory):
+    for meshObject in findMeshObjects(scene):
+        createClassicBlenderMaterialForMeshObject(scene, meshObject, modelDirectory)
+            
 def composeMatrix(location, rotation, scale):
     locMatrix= mathutils.Matrix.Translation(location)
     rotationMatrix = rotation.to_matrix().to_4x4()

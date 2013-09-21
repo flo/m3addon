@@ -32,8 +32,7 @@ import bpy
 import mathutils
 import math
 from bpy_extras import io_utils
-from os import path
-from bpy_extras import image_utils
+
 
 def toBlenderQuaternion(m3Quaternion):
     return mathutils.Quaternion((m3Quaternion.w, m3Quaternion.x, m3Quaternion.y, m3Quaternion.z))
@@ -370,7 +369,7 @@ class Importer:
     
     def importFile(self, filename):
         scene = bpy.context.scene
-        self.filename = filename
+        self.modelDirectory = path.dirname(filename)
         self.scene = scene
         self.model = m3.loadModel(filename)
         self.armature = bpy.data.armatures.new(name="Armature")
@@ -722,121 +721,7 @@ class Importer:
         else:
             return None
     
-    def createClassicBlenderMaterialForMeshObject(self, meshObject):
-        scene = self.scene
-        modelDirectory = path.dirname(self.filename)
-        mesh = meshObject.data
-        mesh.m3_material_name
-        materialReference = scene.m3_material_references[mesh.m3_material_name]
-        materialType = materialReference.materialType
-        materialIndex = materialReference.materialIndex 
-        if materialType != shared.standardMaterialTypeIndex:
-            return
-        
-        realMaterial = bpy.data.materials.new('Material')
-
-        standardMaterial = self.scene.m3_standard_materials[materialIndex]
-        diffuseLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("diffuseLayer")]
-        decalLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("decalLayer")]
-        specularLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("specularLayer")]
-        normalLayer = standardMaterial.layers[shared.getLayerNameFromFieldName("normalLayer")]
-        if diffuseLayer.colorEnabled:
-            red = diffuseLayer.color[0]
-            green = diffuseLayer.color[1]
-            blue = diffuseLayer.color[2]
-            alpha =  diffuseLayer.color[3] # no known blender equivalent
-            realMaterial.diffuse_color = (red, green, blue)
-        else:
-            # Use red for areas which where transparent
-            realMaterial.diffuse_color = (1,0,0)
-        realMaterial.diffuse_shader = 'FRESNEL' #gave most similar result. Another option would be 'LAMBERT' 
-        realMaterial.diffuse_intensity = diffuseLayer.brightMult
-        
-        if specularLayer.colorEnabled:
-            red = specularLayer.color[0]
-            green = specularLayer.color[1]
-            blue = specularLayer.color[2]
-            alpha =  specularLayer.color[3] # no known blender equivalent
-            realMaterial.specular_color = (red, green, blue)
-        realMaterial.specular_shader = 'COOKTORR'
-        realMaterial.specular_intensity = specularLayer.brightMult
-        
-        # unsued so far:
-        #realMaterial.alpha = 1 # 0.0 - 1.0
-        #realMaterial.ambient = 1
-
-        if diffuseLayer.imagePath != "" and diffuseLayer.imagePath != None:
-            absoluteImagePath = path.join(modelDirectory, diffuseLayer.imagePath)
-
-            textureSlot = realMaterial.texture_slots.add()
-            texture = bpy.data.textures.new(diffuseLayer.name, type='IMAGE')
-            image = image_utils.load_image(absoluteImagePath)
-            texture.image = image
-            #TODO make use of textureWrapX and textureWrapY
-            texture.extension = 'REPEAT' # or 'CLIP'
-            textureSlot.texture = texture
-            textureSlot.texture_coords = 'UV'
-            textureSlot.use_map_color_diffuse = True
-            # There is no known scale field, but there might be one:
-            # textureSlot.scale = (scaleX, scaleY, 1.0)
-            textureSlot.offset = (diffuseLayer.uvOffset[0], diffuseLayer.uvOffset[1], 0.0)
-
-
-        if decalLayer.imagePath != "" and decalLayer.imagePath != None:
-            absoluteImagePath = path.join(modelDirectory, decalLayer.imagePath)
-
-            textureSlot = realMaterial.texture_slots.add()
-            texture = bpy.data.textures.new(decalLayer.name, type='IMAGE')
-            image = image_utils.load_image(absoluteImagePath)
-            texture.image = image
-            #TODO make use of textureWrapX and textureWrapY
-            texture.extension = 'REPEAT' # or 'CLIP'
-            textureSlot.texture = texture
-            textureSlot.texture_coords = 'UV'
-            textureSlot.use_map_color_diffuse = True
-            # There is no known scale field, but there might be one:
-            # textureSlot.scale = (scaleX, scaleY, 1.0)
-            textureSlot.offset = (decalLayer.uvOffset[0], decalLayer.uvOffset[1], 0.0)
-
-        if specularLayer.imagePath != "" and specularLayer.imagePath != None:
-            absoluteImagePath = path.join(modelDirectory, specularLayer.imagePath)
-
-            textureSlot = realMaterial.texture_slots.add()
-            texture = bpy.data.textures.new(specularLayer.name, type='IMAGE')
-            image = image_utils.load_image(absoluteImagePath)
-            #TODO make use of textureWrapX and textureWrapY
-            texture.image = image
-            texture.extension = 'REPEAT' # or 'CLIP'
-            textureSlot.texture = texture
-            textureSlot.texture_coords = 'UV'
-            textureSlot.use_map_color_diffuse = False
-            textureSlot.use_map_specular = True
-            # There is no known scale field, but there might be one:
-            # textureSlot.scale = (scaleX, scaleY, 1.0)
-            textureSlot.offset = (specularLayer.uvOffset[0], specularLayer.uvOffset[1], 0.0)
-
-        if normalLayer.imagePath != "" and normalLayer.imagePath != None:
-            absoluteImagePath = path.join(modelDirectory, normalLayer.imagePath)
-            
-            textureSlot = realMaterial.texture_slots.add()
-            texture = bpy.data.textures.new(normalLayer.name, type='IMAGE')
-            image = image_utils.load_image(absoluteImagePath)
-            #TODO make use of textureWrapX and textureWrapY
-            texture.image = image
-            texture.extension = 'REPEAT' # or 'CLIP'
-            texture.use_normal_map = True
-            textureSlot.texture = texture
-            textureSlot.texture_coords = 'UV'
-            print(dir(textureSlot))
-            textureSlot.use_map_color_diffuse = False
-            textureSlot.use_map_normal = True
-            textureSlot.normal_map_space = 'WORLD'
-            textureSlot.use_stencil = True # Not sure why but this option seems necessary
-            # There is no known scale field, but there might be one:
-            # textureSlot.scale = (scaleX, scaleY, 1.0)
-            textureSlot.offset = (normalLayer.uvOffset[0], normalLayer.uvOffset[1], 0.0)
-
-        mesh.materials.append(realMaterial)
+    
 
     
     
@@ -1267,7 +1152,7 @@ class Importer:
         model = self.model
         if model.vFlags == 0x180007d:
             return # no vertices
-        
+
         vertexClassName = "VertexFormat" + hex(self.model.vFlags)        
         if not vertexClassName in m3.structures:
             raise Exception("Vertex flags %s can't behandled yet" % hex(self.model.vFlags))
@@ -1304,7 +1189,8 @@ class Importer:
                 bpy.context.scene.objects.link(meshObject)
                 
                 mesh.m3_material_name = self.getNameOfMaterialWithReferenceIndex(m3Object.materialReferenceIndex)
-                self.createClassicBlenderMaterialForMeshObject(meshObject)
+
+                shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject, self.modelDirectory)
                 
                 # merge vertices together which have always the same position and normal:
                 # This way there are not only fewer vertices to edit,
