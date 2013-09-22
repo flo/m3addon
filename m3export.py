@@ -37,6 +37,7 @@ import os.path
 import random
 from . import calculateTangents
 import time     
+import math
 
 actionTypeScene = "SCENE"
 actionTypeArmature = "OBJECT"
@@ -57,6 +58,7 @@ class Exporter:
         self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap = {}
         self.prepareAnimIdMaps()
         self.nameToAnimIdToAnimDataMap = {}
+        self.restPositionsOfExportedBones = []
         for animationIndex in self.animationIndicesToExport:
             animation = self.scene.m3_animations[animationIndex]
             if animation.name in self.nameToAnimIdToAnimDataMap:
@@ -286,12 +288,14 @@ class Exporter:
                 bone.scale.header = self.createNullAnimHeader(animId=scaleAnimId, interpolationType=1)
                 bone.ar1 = self.createNullUInt32AnimationReference(1)
                 model.bones.append(bone)
+                absRestPosMatrix = blenderBone.matrix_local  
+                self.restPositionsOfExportedBones.append(absRestPosMatrix.translation.copy())
                 if not blenderBone.use_inherit_rotation:
                     raise Exception("The setting inhertRotation=false of bone %s is not exportable!" % boneName)
                 if not blenderBone.use_inherit_scale:
                     raise Exception("The setting inhertScale=false of bone %s is not exportable!" % boneName)
 
-                absRestPosMatrix = blenderBone.matrix_local    
+                
                 if blenderBone.parent != None:
                     bone.parent = self.boneNameToBoneIndexMap[blenderBone.parent.name]
                     absInvRestPoseMatrixParent = boneNameToAbsInvRestPoseMatrix[blenderBone.parent.name]
@@ -412,6 +416,7 @@ class Exporter:
                             boneIndexToAbsoluteMatrixMap = {}
                             frameToBoneIndexToAbsoluteMatrixMap[frame] = boneIndexToAbsoluteMatrixMap
                         
+                          
                         absoluteBoneMatrix = m3PoseMatrix
                         if (bone.parent != -1):
                             # The parent matrix has it's absoluteInverseRestPoseMatrixFixed multiplied to it. It needs to be undone:
@@ -421,7 +426,7 @@ class Exporter:
                         absoluteInverseRestPoseMatrixFixed = self.boneIndexToAbsoluteInverseRestPoseMatrixFixedMap[boneIndex]
 
                         absoluteBoneMatrix = absoluteBoneMatrix * absoluteInverseRestPoseMatrixFixed
-
+                        
                         boneIndexToAbsoluteMatrixMap[boneIndex] = absoluteBoneMatrix
 
                         locations = boneNameToLocations[boneName]
@@ -787,6 +792,7 @@ class Exporter:
         animHeader.animFlags = 0x0
         animHeader.animId = self.boundingAnimId # boudings seem to have always this id
         boundingsAnimRef.header = animHeader
+        self.initBoundingPointsOfExportedBonesList(model, m3Vertices)
         defaultBoundingsVector = self.calculateBoundingsVector(model, m3Vertices, self.boneIndexToDefaultAbsoluteMatrixMap)
         boundingsAnimRef.initValue = self.createBNDSFromVector(defaultBoundingsVector)
         boundingsAnimRef.nullValue = self.createBoundings(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -794,6 +800,7 @@ class Exporter:
         scene = self.scene
         for animationIndex in self.animationIndicesToExport:
             animation = self.scene.m3_animations[animationIndex]
+            print("Exporting animation %s" % animation.name)
             frameToBoneIndexToAbsoluteMatrixMap = self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap[animation.name]
             boundingsVectorList = []
             frames = self.allFramesOfAnimation(animation)
@@ -853,50 +860,171 @@ class Exporter:
     
     
     def calculateBoundingsVector(self, model, m3Vertices, boneIndexToAbsoluteMatrixMap):
-        #TODO case 0 vertices
-        minX = float("inf")
-        minY = float("inf")
-        minZ = float("inf")
-        maxX = -float("inf")
-        maxY = -float("inf")
-        maxZ = -float("inf")
+        minX2 = float("inf")
+        minY2 = float("inf")
+        minZ2 = float("inf")
+        maxX2 = -float("inf")
+        maxY2 = -float("inf")
+        maxZ2 = -float("inf")
+        for boneIndex, boudingPoints in enumerate(self.boundingPointsOfExportedBones):
+            if len(boudingPoints) > 0:
+                boneMatrix = boneIndexToAbsoluteMatrixMap[boneIndex]
+                minXBone = float("inf")
+                minYBone = float("inf")
+                minZBone = float("inf")
+                maxXBone = -float("inf")
+                maxYBone = -float("inf")
+                maxZBone = -float("inf")
+                for untransformedPosition in boudingPoints:
+                    positionTransformedByBone = boneMatrix * untransformedPosition
+                    minXBone = min(minXBone, positionTransformedByBone.x)
+                    minYBone = min(minYBone, positionTransformedByBone.y)
+                    minZBone = min(minZBone, positionTransformedByBone.z)
+                    maxXBone = max(maxXBone, positionTransformedByBone.x)
+                    maxYBone = max(maxYBone, positionTransformedByBone.y)
+                    maxZBone = max(maxZBone, positionTransformedByBone.z)          
+                
+                minX2 = min(minX2, minXBone)
+                minY2 = min(minY2, minYBone)
+                minZ2 = min(minZ2, minZBone)
+                maxX2 = max(maxX2, maxXBone)
+                maxY2 = max(maxY2, maxYBone)
+                maxZ2 = max(maxZ2, maxZBone)     
+                #print("Bone %s,  (%2f %2f %2f) to (%2f %2f %2f)" %(model.bones[boneIndex].name, minXBone, minYBone, minZBone, maxXBone, maxYBone,maxZBone))
+
+
+        visualizeBoundingBoxes= False
+
+        #Debug code to visualize boundings:
+        if visualizeBoundingBoxes:
+            def selectOrCreateBone(scene, boneName, location):
+                "Returns the bone and it's pose variant"
+                if bpy.ops.object.mode_set.poll():
+                    bpy.ops.object.mode_set(mode='OBJECT')
+                if bpy.ops.object.select_all.poll():
+                    bpy.ops.object.select_all(action='DESELECT')
+                bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
+                boneExists = bone != None
+                if boneExists:
+                    armature = armatureObject.data
+                    armatureObject.select = True
+                    scene.objects.active = armatureObject
+                else:
+                    armatureObject = shared.findArmatureObjectForNewBone(scene)
+                    if armatureObject == None:
+                        armature = bpy.data.armatures.new(name="Armature")
+                        armatureObject = bpy.data.objects.new("Armature", armature)
+                        scene.objects.link(armatureObject)
+                    else:
+                        armature = armatureObject.data
+                    armatureObject.select = True
+                    scene.objects.active = armatureObject
+                    bpy.ops.object.mode_set(mode='EDIT')
+                    editBone = armature.edit_bones.new(boneName)
+                    editBone.head = location
+                    editBone.tail = (editBone.head[0] + 0.05, editBone.head[1], editBone.head[2])
+
+                if bpy.ops.object.mode_set.poll():
+                    bpy.ops.object.mode_set(mode='POSE')
+                scene.objects.active = armatureObject
+                armatureObject.select = True
+                for currentBone in armature.bones:
+                    currentBone.select = currentBone.name == boneName
+                poseBone = armatureObject.pose.bones[boneName]
+                bone = armatureObject.data.bones[boneName]
+                return (bone, poseBone)
+            for boneIndex, boudingPoints in enumerate(self.boundingPointsOfExportedBones):
+                boneMatrix = boneIndexToAbsoluteMatrixMap[boneIndex]
+                minXBone = float("inf")
+                minYBone = float("inf")
+                minZBone = float("inf")
+                maxXBone = -float("inf")
+                maxYBone = -float("inf")
+                maxZBone = -float("inf")
+                transformedPositions = []
+                for untransformedPosition in boudingPoints:
+                    positionTransformedByBone = boneMatrix * untransformedPosition
+                    transformedPositions.append(positionTransformedByBone)   
+                if len(boudingPoints) >= 8:             
+                    mesh = bpy.data.meshes.new("debug_" + model.bones[boneIndex].name)
+                    mesh.from_pydata(vertices = transformedPositions, faces = [], edges = [(0,1),(1,2),(2,3),(3,0),(4,5),(5,6),(6,7),(7,4),(0,4),(1,5),(2,6),(3,7)])
+                    mesh.update(calc_edges = True)
+                    mesh.m3_physics_mesh = True
+                    
+                    meshObject = bpy.data.objects.new(mesh.name, mesh)
+                    meshObject.location = (0,0,0)
+                    meshObject.show_name = True
+                    
+                    self.scene.objects.link(meshObject)
+            
+                
+            particle_system = self.scene.m3_particle_systems.add()
+            particle_system.updateBlenderBoneShapes = False
+            particle_system.name = "debug_boundings"
+            particle_system.boneName = particle_system.name
+            boundingsCenter = mathutils.Vector(((minX2 + maxX2) / 2.0, (minY2 + maxY2) / 2.0, (minZ2+maxZ2) / 2.0))
+            bone, poseBone = selectOrCreateBone(self.scene, particle_system.boneName, boundingsCenter)
+            particle_system.emissionAreaSize = (maxX2-minX2, maxY2-minY2, maxZ2-minZ2 )
+            particle_system.emissionAreaType = shared.emissionAreaTypeCuboid
+            shared.updateBoneShapeOfParticleSystem(particle_system, bone, poseBone)
+            particle_system.updateBlenderBoneShapes = True                
+            raise Exception("Aborting to visualize bounding boxes")
+        
+        diffV = mathutils.Vector(((maxX2-minX2),(maxY2-minY2), (maxZ2 - minZ2)))
+        radius = diffV.length / 2
+        return mathutils.Vector((minX2, minY2, minZ2, maxX2, maxY2, maxZ2, radius))
+
+    def initBoundingPointsOfExportedBonesList(self, model, m3Vertices):
+        pointsOfExportedBones = []
+        for index in range(len(self.restPositionsOfExportedBones)):
+            pointsOfExportedBones.append([])
+            
         for division in model.divisions:
             divisionFaceIndices = division.faces
             for region in division.regions:
                 regionVertexIndices = range(region.firstVertexIndex,region.firstVertexIndex + region.numberOfVertices)
                 boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
                 boneMatrixLookup = []
-                for boneIndex in boneIndexLookup:
-                    boneMatrixLookup.append(boneIndexToAbsoluteMatrixMap[boneIndex])
                 for vertexIndex in regionVertexIndices:
                     m3Vertex = m3Vertices[vertexIndex]
                     boneWeightsAsInt = [m3Vertex.boneWeight0, m3Vertex.boneWeight1, m3Vertex.boneWeight2, m3Vertex.boneWeight3]
                     boneLookupIndices = [m3Vertex.boneLookupIndex0, m3Vertex.boneLookupIndex1,  m3Vertex.boneLookupIndex2,  m3Vertex.boneLookupIndex3]
-                    untransformedPosition = mathutils.Vector((m3Vertex.position.x, m3Vertex.position.y, m3Vertex.position.z))
+                    vertexPosition = mathutils.Vector((m3Vertex.position.x, m3Vertex.position.y, m3Vertex.position.z))
                     boneWeights = []
-                    transformedPosition = mathutils.Vector((0, 0, 0))
                     for boneWeightAsInt, boneLookupIndex in zip(boneWeightsAsInt, boneLookupIndices):
                         if boneWeightAsInt != 0:
-                            boneMatrix = boneMatrixLookup[boneLookupIndex]
-                            boneWeight = boneWeightAsInt / 255.0
-                            positionTransformedByBone = boneMatrix * untransformedPosition
-                            positionPart = boneWeight * positionTransformedByBone
-                            transformedPosition += positionPart
-                    if round(transformedPosition.y) > 10:
-                        for boneWeightAsInt, boneLookupIndex in zip(boneWeightsAsInt, boneLookupIndices):
-                            if boneWeightAsInt != 0:
-                                boneMatrix = boneMatrixLookup[boneLookupIndex]
-                                boneWeight = boneWeightAsInt / 255.0
-                                boneIndex = boneIndexLookup[boneLookupIndex]
-                    maxX = max(maxX, transformedPosition.x)
-                    maxY = max(maxY, transformedPosition.y)
-                    maxZ = max(maxZ, transformedPosition.z)
-                    minX = min(minX, transformedPosition.x)
-                    minY = min(minY, transformedPosition.y)
-                    minZ = min(minZ, transformedPosition.z)
-        diffV = mathutils.Vector(((maxX-minX),(maxY-minY), (maxZ - minZ)))
-        radius = diffV.length / 2
-        return mathutils.Vector((minX, minY, minZ, maxX, maxY, maxZ, radius))
+                            boneIndex = boneIndexLookup[boneLookupIndex]
+                            pointsOfExportedBones[boneIndex].append(vertexPosition)
+
+        self.boundingPointsOfExportedBones = []
+        for vertexPositions in pointsOfExportedBones:
+            boundingPoints = []
+            if len(vertexPositions) > 0:
+                minX = float("inf")
+                minY = float("inf")
+                minZ = float("inf")
+                maxX = -float("inf")
+                maxY = -float("inf")
+                maxZ = -float("inf")
+                
+                for vertexPosition in vertexPositions:
+                    minX = min(minX, vertexPosition.x)
+                    minY = min(minY, vertexPosition.y)
+                    minZ = min(minZ, vertexPosition.z)
+                    maxX = max(maxX, vertexPosition.x)
+                    maxY = max(maxY, vertexPosition.y)
+                    maxZ = max(maxZ, vertexPosition.z)
+                boundingPoints.append(mathutils.Vector((minX, minY,minZ)))
+                boundingPoints.append(mathutils.Vector((minX, maxY,minZ)))
+                boundingPoints.append(mathutils.Vector((minX, maxY,maxZ)))
+                boundingPoints.append(mathutils.Vector((minX, minY,maxZ)))
+                boundingPoints.append(mathutils.Vector((maxX, minY,minZ)))
+                boundingPoints.append(mathutils.Vector((maxX, maxY,minZ)))
+                boundingPoints.append(mathutils.Vector((maxX, maxY,maxZ)))
+                boundingPoints.append(mathutils.Vector((maxX, minY,maxZ)))
+            self.boundingPointsOfExportedBones.append(boundingPoints)
+                
+                
 
     def findRootBoneIndex(self, model, boneIndices):
         boneIndexSet = set(boneIndices)
@@ -960,9 +1088,11 @@ class Exporter:
         boneIndex = len(model.bones)
         bone = self.createStaticBoneAtOrigin(boneName, realBone=realBone)
         model.bones.append(bone)
-        
+
+
         boneRestPos = self.createIdentityRestPosition()
         model.absoluteInverseBoneRestPositions.append(boneRestPos)
+        self.restPositionsOfExportedBones.append(mathutils.Matrix())
         return boneIndex
 
     def findArmatureObjects(self):
