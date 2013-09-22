@@ -803,7 +803,7 @@ class Importer:
             elif blenderBoneName.startswith("MR3_Particle_"):
                 wantedName = blenderBoneName[len("MR3_Particle_"):]
             else:
-                print("Warning: A particle system was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
+                print("Warning: A particle system was bound to bone %s which does not start with %s" %(blenderBoneName, shared.star2ParticlePrefix))
                 wantedName = blenderBoneName
             name = uniqueNameFinder.findNameAndMarkAsUsedLike(wantedName)
             m3IndexToParticleSystemMap[particleSystemIndex] = name
