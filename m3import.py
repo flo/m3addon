@@ -401,7 +401,7 @@ class Importer:
         # init stcs of animations at last
         # when all animation properties are known
         self.initSTCsOfAnimations()
-        
+            
         if len(scene.m3_animations) >= 1:
             scene.m3_animation_old_index = -1
             scene.m3_animation_index = -1
@@ -1316,7 +1316,10 @@ class Importer:
                 modifier.object = self.armatureObject
                 modifier.use_bone_envelopes = False
                 modifier.use_vertex_groups = True
-                shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject, self.rootDirectory)
+
+
+                if self.scene.m3_import_options.generateBlenderMaterials:
+                    shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject)
 
     def determineRelEditBoneMatrices(self, m3Bones, editBones):
         absEditBoneMatrices = []

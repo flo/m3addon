@@ -913,7 +913,7 @@ matDefaultSettingsList = [(defaultSettingMesh, "Mesh Standard Material", "A mate
                         (defaultSettingVolume, "Volume Material", "A fog like material"),
                         (defaultSettingCreep, "Creep Material", "Looks like creep if there is creep below the model and is invisible otherwise")
                         ]
-                        
+
 matBlendModeList = [("0", "Opaque", "no description yet"), 
                         ("1", 'Alpha Blend', "no description yet"), 
                         ("2", 'Add', 'no description yet'),
@@ -1371,7 +1371,7 @@ class M3ExportOptions(bpy.types.PropertyGroup):
 class M3ImportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="", options=set())
     rootDirectory = bpy.props.StringProperty(name="rootDirectory", default="", options=set())
-
+    generateBlenderMaterials = bpy.props.BoolProperty(default=True, options=set())
 
 class M3Projection(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
@@ -1452,6 +1452,8 @@ class ImportPanel(bpy.types.Panel):
         layout.prop(scene.m3_import_options, "path", text="M3 File")
         layout.operator("m3.quick_import", text="Import M3")
         layout.prop(scene.m3_import_options, "rootDirectory", text="Root Directory")
+        layout.prop(scene.m3_import_options, "generateBlenderMaterials", text="Generate Blender Materials At Import")
+        layout.operator("m3.generate_classic_materials", text="Generate Blender Materials")
 
 class ExportPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_quickExport"
@@ -3791,6 +3793,16 @@ class M3_OT_quickImport(bpy.types.Operator):
         m3import.importM3BasedOnM3ImportOptions(scene)
         return{'FINISHED'}
         
+class M3_OT_generateClassicMaterails(bpy.types.Operator):
+    bl_idname      = 'm3.generate_classic_materials'
+    bl_label       = "M3 -> blender materials"
+    bl_description = "Generates classic blender materials based on the specified m3 materials and imports textures as necessary from the specified path"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        
+        shared.createClassicBlenderMaterialsFromM3Materials(scene)
+        return{'FINISHED'}
 
 class M3_OT_export(bpy.types.Operator, ExportHelper):
     '''Export a M3 file'''

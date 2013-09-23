@@ -397,9 +397,10 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
     elif layerFieldName in ["emissiveLayer", "emissive2Layer"]:
         textureSlot.use_map_emit = True
 
-def createClassicBlenderMaterialForMeshObject(scene, meshObject, modelDirectory):
+def createClassicBlenderMaterialForMeshObject(scene, meshObject):
     mesh = meshObject.data
     mesh.m3_material_name
+        
     materialReference = scene.m3_material_references[mesh.m3_material_name]
     materialType = materialReference.materialType
     materialIndex = materialReference.materialIndex 
@@ -435,16 +436,21 @@ def createClassicBlenderMaterialForMeshObject(scene, meshObject, modelDirectory)
     # unsued so far:
     #realMaterial.alpha = 1 # 0.0 - 1.0
     #realMaterial.ambient = 1
-    
+    rootDirectory = scene.m3_import_options.rootDirectory
     for layerFieldName in ["diffuseLayer", "decalLayer", "specularLayer", "normalLayer","emissiveLayer", "emissive2Layer"]:
-        addTextureSlotBasedOnM3MaterialLayer(mesh, realMaterial, standardMaterial, layerFieldName, modelDirectory)
+        addTextureSlotBasedOnM3MaterialLayer(mesh, realMaterial, standardMaterial, layerFieldName, rootDirectory)
+
     
-    # TODO remove previous materials
+    # Remove old materials:
+    while len(mesh.materials) > 0:
+        mesh.materials.pop(0, update_data=True)
+        
     mesh.materials.append(realMaterial)
 
-def createClassicBlenderMaterialsFromM3Materials(scene, modelDirectory):
+
+def createClassicBlenderMaterialsFromM3Materials(scene):
     for meshObject in findMeshObjects(scene):
-        createClassicBlenderMaterialForMeshObject(scene, meshObject, modelDirectory)
+        createClassicBlenderMaterialForMeshObject(scene, meshObject)
             
 def composeMatrix(location, rotation, scale):
     locMatrix= mathutils.Matrix.Translation(location)
