@@ -368,11 +368,13 @@ class AnimationTempData:
     
 class Importer:
     
-    def importFile(self, filename):
-        scene = bpy.context.scene
-        self.modelDirectory = path.dirname(filename)
+    def importM3BasedOnM3ImportOptions(self, scene):
+        fileName = scene.m3_import_options.path
+        self.rootDirectory = scene.m3_import_options.rootDirectory
+        if (self.rootDirectory == ""):
+            self.rootDirectory = path.dirname(fileName)
         self.scene = scene
-        self.model = m3.loadModel(filename)
+        self.model = m3.loadModel(fileName)
         self.armature = bpy.data.armatures.new(name="Armature")
         scene.render.fps = FRAME_RATE
         self.animations = []
@@ -1314,7 +1316,7 @@ class Importer:
                 modifier.object = self.armatureObject
                 modifier.use_bone_envelopes = False
                 modifier.use_vertex_groups = True
-                shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject, self.modelDirectory)
+                shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject, self.rootDirectory)
 
     def determineRelEditBoneMatrices(self, m3Bones, editBones):
         absEditBoneMatrices = []
@@ -1693,6 +1695,6 @@ def boneMatrix(head, tail, roll):
     matrix.translation = head
     return matrix
 
-def importFile(filename):
+def importM3BasedOnM3ImportOptions(scene):
     importer = Importer()
-    importer.importFile(filename)
+    importer.importM3BasedOnM3ImportOptions(scene)

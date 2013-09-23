@@ -1368,6 +1368,11 @@ class M3ExportOptions(bpy.types.PropertyGroup):
     testPatch20Format = bpy.props.BoolProperty(default=False, options=set())
     animationExportAmount = bpy.props.EnumProperty(default=shared.exportAmountAllAnimations, items=animationExportAmount, options=set())
 
+class M3ImportOptions(bpy.types.PropertyGroup):
+    path = bpy.props.StringProperty(name="path", default="", options=set())
+    rootDirectory = bpy.props.StringProperty(name="rootDirectory", default="", options=set())
+
+
 class M3Projection(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
     # The name gets calculated like this: name = boneSuffix (type)
@@ -1433,6 +1438,20 @@ class M3Light(bpy.types.PropertyGroup):
     unknownFlag0x04 = bpy.props.BoolProperty(options=set())
     turnOn = bpy.props.BoolProperty(default=True,options=set())
         
+class ImportPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_quickImport"
+    bl_label = "M3 Import"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+
+        layout.prop(scene.m3_import_options, "path", text="M3 File")
+        layout.operator("m3.quick_import", text="Import M3")
+        layout.prop(scene.m3_import_options, "rootDirectory", text="Root Directory")
 
 class ExportPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_quickExport"
@@ -3758,6 +3777,20 @@ class M3_OT_quickExport(bpy.types.Operator):
             from . import m3export
         m3export.export(scene, fileName)
         return{'FINISHED'}
+        
+class M3_OT_quickImport(bpy.types.Operator):
+    bl_idname      = 'm3.quick_import'
+    bl_label       = "Quick Import"
+    bl_description = "Imports the model to the specified m3 path without asking further questions"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if not "m3import" in locals():
+            from . import m3import
+        
+        m3import.importM3BasedOnM3ImportOptions(scene)
+        return{'FINISHED'}
+        
 
 class M3_OT_export(bpy.types.Operator, ExportHelper):
     '''Export a M3 file'''
@@ -3803,10 +3836,12 @@ class M3_OT_import(bpy.types.Operator, ImportHelper):
         maxlen= 1024, default= "")
 
     def execute(self, context):
-        print("Load", self.properties.filepath)
+        print("Import", self.properties.filepath)
+        scene = context.scene
         if not "m3import" in locals():
             from . import m3import
-        m3import.importFile(self.properties.filepath)
+        scene.m3_import_options.path = self.properties.filepath
+        m3import.importM3BasedOnM3ImportOptions(scene)
         return {'FINISHED'}
             
     def invoke(self, context, event):
@@ -3855,6 +3890,7 @@ def register():
     bpy.types.Scene.m3_attachment_points = bpy.props.CollectionProperty(type=M3AttachmentPoint)
     bpy.types.Scene.m3_attachment_point_index = bpy.props.IntProperty(options=set(), update=handleAttachmentPointIndexChanged)
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
+    bpy.types.Scene.m3_import_options = bpy.props.PointerProperty(type=M3ImportOptions)
     bpy.types.Scene.m3_bone_visiblity_options = bpy.props.PointerProperty(type=M3BoneVisiblityOptions)
     bpy.types.Scene.m3_animation_ids = bpy.props.CollectionProperty(type=M3AnimIdData)
     bpy.types.Scene.m3_fuzzy_hit_tests = bpy.props.CollectionProperty(type=M3SimpleGeometricShape)
