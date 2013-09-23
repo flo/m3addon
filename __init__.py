@@ -1372,6 +1372,7 @@ class M3ImportOptions(bpy.types.PropertyGroup):
     path = bpy.props.StringProperty(name="path", default="", options=set())
     rootDirectory = bpy.props.StringProperty(name="rootDirectory", default="", options=set())
     generateBlenderMaterials = bpy.props.BoolProperty(default=True, options=set())
+    applySmoothShading = bpy.props.BoolProperty(default=True, options=set())
 
 class M3Projection(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
@@ -1454,6 +1455,8 @@ class ImportPanel(bpy.types.Panel):
         layout.prop(scene.m3_import_options, "rootDirectory", text="Root Directory")
         layout.prop(scene.m3_import_options, "generateBlenderMaterials", text="Generate Blender Materials At Import")
         layout.operator("m3.generate_classic_materials", text="Generate Blender Materials")
+        layout.prop(scene.m3_import_options, "applySmoothShading", text="Apply Smooth Shading")
+
 
 class ExportPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_quickExport"

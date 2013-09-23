@@ -1289,8 +1289,10 @@ class Importer:
 
                     
                 mesh.update(calc_edges=True)
-                for polygon in mesh.polygons:
-                    polygon.use_smooth = True
+                
+                if self.scene.m3_import_options.applySmoothShading:
+                    for polygon in mesh.polygons:
+                        polygon.use_smooth = True
                     
                 boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
                 vertexGroupLookup = []
