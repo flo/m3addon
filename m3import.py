@@ -1288,12 +1288,9 @@ class Importer:
 
 
                     
-                mesh.update(calc_edges=True)
+                mesh.update(calc_edges=True)    
                 
-                if self.scene.m3_import_options.applySmoothShading:
-                    for polygon in mesh.polygons:
-                        polygon.use_smooth = True
-                    
+                
                 boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
                 vertexGroupLookup = []
                 for boneIndex in boneIndexLookup:
@@ -1313,15 +1310,59 @@ class Importer:
                             vertexGroup = vertexGroupLookup[boneLookupIndex]
                             boneWeight = boneWeightAsInt / 255.0
                             vertexGroup.add([oldVertexIndexToNewVertexIndexMap[vertexIndex]], boneWeight, 'REPLACE')
-
+                            
+                if self.scene.m3_import_options.applySmoothShading:
+                    for polygon in mesh.polygons:
+                        polygon.use_smooth = True
+                
+                if self.scene.m3_import_options.markSharpEdges:
+                    self.markBordersEdgesSharp(mesh)
+                    
                 modifier = meshObject.modifiers.new('UseArmature', 'ARMATURE')
                 modifier.object = self.armatureObject
                 modifier.use_bone_envelopes = False
                 modifier.use_vertex_groups = True
 
-
                 if self.scene.m3_import_options.generateBlenderMaterials:
                     shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject)
+
+    def markBordersEdgesSharp(self, mesh):
+
+        allPolygonEdges = []
+        
+        for polygon in mesh.polygons:
+            if polygon.vertices[0] < polygon.vertices[1]:
+                edge0 = (polygon.vertices[0], polygon.vertices[1])
+            else:
+                edge0 = (polygon.vertices[1], polygon.vertices[0])
+            if polygon.vertices[1] < polygon.vertices[2]:
+                edge1 = (polygon.vertices[1], polygon.vertices[2])
+            else:
+                edge1 = (polygon.vertices[2], polygon.vertices[1])
+            if polygon.vertices[2] < polygon.vertices[0]:
+                edge2 = (polygon.vertices[2], polygon.vertices[0])
+            else:
+                edge2 = (polygon.vertices[0], polygon.vertices[2])
+            allPolygonEdges.append(edge0)
+            allPolygonEdges.append(edge1)
+            allPolygonEdges.append(edge2)
+        uniqueEdges = set()
+        visitedEdges = set()
+        for edge in allPolygonEdges:
+            if edge in visitedEdges:
+                uniqueEdges.remove(edge)
+            else:
+                visitedEdges.add(edge)
+                uniqueEdges.add(edge)
+        
+        for edgeObject in mesh.edges:
+            if edgeObject.vertices[0] < edgeObject.vertices[1]:
+                edge = (edgeObject.vertices[0],edgeObject.vertices[1])
+            else:
+                edge = (edgeObject.vertices[1],edgeObject.vertices[0])
+            if edge in uniqueEdges:
+                edgeObject.use_edge_sharp = True
+        mesh.show_edge_sharp = True
 
     def determineRelEditBoneMatrices(self, m3Bones, editBones):
         absEditBoneMatrices = []
