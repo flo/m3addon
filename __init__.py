@@ -510,15 +510,7 @@ def prepareDefaultValuesForNewAction(objectWithAnimationData, newAction):
     propertiesBecomingAnimated = newAnimatedProperties.difference(oldAnimatedProperties)
     for prop in propertiesBecomingAnimated:
         value = getAttribute(objectWithAnimationData, prop[0],prop[1])
-        curve = None
-        for c in defaultAction.fcurves:
-            if c.data_path == prop[0] and c.array_index == prop[1]:
-                curve = c
-                break
-        if curve == None:
-            curve = defaultAction.fcurves.new(prop[0], prop[1])
-        keyFrame = curve.keyframe_points.insert(0, value)
-        keyFrame.interpolation = "CONSTANT"
+        shared.setDefaultValue(defaultAction,prop[0],prop[1], value)
     propertiesBecomingUnanimated = oldAnimatedProperties.difference(newAnimatedProperties)
     #TODO was checked with if defaultAction != None:
     for curve in defaultAction.fcurves:

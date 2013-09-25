@@ -1596,8 +1596,7 @@ class Importer:
     def animateFloat(self, objectWithAnimationData, path, animId, defaultValue):
         #TODO let animateFloat take objectId as argument
         defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
-        curve = defaultAction.fcurves.new(path, 0)
-        insertConstantKeyFrame(curve, 0, defaultValue)
+        shared.setDefaultValue(defaultAction, path, 0, defaultValue)
         
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
@@ -1607,8 +1606,7 @@ class Importer:
     
     def animateInteger(self, objectWithAnimationData, path, animId, defaultValue):
         defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
-        curve = defaultAction.fcurves.new(path, 0)
-        insertConstantKeyFrame(curve, 0, defaultValue)
+        shared.setDefaultValue(defaultAction, path, 0, defaultValue)
         
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
@@ -1618,12 +1616,9 @@ class Importer:
 
     def animateVector3(self, objectWithAnimationData, path, animId, defaultValue):
         defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
-        xCurve = defaultAction.fcurves.new(path, 0)
-        yCurve = defaultAction.fcurves.new(path, 1)
-        zCurve = defaultAction.fcurves.new(path, 2)
-        insertConstantKeyFrame(xCurve, 0, defaultValue.x) 
-        insertConstantKeyFrame(yCurve, 0, defaultValue.y) 
-        insertConstantKeyFrame(zCurve, 0, defaultValue.z) 
+        shared.setDefaultValue(defaultAction, path, 0, defaultValue.x)
+        shared.setDefaultValue(defaultAction, path, 1, defaultValue.y)
+        shared.setDefaultValue(defaultAction, path, 2, defaultValue.z)
         
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
@@ -1641,10 +1636,8 @@ class Importer:
 
     def animateVector2(self, objectWithAnimationData, path, animId, defaultValue):
         defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
-        xCurve = defaultAction.fcurves.new(path, 0)
-        yCurve = defaultAction.fcurves.new(path, 1)
-        insertConstantKeyFrame(xCurve, 0, defaultValue.x) 
-        insertConstantKeyFrame(yCurve, 0, defaultValue.y) 
+        shared.setDefaultValue(defaultAction, path, 0, defaultValue.x)
+        shared.setDefaultValue(defaultAction, path, 0, defaultValue.y)
         
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
@@ -1659,8 +1652,7 @@ class Importer:
         defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
         defaultValue = toBlenderColorVector(m3DefaultValue)
         for i in range(4):
-            curve = defaultAction.fcurves.new(path, i)
-            insertConstantKeyFrame(curve, 0, defaultValue[i])
+            shared.setDefaultValue(defaultAction, path, i, defaultValue[i])
         
         self.addAnimIdData(animId, objectId=shared.animObjectIdScene, animPath=path)
         for action, timeValueMap in self.actionAndTimeValueMapPairsFor(animId):
@@ -1680,13 +1672,12 @@ class Importer:
         #Store default values in an action:
         defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
         for i in range(3):
-            curve = defaultAction.fcurves.new(animPathMinBorder, i)
-            insertConstantKeyFrame(curve, 0, minBorderDefault[i])
+            shared.setDefaultValue(defaultAction, animPathMinBorder, i, minBorderDefault[i])
+
         for i in range(3):
-            curve = defaultAction.fcurves.new(animPathMaxBorder, i)
-            insertConstantKeyFrame(curve, 0, maxBorderDefault[i])
-        curve = defaultAction.fcurves.new(animPathRadius, 0)
-        insertConstantKeyFrame(curve, 0, radiusDefault)
+            shared.setDefaultValue(defaultAction, animPathMaxBorder, i, maxBorderDefault[i])
+
+        shared.setDefaultValue(defaultAction, animPathRadius, 0, radiusDefault)
 
         #Which path we pass to addAnimIdData does not matter,
         # since they all would result in the same longAnimId (see getLongAnimIdOf):

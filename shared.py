@@ -134,6 +134,17 @@ def attachmentPointNameFromBoneName(boneName):
         return boneName
     
 
+def setDefaultValue(defaultAction, path, index, value):
+    curve = None
+    for c in defaultAction.fcurves:
+        if c.data_path == path  and c.array_index == index:
+            curve = c
+            break
+    if curve == None:
+        curve = defaultAction.fcurves.new(path, index)
+    keyFrame = curve.keyframe_points.insert(0, value)
+    keyFrame.interpolation = "CONSTANT"
+
 def boneNameForPartileSystem(particleSystem):
     return toValidBoneName(star2ParticlePrefix + particleSystem.name)
     
