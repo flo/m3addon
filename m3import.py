@@ -1189,8 +1189,8 @@ class Importer:
                 meshObject = bpy.data.objects.new('MeshObject', mesh)
                 meshObject.location = (0,0,0)
                 meshObject.show_name = True
-                bpy.context.scene.objects.link(meshObject)
-                
+                self.scene.objects.link(meshObject)
+            
                 mesh.m3_material_name = self.getNameOfMaterialWithReferenceIndex(m3Object.materialReferenceIndex)
                 
                 # merge vertices together which have always the same position and normal:
@@ -1318,10 +1318,24 @@ class Importer:
                 if self.scene.m3_import_options.markSharpEdges:
                     self.markBordersEdgesSharp(mesh)
                     
+                    # Remove doubles after marking the sharp edges
+                    # since the sharp edge detection algrithm depend on it
+                    bpy.ops.object.select_all(action='DESELECT')
+                    self.scene.objects.active = meshObject
+                    meshObject.select = True
+                    bpy.ops.object.mode_set(mode='EDIT') 
+                    bpy.ops.mesh.select_all(action='SELECT') 
+                    bpy.ops.mesh.remove_doubles()    
+
+                
                 modifier = meshObject.modifiers.new('UseArmature', 'ARMATURE')
                 modifier.object = self.armatureObject
                 modifier.use_bone_envelopes = False
                 modifier.use_vertex_groups = True
+                
+                if self.scene.m3_import_options.markSharpEdges:
+                    modifier = meshObject.modifiers.new('EdgeSplit', 'EDGE_SPLIT')
+                    modifier.use_edge_angle = False
 
                 if self.scene.m3_import_options.generateBlenderMaterials:
                     shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject)

@@ -590,6 +590,18 @@ class Exporter:
         m3Vertices = []
         for meshIndex, meshObject in enumerate(nonEmptyMeshObjects):   
             mesh = meshObject.data
+            
+            bpy.ops.object.select_all(action = 'DESELECT')
+            self.scene.objects.active = meshObject
+            meshObject.select = True
+            bpy.ops.object.duplicate()
+            meshObjectCopy = self.scene.objects.active 
+            bpy.ops.object.modifier_apply (modifier='EdgeSplit')
+            self.scene.objects.unlink(meshObjectCopy)
+            mesh = meshObjectCopy.data
+            meshObject = meshObjectCopy
+            mesh.update(calc_tessface=True)
+
             firstBoneLookupIndex = len(model.boneLookup)
             staticMeshBoneName = "StaticMesh"
             boneNameToBoneLookupIndexMap = {}
