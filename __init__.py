@@ -1366,6 +1366,7 @@ class M3ImportOptions(bpy.types.PropertyGroup):
     generateBlenderMaterials = bpy.props.BoolProperty(default=True, options=set())
     applySmoothShading = bpy.props.BoolProperty(default=True, options=set())
     markSharpEdges = bpy.props.BoolProperty(default=True, options=set())
+    teamColor = bpy.props.FloatVectorProperty(default=(1.0, 0.0, 0.0), min = 0.0, max = 1.0, name="team color", size=3, subtype="COLOR", options=set(), description="Team color place holder used for generated blender materials")
 
 class M3Projection(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
@@ -1450,6 +1451,7 @@ class ImportPanel(bpy.types.Panel):
         layout.operator("m3.generate_classic_materials", text="Generate Blender Materials")
         layout.prop(scene.m3_import_options, "applySmoothShading", text="Apply Smooth Shading")
         layout.prop(scene.m3_import_options, "markSharpEdges", text="Mark sharp edges")
+        layout.prop(scene.m3_import_options, "teamColor", text="Team Color")
 
 
 class ExportPanel(bpy.types.Panel):

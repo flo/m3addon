@@ -430,8 +430,8 @@ def createClassicBlenderMaterialForMeshObject(scene, meshObject):
         alpha =  diffuseLayer.color[3] # no known blender equivalent
         realMaterial.diffuse_color = (red, green, blue)
     else:
-        # Use red for areas which where transparent
-        realMaterial.diffuse_color = (1,0,0)
+        # transparent parts are usually team colored:
+        realMaterial.diffuse_color = tuple(f for f in scene.m3_import_options.teamColor)
     realMaterial.diffuse_shader = 'FRESNEL' #gave most similar result. Another option would be 'LAMBERT' 
     realMaterial.diffuse_intensity = diffuseLayer.brightMult
     
