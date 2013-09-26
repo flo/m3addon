@@ -3806,7 +3806,7 @@ class M3_OT_generateClassicMaterails(bpy.types.Operator):
 class M3_OT_export(bpy.types.Operator, ExportHelper):
     '''Export a M3 file'''
     bl_idname = "m3.export"
-    bl_label = "Export M3 Particle Systems"
+    bl_label = "Export M3 Model"
     bl_options = {'UNDO'}
 
     filename_ext = ".m3"
