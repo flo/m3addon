@@ -1469,6 +1469,8 @@ class ExportPanel(bpy.types.Panel):
         layout.operator("m3.quick_export", text="Export As M3")
         layout.prop(scene.m3_export_options, "testPatch20Format", text="Use new experimental format")
         layout.prop(scene.m3_export_options, "animationExportAmount", text="Export")
+        layout.operator("m3.convert_to_m3_normal_map", text="Convert normal map")
+
 
 
 class BoneVisibilityPanel(bpy.types.Panel):
@@ -3859,7 +3861,97 @@ class M3_OT_import(bpy.types.Operator, ImportHelper):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
+class M3_OT_conertBlenderToM3NormalMap(bpy.types.Operator):
+    '''Convert a blender normal map to a M3 one'''
+    bl_idname = "m3.convert_blender_to_m3_normal_map"
+    bl_label = "Converts a classic normal map to a normal map usable in the m3 format"
+    bl_options = {'UNDO'}
+
+
+    @classmethod
+    def poll(cls, context):
+        if not hasattr(context, "edit_image"):
+            return False
+        return context.edit_image is not None
+            
+    def invoke(self, context, event):
+        currentImage = context.edit_image
+        values = list(currentImage.pixels)
+
+        def getNewValue(absoluteIndex):
+            colorIndex = absoluteIndex % 4
+            # Blender: R = (left/right), G = (up/down) , B = (height), A = (unused)
+            # M3:      R = (unused)    , G = (down/up?),  B = (unused), A = (left/right)
+
+            if colorIndex == 0: # red color slot:
+                # unused
+                return 1.0
+            elif colorIndex == 1: # green color slot
+                #m3.G = blender.G
+                return 1.0 -  values[absoluteIndex]
+            elif colorIndex == 2: # blue color slot
+                # unused ?
+                return 0.0
+            if colorIndex == 3: # change alpha
+                # m3.A = blender.R 
+                # to get from index pixelOffset+0 to pixelOffset+3: add 3
+                return values[absoluteIndex-3]
+            
+                
+        currentImage.pixels = [getNewValue(i) for i in range(len(values))]
+        currentImage.update()
+        return{'FINISHED'}
         
+class M3_OT_conertM3ToBlenderNormalMap(bpy.types.Operator):
+    '''Convert a m3 normal map to a blender one'''
+    bl_idname = "m3.convert_m3_to_blender_normal_map"
+    bl_label = "Converts a m3 normal map to a classic normal map"
+    bl_options = {'UNDO'}
+
+
+    @classmethod
+    def poll(cls, context):
+        if not hasattr(context, "edit_image"):
+            return False
+        return context.edit_image is not None
+            
+    def invoke(self, context, event):
+        currentImage = context.edit_image
+        values = list(currentImage.pixels)
+
+        def getNewValue(absoluteIndex):
+            colorIndex = absoluteIndex % 4
+            # Blender: R = (left/right), G = (up/down) , B = (height), A = (unused)
+            # M3:      R = (unused)    , G = (down/up?),  B = (unused), A = (left/right)
+
+            if colorIndex == 0: # red color slot:
+                #blender.R = m3.A
+                return values[absoluteIndex+3] # old alpha
+            elif colorIndex == 1: # green color slot
+                #blender.G = 1.0 - m3.G
+                return 1.0 -  values[absoluteIndex]
+            elif colorIndex == 2: # blue color slot
+                newRed = values[absoluteIndex+1] # (newRed = old alpha)
+                newGreen = 1.0 - values[absoluteIndex-1] # 1.0 - old green
+                leftRight = 2*(newRed -0.5) 
+                upDown = 2*(newGreen -0.5) 
+                # since sqrt(lowHigh^2 + leftRight^2 + upDown^2) = 1.0 is
+                # newBlue = math.sqrt(1.0 - newRed*newRed - newGreen*newGreen)
+                return math.sqrt(max(0.0, 1.0 - leftRight*leftRight - upDown*upDown))
+            if colorIndex == 3: # change alpha
+                # unused
+                return 1.0
+            
+                
+        currentImage.pixels = [getNewValue(i) for i in range(len(values))]
+        currentImage.update()
+        return{'FINISHED'}
+        
+
+def menu_func_convertNormalMaps(self, context):
+    self.layout.operator(M3_OT_conertBlenderToM3NormalMap.bl_idname, text="Convert Blender to M3 Normal Map")
+    self.layout.operator(M3_OT_conertM3ToBlenderNormalMap.bl_idname, text="Convert M3 to Blender Normal Map")
+
 
 def menu_func_import(self, context):
     self.layout.operator(M3_OT_import.bl_idname, text="Starcraft 2 Model (.m3)...")
@@ -3911,6 +4003,7 @@ def register():
     bpy.types.Mesh.m3_physics_mesh = bpy.props.BoolProperty(default=False, options=set(), description="Mark mesh to be used for physics shape only (not exported).")
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
+    bpy.types.IMAGE_MT_image.append(menu_func_convertNormalMaps)
     bpy.types.Bone.m3_bind_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
     bpy.types.EditBone.m3_bind_scale = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), size=3, options=set()) 
     bpy.types.Scene.m3_default_value_action_assignments = bpy.props.CollectionProperty(type=AssignedActionOfM3Animation, options=set())
@@ -3921,6 +4014,7 @@ def unregister():
     bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
+    bpy.types.IMAGE_MT_image.remove(menu_func_convertNormalMaps)
  
 if __name__ == "__main__":
     register()
