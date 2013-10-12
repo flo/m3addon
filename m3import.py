@@ -140,10 +140,13 @@ def convertToBlenderQuaternionMap(timeToM3VectorMap):
     return result
 
 
-def visualizeMatrix(matrix):
+def visualizeMatrix(matrix, at3DCursor):
     mesh = bpy.data.meshes.new('AxisMesh')
     meshObject = bpy.data.objects.new('AxisMesh', mesh)
-    meshObject.location = (0,0,0)
+    if at3DCursor:
+        meshObject.location = scene.cursor_location
+    else:
+        meshObject.location = (0,0,0)
     meshObject.show_name = True
     oVertex = matrix.translation
     matrix3x3 = matrix.to_3x3()
@@ -426,10 +429,11 @@ class Importer:
     def createArmatureObject(self):
         #bpy.ops.object.mode_set(mode='OBJECT')
         #alternative: armature = bpy.ops.object.armature_add(view_align=False,enter_editmode=False, location=location, rotation=(0,0,0), layers=firstLayerOnly)
-        currentScene = bpy.context.scene
+        scene = bpy.context.scene
         armatureObject = bpy.data.objects.new("Armature Object", self.armature)
-        currentScene.objects.link(armatureObject)
-        currentScene.objects.active = armatureObject
+        armatureObject.location = scene.cursor_location
+        scene.objects.link(armatureObject)
+        scene.objects.active = armatureObject
         armatureObject.select = True
         self.armatureObject = armatureObject
 
@@ -1047,7 +1051,7 @@ class Importer:
                     mesh.m3_physics_mesh = True
                     
                     meshObject = bpy.data.objects.new('PhysicsMeshObject', mesh)
-                    meshObject.location = (0,0,0)
+                    meshObject.location = scene.cursor_location
                     meshObject.show_name = True
                     
                     scene.objects.link(meshObject)
@@ -1187,7 +1191,7 @@ class Importer:
 
                 mesh = bpy.data.meshes.new('Mesh')
                 meshObject = bpy.data.objects.new('MeshObject', mesh)
-                meshObject.location = (0,0,0)
+                meshObject.location = self.scene.cursor_location
                 meshObject.show_name = True
                 self.scene.objects.link(meshObject)
             
