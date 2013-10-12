@@ -1331,6 +1331,8 @@ class Importer:
                     bpy.ops.mesh.select_all(action='SELECT') 
                     bpy.ops.mesh.remove_doubles()    
 
+
+                self.setOriginToCenter(meshObject)
                 
                 modifier = meshObject.modifiers.new('UseArmature', 'ARMATURE')
                 modifier.object = self.armatureObject
@@ -1343,6 +1345,14 @@ class Importer:
 
                 if self.scene.m3_import_options.generateBlenderMaterials:
                     shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject)
+
+    def setOriginToCenter(self, meshObject):
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+        self.scene.objects.active = meshObject
+        meshObject.select = True
+        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
+    
 
     def markBordersEdgesSharp(self, mesh):
 
