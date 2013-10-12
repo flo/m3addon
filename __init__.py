@@ -801,7 +801,114 @@ def selectOrCreateBone(scene, boneName):
     bone = armatureObject.data.bones[boneName]
     return (bone, poseBone)
 
- 
+
+
+def determineLayerNames(defaultSetting):
+    from . import m3
+    settingToStructureNameMap = {
+        defaultSettingMesh: "MAT_", 
+        defaultSettingParticle: "MAT_", 
+        defaultSettingCreep: "CREP",
+        defaultSettingDisplacement: "DIS_",
+        defaultSettingComposite: "CMP_",
+        defaultSettingVolume: "VOL_",
+        defaultSettingTerrain: "TER_"
+    }
+    structureName = settingToStructureNameMap[defaultSetting]
+    structureDescription = m3.structures[structureName].getNewestVersion()
+    for field in structureDescription.fields:
+        if hasattr(field, "referenceStructureDescription"):
+            if field.historyOfReferencedStructures.name == "LAYR":
+                yield shared.getLayerNameFromFieldName(field.name)
+
+
+def finUnusedMaterialName(scene):
+    usedNames = set()
+    for materialReferenceIndex in range(0, len(scene.m3_material_references)):
+        materialReference = scene.m3_material_references[materialReferenceIndex]
+        material = shared.getMaterial(scene, materialReference.materialType, materialReference.materialIndex)
+        if material != None:
+            usedNames.add(material.name)
+    unusedName = None
+    counter = 1
+    while unusedName == None:
+        suggestedName = "%02d" % counter
+        if not suggestedName in usedNames:
+            unusedName = suggestedName
+        counter += 1
+    return unusedName
+
+def createMaterial(scene, materialName, defaultSetting):
+    layerNames = determineLayerNames(defaultSetting)
+                    
+    if defaultSetting in [defaultSettingMesh, defaultSettingParticle]:
+        materialType = shared.standardMaterialTypeIndex
+        materialIndex = len(scene.m3_standard_materials)
+        material = scene.m3_standard_materials.add()
+        for layerName in layerNames:
+            layer = material.layers.add()
+            layer.name = layerName
+            if layerName == "Diffuse":
+                if defaultSetting != defaultSettingParticle:
+                    layer.alphaAsTeamColor = True
+        
+        if defaultSetting == defaultSettingParticle:
+            material.unfogged = True
+            material.blendMode = "2"
+            material.layerBlendType = "2"
+            material.emisBlendType = "2"
+            material.noShadowsCast = True
+            material.noHitTest = True
+            material.noShadowsReceived = True
+            material.forParticles = True
+            material.unknownFlag0x1 = True
+            material.unknownFlag0x2 = True
+            material.unknownFlag0x8 = True
+    elif defaultSetting == defaultSettingDisplacement:
+        materialType = shared.displacementMaterialTypeIndex
+        materialIndex = len(scene.m3_displacement_materials)
+        material = scene.m3_displacement_materials.add()
+        for layerName in layerNames:
+            layer = material.layers.add()
+            layer.name = layerName
+    elif defaultSetting == defaultSettingComposite:
+        materialType = shared.compositeMaterialTypeIndex
+        materialIndex = len(scene.m3_composite_materials)
+        material = scene.m3_composite_materials.add()
+        # has no layers
+    elif defaultSetting == defaultSettingTerrain:
+        materialType = shared.terrainMaterialTypeIndex
+        materialIndex = len(scene.m3_terrain_materials)
+        material = scene.m3_terrain_materials.add()
+        for layerName in layerNames:
+            layer = material.layers.add()
+            layer.name = layerName
+    elif defaultSetting == defaultSettingVolume:
+        materialType = shared.volumeMaterialTypeIndex
+        materialIndex = len(scene.m3_volume_materials)
+        material = scene.m3_volume_materials.add()
+        for layerName in layerNames:
+            layer = material.layers.add()
+            layer.name = layerName
+    elif defaultSetting == defaultSettingCreep:
+        materialType = shared.creepMaterialTypeIndex
+        materialIndex = len(scene.m3_creep_materials)
+        material = scene.m3_creep_materials.add()
+        for layerName in layerNames:
+            layer = material.layers.add()
+            layer.name = layerName
+            
+            
+    materialReferenceIndex = len(scene.m3_material_references)
+    materialReference = scene.m3_material_references.add()
+    materialReference.materialIndex = materialIndex
+    materialReference.materialType = materialType
+    material.materialReferenceIndex = materialReferenceIndex
+    material.name = materialName # will also set materialReference name
+
+
+    scene.m3_material_reference_index = len(scene.m3_material_references)-1
+
     
 emissionAreaTypesWithRadius = [shared.emissionAreaTypeSphere, shared.emissionAreaTypeCylinder]
 emissionAreaTypesWithWidth = [shared.emissionAreaTypePlane, shared.emissionAreaTypeCuboid]
@@ -1607,7 +1714,10 @@ class MaterialSelectionPanel(bpy.types.Panel):
         layout = self.layout
         meshObject = context.object
         mesh = meshObject.data
-        layout.prop_search(mesh, 'm3_material_name', scene, 'm3_material_references', text="M3 Material", icon='NONE')
+        row = layout.row()
+
+        row.prop_search(mesh, 'm3_material_name', scene, 'm3_material_references', text="M3 Material", icon='NONE')
+        row.operator("m3.create_material_for_mesh", icon='ZOOMIN', text="")
 
 def displayMaterialPropertiesUI(scene, layout, materialReference):
         materialType = materialReference.materialType
@@ -2700,125 +2810,56 @@ class M3_MATERIALS_OT_add(bpy.types.Operator):
     bl_description = "Adds an material for the export to Starcraft 2"
 
     defaultSetting = bpy.props.EnumProperty(items=matDefaultSettingsList, options=set(), default="MESH")
-    name = bpy.props.StringProperty(name="name", default="Stand", options=set())
+    materialName = bpy.props.StringProperty(name="materialName", default="01", options=set())
     
     def invoke(self, context, event):
         scene = context.scene
-        self.name = self.findUnusedName(scene)
+        self.materialName = finUnusedMaterialName(scene)
         context.window_manager.invoke_props_dialog(self, width=250)
         return {'RUNNING_MODAL'}  
         
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "defaultSetting", text="Default Settings") 
-        layout.prop(self, "name", text="Name") 
-  
-    def determineLayerNames(self):
-        from . import m3
-        settingToStructureNameMap = {
-            defaultSettingMesh: "MAT_", 
-            defaultSettingParticle: "MAT_", 
-            defaultSettingCreep: "CREP",
-            defaultSettingDisplacement: "DIS_",
-            defaultSettingComposite: "CMP_",
-            defaultSettingVolume: "VOL_",
-            defaultSettingTerrain: "TER_"
-        }
-        structureName = settingToStructureNameMap[self.defaultSetting]
-        structureDescription = m3.structures[structureName].getNewestVersion()
-        for field in structureDescription.fields:
-            if hasattr(field, "referenceStructureDescription"):
-                if field.historyOfReferencedStructures.name == "LAYR":
-                    yield shared.getLayerNameFromFieldName(field.name)
+        layout.prop(self, "materialName", text="Name") 
+
   
     def execute(self, context):
         scene = context.scene
-        layerNames = self.determineLayerNames()
-                        
-        if self.defaultSetting in [defaultSettingMesh, defaultSettingParticle]:
-            materialType = shared.standardMaterialTypeIndex
-            materialIndex = len(scene.m3_standard_materials)
-            material = scene.m3_standard_materials.add()
-            for layerName in layerNames:
-                layer = material.layers.add()
-                layer.name = layerName
-                if layerName == "Diffuse":
-                    if self.defaultSetting != defaultSettingParticle:
-                        layer.alphaAsTeamColor = True
-            
-            if self.defaultSetting == defaultSettingParticle:
-                material.unfogged = True
-                material.blendMode = "2"
-                material.layerBlendType = "2"
-                material.emisBlendType = "2"
-                material.noShadowsCast = True
-                material.noHitTest = True
-                material.noShadowsReceived = True
-                material.forParticles = True
-                material.unknownFlag0x1 = True
-                material.unknownFlag0x2 = True
-                material.unknownFlag0x8 = True
-        elif self.defaultSetting == defaultSettingDisplacement:
-            materialType = shared.displacementMaterialTypeIndex
-            materialIndex = len(scene.m3_displacement_materials)
-            material = scene.m3_displacement_materials.add()
-            for layerName in layerNames:
-                layer = material.layers.add()
-                layer.name = layerName
-        elif self.defaultSetting == defaultSettingComposite:
-            materialType = shared.compositeMaterialTypeIndex
-            materialIndex = len(scene.m3_composite_materials)
-            material = scene.m3_composite_materials.add()
-            # has no layers
-        elif self.defaultSetting == defaultSettingTerrain:
-            materialType = shared.terrainMaterialTypeIndex
-            materialIndex = len(scene.m3_terrain_materials)
-            material = scene.m3_terrain_materials.add()
-            for layerName in layerNames:
-                layer = material.layers.add()
-                layer.name = layerName
-        elif self.defaultSetting == defaultSettingVolume:
-            materialType = shared.volumeMaterialTypeIndex
-            materialIndex = len(scene.m3_volume_materials)
-            material = scene.m3_volume_materials.add()
-            for layerName in layerNames:
-                layer = material.layers.add()
-                layer.name = layerName
-        elif self.defaultSetting == defaultSettingCreep:
-            materialType = shared.creepMaterialTypeIndex
-            materialIndex = len(scene.m3_creep_materials)
-            material = scene.m3_creep_materials.add()
-            for layerName in layerNames:
-                layer = material.layers.add()
-                layer.name = layerName
-                
-                
-        materialReferenceIndex = len(scene.m3_material_references)
-        materialReference = scene.m3_material_references.add()
-        materialReference.materialIndex = materialIndex
-        materialReference.materialType = materialType
-        material.materialReferenceIndex = materialReferenceIndex
-        material.name = self.name # will also set materialReference name
-
-
-        scene.m3_material_reference_index = len(scene.m3_material_references)-1
+        createMaterial(scene, self.materialName, self.defaultSetting)
         return {'FINISHED'}
-    def findUnusedName(self, scene):
-        usedNames = set()
-        for materialReferenceIndex in range(0, len(scene.m3_material_references)):
-            materialReference = scene.m3_material_references[materialReferenceIndex]
-            material = shared.getMaterial(scene, materialReference.materialType, materialReference.materialIndex)
-            if material != None:
-                usedNames.add(material.name)
-        unusedName = None
-        counter = 1
-        while unusedName == None:
-            suggestedName = "%02d" % counter
-            if not suggestedName in usedNames:
-                unusedName = suggestedName
-            counter += 1
-        return unusedName
+    
+class M3_MATERIALS_OT_createForMesh(bpy.types.Operator):
+    bl_idname      = 'm3.create_material_for_mesh'
+    bl_label       = "Creates a M3 Material for the current mesh"
+    bl_description = "Creates an m3 material for the current mesh"
 
+    defaultSetting = bpy.props.EnumProperty(items=matDefaultSettingsList, options=set(), default="MESH")
+    materialName = bpy.props.StringProperty(name="materialName", default="01", options=set())
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        self.materialName = finUnusedMaterialName(scene)
+        context.window_manager.invoke_props_dialog(self, width=250)
+        return {'RUNNING_MODAL'}  
+        
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "defaultSetting", text="Default Settings") 
+        layout.prop(self, "materialName", text="Name") 
+  
+
+  
+    def execute(self, context):
+        scene = context.scene
+        meshObject = context.object
+        mesh = meshObject.data
+        createMaterial(scene, self.materialName, self.defaultSetting)
+        mesh.m3_material_name = self.materialName
+
+        return {'FINISHED'}
+    
+    
 class M3_MATERIALS_OT_remove(bpy.types.Operator):
     bl_idname      = 'm3.materials_remove'
     bl_label       = "Remove M3 Material"
