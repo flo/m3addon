@@ -1189,8 +1189,15 @@ class Importer:
                     facesWithOldIndices.append(face)
                     vertexIndexIndex += 3
 
-                mesh = bpy.data.meshes.new('Mesh')
-                meshObject = bpy.data.objects.new('MeshObject', mesh)
+
+                boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
+                numberOfBones = len(boneIndexLookup)
+                preferedMeshName = "Mesh"
+                if numberOfBones == 1:
+                    boneName = self.boneNames[boneIndexLookup[0]]
+                    preferedMeshName = boneName
+                mesh = bpy.data.meshes.new(preferedMeshName)
+                meshObject = bpy.data.objects.new(preferedMeshName, mesh)
                 meshObject.location = self.scene.cursor_location
                 meshObject.show_name = True
                 self.scene.objects.link(meshObject)
@@ -1295,7 +1302,6 @@ class Importer:
                 mesh.update(calc_edges=True)    
                 
                 
-                boneIndexLookup = model.boneLookup[region.firstBoneLookupIndex:region.firstBoneLookupIndex + region.numberOfBoneLookupIndices]
                 vertexGroupLookup = []
                 for boneIndex in boneIndexLookup:
                     boneName = shared.toValidBoneName(self.boneNames[boneIndex])
