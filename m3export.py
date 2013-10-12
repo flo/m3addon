@@ -258,6 +258,8 @@ class Exporter:
 
         for armatureObject in self.findArmatureObjects():
             armature = armatureObject.data 
+            objectToWorldMatrix = armatureObject.matrix_world
+
             boneNamesOfArmature = list()
             self.armatureObjectNameToBoneNamesMap[armatureObject.name] = boneNamesOfArmature 
             for blenderBoneIndex, blenderBone in enumerate(armature.bones):
@@ -288,7 +290,7 @@ class Exporter:
                 bone.scale.header = self.createNullAnimHeader(animId=scaleAnimId, interpolationType=1)
                 bone.ar1 = self.createNullUInt32AnimationReference(1)
                 model.bones.append(bone)
-                absRestPosMatrix = blenderBone.matrix_local  
+                absRestPosMatrix = objectToWorldMatrix * blenderBone.matrix_local  
                 self.restPositionsOfExportedBones.append(absRestPosMatrix.translation.copy())
                 if not blenderBone.use_inherit_rotation:
                     raise Exception("The setting inhertRotation=false of bone %s is not exportable!" % boneName)
@@ -617,7 +619,8 @@ class Exporter:
                         boneNamesOfArmature.add(blenderBone.name)
             else:
                 raise Exception("Mesh must have no modifiers except single one for the armature")
-                
+            objectToWorldMatrix = meshObject.matrix_world
+
             firstFaceVertexIndexIndex = len(division.faces)
             firstVertexIndexIndex = len(m3Vertices)
             regionFaceVertexIndices = []
@@ -647,7 +650,9 @@ class Exporter:
                 for faceRelativeVertexIndex, blenderVertexIndex in faceRelativeVertexIndexAndBlenderVertexIndexTuples:
                     blenderVertex =  mesh.vertices[blenderVertexIndex]
                     m3Vertex = m3VertexStructureDefinition.createInstance()
-                    m3Vertex.position = self.blenderToM3Vector(blenderVertex.co)
+                    
+                    absolutePosition = objectToWorldMatrix * blenderVertex.co
+                    m3Vertex.position = self.blenderToM3Vector(absolutePosition)
                     
                     weightLookupIndexPairs = []
                     for gIndex, g in enumerate(blenderVertex.groups):
