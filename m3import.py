@@ -1011,7 +1011,7 @@ class Importer:
             animPathPrefix = "m3_rigid_bodies[%s]." % blenderRigidBodyIndex
             transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=rigid_body, m3Object=m3RigidBody)
             shared.transferRigidBody(transferer)
-            blenderBoneName = self.boneNames[m3Force.boneIndex]
+            blenderBoneName = self.boneNames[m3RigidBody.boneIndex]
             rigid_body.name = blenderBoneName
             rigid_body.boneName = blenderBoneName
             
