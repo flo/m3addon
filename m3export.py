@@ -372,6 +372,7 @@ class Exporter:
     def initBoneAnimations(self, model): 
         for animationIndex in self.animationIndicesToExport:
             animation = self.scene.m3_animations[animationIndex]
+            print("Calculating bone movement done in animation %s" % animation.name)
             self.scene.m3_animation_index = animationIndex
             frames = set()
             # For animated rotations all frames are needed,
@@ -592,7 +593,8 @@ class Exporter:
         m3Vertices = []
         for meshIndex, meshObject in enumerate(nonEmptyMeshObjects):   
             mesh = meshObject.data
-            
+            print("Exporting mesh object %s" % meshObject.name)
+
             bpy.ops.object.select_all(action = 'DESELECT')
             self.scene.objects.active = meshObject
             meshObject.select = True
@@ -817,7 +819,7 @@ class Exporter:
         scene = self.scene
         for animationIndex in self.animationIndicesToExport:
             animation = self.scene.m3_animations[animationIndex]
-            print("Exporting animation %s" % animation.name)
+            print("Calculating mesh boundings for animation %s" % animation.name)
             frameToBoneIndexToAbsoluteMatrixMap = self.animationNameToFrameToBoneIndexToAbsoluteMatrixMap[animation.name]
             boundingsVectorList = []
             frames = self.allFramesOfAnimation(animation)
