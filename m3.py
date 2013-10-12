@@ -316,7 +316,7 @@ class TagField(Field):
         if len(s) == 4:
             b = (s[3] + s[2] + s[1] + s[0]).encode("ascii")
         else:
-            b = (s[2] + s[1] + s[0]).encode("ascii") + b"\\x00"
+            b = (s[2] + s[1] + s[0]).encode("ascii") + b"\x00"
         return self.structFormat.pack_into(buffer, offset, b[0], b[1], b[2], b[3])
 
     def setToDefault(self, owner):
