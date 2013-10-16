@@ -1576,7 +1576,6 @@ class ExportPanel(bpy.types.Panel):
         layout.operator("m3.quick_export", text="Export As M3")
         layout.prop(scene.m3_export_options, "testPatch20Format", text="Use new experimental format")
         layout.prop(scene.m3_export_options, "animationExportAmount", text="Export")
-        layout.operator("m3.convert_to_m3_normal_map", text="Convert normal map")
 
 
 
