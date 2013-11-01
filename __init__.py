@@ -2815,6 +2815,10 @@ class ExtraBonePropertiesPanel(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_context = "bone"
     
+    @classmethod
+    def poll(cls, context):
+        return context.bone != None
+
     def draw(self, context):
         layout = self.layout
         bone = context.bone
