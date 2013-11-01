@@ -507,11 +507,32 @@ def prepareDefaultValuesForNewAction(objectWithAnimationData, newAction):
             newAnimatedProperties.add((curve.data_path, curve.array_index))    
     defaultAction = shared.getOrCreateDefaultActionFor(objectWithAnimationData)
 
+    removedProperties = set()
+
     propertiesBecomingAnimated = newAnimatedProperties.difference(oldAnimatedProperties)
     for prop in propertiesBecomingAnimated:
-        value = getAttribute(objectWithAnimationData, prop[0],prop[1])
-        shared.setDefaultValue(defaultAction,prop[0],prop[1], value)
+        try:
+            value = getAttribute(objectWithAnimationData, prop[0],prop[1])
+            propertyExists = True
+        except:
+            propertyExists = False
+        if propertyExists:
+            shared.setDefaultValue(defaultAction,prop[0],prop[1], value)
+        else:
+            removedProperties.add(prop)
     propertiesBecomingUnanimated = oldAnimatedProperties.difference(newAnimatedProperties)
+    
+    if len(removedProperties) > 0:
+        print("Removing animations for %s since those properties do no longer exist" % removedProperties)
+    
+    removedCurves = list()
+    if newAction != None:
+        for curve in newAction.fcurves:
+            if (curve.data_path, curve.array_index) in removedProperties:
+                removedCurves.append(curve)
+    for removedCurve in removedCurves:
+        newAction.fcurves.remove(removedCurve)
+    
     #TODO was checked with if defaultAction != None:
     for curve in defaultAction.fcurves:
         prop = (curve.data_path, curve.array_index)
