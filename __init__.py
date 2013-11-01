@@ -3753,7 +3753,7 @@ class M3_TIGHT_HIT_TESTS_OT_selectorcreatebone(bpy.types.Operator):
         return{'FINISHED'}
 
 
-class M3_TIGHT_HIT_TESTS_OT_selectorcreatebone(bpy.types.Operator):
+class M3_TIGHT_HIT_TESTS_OT_hittestremove(bpy.types.Operator):
     bl_idname      = 'm3.tight_hit_test_remove'
     bl_label       = "Select or create the HitTestFuzzy bone"
     bl_description = "Adds a shape for the fuzzy hit test"
