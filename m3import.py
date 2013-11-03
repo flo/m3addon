@@ -1384,7 +1384,8 @@ class Importer:
         visitedEdges = set()
         for edge in allPolygonEdges:
             if edge in visitedEdges:
-                uniqueEdges.remove(edge)
+                if edge in uniqueEdges:
+                    uniqueEdges.remove(edge)
             else:
                 visitedEdges.add(edge)
                 uniqueEdges.add(edge)
