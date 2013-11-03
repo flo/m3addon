@@ -1918,16 +1918,13 @@ class MatrialLayersPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        row = layout.row()
-        col = row.column()
 
         materialIndex = scene.m3_material_reference_index
         if materialIndex >= 0 and materialIndex < len(scene.m3_material_references):
             materialReference = scene.m3_material_references[materialIndex]
             displayMaterialLayersUI(scene, layout, materialReference)
-
         else:
-            col.label(text="No properties to display")
+            layout.label(text="No properties to display")
 
 
 class ObjectMatrialLayersPanel(bpy.types.Panel):
@@ -1951,7 +1948,7 @@ class ObjectMatrialLayersPanel(bpy.types.Panel):
         if materialReference != None:
             displayMaterialLayersUI(scene, layout, materialReference)
         else:
-            col.label(text="No properties to display")
+            layout.label(text="No properties to display")
 
 class CameraPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_cameras"
