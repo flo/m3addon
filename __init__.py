@@ -436,17 +436,22 @@ def handleWarpVisibilityUpdate(self, context):
         boneName = warp.boneName
         shared.setBoneVisibility(scene, boneName, self.showWarps)
 
+
+def getOrCreateStrip(m3Animation, animationData):
+    trackName = m3Animation.name + "_full"
+    track = shared.getOrCreateTrack(animationData, trackName)
+    if len(track.strips) > 0:
+        strip = track.strips[0]
+    else:
+        stripName = trackName
+        strip = track.strips.new(name=stripName, start=0,action=animationData.action)
+    return strip
+
 def handleAnimationChange(targetObject, oldAnimation, newAnimation):
-    animationData = targetObject.animation_data
+    animationData = targetObject.animation_data    
     oldAction = animationData.action
     if oldAction != None and oldAnimation != None:
-        oldTrackName = oldAnimation.name + "_full"
-        oldTrack = shared.getOrCreateTrack(animationData, oldTrackName)
-        if len(oldTrack.strips) > 0:
-            oldStrip = oldTrack.strips[0]
-        else:
-            oldStripName = oldTrackName
-            oldStrip = oldTrack.strips.new(name=oldStripName, start=0,action=animationData.action)
+        oldStrip = getOrCreateStrip(oldAnimation, animationData)
         oldStrip.action = animationData.action
     
     if newAnimation:   
@@ -1623,6 +1628,14 @@ class BoneVisibilityPanel(bpy.types.Panel):
         layout.prop(scene.m3_bone_visiblity_options, "showProjections", text="Projections")
         layout.prop(scene.m3_bone_visiblity_options, "showWarps", text="Warps")
 
+class BasicMenu(bpy.types.Menu):
+    bl_idname = "OBJECT_MT_M3_animations_menu"
+    bl_label = "Select"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("m3.animations_duplicate", text="Duplicate")
+
 class AnimationSequencesPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_animations"
     bl_label = "M3 Animation Sequences"
@@ -1641,6 +1654,7 @@ class AnimationSequencesPanel(bpy.types.Panel):
         col = row.column(align=True)
         col.operator("m3.animations_add", icon='ZOOMIN', text="")
         col.operator("m3.animations_remove", icon='ZOOMOUT', text="")
+        col.menu("OBJECT_MT_M3_animations_menu", icon='DOWNARROW_HLT', text="")
         animationIndex = scene.m3_animation_index
         if animationIndex >= 0 and animationIndex < len(scene.m3_animations):
             animation = scene.m3_animations[animationIndex]
@@ -3019,8 +3033,74 @@ class M3_ANIMATIONS_OT_remove(bpy.types.Operator):
                 scene.m3_animation_old_index = -1
                 scene.m3_animation_index -= 1
         return{'FINISHED'}
+    
+def copyCurrentActionOfObjectToM3Animation(objectWithAnimationData, targetAnimation):
+    animationData = objectWithAnimationData.animation_data
+    sourceAction = animationData.action
+    if sourceAction != None:
+        targetStrip = getOrCreateStrip(targetAnimation, animationData)
         
+        newAction = bpy.data.actions.new(objectWithAnimationData.name + targetAnimation.name)
         
+        for sourceCurve in sourceAction.fcurves:
+            path = sourceCurve.data_path
+            arrayIndex = sourceCurve.array_index
+            groupName = sourceCurve.group.name
+            targetCurve = newAction.fcurves.new(path, arrayIndex, groupName)
+            targetCurve.extrapolation = sourceCurve.extrapolation
+            targetCurve.color_mode = sourceCurve.color_mode
+            targetCurve.color = sourceCurve.color
+            for sourceKeyFrame in sourceCurve.keyframe_points:
+                frame = sourceKeyFrame.co.x
+                value = sourceKeyFrame.co.y
+                targetKeyFrame = targetCurve.keyframe_points.insert(frame, value)
+                targetKeyFrame.handle_left_type = sourceKeyFrame.handle_left_type
+                targetKeyFrame.handle_right_type = sourceKeyFrame.handle_right_type
+                targetKeyFrame.interpolation = sourceKeyFrame.interpolation
+                targetKeyFrame.type = sourceKeyFrame.type
+                targetKeyFrame.handle_left.x = sourceKeyFrame.handle_left.x
+                targetKeyFrame.handle_left.y = sourceKeyFrame.handle_left.y
+                targetKeyFrame.handle_right.x = sourceKeyFrame.handle_right.x
+                targetKeyFrame.handle_right.y = sourceKeyFrame.handle_right.y
+
+        targetStrip.action = newAction
+
+
+class M3_ANIMATIONS_OT_duplicate(bpy.types.Operator):
+    bl_idname      = 'm3.animations_duplicate'
+    bl_label       = "Create identical copy of the animation"
+    bl_description = "Create identical copy of the animation"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_animation_index < 0:
+            return{'FINISHED'}
+        oldAnimation = scene.m3_animations[scene.m3_animation_index]
+        
+        uniqueNameFinder = shared.UniqueNameFinder()
+        uniqueNameFinder.markNamesOfCollectionAsUsed(scene.m3_animations)
+        
+        newAnimation = scene.m3_animations.add()
+        newAnimation.name = uniqueNameFinder.findNameAndMarkAsUsedLike(oldAnimation.name)
+        newAnimation.startFrame = oldAnimation.startFrame
+        newAnimation.exlusiveEndFrame = oldAnimation.exlusiveEndFrame
+        newAnimation.frequency = oldAnimation.frequency
+        newAnimation.movementSpeed = oldAnimation.movementSpeed
+        
+                
+        for targetObject in scene.objects:
+            animationData = targetObject.animation_data
+            if animationData != None:
+                copyCurrentActionOfObjectToM3Animation(targetObject, newAnimation)
+        
+        if scene.animation_data != None:
+            copyCurrentActionOfObjectToM3Animation(scene, newAnimation)
+
+        scene.m3_animation_index = len(scene.m3_animations)-1
+   
+        return{'FINISHED'}
+
+
 class M3_ANIMATIONS_OT_deselect(bpy.types.Operator):
     bl_idname      = 'm3.animations_deselect'
     bl_label       = "Edit Default Values"
