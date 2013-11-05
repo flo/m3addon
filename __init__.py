@@ -436,9 +436,11 @@ def handleWarpVisibilityUpdate(self, context):
         boneName = warp.boneName
         shared.setBoneVisibility(scene, boneName, self.showWarps)
 
+def getTrackName(m3Animation):
+    return m3Animation.name + "_full"
 
 def getOrCreateStrip(m3Animation, animationData):
-    trackName = m3Animation.name + "_full"
+    trackName = getTrackName(m3Animation)
     track = shared.getOrCreateTrack(animationData, trackName)
     if len(track.strips) > 0:
         strip = track.strips[0]
@@ -3020,7 +3022,15 @@ class M3_ANIMATIONS_OT_add(bpy.types.Operator):
                 unusedName = suggestedName
             counter += 1
         return unusedName
-        
+
+def removeTrackFor(objectWithAnimationData, animation):
+    animationData = objectWithAnimationData.animation_data
+    if animationData != None:
+        trackName = getTrackName(animation)
+        track = animationData.nla_tracks.get(trackName)
+        if track != None:
+            animationData.nla_tracks.remove(track)
+       
 class M3_ANIMATIONS_OT_remove(bpy.types.Operator):
     bl_idname      = 'm3.animations_remove'
     bl_label       = "Remove Animation Sequence"
@@ -3029,41 +3039,54 @@ class M3_ANIMATIONS_OT_remove(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         if scene.m3_animation_index >= 0:
-                scene.m3_animations.remove(scene.m3_animation_index)
-                scene.m3_animation_old_index = -1
-                scene.m3_animation_index -= 1
+            animation = scene.m3_animations[scene.m3_animation_index]
+
+            for targetObject in scene.objects:
+                removeTrackFor(targetObject, animation)
+            
+            if scene.animation_data != None:
+                removeTrackFor(scene, animation)
+            
+            scene.m3_animations.remove(scene.m3_animation_index)
+            scene.m3_animation_old_index = -1
+            scene.m3_animation_index -= 1
         return{'FINISHED'}
     
 def copyCurrentActionOfObjectToM3Animation(objectWithAnimationData, targetAnimation):
     animationData = objectWithAnimationData.animation_data
+    if animationData == None:
+        return
+    
     sourceAction = animationData.action
-    if sourceAction != None:
-        targetStrip = getOrCreateStrip(targetAnimation, animationData)
-        
-        newAction = bpy.data.actions.new(objectWithAnimationData.name + targetAnimation.name)
-        
-        for sourceCurve in sourceAction.fcurves:
-            path = sourceCurve.data_path
-            arrayIndex = sourceCurve.array_index
-            groupName = sourceCurve.group.name
-            targetCurve = newAction.fcurves.new(path, arrayIndex, groupName)
-            targetCurve.extrapolation = sourceCurve.extrapolation
-            targetCurve.color_mode = sourceCurve.color_mode
-            targetCurve.color = sourceCurve.color
-            for sourceKeyFrame in sourceCurve.keyframe_points:
-                frame = sourceKeyFrame.co.x
-                value = sourceKeyFrame.co.y
-                targetKeyFrame = targetCurve.keyframe_points.insert(frame, value)
-                targetKeyFrame.handle_left_type = sourceKeyFrame.handle_left_type
-                targetKeyFrame.handle_right_type = sourceKeyFrame.handle_right_type
-                targetKeyFrame.interpolation = sourceKeyFrame.interpolation
-                targetKeyFrame.type = sourceKeyFrame.type
-                targetKeyFrame.handle_left.x = sourceKeyFrame.handle_left.x
-                targetKeyFrame.handle_left.y = sourceKeyFrame.handle_left.y
-                targetKeyFrame.handle_right.x = sourceKeyFrame.handle_right.x
-                targetKeyFrame.handle_right.y = sourceKeyFrame.handle_right.y
+    if sourceAction == None:
+        return
+    
+    targetStrip = getOrCreateStrip(targetAnimation, animationData)
+    
+    newAction = bpy.data.actions.new(objectWithAnimationData.name + targetAnimation.name)
+    
+    for sourceCurve in sourceAction.fcurves:
+        path = sourceCurve.data_path
+        arrayIndex = sourceCurve.array_index
+        groupName = sourceCurve.group.name
+        targetCurve = newAction.fcurves.new(path, arrayIndex, groupName)
+        targetCurve.extrapolation = sourceCurve.extrapolation
+        targetCurve.color_mode = sourceCurve.color_mode
+        targetCurve.color = sourceCurve.color
+        for sourceKeyFrame in sourceCurve.keyframe_points:
+            frame = sourceKeyFrame.co.x
+            value = sourceKeyFrame.co.y
+            targetKeyFrame = targetCurve.keyframe_points.insert(frame, value)
+            targetKeyFrame.handle_left_type = sourceKeyFrame.handle_left_type
+            targetKeyFrame.handle_right_type = sourceKeyFrame.handle_right_type
+            targetKeyFrame.interpolation = sourceKeyFrame.interpolation
+            targetKeyFrame.type = sourceKeyFrame.type
+            targetKeyFrame.handle_left.x = sourceKeyFrame.handle_left.x
+            targetKeyFrame.handle_left.y = sourceKeyFrame.handle_left.y
+            targetKeyFrame.handle_right.x = sourceKeyFrame.handle_right.x
+            targetKeyFrame.handle_right.y = sourceKeyFrame.handle_right.y
 
-        targetStrip.action = newAction
+    targetStrip.action = newAction
 
 
 class M3_ANIMATIONS_OT_duplicate(bpy.types.Operator):
@@ -3089,9 +3112,7 @@ class M3_ANIMATIONS_OT_duplicate(bpy.types.Operator):
         
                 
         for targetObject in scene.objects:
-            animationData = targetObject.animation_data
-            if animationData != None:
-                copyCurrentActionOfObjectToM3Animation(targetObject, newAnimation)
+            copyCurrentActionOfObjectToM3Animation(targetObject, newAnimation)
         
         if scene.animation_data != None:
             copyCurrentActionOfObjectToM3Animation(scene, newAnimation)
