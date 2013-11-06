@@ -1204,7 +1204,7 @@
             <version number="18" size="1464" />
             <version number="21" size="1464" />
             <version number="22" size="1484" />
-            <version number="23" size="1504" />
+            <version number="23" size="1492" />
         </versions>
         <versions>
             <version number="0" size="" />
@@ -1429,7 +1429,7 @@
             <field name="unknownfdab7ff3" size="8" expected-value="0xffffffff00000000"/>
             <field name="usedModel" size="12" type="Reference" refTo="SCHR" /> 
             <field name="copyIndices" size="12" type="Reference"  refTo="U32_" />
-            <field name="maybeNewField" size="20" expected-value="0x00000000ffffffffaaaaaaaaaaaaaaaaaaaaaaaa" since-version="23" />
+            <field name="unknown9a7afdf2" size="8" expected-value="0x00000000ffffffff" since-version="23" />
         </fields>
     </structure>
     
