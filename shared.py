@@ -355,7 +355,7 @@ def findMeshObjects(scene):
             
             
 
-def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3Material, layerFieldName , modelDirectory):
+def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3Material, layerFieldName , directoryList):
     blenderM3Layer = blenderM3Material.layers[getLayerNameFromFieldName(layerFieldName)]
 
     if blenderM3Layer == None:
@@ -364,11 +364,16 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
     if (blenderM3Layer.imagePath == "") or (blenderM3Layer.imagePath == None):
         return
     
-    absoluteImagePath = path.join(modelDirectory, blenderM3Layer.imagePath)
-    image = image_utils.load_image(absoluteImagePath)
+    searchedImagePaths = []
+    for directoryPath in directoryList:
+        absoluteImagePath = path.join(directoryPath, blenderM3Layer.imagePath)
+        searchedImagePaths.append(absoluteImagePath)
+        image = image_utils.load_image(absoluteImagePath)
+        if image != None:
+            break
     if not image:
+        print("Failed to load a texture. The following paths have been searched: %s" % searchedImagePaths)
         return
-
 
     textureSlot = classicBlenderMaterial.texture_slots.add()
     texture = bpy.data.textures.new(blenderM3Layer.name, type='IMAGE')
@@ -447,9 +452,16 @@ def createClassicBlenderMaterialForMeshObject(scene, meshObject):
     # unsued so far:
     #realMaterial.alpha = 1 # 0.0 - 1.0
     #realMaterial.ambient = 1
-    rootDirectory = scene.m3_import_options.rootDirectory
+    
+    textureDirectories = []
+    textureDirectories.append(scene.m3_import_options.rootDirectory)
+    
+    if path.isfile(scene.m3_import_options.path):
+        modelDirectory = path.dirname(scene.m3_import_options.path)
+        textureDirectories.append(modelDirectory)
+    
     for layerFieldName in ["diffuseLayer", "decalLayer", "specularLayer", "normalLayer","emissiveLayer", "emissive2Layer"]:
-        addTextureSlotBasedOnM3MaterialLayer(mesh, realMaterial, standardMaterial, layerFieldName, rootDirectory)
+        addTextureSlotBasedOnM3MaterialLayer(mesh, realMaterial, standardMaterial, layerFieldName,  textureDirectories)
 
     
     # Remove old materials:
