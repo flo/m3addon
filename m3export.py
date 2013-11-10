@@ -78,7 +78,7 @@ class Exporter:
             self.structureVersionMap["SEQS"] = 2
             self.structureVersionMap["LAYR"] = 25
             self.structureVersionMap["MAT_"] = 18
-            self.structureVersionMap["PAR_"] = 22
+            self.structureVersionMap["PAR_"] = 23
             self.structureVersionMap["PROJ"] = 5
             self.structureVersionMap["PHSH"] = 3
             self.structureVersionMap["PHRB"] = 4
