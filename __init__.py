@@ -1000,7 +1000,8 @@ uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole imag
 
 particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a configureable direction with a configurable spread"), 
                         ("1", 'Radial', "Particles move into all kinds of directions"), 
-                        ("2", 'Unknown', 'Particles spawn in a sphere')]
+                        ("2", 'Unknown', 'Particles spawn in a sphere'),
+                        ("3", 'Unknown', 'Unknown')]
 
 
 particleAnimationSmoothTypeList = [
