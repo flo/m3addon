@@ -3069,8 +3069,11 @@ def copyCurrentActionOfObjectToM3Animation(objectWithAnimationData, targetAnimat
     for sourceCurve in sourceAction.fcurves:
         path = sourceCurve.data_path
         arrayIndex = sourceCurve.array_index
-        groupName = sourceCurve.group.name
-        targetCurve = newAction.fcurves.new(path, arrayIndex, groupName)
+        if sourceCurve.group != None:
+            groupName = sourceCurve.group.name
+            targetCurve = newAction.fcurves.new(path, arrayIndex, groupName)
+        else:
+            targetCurve = newAction.fcurves.new(path, arrayIndex)
         targetCurve.extrapolation = sourceCurve.extrapolation
         targetCurve.color_mode = sourceCurve.color_mode
         targetCurve.color = sourceCurve.color
