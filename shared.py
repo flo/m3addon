@@ -408,7 +408,7 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
     elif layerFieldName == "normalLayer":
         texture.use_normal_map = True
         textureSlot.use_map_normal = True
-        textureSlot.normal_map_space = 'WORLD'
+        textureSlot.normal_map_space = 'WORLD' # maybe green needs flipped and 'TANGENT' used here?
         textureSlot.use_stencil = True # Not sure why but this option seems necessary
     elif layerFieldName in ["emissiveLayer", "emissive2Layer"]:
         textureSlot.use_map_emit = True
