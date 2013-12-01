@@ -1257,7 +1257,8 @@ def transferLight(transferer):
     transferer.transferAnimatableFloat("falloff")
     transferer.transferInt("unknownAt12")
 
-
+def transferBillboardBehavior(transferer):
+    transferer.transferEnum("billboardType")
 
 blenderMaterialsFieldNames = {
     standardMaterialTypeIndex: "m3_standard_materials", 

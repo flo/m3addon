@@ -1774,13 +1774,21 @@
 
     <structure name="BBSC">
         <description>
-            Unknown
+            Billbord Behavior
         </description>
         <versions>
             <version number="0" size="48" />
         </versions>
         <fields>
-            <field name="unknown" size="48" />
+            <field name="unknownac35793a" size="12" expected-value="0x000000000000000000000000" />
+            <field name="boneIndex" type="uint8" />
+            <field name="unknown8a35689c" type="uint8" default-value= "0"/>
+            <field name="billboardType" type="uint8" default-value="6" />
+            <field name="unknown5cd4cd94" type="uint8" expected-value="1" />
+            <field name="unknown76974b30" size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknown8db56887" type="float" default-value="1.0"/>
+            <field name="unknown8a4fe2ab" size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknown6a9fde72" type="float" default-value="1.0"/>
         </fields>
     </structure>
     
@@ -2077,7 +2085,7 @@
             <field name="attachmentVolumes" type="Reference" refTo="ATVL" />
             <field name="attachmentVolumesAddon0" type="Reference" refTo="U16_"/>
             <field name="attachmentVolumesAddon1" type="Reference" refTo="U16_"/>
-            <field name="bbscData" type="Reference" refTo="BBSC" />
+            <field name="billboardBehaviors" type="Reference" refTo="BBSC" />
             <field name="tmdData" type="Reference" />
             <field name="uniqueUnknownNumber" type="uint32" />
             <field name="unknown45" type="Reference" refTo="U32_" />

@@ -121,6 +121,7 @@ class Exporter:
         self.structureVersionMap["PARC"] = 0
         self.structureVersionMap["FOR_"] = 1
         self.structureVersionMap["LITE"] = 7
+        self.structureVersionMap["BBSC"] = 0
         self.structureVersionMap["ATT_"] = 1
         self.structureVersionMap["ATVL"] = 0
         self.structureVersionMap["COL"] = 0
@@ -195,6 +196,7 @@ class Exporter:
         self.initForces(model)
         self.initRigidBodies(model)
         self.initLights(model)
+        self.initBillboardBehaviors(model)
         # TODO remove call and method:
         #self.initBoundings(model)
         self.initAttachmentPoints(model)
@@ -1592,6 +1594,20 @@ class Exporter:
             shared.transferLight(transferer)
             model.lights.append(m3Light)
 
+
+    def initBillboardBehaviors(self, model):
+        scene = self.scene
+        for billboardBehaviorIndex, billboardBehavior in enumerate(scene.m3_billboard_behaviors):
+            boneName = billboardBehavior.name
+            boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+            #Export only if used:
+            if boneIndex != None:
+                m3BillboardBehavior = self.createInstanceOf("BBSC")
+                m3BillboardBehavior.boneIndex = boneIndex
+                animPathPrefix = "m3_billboard_behaviors[%s]." % billboardBehaviorIndex
+                transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3BillboardBehavior, blenderObject=billboardBehavior, animPathPrefix=animPathPrefix, rootObject=self.scene)
+                shared.transferBillboardBehavior(transferer)
+                model.billboardBehaviors.append(m3BillboardBehavior)
 
     def initAttachmentPoints(self, model):
         scene = self.scene

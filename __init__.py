@@ -642,6 +642,13 @@ def handleLightIndexChanged(self, context):
     light = scene.m3_lights[scene.m3_light_index]
     selectOrCreateBoneForLight(scene, light)
     
+def handleBillboardBehaviorIndexChanged(self, context):
+    scene = context.scene
+    if scene.m3_billboard_behavior_index == -1:
+        return
+    billboardBehavior = scene.m3_billboard_behaviors[scene.m3_billboard_behavior_index]
+    selectBoneIfItExists(scene, billboardBehavior.name)
+    
 def handleProjectionIndexChanged(self, context):
     scene = context.scene
     if scene.m3_projection_index == -1:
@@ -829,8 +836,22 @@ def selectOrCreateBone(scene, boneName):
     bone = armatureObject.data.bones[boneName]
     return (bone, poseBone)
 
-
-
+def selectBoneIfItExists(scene, boneName):
+    if bpy.ops.object.mode_set.poll():
+        bpy.ops.object.mode_set(mode='OBJECT')
+    if bpy.ops.object.select_all.poll():
+        bpy.ops.object.select_all(action='DESELECT')
+    bone, armatureObject = shared.findBoneWithArmatureObject(scene, boneName)
+    armature = armatureObject.data
+    armatureObject.select = True
+    scene.objects.active = armatureObject
+    if bpy.ops.object.mode_set.poll():
+        bpy.ops.object.mode_set(mode='POSE')
+    scene.objects.active = armatureObject
+    armatureObject.select = True
+    for currentBone in armature.bones:
+        currentBone.select = currentBone.name == boneName
+    
 def determineLayerNames(defaultSetting):
     from . import m3
     settingToStructureNameMap = {
@@ -1041,6 +1062,18 @@ matDefaultSettingsList = [(defaultSettingMesh, "Mesh Standard Material", "A mate
                         (defaultSettingVolume, "Volume Material", "A fog like material"),
                         (defaultSettingCreep, "Creep Material", "Looks like creep if there is creep below the model and is invisible otherwise")
                         ]
+
+
+billboardBehaviorTypeList = [("0", "Local X", "Bone gets oriented around X towards camera but rotates then with the model"),
+                             ("1", "Local Z", "Bone gets oriented around Z towards camera but rotates then with the model"),
+                             ("2", "Local Y", "Bone gets oriented around Y towards camera but rotates then with the model"),
+                             ("3", "World X", "Bone gets oriented around X towards camera, independent of model rotation"),
+                             ("4", "World X", "Bone gets oriented around X towards camera, independent of model rotation"),
+                             ("5", "World X", "Bone gets oriented around X towards camera, independent of model rotation"),
+                             ("6", "World All", "Bone orients itself always towards camera and rotates around all axes to do so")
+                            ]
+                             
+                     
 
 matBlendModeList = [("0", "Opaque", "no description yet"), 
                         ("1", 'Alpha Blend', "no description yet"), 
@@ -1502,6 +1535,7 @@ class M3ImportOptions(bpy.types.PropertyGroup):
     generateBlenderMaterials = bpy.props.BoolProperty(default=True, options=set())
     applySmoothShading = bpy.props.BoolProperty(default=True, options=set())
     markSharpEdges = bpy.props.BoolProperty(default=True, options=set())
+    recalculateRestPositionBones = bpy.props.BoolProperty(default=False, options=set())
     teamColor = bpy.props.FloatVectorProperty(default=(1.0, 0.0, 0.0), min = 0.0, max = 1.0, name="team color", size=3, subtype="COLOR", options=set(), description="Team color place holder used for generated blender materials")
 
 class M3Projection(bpy.types.PropertyGroup):
@@ -1568,7 +1602,12 @@ class M3Light(bpy.types.PropertyGroup):
     specular = bpy.props.BoolProperty(options=set())
     unknownFlag0x04 = bpy.props.BoolProperty(options=set())
     turnOn = bpy.props.BoolProperty(default=True,options=set())
-        
+    
+class M3BillboardBehavior(bpy.types.PropertyGroup):
+    # name is also bone name
+    name = bpy.props.StringProperty(name="name", default="", options=set())
+    billboardType = bpy.props.EnumProperty(default="6", items=billboardBehaviorTypeList, options=set())
+                                          
 class ImportPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_quickImport"
     bl_label = "M3 Import"
@@ -2580,6 +2619,30 @@ class LightPanel(bpy.types.Panel):
             layout.prop(light, "turnOn", text="Turn On")
             layout.prop(light, "unknownAt8", text="unknownAt8")
 
+class BillboardBehaviorPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_billboard_behavior"
+    bl_label = "M3 Billboard Behaviors"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        col.template_list("UI_UL_list", "m3_billboard_behaviors", scene, "m3_billboard_behaviors", scene, "m3_billboard_behavior_index", rows=2)
+
+        col = row.column(align=True)
+        col.operator("m3.billboard_behaviors_add", icon='ZOOMIN', text="")
+        col.operator("m3.billboard_behaviors_remove", icon='ZOOMOUT', text="")
+        currentIndex = scene.m3_billboard_behavior_index
+        if currentIndex >= 0 and currentIndex < len(scene.m3_billboard_behaviors):
+            billboardBehavior = scene.m3_billboard_behaviors[currentIndex]
+            layout.separator()
+            layout.prop(billboardBehavior, 'name', text="Bone Name")
+            layout.prop(billboardBehavior, "billboardType", text="Billboard Type")
 
 class ProjectionPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_projections"
@@ -3668,6 +3731,9 @@ class M3_PHYSICS_SHAPES_OT_remove(bpy.types.Operator):
         
         return {'FINISHED'}
 
+
+
+
 class M3_LIGHTS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.lights_add'
     bl_label       = "Add Light"
@@ -3713,7 +3779,58 @@ class M3_LIGHTS_OT_remove(bpy.types.Operator):
             scene.m3_lights.remove(scene.m3_light_index)
             scene.m3_light_index-= 1
         return{'FINISHED'}
+    
+class M3_BILLBOARD_BEHAVIORS_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.billboard_behaviors_add'
+    bl_label       = "Add Billboard Behavior"
+    bl_description = "Adds a billboard behavior"
+
+    def invoke(self, context, event):
+        scene = context.scene
+        print(dir(context))
+        behavior = scene.m3_billboard_behaviors.add()
         
+        selectedBoneName = None
+        if context.active_bone != None:
+            selectedBoneName = context.active_bone.name
+        print("Selected bone %s" % selectedBoneName)
+        if selectedBoneName == None or selectedBoneName in scene.m3_billboard_behaviors:
+            unusedName = self.findUnusedName(scene)
+            behavior.name = unusedName        
+        else:
+            behavior.name = selectedBoneName        
+
+        # The following selection causes a new bone to be created:
+        scene.m3_billboard_behavior_index = len(scene.m3_billboard_behaviors)-1
+        
+        return{'FINISHED'}
+
+    def findUnusedName(self, scene):
+        usedNames = set()
+        for behavior in scene.m3_billboard_behaviors:
+            usedNames.add(behavior.name)
+        unusedName = None
+        counter = 1
+        while unusedName == None:
+            suggestedName = "Billboard Behavior %02d" % counter
+            if not suggestedName in usedNames:
+                unusedName = suggestedName
+            counter += 1
+        return unusedName 
+    
+class M3_BILLBOARD_BEHAVIORS_OT_remove(bpy.types.Operator):
+    bl_idname      = 'm3.billboard_behaviors_remove'
+    bl_label       = "Remove M3 Billboard Behavior"
+    bl_description = "Removes the active M3 billboard behavior"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.m3_billboard_behavior_index >= 0:
+            behavior = scene.m3_billboard_behaviors[scene.m3_billboard_behavior_index]
+            scene.m3_billboard_behaviors.remove(scene.m3_billboard_behavior_index)
+            scene.m3_billboard_behavior_index -= 1
+        return{'FINISHED'}
+
 class M3_PROJECTIONS_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.projections_add'
     bl_label       = "Add Projection"
@@ -4153,6 +4270,8 @@ def register():
     bpy.types.Scene.m3_rigid_body_index = bpy.props.IntProperty(options=set(), update=handleRigidBodyIndexChange)
     bpy.types.Scene.m3_lights = bpy.props.CollectionProperty(type=M3Light)
     bpy.types.Scene.m3_light_index = bpy.props.IntProperty(options=set(), update=handleLightIndexChanged)
+    bpy.types.Scene.m3_billboard_behaviors = bpy.props.CollectionProperty(type=M3BillboardBehavior)
+    bpy.types.Scene.m3_billboard_behavior_index = bpy.props.IntProperty(options=set(), update=handleBillboardBehaviorIndexChanged)
     bpy.types.Scene.m3_projections = bpy.props.CollectionProperty(type=M3Projection)
     bpy.types.Scene.m3_projection_index = bpy.props.IntProperty(options=set(), update=handleProjectionIndexChanged)
     bpy.types.Scene.m3_warps = bpy.props.CollectionProperty(type=M3Warp)

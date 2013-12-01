@@ -179,22 +179,39 @@ def determineTails(m3Bones, heads, boneDirectionVectors):
     tails = []
     for m3Bone, head, childIndices, boneDirectionVector in zip(m3Bones, heads, childBoneIndexLists, boneDirectionVectors):
         skinned = m3Bone.getNamedBit("flags", "skinned")
-        length = 0.1
-        for childIndex in childIndices:
-            headToChildHead = heads[childIndex] - head
-            if headToChildHead.length >= 0.0001:
-                if abs(headToChildHead.angle(boneDirectionVector)) < 0.1:
-                    length = headToChildHead.length 
-        tailOffset = length * boneDirectionVector
-        tail = head + tailOffset
-        # At extreme high tail/head values a higher offset needs to be chosen
-        # since otherwise tail and head is the same due to rouding mistakes
-        # If head and tail are the same then the bone will be removed after leaving edit mode
-        # The length of tailOffset gets doubled each step in order to get in a reasonable amount of steps
-        # to a value that matters
-        while (tail -head).length == 0:
-            tailOffset *= 2 
+        
+        if False:
+            if len(childIndices) == 1:
+                tail = heads[childIndices[0]] 
+            elif len(childIndices) > 1:
+                childDeltaSum = mathutils.Vector((0.0, 0.0, 0.0))
+                for childIndex in childIndices:
+                    headToChildHead = heads[childIndex] - head
+                    childDeltaSum += headToChildHead
+                childDeltaAvg = childDeltaSum / len(childIndices)
+                tail = head + childDeltaAvg
+            elif m3Bone.parent != -1:
+                parentDelta = tails[m3Bone.parent] - heads[m3Bone.parent]
+                tail = head + (parentDelta * 0.5)
+            else:
+                tail = head + mathutils.Vector((0.0, 0.1, 0.0))
+        else:
+            length = 0.1
+            for childIndex in childIndices:
+                headToChildHead = heads[childIndex] - head
+                if headToChildHead.length >= 0.0001:
+                    if abs(headToChildHead.angle(boneDirectionVector)) < 0.1:
+                        length = headToChildHead.length 
+            tailOffset = length * boneDirectionVector
             tail = head + tailOffset
+            # At extreme high tail/head values a higher offset needs to be chosen
+            # since otherwise tail and head is the same due to rouding mistakes
+            # If head and tail are the same then the bone will be removed after leaving edit mode
+            # The length of tailOffset gets doubled each step in order to get in a reasonable amount of steps
+            # to a value that matters
+            while (tail -head).length == 0:
+                tailOffset *= 2 
+                tail = head + tailOffset
 
         tails.append(tail)
     return tails
@@ -397,6 +414,7 @@ class Importer:
         self.createForces()
         self.createRigidBodies()
         self.createLights()
+        self.createBillboardBehaviors()
         self.createAttachmentPoints()
         self.createProjections()
         self.createWarps()
@@ -485,6 +503,10 @@ class Importer:
         checkOrder(model.bones)
         
         heads = list(m.translation for m in absoluteBoneRestPositions)  
+
+        self.scene.m3_import_options.recalculateRestPositionBones = True
+        
+
         # In blender the edit bone with the vector (0,1,0) stands for a idenity matrix
         # So the second column of a edit bone matrix represents the bone vector
         boneDirectionVectors = list(m.col[1].to_3d().normalized() for m in absoluteBoneRestPositions)
@@ -494,6 +516,8 @@ class Importer:
         bindScales = self.determineBindScales()
         bindScaleMatrices = self.scaleVectorsToMatrices(bindScales)
 
+
+            
         editBones = self.createEditBones(model.bones, heads, tails, rolls, bindScales)
         
         relEditBoneMatrices = self.determineRelEditBoneMatrices(model.bones, editBones)
@@ -1095,6 +1119,22 @@ class Importer:
             shared.updateBoneShapeOfLight(light, bone, poseBone)
             bone.hide = not showLights
             light.updateBlenderBone = True
+
+    def createBillboardBehaviors(self):
+        scene = bpy.context.scene
+        print("Loading billboard behaviors")
+        for m3BillboardBehavior in self.model.billboardBehaviors:
+            # The index of the billboardBehavior in model.billboardBehaviors can't be used since some billboardBehaviors may already exist
+            blenderBillboardBehaviorIndex = len(scene.m3_billboard_behaviors)
+            billboardBehavior = scene.m3_billboard_behaviors.add()
+            billboardBehavior.updateBlenderBone = False
+            animPathPrefix = "m3_billboard_behaviors[%s]." % blenderBillboardBehaviorIndex # unused
+            transferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=billboardBehavior, m3Object=m3BillboardBehavior)
+            shared.transferBillboardBehavior(transferer)
+            boneEntry = self.model.bones[m3BillboardBehavior.boneIndex]
+            fullBoneName = boneEntry.name
+            blenderBoneName = self.boneNames[m3BillboardBehavior.boneIndex]
+            billboardBehavior.name = blenderBoneName
 
     def createAttachmentPoints(self):
         print("Loading attachment points and volumes")
