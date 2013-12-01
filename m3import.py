@@ -1361,7 +1361,7 @@ class Importer:
                 
                 vertexGroupLookup = []
                 for boneIndex in boneIndexLookup:
-                    boneName = shared.toValidBoneName(self.boneNames[boneIndex])
+                    boneName = self.boneNames[boneIndex]
                     if boneName in meshObject.vertex_groups:
                         vertexGroup = meshObject.vertex_groups[boneName]
                     else:
