@@ -540,24 +540,37 @@ def prepareDefaultValuesForNewAction(objectWithAnimationData, newAction):
     for removedCurve in removedCurves:
         newAction.fcurves.remove(removedCurve)
     
-    #TODO was checked with if defaultAction != None:
+    
+    defaultsToRemove = set()
+    
     for curve in defaultAction.fcurves:
         prop = (curve.data_path, curve.array_index)
         if prop in propertiesBecomingUnanimated:
             defaultValue = curve.evaluate(0)
-            setAttribute(objectWithAnimationData, curve.data_path, curve.array_index, defaultValue)
-
-
-def setAttribute(obj, curvePath, curveIndex, value):
-    """Gets the value of an attribute via animation path and index"""
-    resolvedObject = obj.path_resolve(curvePath)
-    if type(resolvedObject) in [float, int]:
-        dotIndex = curvePath.rfind(".")
-        attributeName = curvePath[dotIndex+1:]
-        resolvedObject = obj.path_resolve(curvePath[:dotIndex])
-        setattr(resolvedObject, attributeName, value)
-    else:
-        resolvedObject[curveIndex] = value
+            curvePath = curve.data_path
+            curveIndex = curve.array_index
+            
+            try:
+                resolvedObject = objectWithAnimationData.path_resolve(curvePath)
+                propertyExists = True
+            except:
+                propertyExists = False
+            if propertyExists:
+                if type(resolvedObject) in [float, int]:
+                    dotIndex = curvePath.rfind(".")
+                    attributeName = curvePath[dotIndex+1:]
+                    resolvedObject = objectWithAnimationData.path_resolve(curvePath[:dotIndex])
+                    setattr(resolvedObject, attributeName, defaultValue)
+                else:
+                    resolvedObject[curveIndex] = defaultValue
+            else:
+                defaultsToRemove.add(prop)
+    removedDefaultCurves = list()
+    for curve in defaultAction.fcurves:
+        if (curve.data_path, curve.array_index) in removedProperties:
+            removedDefaultCurves.append(curve)
+    for removedDefaultCurve in removedDefaultCurves:
+        defaultAction.fcurves.remove(removedDefaultCurve)   
 
 def getAttribute(obj, curvePath, curveIndex):
     """Gets the value of an attribute via animation path and index"""
