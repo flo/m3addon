@@ -912,7 +912,7 @@ def createMaterial(scene, materialName, defaultSetting):
             layer.name = layerName
             if layerName == "Diffuse":
                 if defaultSetting != defaultSettingParticle:
-                    layer.alphaAsTeamColor = True
+                    layer.colorChannelSetting = "1" # RGB + alpha
         
         if defaultSetting == defaultSettingParticle:
             material.unfogged = True
@@ -1004,6 +1004,7 @@ ribbonTypeList = [("0", "Planar Billboarded", "Planar Billboarded"),
                   ("2", "Cylinder", "Cylinder"),
                   ("3", "Star Shaped", "Star Shaped")
                  ]
+
 
 forceTypeList = [("0", "Directional", "The particles get accelerated into one direction"), 
                     ("1", "Radial", "Particles get accelerated ayway from the force source"),
@@ -1104,6 +1105,16 @@ matLayerAndEmisBlendModeList = [("0", "Mod", "no description yet"),
                         ("5", 'Team Color Diffuse Add', 'no description yet')
                         ]
 
+colorChannelSettingList = [
+    ("0", "RGB", "Use red, green and blue color channel"),
+    ("1", "RGBA", "Use red, green, blue and alpha channel"),
+    ("2", "Alpha Only", "Use alpha channel only"),
+    ("3", "Red Only", "Use red color channel only"),
+    ("4", "Green Only", "Use green color channel only"),
+    ("5", "Blue Only", "Use blue color channel only")
+    ]
+
+
 matSpecularTypeList = [("0", "RGB", "no description yet"), 
                         ("1", 'Alpha Only', "no description yet")
                         ]
@@ -1181,9 +1192,7 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     midtoneOffset = bpy.props.FloatProperty(name="midtone offset", options={"ANIMATABLE"}, description="Can be used to make dark areas even darker so that only the bright regions remain")
     brightness = bpy.props.FloatProperty(name="brightness", options={"ANIMATABLE"}, default=1.0)
     rttChannel = bpy.props.EnumProperty(items=rttChannelList, options=set(), default="-1")
-    alphaAsTeamColor = bpy.props.BoolProperty(options=set())
-    alphaOnly = bpy.props.BoolProperty(options=set())
-    alphaBasedShading = bpy.props.BoolProperty(options=set())
+    colorChannelSetting = bpy.props.EnumProperty(items=colorChannelSettingList, options=set(), default="0")
     useTint = bpy.props.BoolProperty(options=set())
     tintAlpha = bpy.props.BoolProperty(options=set())
     tintStrength = bpy.props.FloatProperty(options=set())
@@ -1928,9 +1937,7 @@ def displayMaterialLayersUI(scene, layout, materialReference):
             layout.prop(layer, 'textureWrapX', text="Tex. Wrap X")
             layout.prop(layer, 'textureWrapY', text="Tex. Wrap Y")
             layout.prop(layer, 'invertColor', text="Invert Color")
-            layout.prop(layer, 'alphaAsTeamColor', text="Alpha As Team Color")
-            layout.prop(layer, 'alphaOnly', text="Alpha Only")
-            layout.prop(layer, 'alphaBasedShading', text="Alpha Based Shading")
+            layout.prop(layer, 'colorChannelSetting', text="Color Channels")
             layout.prop(layer, 'useTint', text="Use Tint")
             layout.prop(layer, 'tintAlpha', text="Tint Alpha")
             layout.prop(layer, 'tintStrength', text="Tint Strength")

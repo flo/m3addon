@@ -986,13 +986,16 @@
                 </bits>
             </field>
             <field name="uvSource" type="uint32" />
-            <field name="alphaFlags" type="uint32" default-value="0" >
-                <bits>
-                    <bit mask="0x1" name="alphaAsTeamColor" />
-                    <bit mask="0x2" name="alphaOnly" />
-                    <bit mask="0x4" name="alphaBasedShading" />
-                </bits>
-            </field>
+            <!--
+                Allowed colorChannelSetting values:
+                0: RGB
+                1: RGBA (used for alpha)
+                2: Alpha Only
+                3: Red Only
+                4: Green Only
+                5: Blue Only
+            -->
+            <field name="colorChannelSetting" type="uint32" default-value="0" />
             <field name="brightMult" type="FloatAnimationReference" />
             <field name="midtoneOffset" type="FloatAnimationReference" />
             <field name="unknown3b61017a" type="uint32" expected-value="0" />
