@@ -13,6 +13,7 @@ Currently the following content can be exported and imported:
       * composite materials
       * terrain materials
       * volume materials
+      * creep materials
   * M3 particle systems
   * M3 forces
   * M3 attachment points and volumes
@@ -20,6 +21,8 @@ Currently the following content can be exported and imported:
   * M3 lights
   * M3 rigid bodies
   * M3 projections
+  * M3 ribbons
+  * M3 billbord behaviors
 
 The script m3ToXml.py can also be used to convert a m3 file into a XML file. It
 takes a m3 file as argument and prints the XML on the command line.
