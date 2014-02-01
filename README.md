@@ -30,8 +30,7 @@ takes a m3 file as argument and prints the XML on the command line.
 The script xmlToM3.py can convert the XML files exported by m3ToXml.py
 back into a m3 file.
 
-The file structures.xml gets used by the script generateM3Library.py to create
-a blender independent python library for loading and saving m3 files.
+The file structures.xml gets used by the m3.py library to parse the m3 files.
 Modifying this XML file will have impact of the above scripts and the blender addon.
 
 Installation
@@ -77,8 +76,8 @@ Some Blender Tipps:
 About the Implementation
 ------------------------
 
+* The m3.py file is a python library for reading and writing m3 files. It uses the structures.xml file to do so.
 * The file structures.xml specifies how the script should parse and export a M3 file
-* The script generateM3Library.py generates the file m3.py which is a python library for loading and saving m3 files.
 * The importing of m3 files works like this:
   1. The method loadModel of the m3.py file gets called to create a python data structure of the m3 file content.
   2. This data structure gets then used to create corresponding blender data structures
