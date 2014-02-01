@@ -590,11 +590,16 @@ def updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone):
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
 
-def updateBoneShapeOfRibbon(particleSystem, bone, poseBone):
-    untransformedPositions, faces = createMeshDataForSphere(0.02)
+def updateBoneShapeOfRibbon(ribbon, bone, poseBone):
+    # radius scale seem to be the diameter
+    startRadius = ribbon.radiusScale[0] / 2
+    untransformedPositions, faces = createMeshDataForCuboid(startRadius, 0.0, 0.0)
+
+    #untransformedPositions, faces = createMeshDataForSphere(0.02)
     #TODO create the correct ribbon meshes
     
-    boneName = particleSystem.boneName
+    
+    boneName = ribbon.boneName
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
