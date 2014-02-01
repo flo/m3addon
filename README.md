@@ -35,12 +35,12 @@ Installation
 ------------
 1. Clone the git repository of this addon
 2. Move the created directory into addons folder of your blender settings:
-   * Example for Linux and Blender 2.63: 
-      * /home/$user/.blender/2.63/scripts/addons/m3addon
-   * Example for Windows XP and Blender 2.63:
-      * C:\Documents and Settings\%username%\Application Data\Blender Foundation\Blender\2.63\scripts\addons
-   * Example for Windows 7 and Blender 2.63:
-      * C:\Users\%username%\AppData\Roaming\Blender Foundation\Blender\2.63\scripts\addons
+   * Example for Linux and Blender 2.69: 
+      * /home/$user/.blender/2.69/scripts/addons/m3addon
+   * Example for Windows XP and Blender 2.69:
+      * C:\Documents and Settings\%username%\Application Data\Blender Foundation\Blender\2.69\scripts\addons
+   * Example for Windows 7 and Blender 2.69:
+      * C:\Users\%username%\AppData\Roaming\Blender Foundation\Blender\2.69\scripts\addons
 3. Activate the addon in blender (There is another M3 addon, so watch out!)
 
 See also: http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Add-Ons
