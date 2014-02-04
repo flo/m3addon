@@ -596,7 +596,8 @@ class Exporter:
         for meshIndex, meshObject in enumerate(nonEmptyMeshObjects):   
             mesh = meshObject.data
             print("Exporting mesh object %s" % meshObject.name)
-
+            if bpy.ops.object.mode_set.poll():
+                bpy.ops.object.mode_set(mode='OBJECT')
             bpy.ops.object.select_all(action = 'DESELECT')
             self.scene.objects.active = meshObject
             meshObject.select = True
