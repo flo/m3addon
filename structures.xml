@@ -1828,13 +1828,42 @@
     
     <structure name="SRIB">
         <description>
-            Unknown
+            Sub Ribbon: An additional end point of this ribbon.
         </description>
         <versions>
             <version number="0" size="272" />
         </versions>
         <fields>
-            <field name="unknown" size="272" />
+            <field name="unknown4beb52da" size="4" default-value="0x00000000"/>
+            <field name="unknowndeb04938" size="16" expected-value="0x00000000000000000000000000000000" />
+            <field name="unknownc402cde2" type="float" default-value="0.01"/>
+            <field name="unknown3c0958eb" size="4" default-value="0x00000000" /> <!-- not always set properly? -->
+            <field name="unknowna86fe3bf" size="4" default-value="0x00000000" /> <!-- not always set properly? -->
+            <field name="unknown7400916d" type="float" default-value="0.01"/>
+            <field name="unknown8f9b35de" size="4" default-value="0x00000000" /> <!-- not always set properly? -->
+            <field name="unknowneee1a711" size="8" expected-value="0x0000000000000000" />
+            <field name="boneIndex" size="4" />
+            <field name="unknownffde53e1" type="FloatAnimationReference" /> <!-- init default is 1.0 -->
+            <field name="unknowneae076ef" type="FloatAnimationReference" /> <!-- init default is 1.0 -->
+            <field name="unknown474f732c" size="4" expected-value="0x00000000"/>
+            <field name="unknownb40b972e" type="AnimationReferenceHeader"  />
+            <field name="unknown5f2925cd" size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknown3af8b42c" type="AnimationReferenceHeader" />
+            <field name="unknownc63b4bf5" size="16" expected-value="0x00000000000000000000000000000000"  />
+            <field name="unknownceca9ac0" type="AnimationReferenceHeader" />
+            <field name="unknownb8e15362" size="12" expected-value="0x000000000000000000000000"  />
+            <field name="unknownf155acc8" type="AnimationReferenceHeader" />
+            <field name="unknowndba80740" size="16" expected-value="0x00000000000000000000000000000000" />
+            <field name="unknown211e7ec5" type="AnimationReferenceHeader" />
+            <field name="unknown19236b0d" size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknownf2bce2c7" type="AnimationReferenceHeader" />
+            <field name="unknown1b7e056c" size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknown534e55c8" type="AnimationReferenceHeader" />
+            <field name="unknown7cfaeed1" size="12" expected-value="0x000000000000000000000000"  />
+            <field name="unknown974d3fd5" type="AnimationReferenceHeader"/>
+            <field name="unknowne8384fb5"  size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknownf2d03be2" type="float" default-value="1.0" />
+            <field name="unknown51a10d01" type="float" default-value="1.0" />
         </fields>
     </structure>
     
