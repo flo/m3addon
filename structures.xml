@@ -981,7 +981,9 @@
             <field name="unknowna9a5325e" type="float" default-value="0.0" />
             <field name="unknown19c50495" type="float" default-value="0.0" />
             <field name="unknownaaefeecf" type="float" default-value="0.0" />
-            <field name="unknown63b2ca3b" size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknown63b2ca3b" type="float" default-value="0.0" />
+            <field name="unknown19193ff0" type="float" default-value="0.0"  />
+            <field name="unknownd32f6ee7" type="float" default-value="0.0"  />
         </fields>
     </structure>
     
