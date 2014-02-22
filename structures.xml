@@ -1850,15 +1850,15 @@
             <field name="boneIndex" size="4" />
             <field name="unknownffde53e1" type="FloatAnimationReference" /> <!-- init default is 1.0 -->
             <field name="unknowneae076ef" type="FloatAnimationReference" /> <!-- init default is 1.0 -->
-            <field name="unknown474f732c" size="4" expected-value="0x00000000"/>
-            <field name="unknownb40b972e" type="AnimationReferenceHeader"  />
-            <field name="unknown5f2925cd" size="12" expected-value="0x000000000000000000000000" />
-            <field name="unknown3af8b42c" type="AnimationReferenceHeader" />
-            <field name="unknownc63b4bf5" size="16" expected-value="0x00000000000000000000000000000000"  />
-            <field name="unknownceca9ac0" type="AnimationReferenceHeader" />
-            <field name="unknownb8e15362" size="12" expected-value="0x000000000000000000000000"  />
-            <field name="unknownf155acc8" type="AnimationReferenceHeader" />
-            <field name="unknowndba80740" size="16" expected-value="0x00000000000000000000000000000000" />
+            <!-- The field unknown474f732c was 5 when unknown3af8b42c  and unknown3af8b42c was used -->
+            <field name="unknown474f732c" type="uint32" default-value="0" />
+            <field name="unknownb40b972e" type="FloatAnimationReference"  />
+            <field name="unknown3af8b42c" type="FloatAnimationReference" />
+            <!-- The field unknownc63b4bf5 was 5 when unknownceca9ac0  (and unknownf155acc8?) was used -->
+            <field name="unknownc63b4bf5" type="uint32" default-value="0"  />
+            <field name="unknownceca9ac0" type="FloatAnimationReference" />
+            <field name="unknownf155acc8" type="FloatAnimationReference" />
+            <field name="unknowndba80740" size="4" expected-value="0x00000000" />
             <field name="unknown211e7ec5" type="AnimationReferenceHeader" />
             <field name="unknown19236b0d" size="12" expected-value="0x000000000000000000000000" />
             <field name="unknownf2bce2c7" type="AnimationReferenceHeader" />
