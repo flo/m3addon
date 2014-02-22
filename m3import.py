@@ -940,6 +940,11 @@ class Importer:
                 if blenderBoneName.startswith(ribbonPrefix):
                     ribbon.boneSuffix = blenderBoneName[len(ribbonPrefix):]  
             ribbon.boneName = blenderBoneName
+
+            for m3EndPoint in m3Ribbon.endPoints:
+                endPoint = ribbon.endPoints.add()
+                endPoint.name = self.boneNames[m3EndPoint.boneIndex]
+                # tODO import properties
             
             bone = self.armature.bones[blenderBoneName]
             poseBone = self.armatureObject.pose.bones[blenderBoneName]
@@ -948,7 +953,6 @@ class Importer:
 
             ribbon.materialName = self.getNameOfMaterialWithReferenceIndex(m3Ribbon.materialReferenceIndex)
 
-            #TODO create sub ribbons
             ribbon.updateBlenderBoneShapes = True
 
 

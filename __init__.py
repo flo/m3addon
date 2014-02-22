@@ -608,11 +608,15 @@ def handleRibbonIndexChanged(self, context):
     if scene.m3_ribbon_index == -1:
         return
     ribbon = scene.m3_ribbons[scene.m3_ribbon_index]
-    #TODO sub ribbons:
-    # ribbon.subIndex = -1
+    ribbon.endPointIndex = -1
     selectOrCreateBoneForRibbon(scene, ribbon)
 
-
+def handleRibbonEndPointIndexChanged(self, context):
+    scene = context.scene
+    ribbon = self
+    if ribbon.endPointIndex >= 0 and ribbon.endPointIndex < len(ribbon.endPoints):
+        endPoint = ribbon.endPoints[ribbon.endPointIndex]
+        selectBoneIfItExists(scene,endPoint.name)
 
 def handleForceIndexChanged(self, context):
     scene = context.scene
@@ -1406,6 +1410,11 @@ class M3ParticleSystem(bpy.types.PropertyGroup):
     simulateOnInit = bpy.props.BoolProperty(options=set())
     copy = bpy.props.BoolProperty(options=set())
 
+class M3RibbonEndPoint(bpy.types.PropertyGroup):
+    # nane is also bone name
+    name = bpy.props.StringProperty(options=set())
+    
+
 class M3Ribbon(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
     # The name gets calculated like this: name = boneSuffix (type)
@@ -1456,6 +1465,9 @@ class M3Ribbon(bpy.types.PropertyGroup):
     useLocaleTime = bpy.props.BoolProperty(default=False, options=set())
     simulateOnInitialization = bpy.props.BoolProperty(default=False, options=set())
     useLengthAndTime = bpy.props.BoolProperty(default=False, options=set())
+    endPoints = bpy.props.CollectionProperty(type=M3RibbonEndPoint)
+    endPointIndex = bpy.props.IntProperty(default=-1, options=set(), update=handleRibbonEndPointIndexChanged)
+
 
 class M3Force(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
@@ -2337,6 +2349,11 @@ class ParticleSystemsPanel(bpy.types.Panel):
             layout.prop(particle_system, 'simulateOnInit', text="Simulate On Init")
             layout.prop(particle_system, 'copy', text="Copy")
 
+
+
+
+
+
 class RibbonsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_ribbons"
     bl_label = "M3 Ribbons"
@@ -2437,6 +2454,43 @@ class RibbonsPanel(bpy.types.Panel):
             layout.prop(ribbon, 'useLocaleTime', text="Use Locale Time")
             layout.prop(ribbon, 'simulateOnInitialization', text="Simulate On Initialization")
             layout.prop(ribbon, 'useLengthAndTime' ,text="Use Length And Time")
+
+
+
+
+class RibbonEndPointsPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_ribbon_end_points"
+    bl_label = "M3 Ribbon End Point"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        
+        ribbonIndex = scene.m3_ribbon_index
+        if ribbonIndex < 0 or ribbonIndex >= len(scene.m3_ribbons):
+            return
+        
+        ribbon = scene.m3_ribbons[ribbonIndex]
+        
+        row = layout.row()
+        col = row.column()
+        col.template_list("UI_UL_list", "m3_ribbon_end_points", ribbon, "endPoints", ribbon, "endPointIndex", rows=2)
+
+        col = row.column(align=True)
+        col.operator("m3.ribbon_end_points_add", icon='ZOOMIN', text="")
+        col.operator("m3.ribbon_end_points_remove", icon='ZOOMOUT', text="")
+        
+        endPointIndex = ribbon.endPointIndex
+        if endPointIndex < 0 or endPointIndex >= len(ribbon.endPoints):
+            return
+        endPoint = ribbon.endPoints[endPointIndex]
+        layout.prop(endPoint, 'name', text="Bone Name")
+
+        
 
 class ForcePanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_forces"
@@ -3594,13 +3648,89 @@ class M3_RIBBONS_OT_remove(bpy.types.Operator):
         if scene.m3_ribbon_index >= 0:
             ribbon = scene.m3_ribbons[scene.m3_particle_system_index]
             removeBone(scene, ribbon.boneName)
-            # TODO for sub ribbons
-            #for subRibbon in ribbon.subRibbons:
-            #    removeBone(scene, subRibbon.boneName)
+            # endPoint do now own the bone, thus we must not delete it:
+            #for endPoint in ribbon.endPoints:
+            #    removeBone(scene, endPoint.name)
             scene.m3_ribbons.remove(scene.m3_ribbon_index)
             scene.m3_ribbon_index-= 1
             
         return{'FINISHED'}
+
+
+class M3_RIBBON_END_POINTS_OT_add(bpy.types.Operator):
+    bl_idname      = 'm3.ribbon_end_points_add'
+    bl_label       = "Add Ribbon End Point"
+    bl_description = "Adds an end point to the current ribbon"
+
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        ribbonIndex = scene.m3_ribbon_index
+        if ribbonIndex < 0 or ribbonIndex > len(scene.m3_ribbons):
+            return False
+        ribbon = scene.m3_ribbons[ribbonIndex]
+        if len(ribbon.endPoints) >= 1:
+            return False # No known model has more then 1 end point
+        
+        return True
+
+    def invoke(self, context, event):
+        scene = context.scene
+        ribbonIndex = scene.m3_ribbon_index
+        if ribbonIndex < 0 or ribbonIndex > len(scene.m3_ribbons):
+            return
+        
+        ribbon = scene.m3_ribbons[ribbonIndex]
+        
+        endPoint = ribbon.endPoints.add()
+        
+        # The following selection causes a new bone to be created:
+        ribbon.endPointIndex = len(ribbon.endPoints)-1
+        return{'FINISHED'}
+    
+
+
+class M3_RIBBON_END_POINTS_OT_remove(bpy.types.Operator):
+    bl_idname      = 'm3.ribbon_end_points_remove'
+    bl_label       = "Remove RibbonEnd Point"
+    bl_description = "Removes the active ribbon end point"
+    
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        ribbonIndex = scene.m3_ribbon_index
+        if ribbonIndex < 0 or ribbonIndex > len(scene.m3_ribbons):
+            return False
+        
+        ribbon = scene.m3_ribbons[ribbonIndex]
+
+        endPointIndex = ribbon.endPointIndex
+        
+        if endPointIndex < 0 or endPointIndex > len(ribbon.endPoints):
+            return False
+        
+        return True
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        ribbonIndex = scene.m3_ribbon_index
+        if ribbonIndex < 0 or ribbonIndex > len(scene.m3_ribbons):
+            return {'FINISHED'} # nothing to remove
+        
+        ribbon = scene.m3_ribbons[ribbonIndex]
+        
+        endPointIndex = ribbon.endPointIndex
+       
+        if endPointIndex < 0 or endPointIndex > len(ribbon.endPoints):
+            return {'FINISHED'} # nothing to remove
+
+        endPoint = ribbon.endPoints[endPointIndex]
+        # end points don't own bones yet:
+        # removeBone(scene, endPoint.name)
+        ribbon.endPoints.remove(endPointIndex)
+        ribbon.endPointIndex -= 1
+        return{'FINISHED'}
+
 
 class M3_FORCES_OT_add(bpy.types.Operator):
     bl_idname      = 'm3.forces_add'

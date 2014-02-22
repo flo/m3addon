@@ -157,7 +157,8 @@ class Exporter:
         self.structureVersionMap["FlagAnimationReference"] = 0
         self.structureVersionMap["SVC3"] = 0
         self.structureVersionMap["WRP_"] = 1
-        
+        self.structureVersionMap["SRIB"] = 0
+
 
     def getVersionOf(self, structureName):
         return self.structureVersionMap[structureName] 
@@ -1456,7 +1457,33 @@ class Exporter:
                 raise Exception("The ribbon %s uses '%s' as material, but no m3 material with that name exist!" % (ribbon.name, ribbon.materialName))
             m3Ribbon.materialReferenceIndex = materialReferenceIndex
 
-            #TODO export sub ribbons
+            if len(ribbon.endPoints) > 0:
+                m3Ribbon.noEndPoints = 0
+            else:
+                m3Ribbon.noEndPoints = 1
+
+            for endPoint in ribbon.endPoints:
+                m3EndPoint = self.createInstanceOf("SRIB")
+                boneName = endPoint.name
+                boneIndex = self.boneNameToBoneIndexMap.get(boneName)
+                if boneIndex == None:
+                    raise Exception("The bone %s of an end point from ribbon %s does not exist" % (boneName, ribbon.name))
+                m3EndPoint.boneIndex = boneIndex
+                
+                
+                # TODO export properties
+                # below are necessary animation property placeholder:
+                m3EndPoint.unknownffde53e1 = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
+                m3EndPoint.unknowneae076ef = self.createNullFloatAnimationReference(initValue=1.0, nullValue=0.0)
+                m3EndPoint.unknownb40b972e = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+                m3EndPoint.unknown3af8b42c = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+                m3EndPoint.unknownceca9ac0 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+                m3EndPoint.unknownf155acc8 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+                m3EndPoint.unknown211e7ec5 = self.createNullAnimHeader(interpolationType=1)
+                m3EndPoint.unknownf2bce2c7 = self.createNullAnimHeader(interpolationType=1)
+                m3EndPoint.unknown534e55c8 = self.createNullAnimHeader(interpolationType=1)
+                m3EndPoint.unknown974d3fd5 = self.createNullAnimHeader(interpolationType=1)
+                m3Ribbon.endPoints.append(m3EndPoint)
     
     def initProjections(self, model):
         scene = self.scene

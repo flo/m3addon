@@ -1847,7 +1847,7 @@
             <field name="unknown7400916d" type="float" default-value="0.01"/>
             <field name="unknown8f9b35de" size="4" default-value="0x00000000" /> <!-- not always set properly? -->
             <field name="unknowneee1a711" size="8" expected-value="0x0000000000000000" />
-            <field name="boneIndex" size="4" />
+            <field name="boneIndex" type="uint32" />
             <field name="unknownffde53e1" type="FloatAnimationReference" /> <!-- init default is 1.0 -->
             <field name="unknowneae076ef" type="FloatAnimationReference" /> <!-- init default is 1.0 -->
             <!-- The field unknown474f732c was 5 when unknown3af8b42c  and unknown3af8b42c was used -->
@@ -1860,13 +1860,17 @@
             <field name="unknownf155acc8" type="FloatAnimationReference" />
             <field name="unknowndba80740" size="4" expected-value="0x00000000" />
             <field name="unknown211e7ec5" type="AnimationReferenceHeader" />
-            <field name="unknown19236b0d" size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknown19236b0d" size="8" expected-value="0x0000000000000000" />
+            <field name="unknowne6b58d2" type="int32" default-value="-1" />
             <field name="unknownf2bce2c7" type="AnimationReferenceHeader" />
-            <field name="unknown1b7e056c" size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknown1b7e056c" size="8" expected-value="0x0000000000000000" />
+            <field name="unknown9c189df7" type="int32" default-value="-1" />
             <field name="unknown534e55c8" type="AnimationReferenceHeader" />
-            <field name="unknown7cfaeed1" size="12" expected-value="0x000000000000000000000000"  />
+            <field name="unknown7cfaeed1" size="8" expected-value="0x0000000000000000" />
+            <field name="unknown9b3d9517" type="int32" default-value="-1" />
             <field name="unknown974d3fd5" type="AnimationReferenceHeader"/>
-            <field name="unknowne8384fb5"  size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknowne8384fb5" size="8" expected-value="0x0000000000000000" />
+            <field name="unknownc0adf8c9" type="int32" default-value="-1" />
             <field name="unknownf2d03be2" type="float" default-value="1.0" />
             <field name="unknown51a10d01" type="float" default-value="1.0" />
         </fields>
@@ -1929,7 +1933,8 @@
             <field name="stretchLimit" type="float" />
             <field name="unknownc7004d01" type="float" default-value="0.0"/>
             <field name="unknown44a749fe" type="float" default-value="0.0"/>
-            <field name="unknown64a0477a" type="uint32" default-value="1"/> <!-- gateway0-->
+            <!-- noEndPoints must be 0 if there are endPoints (SRIB)-->
+            <field name="noEndPoints" type="uint32" default-value="1"/>
             <field till-version="6" name="unknown20683e1b" type="uint32" default-value="0"/> <!--overseer2-->
             <field till-version="6" name="unknowndf1a587b" type="uint32" default-value="0"/> <!--overseer2-->
             <field name="surfaceNoiseAmplitude" type="float" />
@@ -1944,7 +1949,7 @@
             <field name="unknowna5803a0e" type="float" default-value="0.5"/>
             <field name="ribbonLength" type="FloatAnimationReference" />
             <field till-version="6"  name="filler1" type="int32" default-value="0"/>
-            <field name="sribData" type="Reference" refTo="SRIB" />
+            <field name="endPoints" type="Reference" refTo="SRIB" />
             <field name="unknown7e341928" type="AnimationReferenceHeader" />
             <field name="unknown34b7bf34" type="uint32" default-value="1"/>
             <field name="unknownf2b8c436" type="int32" default-value="0"/>
