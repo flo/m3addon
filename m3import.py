@@ -801,10 +801,19 @@ class Importer:
         blenderShapeObject.updateBlenderBone = True
 
 
+    def m3Vector4IsZero(self, v):
+        return v.x == 0.0 and v.y == 0.0 and v.z == 0.0 and v.w == 0.0 
+        
+
     def initTightHitTest(self):
         print("Loading tight hit test shape")
         scene = bpy.context.scene
-        self.intShapeObject(scene.m3_tight_hit_test, self.model.tightHitTest)
+        m = self.model.tightHitTest.matrix
+        matrixIsZero = self.m3Vector4IsZero(m.x) and self.m3Vector4IsZero(m.y) and self.m3Vector4IsZero(m.z) and self.m3Vector4IsZero(m.w)
+        if matrixIsZero:
+            pass # known bug of some inoffical exporters
+        else:
+            self.intShapeObject(scene.m3_tight_hit_test, self.model.tightHitTest)
 
     def createFuzzyHitTests(self):
         scene = bpy.context.scene
