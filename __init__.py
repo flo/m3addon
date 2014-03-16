@@ -845,6 +845,14 @@ def selectOrCreateBone(scene, boneName):
 
     if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode='POSE')
+        
+    for boneOfArmature in armature.bones:
+        isBoneToSelect = boneOfArmature.name == boneName
+        boneOfArmature.select_head = isBoneToSelect
+        boneOfArmature.select_tail = isBoneToSelect
+        boneOfArmature.select = isBoneToSelect
+    armature.bones.active = bone
+        
     scene.objects.active = armatureObject
     armatureObject.select = True
     for currentBone in armature.bones:
