@@ -1231,6 +1231,19 @@
             <field name="path" type="Reference" refTo="CHAR" />
         </fields>
     </structure>
+    
+    <structure name="STBM">
+    <description>Unknown material</description>
+        <versions>
+            <version number="0" size="48" />
+        </versions>
+        <fields>
+            <field name="name" type="Reference" refTo="CHAR" />
+            <field name="unknownLayer1" type="Reference" refTo="LAYR" />
+            <field name="unknownLayer2" type="Reference" refTo="LAYR" />
+            <field name="unknownLayer3" type="Reference" refTo="LAYR" />
+        </fields>
+    </structure>
 
     <structure name="PAR_">
         <description>Particle System</description>
@@ -2132,7 +2145,7 @@
             <field name="unknownMaybeRef0" type="Reference" />
             <field name="creepMaterials" type="Reference" refTo="CREP" />
             <field name="unknown82f8f7b2" size="12" since-version="25" />
-            <field name="unknownfd74ca5e" size="12" since-version="26" expected-value="0x000000000000000000000000"/>
+            <field name="stbmMaterial" type="Reference" refTo="STBM" since-version="26" />
             <field name="particles" type="Reference" refTo="PAR_" />
             <field name="particleCopies" type="Reference" refTo="PARC" />
             <field name="ribbons" type="Reference" refTo="RIB_" />
