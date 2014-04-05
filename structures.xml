@@ -1221,18 +1221,24 @@
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR" />
-            <field name="unknown0" type="uint32" default-value="0" />
-            <field name="unknown1" type="uint32" default-value="0" /> 
+            <field name="unknown50762f82" type="uint32" default-value="0" />
+            <field name="flags" type="uint32" default-value="0">
+                <bits>
+                    <bit mask="0x1" name="drawAfterTransparency" />
+                </bits>
+            </field>
             <field name="volumeDensity" type="FloatAnimationReference" /> <!-- maybe -->
-            <field name="unknownc9992b55" type="AnimationReferenceHeader" />
-            <field name="initOfUnknownc9992b55" size="4" default-value="0x00000000" />
-            <field name="nullOfUnknownc9992b55" size="4" default-value="0x00000000" />
-            <field name="endOfUnknownc9992b55" size="4" default-value="0xffffffff" />  
-            <field name="unknown510952ee" type="FloatAnimationReference" />
+            <field name="nearPlane" type="FloatAnimationReference" />
+            <field name="falloff" type="FloatAnimationReference" />
             <field name="layer1" type="Reference" refTo="LAYR" />
             <field name="layer2" type="Reference" refTo="LAYR" />
             <field name="layer3" type="Reference" refTo="LAYR" />
-            <field name="unknown" size="152" />
+            <field name="scrollRate" type="Vector3AnimationReferenceV0" />
+            <field name="translation" type="Vector3AnimationReferenceV0" />
+            <field name="scale" type="Vector3AnimationReferenceV0" />
+            <field name="rotation" type="Vector3AnimationReferenceV0" />
+            <field name="alphaTreshhold" type="uint32" />
+            <field name="unknown1d13acfe" type="uint32" default-value="32" />
         </fields>
     </structure>
     
