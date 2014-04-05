@@ -1032,8 +1032,8 @@
             <field name="brightMult" type="FloatAnimationReference" />
             <field name="midtoneOffset" type="FloatAnimationReference" />
             <field name="unknown3b61017a" type="uint32" default-value="0" />
-            <field name="unknownba9fac78" type="float" default-value="0.8" since-version="24" />
-            <field name="unknownc77129b6" type="float" default-value="0.5" since-version="24" />
+            <field name="noiseAmp" type="float" default-value="0.8" since-version="24" />
+            <field name="noiseFreq" type="float" default-value="0.5" since-version="24" />
             <field name="rttChannel" type="int32" default-value="-1" />
             <field name="unknownfd48875c" size="8" expected-value="0x0000000000000000" />
             <field name="unknown63b7f7f2" type="int32" expected-value="0" />
