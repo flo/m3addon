@@ -1213,6 +1213,29 @@
         </fields>
     </structure>
     
+        
+    <structure name="VON_">
+        <description>Volume Noise Material</description>
+        <versions>
+            <version number="0" size="268" />
+        </versions>
+        <fields>
+            <field name="name" type="Reference" refTo="CHAR" />
+            <field name="unknown0" type="uint32" default-value="0" />
+            <field name="unknown1" type="uint32" default-value="0" /> 
+            <field name="volumeDensity" type="FloatAnimationReference" /> <!-- maybe -->
+            <field name="unknownc9992b55" type="AnimationReferenceHeader" />
+            <field name="initOfUnknownc9992b55" size="4" default-value="0x00000000" />
+            <field name="nullOfUnknownc9992b55" size="4" default-value="0x00000000" />
+            <field name="endOfUnknownc9992b55" size="4" default-value="0xffffffff" />  
+            <field name="unknown510952ee" type="FloatAnimationReference" />
+            <field name="layer1" type="Reference" refTo="LAYR" />
+            <field name="layer2" type="Reference" refTo="LAYR" />
+            <field name="layer3" type="Reference" refTo="LAYR" />
+            <field name="unknown" size="152" />
+        </fields>
+    </structure>
+    
     <structure name="CREP">
         <description>Creep Material</description>
         <versions>
@@ -2148,8 +2171,8 @@
             <!-- it grew in size between version from 2 to 3 which indicates a reference-->
             <field name="unknownMaybeRef0" type="Reference" />
             <field name="creepMaterials" type="Reference" refTo="CREP" />
-            <field name="unknown82f8f7b2" size="12" since-version="25" />
-            <field name="stbmMaterial" type="Reference" refTo="STBM" since-version="26" />
+            <field name="volumeNoiseMaterials" type="Reference" refTo="VON_" since-version="25" />
+            <field name="splatTerrainBakeMaterial" type="Reference" refTo="STBM" since-version="26" />
             <field name="particles" type="Reference" refTo="PAR_" />
             <field name="particleCopies" type="Reference" refTo="PARC" />
             <field name="ribbons" type="Reference" refTo="RIB_" />
