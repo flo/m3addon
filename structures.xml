@@ -1260,7 +1260,7 @@
     </structure>
     
     <structure name="STBM">
-    <description>Unknown material</description>
+    <description>Splat Terrain Bake Material</description>
         <versions>
             <version number="0" size="48" />
         </versions>
