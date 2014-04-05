@@ -1217,10 +1217,12 @@
         <description>Creep Material</description>
         <versions>
             <version number="0" size="24" />
+            <version number="1" size="28" />
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR" />
             <field name="creepLayer" type="Reference" refTo="LAYR" />
+            <field name="unknownda1b4eb3" size="4" expected-value="0x00000000" since-version="1" />
         </fields>
     </structure>
 
