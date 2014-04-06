@@ -3123,9 +3123,11 @@ class M3_MATERIALS_OT_remove(bpy.types.Operator):
             for otherReference in scene.m3_material_references:
                 if otherReference.materialType == materialType and otherReference.materialIndex > materialIndex:
                     otherReference.materialIndex -= 1
-
-            if materialType == shared.standardMaterialTypeIndex:
-                scene.m3_standard_materials.remove(materialIndex)
+                
+            blenderMaterialsFieldName = shared.blenderMaterialsFieldNames[materialType]
+            blenderMaterialsField = getattr(scene, blenderMaterialsFieldName)
+            blenderMaterialsField.remove(materialIndex)
+           
             
             scene.m3_material_references.remove(scene.m3_material_reference_index)
             scene.m3_material_reference_index -= 1
