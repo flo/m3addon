@@ -133,6 +133,7 @@ class Exporter:
         self.structureVersionMap["TER_"] = 0
         self.structureVersionMap["VOL_"] = 0
         self.structureVersionMap["CREP"] = 0
+        self.structureVersionMap["VON_"] = 0
         self.structureVersionMap["Vector2AnimationReference"] = 0
         self.structureVersionMap["Int16AnimationReference"] = 0
         self.structureVersionMap["UInt16AnimationReference"] = 0
@@ -1752,6 +1753,14 @@ class Exporter:
         for materialIndex, material in enumerate(scene.m3_creep_materials):
             model.creepMaterials.append(self.createCreepMaterial(materialIndex, material))
     
+        if (len(scene.m3_volume_noise_materials) > 0) and self.structureVersionMap["MODL"] < 25:
+            raise Exception("The chosen export format (version) does not support the export of volume materials")
+        
+        for materialIndex, material in enumerate(scene.m3_volume_noise_materials):
+            model.volumeNoiseMaterials.append(self.createVolumeNoiseMaterial(materialIndex, material))
+    
+    
+    
     def createMaterialLayer(self, layer, animPathPrefix):
         m3Layer =  self.createInstanceOf("LAYR")
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, rootObject=self.scene)
@@ -1874,7 +1883,19 @@ class Exporter:
         self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
         return m3Material
 
-
+    def createVolumeNoiseMaterial(self, materialIndex, material):
+        m3Material = self.createInstanceOf("VON_")
+        materialAnimPathPrefix = "m3_volume_noise_materials[%s]." % materialIndex
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
+        shared.transferVolumeNoiseMaterial(transferer)
+        m3Material.name = material.name
+        self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
+        # teh following unknown field needs to be 2 or the material is invisible:
+        m3Material.noise1Layer[0].unknown3b61017a = 2
+        m3Material.noise2Layer[0].unknown3b61017a = 2
+        
+        return m3Material
+    
     def createNullVector2AnimationReference(self, x, y, interpolationType=1):
         animRef = self.createInstanceOf("Vector2AnimationReference")
         animRef.header = self.createNullAnimHeader(interpolationType=interpolationType)

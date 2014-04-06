@@ -886,6 +886,7 @@ def determineLayerNames(defaultSetting):
         defaultSettingDisplacement: "DIS_",
         defaultSettingComposite: "CMP_",
         defaultSettingVolume: "VOL_",
+        defaultSettingVolumeNoise: "VON_",
         defaultSettingTerrain: "TER_"
     }
     structureName = settingToStructureNameMap[defaultSetting]
@@ -961,6 +962,13 @@ def createMaterial(scene, materialName, defaultSetting):
         materialType = shared.volumeMaterialTypeIndex
         materialIndex = len(scene.m3_volume_materials)
         material = scene.m3_volume_materials.add()
+        for layerName in layerNames:
+            layer = material.layers.add()
+            layer.name = layerName
+    elif defaultSetting == defaultSettingVolumeNoise:
+        materialType = shared.volumeNoiseMaterialTypeIndex
+        materialIndex = len(scene.m3_volume_noise_materials)
+        material = scene.m3_volume_noise_materials.add()
         for layerName in layerNames:
             layer = material.layers.add()
             layer.name = layerName
@@ -1079,6 +1087,7 @@ defaultSettingDisplacement = "DISPLACEMENT"
 defaultSettingComposite = "COMPOSITE"
 defaultSettingTerrain = "TERRAIN"
 defaultSettingVolume = "VOLUME"
+defaultSettingVolumeNoise = "VOLUME_NOISE"
 defaultSettingCreep = "CREEP"
 matDefaultSettingsList = [(defaultSettingMesh, "Mesh Standard Material", "A material for meshes"), 
                         (defaultSettingParticle, 'Particle Standard Material', "Material for particle systems"),
@@ -1086,6 +1095,7 @@ matDefaultSettingsList = [(defaultSettingMesh, "Mesh Standard Material", "A mate
                         (defaultSettingComposite, "Composite Material", "A combination of multiple materials"),
                         (defaultSettingTerrain, "Terrain Material", "Makes the object look like the ground below it"),
                         (defaultSettingVolume, "Volume Material", "A fog like material"),
+                        (defaultSettingVolumeNoise, "Volume Noise Material", "A fog like material"),
                         (defaultSettingCreep, "Creep Material", "Looks like creep if there is creep below the model and is invisible otherwise")
                         ]
 
@@ -1278,8 +1288,23 @@ class M3VolumeMaterial(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Material", update=handleMaterialNameChange, options=set())
     # the following field gets used to update the name of the material reference:
     materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
-    volumeDensity = bpy.props.FloatProperty(name="volume density",options={"ANIMATABLE"}, default=1.0, description="Factor that gets multiplicated with the strength values")
+    volumeDensity = bpy.props.FloatProperty(name="volume density",options={"ANIMATABLE"}, default=0.3, description="Factor that gets multiplicated with the strength values")
     layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
+
+class M3VolumeNoiseMaterial(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="name", default="Material", update=handleMaterialNameChange, options=set())
+    # the following field gets used to update the name of the material reference:
+    materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
+    volumeDensity = bpy.props.FloatProperty(name="volume density",options={"ANIMATABLE"}, default=0.3, description="Factor that gets multiplicated with the strength values")
+    nearPlane = bpy.props.FloatProperty(name="near plane",options={"ANIMATABLE"}, default=0.0)
+    falloff = bpy.props.FloatProperty(name="falloff",options={"ANIMATABLE"}, default=0.9)
+    layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
+    scrollRate = bpy.props.FloatVectorProperty(name="scroll rate", default=(0.0, 0.0, 0.8), size=3, subtype="XYZ", options={"ANIMATABLE"})
+    translation = bpy.props.FloatVectorProperty(name="translation", default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
+    scale = bpy.props.FloatVectorProperty(name="scale", default=(2.0, 2.0, 1.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
+    rotation = bpy.props.FloatVectorProperty(name="rotation", default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
+    alphaTreshhold = bpy.props.IntProperty(options=set(), default=0)
+    drawAfterTransparency = bpy.props.BoolProperty(options=set(), default=False)
 
 class M3CreepMaterial(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Material", update=handleMaterialNameChange, options=set())
@@ -1898,6 +1923,18 @@ def displayMaterialPropertiesUI(scene, layout, materialReference):
             material = scene.m3_volume_materials[materialIndex]
             layout.prop(material, 'name', text="Name")
             layout.prop(material, 'volumeDensity', text="Volume Density")
+        elif materialType == shared.volumeNoiseMaterialTypeIndex:
+            material = scene.m3_volume_noise_materials[materialIndex]
+            layout.prop(material, 'name', text="Name")
+            layout.prop(material, 'volumeDensity', text="Volume Density")
+            layout.prop(material, 'nearPlane', text="Near Plane")
+            layout.prop(material, 'falloff', text="Falloff")
+            layout.prop(material, 'scrollRate', text="Scroll Rate")
+            layout.prop(material, 'translation', text="Translation")
+            layout.prop(material, 'scale', text="Scale")
+            layout.prop(material, 'rotation', text="Rotation")
+            layout.prop(material, 'alphaTreshhold', text="Alpha Treshhold")
+            layout.prop(material, 'drawAfterTransparency', text="Draw after transparency")
         elif materialType == shared.creepMaterialTypeIndex:
             material = scene.m3_creep_materials[materialIndex]
             layout.prop(material, 'name', text="Name")
@@ -4414,6 +4451,7 @@ def register():
     bpy.types.Scene.m3_composite_materials = bpy.props.CollectionProperty(type=M3CompositeMaterial)
     bpy.types.Scene.m3_terrain_materials = bpy.props.CollectionProperty(type=M3TerrainMaterial)
     bpy.types.Scene.m3_volume_materials = bpy.props.CollectionProperty(type=M3VolumeMaterial)
+    bpy.types.Scene.m3_volume_noise_materials = bpy.props.CollectionProperty(type=M3VolumeNoiseMaterial)
     bpy.types.Scene.m3_creep_materials = bpy.props.CollectionProperty(type=M3CreepMaterial)
     bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_cameras = bpy.props.CollectionProperty(type=M3Camera)

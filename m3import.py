@@ -749,6 +749,8 @@ class Importer:
             return self.model.volumeMaterials[materialIndex].name
         elif materialType == shared.creepMaterialTypeIndex:
             return self.model.creepMaterials[materialIndex].name
+        elif materialType == shared.volumeNoiseMaterialTypeIndex:
+            return self.model.volumeNoiseMaterials[materialIndex].name
         else:
             return None
     

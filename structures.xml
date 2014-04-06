@@ -1031,6 +1031,7 @@
             <field name="colorChannelSetting" type="uint32" default-value="0" />
             <field name="brightMult" type="FloatAnimationReference" />
             <field name="midtoneOffset" type="FloatAnimationReference" />
+            <!-- unknown3b61017a needs to be 2 for volume noise materials -->
             <field name="unknown3b61017a" type="uint32" default-value="0" />
             <field name="noiseAmp" type="float" default-value="0.8" since-version="24" />
             <field name="noiseFreq" type="float" default-value="0.5" since-version="24" />
@@ -1230,9 +1231,9 @@
             <field name="volumeDensity" type="FloatAnimationReference" /> <!-- maybe -->
             <field name="nearPlane" type="FloatAnimationReference" />
             <field name="falloff" type="FloatAnimationReference" />
-            <field name="layer1" type="Reference" refTo="LAYR" />
-            <field name="layer2" type="Reference" refTo="LAYR" />
-            <field name="layer3" type="Reference" refTo="LAYR" />
+            <field name="colorLayer" type="Reference" refTo="LAYR" />
+            <field name="noise1Layer" type="Reference" refTo="LAYR" />
+            <field name="noise2Layer" type="Reference" refTo="LAYR" />
             <field name="scrollRate" type="Vector3AnimationReferenceV0" />
             <field name="translation" type="Vector3AnimationReferenceV0" />
             <field name="scale" type="Vector3AnimationReferenceV0" />

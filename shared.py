@@ -27,13 +27,14 @@ from bpy_extras import io_utils
 from os import path
 from bpy_extras import image_utils
 
-materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume", "Unknown", "Creep"]
+materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume", "Unknown", "Creep", "Volume Noise"]
 standardMaterialTypeIndex = 1
 displacementMaterialTypeIndex = 2
 compositeMaterialTypeIndex = 3
 terrainMaterialTypeIndex = 4
 volumeMaterialTypeIndex = 5
 creepMaterialTypeIndex = 7
+volumeNoiseMaterialTypeIndex = 8
 
 emissionAreaTypePoint = "0"
 emissionAreaTypePlane = "1"
@@ -96,6 +97,9 @@ layerFieldNameToNameMap = {
     "unknownLayer2": "Unknown Layer 2",
     "strengthLayer": "Strength",
     "terrainLayer": "Terrain",
+    "colorLayer": "Color",
+    "noise1Layer": "Noise 1",
+    "noise2Layer": "Noise 2",
     "creepLayer": "Creep"
 }
 
@@ -277,6 +281,8 @@ def getMaterial(scene, materialTypeIndex, materialIndex):
         return scene.m3_volume_materials[materialIndex] 
     elif materialTypeIndex == creepMaterialTypeIndex:
         return scene.m3_creep_materials[materialIndex] 
+    elif materialTypeIndex == volumeNoiseMaterialTypeIndex:
+        return scene.m3_volume_noise_materials[materialIndex] 
     return None
 
 def sqr(x):
@@ -1187,8 +1193,18 @@ def transferTerrainMaterial(transferer):
     pass
 
 def transferVolumeMaterial(transferer):
-    pass
     transferer.transferAnimatableFloat("volumeDensity")
+
+def transferVolumeNoiseMaterial(transferer):
+    transferer.transferAnimatableFloat("volumeDensity")
+    transferer.transferAnimatableFloat("nearPlane")
+    transferer.transferAnimatableFloat("falloff")
+    transferer.transferAnimatableVector3("scrollRate")
+    transferer.transferAnimatableVector3("translation")
+    transferer.transferAnimatableVector3("scale")
+    transferer.transferAnimatableVector3("rotation")
+    transferer.transferInt("alphaTreshhold")
+    transferer.transferBit("flags", "drawAfterTransparency")
 
 def transferCreepMaterial(transferer):
     pass
@@ -1269,7 +1285,8 @@ blenderMaterialsFieldNames = {
     compositeMaterialTypeIndex: "m3_composite_materials", 
     terrainMaterialTypeIndex: "m3_terrain_materials", 
     volumeMaterialTypeIndex: "m3_volume_materials",  
-    creepMaterialTypeIndex: "m3_creep_materials"
+    creepMaterialTypeIndex: "m3_creep_materials",
+    volumeNoiseMaterialTypeIndex: "m3_volume_noise_materials"
     }
 m3MaterialFieldNames = { 
     standardMaterialTypeIndex: "standardMaterials", 
@@ -1277,7 +1294,9 @@ m3MaterialFieldNames = {
     compositeMaterialTypeIndex: "compositeMaterials", 
     terrainMaterialTypeIndex: "terrainMaterials", 
     volumeMaterialTypeIndex: "volumeMaterials",  
-    creepMaterialTypeIndex: "creepMaterials"
+    creepMaterialTypeIndex: "creepMaterials",
+    volumeNoiseMaterialTypeIndex: "volumeNoiseMaterials"
+        
     }
 materialTransferMethods = {
         standardMaterialTypeIndex: transferStandardMaterial, 
@@ -1285,5 +1304,6 @@ materialTransferMethods = {
         compositeMaterialTypeIndex: transferCompositeMaterial, 
         terrainMaterialTypeIndex: transferTerrainMaterial, 
         volumeMaterialTypeIndex: transferVolumeMaterial,  
-        creepMaterialTypeIndex: transferCreepMaterial
+        creepMaterialTypeIndex: transferCreepMaterial,
+        volumeNoiseMaterialTypeIndex: transferVolumeNoiseMaterial
     }
