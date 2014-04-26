@@ -1137,7 +1137,7 @@
             <field name="emisBlendType" type="uint32" />
             <field name="emisMode" type="uint32" default-value="2" />
             <field name="specType" type="uint32" />
-            <field name="unknownAnimationRef1" type="UInt32AnimationReference" />
+            <field name="unknownAnimationRef1" type="FloatAnimationReference" />
             <field name="unknownAnimationRef2" type="UInt32AnimationReference" />
         </fields>
     </structure>

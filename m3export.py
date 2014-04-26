@@ -1827,7 +1827,7 @@ class Exporter:
         m3Material.name = material.name
         self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
 
-        m3Material.unknownAnimationRef1 = self.createNullUInt32AnimationReference(0)
+        m3Material.unknownAnimationRef1 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
         m3Material.unknownAnimationRef2 = self.createNullUInt32AnimationReference(0)
         return m3Material
 
