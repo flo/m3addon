@@ -1111,7 +1111,17 @@
             </field>
             <field name="blendMode" type="uint32" />
             <field name="priority" type="int32" />
-            <field name="unknown1" type="uint32" default-value="0" />
+            <field name="usedRTTChannels" type="uint32" default-value="0" >
+                 <bits>
+                    <bit mask="0x1" name="channel0" />
+                    <bit mask="0x2" name="channel1" />
+                    <bit mask="0x4" name="channel2" />
+                    <bit mask="0x8" name="channel3" />
+                    <bit mask="0x10" name="channel4" />
+                    <bit mask="0x20" name="channel5" />
+                    <bit mask="0x40" name="channel6" />
+               </bits>
+            </field>
             <field name="specularity" type="float" />
             <field name="unknown2" type="float" default-value="0.0" />
             <field name="cutoutThresh" type="uint8" default-value="0" />

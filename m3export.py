@@ -1826,6 +1826,11 @@ class Exporter:
         shared.transferStandardMaterial(transferer)
         m3Material.name = material.name
         self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
+        
+        for blenderMaterialLayer in material.layers:
+            if blenderMaterialLayer.rttChannel != "-1":
+                nameOfFlagToSet = "channel" + blenderMaterialLayer.rttChannel
+                m3Material.setNamedBit("usedRTTChannels", nameOfFlagToSet, True)
 
         m3Material.unknownAnimationRef1 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
         m3Material.unknownAnimationRef2 = self.createNullUInt32AnimationReference(0)
