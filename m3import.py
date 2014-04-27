@@ -737,26 +737,9 @@ class Importer:
     def getMaterialNameByM3MaterialReference(self, materialReference):
         materialIndex = materialReference.materialIndex
         materialType = materialReference.materialType
-        if materialType == shared.standardMaterialTypeIndex:
-            return self.model.standardMaterials[materialIndex].name
-        elif materialType == shared.displacementMaterialTypeIndex:
-            return self.model.displacementMaterials[materialIndex].name
-        elif materialType == shared.compositeMaterialTypeIndex:
-            return self.model.compositeMaterials[materialIndex].name
-        elif materialType == shared.terrainMaterialTypeIndex:
-            return self.model.terrainMaterials[materialIndex].name
-        elif materialType == shared.volumeMaterialTypeIndex:
-            return self.model.volumeMaterials[materialIndex].name
-        elif materialType == shared.creepMaterialTypeIndex:
-            return self.model.creepMaterials[materialIndex].name
-        elif materialType == shared.volumeNoiseMaterialTypeIndex:
-            return self.model.volumeNoiseMaterials[materialIndex].name
-        else:
-            return None
-    
-    
-
-    
+        m3MaterialFieldName = shared.m3MaterialFieldNames[materialType]
+        m3MaterialList = getattr(self.model, m3MaterialFieldName)
+        return m3MaterialList[materialIndex].name    
     
     def createCameras(self):
         scene = bpy.context.scene
