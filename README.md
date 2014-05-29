@@ -15,6 +15,7 @@ Currently the following content can be exported and imported:
       * volume materials
       * creep materials
       * volume noise materials
+      * splat terran bake materials
   * M3 particle systems
   * M3 forces
   * M3 attachment points and volumes

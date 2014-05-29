@@ -159,6 +159,7 @@ class Exporter:
         self.structureVersionMap["SVC3"] = 0
         self.structureVersionMap["WRP_"] = 1
         self.structureVersionMap["SRIB"] = 0
+        self.structureVersionMap["STBM"] = 0
 
 
     def getVersionOf(self, structureName):
@@ -1752,13 +1753,18 @@ class Exporter:
 
         for materialIndex, material in enumerate(scene.m3_creep_materials):
             model.creepMaterials.append(self.createCreepMaterial(materialIndex, material))
-    
+        
         if (len(scene.m3_volume_noise_materials) > 0) and self.structureVersionMap["MODL"] < 25:
-            raise Exception("The chosen export format (version) does not support the export of volume materials")
+            raise Exception("The chosen export format (version) does not support the export of volume noise materials")
         
         for materialIndex, material in enumerate(scene.m3_volume_noise_materials):
             model.volumeNoiseMaterials.append(self.createVolumeNoiseMaterial(materialIndex, material))
     
+        if (len(scene.m3_stb_materials) > 0) and self.structureVersionMap["MODL"] < 26:
+            raise Exception("The chosen export format (version) does not support the export of splat terrain bake materials")
+        
+        for materialIndex, material in enumerate(scene.m3_stb_materials):
+            model.splatTerrainBakeMaterials.append(self.createSTBMaterial(materialIndex, material))
     
     
     def createMaterialLayer(self, layer, animPathPrefix):
@@ -1899,6 +1905,15 @@ class Exporter:
         m3Material.noise1Layer[0].unknown3b61017a = 2
         m3Material.noise2Layer[0].unknown3b61017a = 2
         
+        return m3Material
+    
+    def createSTBMaterial(self, materialIndex, material):
+        m3Material = self.createInstanceOf("STBM")
+        materialAnimPathPrefix = "m3_stb_materials[%s]." % materialIndex
+        transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
+        shared.transfersplatTerrainBakeMaterial(transferer)
+        m3Material.name = material.name
+        self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
         return m3Material
     
     def createNullVector2AnimationReference(self, x, y, interpolationType=1):

@@ -1283,9 +1283,9 @@
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR" />
-            <field name="unknownLayer1" type="Reference" refTo="LAYR" />
-            <field name="unknownLayer2" type="Reference" refTo="LAYR" />
-            <field name="unknownLayer3" type="Reference" refTo="LAYR" />
+            <field name="diffuseLayer" type="Reference" refTo="LAYR" />
+            <field name="normalLayer" type="Reference" refTo="LAYR" />
+            <field name="specularLayer" type="Reference" refTo="LAYR" />
         </fields>
     </structure>
 
@@ -2189,7 +2189,7 @@
             <field name="unknownMaybeRef0" type="Reference" />
             <field name="creepMaterials" type="Reference" refTo="CREP" />
             <field name="volumeNoiseMaterials" type="Reference" refTo="VON_" since-version="25" />
-            <field name="splatTerrainBakeMaterial" type="Reference" refTo="STBM" since-version="26" />
+            <field name="splatTerrainBakeMaterials" type="Reference" refTo="STBM" since-version="26" />
             <field name="particles" type="Reference" refTo="PAR_" />
             <field name="particleCopies" type="Reference" refTo="PARC" />
             <field name="ribbons" type="Reference" refTo="RIB_" />

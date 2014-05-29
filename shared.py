@@ -27,7 +27,7 @@ from bpy_extras import io_utils
 from os import path
 from bpy_extras import image_utils
 
-materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume", "Unknown", "Creep", "Volume Noise"]
+materialNames = ["No Material", "Standard", "Displacement", "Composite", "Terrain", "Volume", "Unknown", "Creep", "Volume Noise", "Splat Terrain Bake"]
 standardMaterialTypeIndex = 1
 displacementMaterialTypeIndex = 2
 compositeMaterialTypeIndex = 3
@@ -35,6 +35,7 @@ terrainMaterialTypeIndex = 4
 volumeMaterialTypeIndex = 5
 creepMaterialTypeIndex = 7
 volumeNoiseMaterialTypeIndex = 8
+stbMaterialTypeIndex=9
 
 emissionAreaTypePoint = "0"
 emissionAreaTypePlane = "1"
@@ -269,21 +270,9 @@ def setAnimationWithIndexToCurrentData(scene, animationIndex):
         assignedAction.actionName = scene.animation_data.action.name
 
 def getMaterial(scene, materialTypeIndex, materialIndex):
-    if materialTypeIndex == standardMaterialTypeIndex:
-        return scene.m3_standard_materials[materialIndex]
-    elif materialTypeIndex == displacementMaterialTypeIndex:
-        return scene.m3_displacement_materials[materialIndex]
-    elif materialTypeIndex == compositeMaterialTypeIndex:
-        return scene.m3_composite_materials[materialIndex] 
-    elif materialTypeIndex == terrainMaterialTypeIndex:
-        return scene.m3_terrain_materials[materialIndex] 
-    elif materialTypeIndex == volumeMaterialTypeIndex:
-        return scene.m3_volume_materials[materialIndex] 
-    elif materialTypeIndex == creepMaterialTypeIndex:
-        return scene.m3_creep_materials[materialIndex] 
-    elif materialTypeIndex == volumeNoiseMaterialTypeIndex:
-        return scene.m3_volume_noise_materials[materialIndex] 
-    return None
+    blenderFieldName = blenderMaterialsFieldNames[materialTypeIndex]
+    materialsList = getattr(scene, blenderFieldName)
+    return materialsList[materialIndex]
 
 def sqr(x):
     return x*x
@@ -1209,6 +1198,9 @@ def transferVolumeNoiseMaterial(transferer):
 def transferCreepMaterial(transferer):
     pass
 
+def transfersplatTerrainBakeMaterial(transferer):
+    pass
+
 def transferMaterialLayer(transferer):
     transferer.transferString("imagePath")
     transferer.transferInt("unknownbd3f7b5d")
@@ -1286,7 +1278,8 @@ blenderMaterialsFieldNames = {
     terrainMaterialTypeIndex: "m3_terrain_materials", 
     volumeMaterialTypeIndex: "m3_volume_materials",  
     creepMaterialTypeIndex: "m3_creep_materials",
-    volumeNoiseMaterialTypeIndex: "m3_volume_noise_materials"
+    volumeNoiseMaterialTypeIndex: "m3_volume_noise_materials",
+    stbMaterialTypeIndex: "m3_stb_materials"
     }
 m3MaterialFieldNames = { 
     standardMaterialTypeIndex: "standardMaterials", 
@@ -1295,8 +1288,8 @@ m3MaterialFieldNames = {
     terrainMaterialTypeIndex: "terrainMaterials", 
     volumeMaterialTypeIndex: "volumeMaterials",  
     creepMaterialTypeIndex: "creepMaterials",
-    volumeNoiseMaterialTypeIndex: "volumeNoiseMaterials"
-        
+    volumeNoiseMaterialTypeIndex: "volumeNoiseMaterials",
+    stbMaterialTypeIndex: "splatTerrainBakeMaterials"
     }
 materialTransferMethods = {
         standardMaterialTypeIndex: transferStandardMaterial, 
@@ -1305,5 +1298,6 @@ materialTransferMethods = {
         terrainMaterialTypeIndex: transferTerrainMaterial, 
         volumeMaterialTypeIndex: transferVolumeMaterial,  
         creepMaterialTypeIndex: transferCreepMaterial,
-        volumeNoiseMaterialTypeIndex: transferVolumeNoiseMaterial
+        volumeNoiseMaterialTypeIndex: transferVolumeNoiseMaterial,
+        stbMaterialTypeIndex: transfersplatTerrainBakeMaterial
     }

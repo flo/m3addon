@@ -887,7 +887,8 @@ def determineLayerNames(defaultSetting):
         defaultSettingComposite: "CMP_",
         defaultSettingVolume: "VOL_",
         defaultSettingVolumeNoise: "VON_",
-        defaultSettingTerrain: "TER_"
+        defaultSettingTerrain: "TER_",
+        defaultSettingSplatTerrainBake: "STBM"
     }
     structureName = settingToStructureNameMap[defaultSetting]
     structureDescription = m3.structures[structureName].getNewestVersion()
@@ -976,6 +977,13 @@ def createMaterial(scene, materialName, defaultSetting):
         materialType = shared.creepMaterialTypeIndex
         materialIndex = len(scene.m3_creep_materials)
         material = scene.m3_creep_materials.add()
+        for layerName in layerNames:
+            layer = material.layers.add()
+            layer.name = layerName
+    elif defaultSetting == defaultSettingSplatTerrainBake:
+        materialType = shared.stbMaterialTypeIndex
+        materialIndex = len(scene.m3_stb_materials)
+        material = scene.m3_stb_materials.add()
         for layerName in layerNames:
             layer = material.layers.add()
             layer.name = layerName
@@ -1089,6 +1097,7 @@ defaultSettingTerrain = "TERRAIN"
 defaultSettingVolume = "VOLUME"
 defaultSettingVolumeNoise = "VOLUME_NOISE"
 defaultSettingCreep = "CREEP"
+defaultSettingSplatTerrainBake="STB"
 matDefaultSettingsList = [(defaultSettingMesh, "Mesh Standard Material", "A material for meshes"), 
                         (defaultSettingParticle, 'Particle Standard Material', "Material for particle systems"),
                         (defaultSettingDisplacement, "Displacement Material", "Moves the colors of the background to other locations"),
@@ -1096,7 +1105,8 @@ matDefaultSettingsList = [(defaultSettingMesh, "Mesh Standard Material", "A mate
                         (defaultSettingTerrain, "Terrain Material", "Makes the object look like the ground below it"),
                         (defaultSettingVolume, "Volume Material", "A fog like material"),
                         (defaultSettingVolumeNoise, "Volume Noise Material", "A fog like material"),
-                        (defaultSettingCreep, "Creep Material", "Looks like creep if there is creep below the model and is invisible otherwise")
+                        (defaultSettingCreep, "Creep Material", "Looks like creep if there is creep below the model and is invisible otherwise"),
+                        (defaultSettingSplatTerrainBake, "STB Material", "Splat Terrain Bake Material")
                         ]
 
 
@@ -1311,6 +1321,13 @@ class M3CreepMaterial(bpy.types.PropertyGroup):
     # the following field gets used to update the name of the material reference:
     materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
     layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
+
+class M3STBMaterial(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="name", default="Material", update=handleMaterialNameChange, options=set())
+    # the following field gets used to update the name of the material reference:
+    materialReferenceIndex = bpy.props.IntProperty(options=set(), default=-1)
+    layers = bpy.props.CollectionProperty(type=M3MaterialLayer, options=set())
+
 
 class M3Camera(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Camera", update=handleCameraNameChange, options=set())
@@ -1937,6 +1954,9 @@ def displayMaterialPropertiesUI(scene, layout, materialReference):
             layout.prop(material, 'drawAfterTransparency', text="Draw after transparency")
         elif materialType == shared.creepMaterialTypeIndex:
             material = scene.m3_creep_materials[materialIndex]
+            layout.prop(material, 'name', text="Name")
+        elif materialType == shared.stbMaterialTypeIndex:
+            material = scene.m3_stb_materials[materialIndex]
             layout.prop(material, 'name', text="Name")
         else:
             layout.label(text=("Unsupported material type %d" % materialType))
@@ -4455,6 +4475,7 @@ def register():
     bpy.types.Scene.m3_volume_materials = bpy.props.CollectionProperty(type=M3VolumeMaterial)
     bpy.types.Scene.m3_volume_noise_materials = bpy.props.CollectionProperty(type=M3VolumeNoiseMaterial)
     bpy.types.Scene.m3_creep_materials = bpy.props.CollectionProperty(type=M3CreepMaterial)
+    bpy.types.Scene.m3_stb_materials = bpy.props.CollectionProperty(type=M3STBMaterial)
     bpy.types.Scene.m3_material_reference_index = bpy.props.IntProperty(options=set())
     bpy.types.Scene.m3_cameras = bpy.props.CollectionProperty(type=M3Camera)
     bpy.types.Scene.m3_camera_index = bpy.props.IntProperty(options=set(), update=handleCameraIndexChanged)
