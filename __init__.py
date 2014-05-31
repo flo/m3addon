@@ -1804,7 +1804,7 @@ class AnimationSequencesPanel(bpy.types.Panel):
             
 class AnimationSequenceTransformationCollectionsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_STCs"
-    bl_label = "M3 Animation STCs"
+    bl_label = "M3 Sub Animations"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
@@ -3344,8 +3344,8 @@ class M3_ANIMATIONS_OT_deselect(bpy.types.Operator):
 
 class M3_ANIMATIONS_OT_STC_add(bpy.types.Operator):
     bl_idname      = 'm3.stc_add'
-    bl_label       = "Add STC to animation"
-    bl_description = "Adds a new sequence transformation collection to the active animation sequence"
+    bl_label       = "Add sub animation"
+    bl_description = "Add sub animation to the active animation sequence"
     
     def invoke(self, context, event):
         scene = context.scene
@@ -3378,8 +3378,8 @@ class M3_ANIMATIONS_OT_STC_add(bpy.types.Operator):
         
 class M3_ANIMATIONS_OT_STC_remove(bpy.types.Operator):
     bl_idname      = 'm3.stc_remove'
-    bl_label       = "Remove STC from animation"
-    bl_description = "Removes the active STC from animation sequence"
+    bl_label       = "Remove sub animation from animation"
+    bl_description = "Removes the active sub animation from animation sequence"
     
     def invoke(self, context, event):
         scene = context.scene
@@ -3394,8 +3394,8 @@ class M3_ANIMATIONS_OT_STC_remove(bpy.types.Operator):
 
 class M3_ANIMATIONS_OT_STC_select(bpy.types.Operator):
     bl_idname      = 'm3.stc_select'
-    bl_label       = "Select all FCurves of the active STC"
-    bl_description = "Selects all FCURVES of the active sequence transformation collection"
+    bl_label       = "Select all FCurves of the active sub animation"
+    bl_description = "Selects all FCURVES of the active sub animation"
     
     def invoke(self, context, event):
         scene = context.scene        
@@ -3456,8 +3456,8 @@ class M3_ANIMATIONS_OT_STC_select(bpy.types.Operator):
     
 class M3_ANIMATIONS_OT_STC_assign(bpy.types.Operator):
     bl_idname      = 'm3.stc_assign'
-    bl_label       = "Assign FCurves to STC"
-    bl_description = "Assigns all selected FCurves to the active STC"
+    bl_label       = "Assign FCurves to sub animation"
+    bl_description = "Assigns all selected FCurves to the active sub animation"
     
     def invoke(self, context, event):
         scene = context.scene
