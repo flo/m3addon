@@ -626,7 +626,7 @@ class Exporter:
                     for blenderBoneIndex, blenderBone in enumerate(armature.bones):
                         boneNamesOfArmature.add(blenderBone.name)
             else:
-                raise Exception("Mesh must have no modifiers except single one for the armature")
+                raise Exception("The mesh %s has invalid modifiers: Mesh must have no modifiers except single one for the armature and one for edge split." % meshObject.name)
             objectToWorldMatrix = meshObject.matrix_world
 
             firstFaceVertexIndexIndex = len(division.faces)
