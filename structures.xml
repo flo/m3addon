@@ -718,7 +718,7 @@
     </structure>
     
     <structure name="STC_" version="4" size="204">
-        <description>Sequence Transformations Collection
+        <description>Sequence Transformations Collection of a Sub Animation
             animId: array of animation ids
             animref: array of integers is actually an array of short pairs:
             first 2 bytes: index which determines the field in this struct and thus kind
@@ -736,7 +736,7 @@
         <fields>
             <field name="name" type="Reference"  refTo="CHAR" />
             <field name="runsConcurrent" type="uint16" default-value="0" />
-            <field name="unknownAt14" type="uint16" default-value="0" />
+            <field name="priority" type="uint16" default-value="0" />
             <field name="stsIndex" type="uint16"/>
             <field name="stsIndexCopy" type="uint16"/>
             <field name="animIds" type="Reference" refTo="U32_" />

@@ -1190,6 +1190,7 @@ class M3TransformationCollection(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="all", options=set())
     animatedProperties = bpy.props.CollectionProperty(type=M3AnimatedPropertyReference, options=set())
     runsConcurrent = bpy.props.BoolProperty(default=True, options=set())
+    priority = bpy.props.IntProperty(subtype="UNSIGNED",options=set())
 
     
 class M3Animation(bpy.types.PropertyGroup):
@@ -1829,6 +1830,7 @@ class AnimationSequenceTransformationCollectionsPanel(bpy.types.Panel):
                 layout.separator()
                 layout.prop(transformationCollection, 'name', text="Name")
                 layout.prop(transformationCollection, 'runsConcurrent', text="Runs Concurrent")
+                layout.prop(transformationCollection, 'priority', text="Priority")
                 row = layout.row()
                 col = row.column()
                 col.operator("m3.stc_select", text="Select FCurves")

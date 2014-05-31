@@ -1233,6 +1233,7 @@ def transferAnimation(transferer):
     
 def transferSTC(transferer):
     transferer.transferBoolean("runsConcurrent")
+    transferer.transferInt("priority")
 
 def transferCamera(transferer):
     transferer.transferAnimatableFloat("fieldOfView")
