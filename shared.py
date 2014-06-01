@@ -410,17 +410,26 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
 
 def createClassicBlenderMaterialForMeshObject(scene, meshObject):
     mesh = meshObject.data
-    mesh.m3_material_name
         
     materialReference = scene.m3_material_references[mesh.m3_material_name]
     materialType = materialReference.materialType
     materialIndex = materialReference.materialIndex 
-    if materialType != standardMaterialTypeIndex:
+    if not materialType in [1, 3]:
         return
-    
     realMaterial = bpy.data.materials.new('Material')
 
-    standardMaterial = scene.m3_standard_materials[materialIndex]
+    if materialType == 3:
+        compositing_material = scene.m3_composite_materials[materialIndex]
+        for key in compositing_material.sections.keys():
+            ref = scene.m3_material_references[key]
+            if ref.materialType == 1:
+                standardMaterial = scene.m3_standard_materials[ref.materialIndex]
+                break
+        if not standardMaterial:
+            return
+    else:
+        standardMaterial = scene.m3_standard_materials[materialIndex]
+
     diffuseLayer = standardMaterial.layers[getLayerNameFromFieldName("diffuseLayer")]
     specularLayer = standardMaterial.layers[getLayerNameFromFieldName("specularLayer")]
     if diffuseLayer.colorEnabled:
