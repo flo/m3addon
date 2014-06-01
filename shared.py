@@ -414,15 +414,15 @@ def createClassicBlenderMaterialForMeshObject(scene, meshObject):
     materialReference = scene.m3_material_references[mesh.m3_material_name]
     materialType = materialReference.materialType
     materialIndex = materialReference.materialIndex 
-    if not materialType in [1, 3]:
+    if not materialType in [standardMaterialTypeIndex, compositeMaterialTypeIndex]:
         return
     realMaterial = bpy.data.materials.new('Material')
 
-    if materialType == 3:
+    if materialType == compositeMaterialTypeIndex:
         compositing_material = scene.m3_composite_materials[materialIndex]
         for key in compositing_material.sections.keys():
             ref = scene.m3_material_references[key]
-            if ref.materialType == 1:
+            if ref.materialType == standardMaterialTypeIndex:
                 standardMaterial = scene.m3_standard_materials[ref.materialIndex]
                 break
         if not standardMaterial:
