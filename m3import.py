@@ -699,7 +699,19 @@ class Importer:
         scene = self.scene
         self.initMaterialReferenceIndexToNameMap()
         
+        if self.scene.m3_import_options.contentToImport == "MESH_WITH_MATERIALS_ONLY":
+            # Import only indices of materials used by meshes:
+            matRefIndicesToImport = set()
+            for division in self.model.divisions:
+                for m3Object in division.objects:
+                    matRefIndicesToImport.add(m3Object.materialReferenceIndex)  
+        else:
+            # Import all materials:
+            matRefIndicesToImport = set(range(len(self.model.materialReferences)))    
+        
         for materialReferenceIndex, m3MaterialReference in enumerate(self.model.materialReferences):
+            if not materialReferenceIndex in matRefIndicesToImport:
+                continue
             materialType = m3MaterialReference.materialType
             m3MaterialIndex = m3MaterialReference.materialIndex
             m3MaterialFieldName = shared.m3MaterialFieldNames[materialType]
