@@ -1298,8 +1298,6 @@
             <version number="21" size="1464" />
             <version number="22" size="1484" />
             <version number="23" size="1492" />
-        </versions>
-        <versions>
             <version number="0" size="" />
         </versions>
         <fields>
@@ -1499,7 +1497,7 @@
                 4: Bezier Hold
             -->
             <field name="colorSmoothingType"  type="uint32" default-value="0" since-version="17" />
-            <field name="sizeSmoothingType" type="uint32" default-alue="0" since-version="17" />
+            <field name="sizeSmoothingType" type="uint32" default-value="0" since-version="17" />
             <field name="rotationSmoothingType" type="uint32"  default-value="0" since-version="17" />
             <field name="unknown22856fde" type="FloatAnimationReference" since-version="17" />
             <field name="unknownb35ad6e1" type="Vector2AnimationReferenceV0" since-version="17" />
@@ -1594,11 +1592,11 @@
             <field name="unknown1a597211" type="float" default-value="0.8" />
             <field name="unknown7d90d255" type="float" default-value="0.8" />
             <field name="unknowne243c135" size="4" expected-value="0x00000000"/>
-            <field name="unknownbf38195c" type="float" defeault-value="10.0" />
+            <field name="unknownbf38195c" type="float" default-value="10.0" />
             <field name="unknown55fd8fa6" size="4" expected-value="0x00000000"/>
-            <field name="unknown1c58f255" type="float" defeault-value="5.0" />
+            <field name="unknown1c58f255" type="float" default-value="5.0" />
             <field name="unknowne4fcbb89" size="4" expected-value="0x00000000"/>
-            <field name="unknown15aa6267" type="float" defeault-value="4.0" />
+            <field name="unknown15aa6267" type="float" default-value="4.0" />
             <field name="unknown44efb863" type="FlagAnimationReference" />
             <field name="unknownef7b512d" type="uint32" default-value="0"/>
             <field name="unknown9588cd5c" type="uint32" default-value="1" />
