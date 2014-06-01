@@ -390,43 +390,49 @@ class Importer:
     
     def importM3BasedOnM3ImportOptions(self, scene):
         fileName = scene.m3_import_options.path
+        contentToImport = scene.m3_import_options.contentToImport
         self.rootDirectory = scene.m3_import_options.rootDirectory
         if (self.rootDirectory == ""):
             self.rootDirectory = path.dirname(fileName)
         self.scene = scene
         self.model = m3.loadModel(fileName)
-        self.armature = bpy.data.armatures.new(name="Armature")
+        if contentToImport != "MESH_WITH_MATERIALS_ONLY": 
+            self.armature = bpy.data.armatures.new(name="Armature")
         scene.render.fps = FRAME_RATE
         self.animations = []
         self.animIdToLongAnimIdMap = {}
-        # clear existing animation ids so that they can't conflict with new ones:
-        self.scene.m3_animation_ids.clear()
-        self.storeModelId()
-        self.createAnimations()
-        self.createArmatureObject()
-        self.createBones()
+        if contentToImport != "MESH_WITH_MATERIALS_ONLY": 
+            # clear existing animation ids so that they can't conflict with new ones:
+            self.scene.m3_animation_ids.clear()
+            self.storeModelId()
+            self.createAnimations()
+            self.createArmatureObject()
+            self.createBones()
         self.createMaterials()
-        self.createCameras()
-        self.createFuzzyHitTests()
-        self.initTightHitTest()
-        self.createParticleSystems()
-        self.createRibbons()
-        self.createForces()
-        self.createRigidBodies()
-        self.createLights()
-        self.createBillboardBehaviors()
-        self.createAttachmentPoints()
-        self.createProjections()
-        self.createWarps()
+        if contentToImport != "MESH_WITH_MATERIALS_ONLY": 
+            self.createCameras()
+            self.createFuzzyHitTests()
+            self.initTightHitTest()
+            self.createParticleSystems()
+            self.createRibbons()
+            self.createForces()
+            self.createRigidBodies()
+            self.createLights()
+            self.createBillboardBehaviors()
+            self.createAttachmentPoints()
+            self.createProjections()
+            self.createWarps()
         self.createMesh()
-        # init stcs of animations at last
-        # when all animation properties are known
-        self.initSTCsOfAnimations()
+        
+        if contentToImport != "MESH_WITH_MATERIALS_ONLY": 
+            # init stcs of animations at last
+            # when all animation properties are known
+            self.initSTCsOfAnimations()
             
-        if len(scene.m3_animations) >= 1:
-            scene.m3_animation_old_index = -1
-            scene.m3_animation_index = -1
-            scene.m3_animation_index = 0
+            if len(scene.m3_animations) >= 1:
+                scene.m3_animation_old_index = -1
+                scene.m3_animation_index = -1
+                scene.m3_animation_index = 0
         
         if bpy.ops.object.mode_set.poll():
             bpy.ops.object.mode_set(mode='OBJECT')
@@ -1210,7 +1216,6 @@ class Importer:
             divisionFaceIndices = division.faces
             for m3Object in division.objects:
                 region = division.regions[m3Object.regionIndex]
-                bpy.ops.object.mode_set(mode='OBJECT')
                 regionVertexIndices = range(region.firstVertexIndex,region.firstVertexIndex + region.numberOfVertices)
                 firstVertexIndexIndex = region.firstFaceVertexIndexIndex
                 lastVertexIndexIndex = firstVertexIndexIndex + region.numberOfFaceVertexIndices
@@ -1232,14 +1237,13 @@ class Importer:
                 numberOfBones = len(boneIndexLookup)
                 preferedMeshName = "Mesh"
                 if numberOfBones == 1:
-                    boneName = self.boneNames[boneIndexLookup[0]]
-                    preferedMeshName = boneName
+                    preferedMeshName = self.model.bones[boneIndexLookup[0]].name
                 mesh = bpy.data.meshes.new(preferedMeshName)
                 meshObject = bpy.data.objects.new(preferedMeshName, mesh)
                 meshObject.location = self.scene.cursor_location
                 meshObject.show_name = True
                 self.scene.objects.link(meshObject)
-            
+
                 mesh.m3_material_name = self.getNameOfMaterialWithReferenceIndex(m3Object.materialReferenceIndex)
                 
                 # merge vertices together which have always the same position and normal:
@@ -1356,33 +1360,35 @@ class Importer:
                 mesh.validate()   
                 mesh.update(calc_edges=True)    
                 
-                
-                vertexGroupLookup = []
-                for boneIndex in boneIndexLookup:
-                    boneName = self.boneNames[boneIndex]
-                    if boneName in meshObject.vertex_groups:
-                        vertexGroup = meshObject.vertex_groups[boneName]
-                    else:
-                        vertexGroup =  meshObject.vertex_groups.new(boneName)
-                    vertexGroupLookup.append(vertexGroup)
-                for vertexIndex in range(region.firstVertexIndex,region.firstVertexIndex + region.numberOfVertices):
-                    m3Vertex = m3Vertices[vertexIndex]
-                    boneWeightsAsInt = [m3Vertex.boneWeight0, m3Vertex.boneWeight1, m3Vertex.boneWeight2, m3Vertex.boneWeight3]
-                    boneLookupIndices = [m3Vertex.boneLookupIndex0, m3Vertex.boneLookupIndex1,  m3Vertex.boneLookupIndex2,  m3Vertex.boneLookupIndex3]
-                    boneWeights = []
-                    for boneWeightAsInt, boneLookupIndex in zip(boneWeightsAsInt, boneLookupIndices):
-                        if boneWeightAsInt != 0:
-                            vertexGroup = vertexGroupLookup[boneLookupIndex]
-                            boneWeight = boneWeightAsInt / 255.0
-                            vertexGroup.add([oldVertexIndexToNewVertexIndexMap[vertexIndex]], boneWeight, 'REPLACE')
-                            
+                shouldCreateVertexGroups = self.scene.m3_import_options.contentToImport != "MESH_WITH_MATERIALS_ONLY"
+                if shouldCreateVertexGroups:
+                    vertexGroupLookup = []
+                    for boneIndex in boneIndexLookup:
+                        boneName = self.boneNames[boneIndex]
+                        if boneName in meshObject.vertex_groups:
+                            vertexGroup = meshObject.vertex_groups[boneName]
+                        else:
+                            vertexGroup =  meshObject.vertex_groups.new(boneName)
+                        vertexGroupLookup.append(vertexGroup)
+                    for vertexIndex in range(region.firstVertexIndex,region.firstVertexIndex + region.numberOfVertices):
+                        m3Vertex = m3Vertices[vertexIndex]
+                        boneWeightsAsInt = [m3Vertex.boneWeight0, m3Vertex.boneWeight1, m3Vertex.boneWeight2, m3Vertex.boneWeight3]
+                        boneLookupIndices = [m3Vertex.boneLookupIndex0, m3Vertex.boneLookupIndex1,  m3Vertex.boneLookupIndex2,  m3Vertex.boneLookupIndex3]
+                        boneWeights = []
+                        for boneWeightAsInt, boneLookupIndex in zip(boneWeightsAsInt, boneLookupIndices):
+                            if boneWeightAsInt != 0:
+                                vertexGroup = vertexGroupLookup[boneLookupIndex]
+                                boneWeight = boneWeightAsInt / 255.0
+                                vertexGroup.add([oldVertexIndexToNewVertexIndexMap[vertexIndex]], boneWeight, 'REPLACE')
+                                
                 if self.scene.m3_import_options.applySmoothShading:
                     for polygon in mesh.polygons:
                         polygon.use_smooth = True
                 
                 if self.scene.m3_import_options.markSharpEdges:
                     self.markBordersEdgesSharp(mesh)
-                    
+                    if bpy.ops.object.mode_set.poll():
+                        bpy.ops.object.mode_set(mode='OBJECT')
                     # Remove doubles after marking the sharp edges
                     # since the sharp edge detection algrithm depend on it
                     bpy.ops.object.select_all(action='DESELECT')
@@ -1395,10 +1401,11 @@ class Importer:
 
                 self.setOriginToCenter(meshObject)
                 
-                modifier = meshObject.modifiers.new('UseArmature', 'ARMATURE')
-                modifier.object = self.armatureObject
-                modifier.use_bone_envelopes = False
-                modifier.use_vertex_groups = True
+                if self.scene.m3_import_options.contentToImport != "MESH_WITH_MATERIALS_ONLY":
+                    modifier = meshObject.modifiers.new('UseArmature', 'ARMATURE')
+                    modifier.object = self.armatureObject
+                    modifier.use_bone_envelopes = False
+                    modifier.use_vertex_groups = True
                 
                 if self.scene.m3_import_options.markSharpEdges:
                     modifier = meshObject.modifiers.new('EdgeSplit', 'EDGE_SPLIT')

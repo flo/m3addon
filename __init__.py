@@ -1161,6 +1161,11 @@ rttChannelList = [("-1", "None", "None"),
                   ("6", "Layer 7", "Render To Texture Layer 7"),
 ]
 
+
+contentToImportList = [("EVERYTHING", "Everything", "Import everything included in the m3 file"),
+                       ("MESH_WITH_MATERIALS_ONLY", "Mesh with materials only", "Import the mesh with its m3 materials only")
+                       ]
+
 lightTypeList = [# directional light isn't supported yet: ("0", "Directional", ""),
                  (shared.lightTypePoint, "Point", "Light are generated around a point"),
                  (shared.lightTypeSpot, "Spot", "")
@@ -1622,6 +1627,8 @@ class M3ImportOptions(bpy.types.PropertyGroup):
     markSharpEdges = bpy.props.BoolProperty(default=True, options=set())
     recalculateRestPositionBones = bpy.props.BoolProperty(default=False, options=set())
     teamColor = bpy.props.FloatVectorProperty(default=(1.0, 0.0, 0.0), min = 0.0, max = 1.0, name="team color", size=3, subtype="COLOR", options=set(), description="Team color place holder used for generated blender materials")
+    contentToImport = bpy.props.EnumProperty(default="EVERYTHING", items=contentToImportList, options=set())
+
 
 class M3Projection(bpy.types.PropertyGroup):
     # name attribute seems to be needed for template_list but is not actually in the m3 file
@@ -1705,6 +1712,7 @@ class ImportPanel(bpy.types.Panel):
         scene = context.scene
 
         layout.prop(scene.m3_import_options, "path", text="M3 File")
+        layout.prop(scene.m3_import_options, "contentToImport", text="Import ")
         layout.operator("m3.quick_import", text="Import M3")
         layout.prop(scene.m3_import_options, "rootDirectory", text="Root Directory")
         layout.prop(scene.m3_import_options, "generateBlenderMaterials", text="Generate Blender Materials At Import")
