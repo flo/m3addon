@@ -665,20 +665,23 @@ class Exporter:
                     weightLookupIndexPairs = []
                     for gIndex, g in enumerate(blenderVertex.groups):
                         vertexGroupIndex = g.group
-                        vertexGroup = meshObject.vertex_groups[vertexGroupIndex]
-                        boneIndex = self.boneNameToBoneIndexMap.get(vertexGroup.name)
-                        if boneIndex != None and vertexGroup.name in boneNamesOfArmature:
-                            boneLookupIndex = boneNameToBoneLookupIndexMap.get(vertexGroup.name)
-                            if boneLookupIndex == None:
-                                boneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
-                                model.boneLookup.append(boneIndex)
-                                boneNameToBoneLookupIndexMap[vertexGroup.name] = boneLookupIndex
-                            bone = model.bones[boneIndex]
-                            bone.setNamedBit("flags", "skinned", True)
-                            boneWeight = round(g.weight * 255)
-                            if boneWeight != 0:
-                                if len(weightLookupIndexPairs) < 4:
-                                    weightLookupIndexPairs.append((g.weight, boneLookupIndex))
+                        # It seems like the group data can become corrupted in Blender:
+                        validGroup = vertexGroupIndex < len(meshObject.vertex_groups)
+                        if vertexGroupIndex < len(meshObject.vertex_groups):
+                            vertexGroup = meshObject.vertex_groups[vertexGroupIndex]
+                            boneIndex = self.boneNameToBoneIndexMap.get(vertexGroup.name)
+                            if boneIndex != None and vertexGroup.name in boneNamesOfArmature:
+                                boneLookupIndex = boneNameToBoneLookupIndexMap.get(vertexGroup.name)
+                                if boneLookupIndex == None:
+                                    boneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
+                                    model.boneLookup.append(boneIndex)
+                                    boneNameToBoneLookupIndexMap[vertexGroup.name] = boneLookupIndex
+                                bone = model.bones[boneIndex]
+                                bone.setNamedBit("flags", "skinned", True)
+                                boneWeight = round(g.weight * 255)
+                                if boneWeight != 0:
+                                    if len(weightLookupIndexPairs) < 4:
+                                        weightLookupIndexPairs.append((g.weight, boneLookupIndex))
                                 
                     totalWeight = 0
                     for weight, lookupIndex in weightLookupIndexPairs:
