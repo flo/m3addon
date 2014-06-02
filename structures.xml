@@ -1298,7 +1298,6 @@
             <version number="21" size="1464" />
             <version number="22" size="1484" />
             <version number="23" size="1492" />
-            <version number="0" size="" />
         </versions>
         <fields>
             <field name="bone" type="uint32" />
