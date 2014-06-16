@@ -408,6 +408,7 @@ class Importer:
             self.createAnimations()
             self.createArmatureObject()
             self.createBones()
+            self.importVisibilityTest()
         self.createMaterials()
         if contentToImport != "MESH_WITH_MATERIALS_ONLY": 
             self.createCameras()
@@ -683,6 +684,16 @@ class Importer:
                     insertLinearKeyFrame(scaXCurve, frame, scale.x)
                     insertLinearKeyFrame(scaYCurve, frame, scale.y)
                     insertLinearKeyFrame(scaZCurve, frame, scale.z)    
+    
+    
+    def importVisibilityTest(self):
+        print("Imported bounding radius %s" % self.model.boundings.radius)
+        self.scene.m3_visibility_test.radius = self.model.boundings.radius
+        minBorder = toBlenderVector3(self.model.boundings.minBorder)
+        maxBorder = toBlenderVector3(self.model.boundings.maxBorder)
+        self.scene.m3_visibility_test.center = (minBorder + maxBorder) / 2.0
+        self.scene.m3_visibility_test.size = maxBorder - minBorder
+        self.scene.m3_visibility_test.radius = self.model.boundings.radius
     
     def createLayers(self, scene, material, m3Material, materialAnimPathPrefix):
         for layerFieldName in shared.layerFieldNamesOfM3Material(m3Material):

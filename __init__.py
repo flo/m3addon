@@ -1347,6 +1347,12 @@ class M3Camera(bpy.types.PropertyGroup):
     falloffEnd = bpy.props.FloatProperty(name="falloffEnd", options={"ANIMATABLE"}, default=2.0)
     depthOfField = bpy.props.FloatProperty(name="depthOfField", options={"ANIMATABLE"}, default=0.5)
 
+class M3Boundings(bpy.types.PropertyGroup):
+    radius = bpy.props.FloatProperty(name="radius", options=set(), default=2.0)
+    center = bpy.props.FloatVectorProperty(name="center", default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options=set())
+    size = bpy.props.FloatVectorProperty(name="size", default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options=set())
+
+
 class M3ParticleSpawnPoint(bpy.types.PropertyGroup):
     location = bpy.props.FloatVectorProperty(default=(1.0, 1.0, 1.0), name="location", size=3, subtype="XYZ", options={"ANIMATABLE"}, description="The first two values are the initial and final size of particles")
 
@@ -2717,6 +2723,25 @@ class PhysicsMeshPanel(bpy.types.Panel):
         layout = self.layout
         mesh = context.object.data
         layout.prop(mesh, "m3_physics_mesh", text="Physics Mesh Only")
+
+
+
+class VisbilityTestPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_M3_visibility_test"
+    bl_label = "M3 Visibility Test"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        col = row.column()
+        layout.prop(scene.m3_visibility_test, 'radius', text="Radius")
+        layout.prop(scene.m3_visibility_test, 'center', text="Center")
+        layout.prop(scene.m3_visibility_test, 'size', text="Size")
 
 class LightPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_lights"
@@ -4459,6 +4484,7 @@ class M3_OT_conertM3ToBlenderNormalMap(bpy.types.Operator):
         return{'FINISHED'}
         
 
+
 def menu_func_convertNormalMaps(self, context):
     self.layout.operator(M3_OT_conertBlenderToM3NormalMap.bl_idname, text="Convert Blender to M3 Normal Map")
     self.layout.operator(M3_OT_conertM3ToBlenderNormalMap.bl_idname, text="Convert M3 to Blender Normal Map")
@@ -4510,6 +4536,7 @@ def register():
     bpy.types.Scene.m3_export_options = bpy.props.PointerProperty(type=M3ExportOptions)
     bpy.types.Scene.m3_import_options = bpy.props.PointerProperty(type=M3ImportOptions)
     bpy.types.Scene.m3_bone_visiblity_options = bpy.props.PointerProperty(type=M3BoneVisiblityOptions)
+    bpy.types.Scene.m3_visibility_test = bpy.props.PointerProperty(type=M3Boundings)
     bpy.types.Scene.m3_animation_ids = bpy.props.CollectionProperty(type=M3AnimIdData)
     bpy.types.Scene.m3_fuzzy_hit_tests = bpy.props.CollectionProperty(type=M3SimpleGeometricShape)
     bpy.types.Scene.m3_fuzzy_hit_test_index = bpy.props.IntProperty(options=set(), update=handleFuzzyHitTestIndexChanged)

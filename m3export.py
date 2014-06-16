@@ -200,6 +200,7 @@ class Exporter:
         self.initRigidBodies(model)
         self.initLights(model)
         self.initBillboardBehaviors(model)
+        self.initVisibilityTest(model)
         # TODO remove call and method:
         #self.initBoundings(model)
         self.initAttachmentPoints(model)
@@ -505,6 +506,16 @@ class Exporter:
                         animIdToAnimDataMap[scaleAnimId] = m3AnimBlock
                         bone.scale.header.animFlags = shared.animFlagsForAnimatedProperty
                         bone.setNamedBit("flags", "animated", True)
+
+    def initVisibilityTest(self, model):
+        halfSize = self.scene.m3_visibility_test.size / 2.0
+        minBorder = self.scene.m3_visibility_test.center - halfSize
+        maxBorder = self.scene.m3_visibility_test.center + halfSize
+        model.boundings.radius = self.scene.m3_visibility_test.radius
+        model.boundings.minBorder = self.blenderToM3Vector(minBorder)
+        model.boundings.maxBorder = self.blenderToM3Vector(maxBorder)
+        
+
 
     def allFramesOfAnimation(self, animation):
         # In Starcraft 2 there is one more key frame then there is usually in Blender:
