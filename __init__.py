@@ -1058,7 +1058,12 @@ uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole imag
                  ("7", "Unknown (value 7)", "Unknown"),
                  ("8", "Unknown (value 8)", "Unknown"),
                  ("9", "Unknown (value 9)", "Unknown"),
-                 ("10", "Unknown (value 9)", "Unknown")
+                 ("10", "Unknown (value 10)", "Unknown"),
+                 ("11", "Unknown (value 11)", "Unknown"),
+                 ("12", "Unknown (value 12)", "Unknown"),
+                 ("13", "Unknown (value 13)", "Unknown"),
+                 ("14", "Unknown (value 13)", "Unknown"),
+                 ("15", "Unknown (value 13)", "Unknown")
                  ] 
 
 particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a configureable direction with a configurable spread"), 
