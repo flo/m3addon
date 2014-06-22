@@ -1015,6 +1015,7 @@
                     <bit mask="0x4" name="textureWrapX" />
                     <bit mask="0x8" name="textureWrapY" />
                     <bit mask="0x10" name="invertColor" />
+                    <bit mask="0x20" name="clampColor" />
                     <bit mask="0x400" name="colorEnabled" />
                 </bits>
             </field>
