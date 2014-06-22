@@ -38,7 +38,7 @@ class ChangeLogCreator:
         try:
             previousModelModiticationTime = os.path.getmtime(self.modelFileName)
             self.log("Log file started at %s" % time.ctime(previousModelModiticationTime))
-            previousModel = m3.loadModel(self.modelFileName)
+            previousModel = m3.loadModel(self.modelFileName, checkExpectedValue=False)
             while True:
                 currentModelModificationTime = os.path.getmtime(self.modelFileName)
                 if currentModelModificationTime > previousModelModiticationTime:

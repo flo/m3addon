@@ -40,9 +40,9 @@ class Section:
     def __init__(self):
         self.timesReferenced = 0
     
-    def determineContentField(self):
+    def determineContentField(self, checkExpectedValue):
         indexEntry = self.indexEntry
-        self.content = self.structureDescription.createInstances(buffer=self.rawBytes, count=indexEntry.repetitions)
+        self.content = self.structureDescription.createInstances(buffer=self.rawBytes, count=indexEntry.repetitions, checkExpectedValue=checkExpectedValue)
 
     def determineFieldRawBytes(self):
         minRawBytes = self.determineRawBytesWithData()
@@ -146,10 +146,10 @@ class M3StructureDescription:
             nameToFieldMap[field.name] = field
         self.nameToFieldMap = nameToFieldMap
 
-    def createInstance(self, buffer=None, offset=0):
-        return M3Structure(self, buffer, offset)
+    def createInstance(self, buffer=None, offset=0, checkExpectedValue=True):
+        return M3Structure(self, buffer, offset, checkExpectedValue)
 
-    def createInstances(self, buffer, count, offset=0):
+    def createInstances(self, buffer, count, offset=0, checkExpectedValue=True):
         if self.isPrimitive:
             if self.structureName == "CHAR":
                 return buffer[:count-1].decode("ASCII")
@@ -167,7 +167,7 @@ class M3StructureDescription:
             list = []
             instanceOffset = 0
             for i in range(count):
-                list.append(self.createInstance(buffer=buffer, offset=instanceOffset));
+                list.append(self.createInstance(buffer=buffer, offset=instanceOffset, checkExpectedValue=checkExpectedValue));
                 instanceOffset += self.size
             return list
     
@@ -229,11 +229,11 @@ class M3StructureDescription:
 
 class M3Structure:
     
-    def __init__(self, structureDescription, buffer=None, offset=0):
+    def __init__(self, structureDescription, buffer=None, offset=0, checkExpectedValue=True):
         self.structureDescription = structureDescription
 
         if buffer != None:
-            self.readFromBuffer(buffer, offset)
+            self.readFromBuffer(buffer, offset, checkExpectedValue)
         else:
             for field in self.structureDescription.fields:
                 field.setToDefault(self)
@@ -248,10 +248,10 @@ class M3Structure:
         for field in self.structureDescription.fields:
             field.resolveIndexReferences(self, sections)
         
-    def readFromBuffer(self, buffer, offset):
+    def readFromBuffer(self, buffer, offset, checkExpectedValue):
         fieldOffset = offset
         for field in self.structureDescription.fields:
-            field.readFromBuffer(self, buffer, fieldOffset)
+            field.readFromBuffer(self, buffer, fieldOffset, checkExpectedValue)
             fieldOffset += field.size
         assert fieldOffset - offset == self.structureDescription.size
     
@@ -302,7 +302,7 @@ class TagField(Field):
         self.structFormat = struct.Struct("<4B")
         self.size = 4
     
-    def readFromBuffer(self, owner, buffer, offset):
+    def readFromBuffer(self, owner, buffer, offset, checkExpectedValue):
         b = self.structFormat.unpack_from(buffer, offset)
         if b[3] == 0:
             s = chr(b[2]) + chr(b[1]) + chr(b[0])
@@ -401,8 +401,8 @@ class ReferenceField(Field):
         #    raise Exception("Expected a list to contain a object of a class with tagName %s, but it contained a object of class %s with tagName %s" % (tagName, contentClass, contentClass.tagName))
         return firstElement.structureDescription
 
-    def readFromBuffer(self, owner, buffer, offset):
-        referenceObject = self.referenceStructureDescription.createInstance(buffer, offset)
+    def readFromBuffer(self, owner, buffer, offset, checkExpectedValue):
+        referenceObject = self.referenceStructureDescription.createInstance(buffer, offset, checkExpectedValue)
         setattr(owner, self.name, referenceObject)
  
     def writeToBuffer(self, owner, buffer, offset):
@@ -517,9 +517,9 @@ class EmbeddedStructureField(Field):
         emeddedStructure = getattr(owner, self.name)
         return emeddedStructure.toBytes()
         
-    def readFromBuffer(self, owner, buffer, offset):
+    def readFromBuffer(self, owner, buffer, offset, checkExpectedValue):
         
-        referenceObject = self.structureDescription.createInstance(buffer, offset)
+        referenceObject = self.structureDescription.createInstance(buffer, offset, checkExpectedValue)
         setattr(owner, self.name, referenceObject)
     
     def writeToBuffer(self, owner, buffer, offset):
@@ -545,7 +545,7 @@ class PrimitiveField(Field):
         self.defaultValue = defaultValue
         self.expectedValue = expectedValue
 
-    def readFromBuffer(self, owner, buffer, offset):
+    def readFromBuffer(self, owner, buffer, offset, checkExpectedValue):
         value = self.structFormat.unpack_from(buffer, offset)[0]
         if self.expectedValue != None and value != self.expectedValue:
             structureName = owner.structureDescription.structureName
@@ -607,11 +607,11 @@ class Fixed8Field(PrimitiveField):
     def __init__(self, name, typeString, sinceVersion, tillVersion, defaultValue, expectedValue):
         PrimitiveField.__init__(self, name, typeString, sinceVersion, tillVersion, defaultValue, expectedValue)
 
-    def readFromBuffer(self, owner, buffer, offset):
+    def readFromBuffer(self, owner, buffer, offset, checkExpectedValue):
         intValue = self.structFormat.unpack_from(buffer, offset)[0]
         floatValue =  ((intValue / 255.0 * 2.0) -1) 
         
-        if self.expectedValue != None and floatValue != self.expectedValue:
+        if checkExpectedValue and self.expectedValue != None and floatValue != self.expectedValue:
             structureName = owner.structureDescription.structureName
             structureVersion = owner.structureDescription.structureVersion
             raise Exception("Expected that field %s of %s (V. %d) has always the value %s, but it was %s" % (self.name, structureName, structureVersion, self.expectedValue, intValue))
@@ -638,9 +638,9 @@ class UnknownBytesField(Field):
         self.expectedValue = expectedValue
         assert self.structFormat.size == self.size
 
-    def readFromBuffer(self, owner, buffer, offset):
+    def readFromBuffer(self, owner, buffer, offset, checkExpectedValue):
         value = self.structFormat.unpack_from(buffer, offset)[0]
-        if self.expectedValue != None and value != self.expectedValue:
+        if checkExpectedValue and self.expectedValue != None and value != self.expectedValue:
             raise Exception("Expected that %sV%s.%s has always the value %s, but it was %s" % (owner.structureDescription.structureName, owner.structureDescription.structureVersion, self.name, self.expectedValue, value))
 
         setattr(owner, self.name, value)
@@ -1073,12 +1073,12 @@ def resolveAllReferences(list, sections):
             for entry in sublist:
                 entry.resolveReferences(sections)
 
-def loadSections(filename):
+def loadSections(filename, checkExpectedValue=True):
     source = open(filename, "rb")
     try:
         MD34V11 = structures["MD34"].getVersion(11)
         headerBytes = source.read(MD34V11.size)
-        header = MD34V11.createInstance(headerBytes);
+        header = MD34V11.createInstance(headerBytes, checkExpectedValue=checkExpectedValue)
         
         source.seek(header.indexOffset)
         MD34IndexEntryV0 = structures["MD34IndexEntry"].getVersion(0)
@@ -1086,7 +1086,7 @@ def loadSections(filename):
         for i in range(header.indexSize):
             section = Section()
             indexEntryBytes = source.read(MD34IndexEntryV0.size)
-            section.indexEntry = MD34IndexEntryV0.createInstance(indexEntryBytes)
+            section.indexEntry = MD34IndexEntryV0.createInstance(indexEntryBytes, checkExpectedValue=checkExpectedValue)
             sections.append(section)
         
         offsets = []
@@ -1116,7 +1116,7 @@ def loadSections(filename):
 
             if structureDescription != None:
                 section.structureDescription = structureDescription
-                section.determineContentField()
+                section.determineContentField(checkExpectedValue)
             else:
                 guessedUnusedSectionBytes = 0
                 for i in range (1,16):
@@ -1172,8 +1172,8 @@ def checkThatAllSectionsGotReferenced(sections):
     if numberOfUnreferencedSections > 0:
         raise Exception("Unable to load all data: There were %d unreferenced sections. View log for details" % numberOfUnreferencedSections)
 
-def loadModel(filename):
-    sections = loadSections(filename)
+def loadModel(filename, checkExpectedValue=True):
+    sections = loadSections(filename, checkExpectedValue)
     resolveReferencesOfSections(sections)
     checkThatAllSectionsGotReferenced(sections)
     header = sections[0].content[0]
