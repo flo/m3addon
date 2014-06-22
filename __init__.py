@@ -1050,20 +1050,24 @@ physicsShapeTypeList = [("0", "Box", "Box shape with the given width, length and
 
 uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole image UVs for particles"),
                  ("1", "UV Layer 2", "Second UV layer which can be used for decals"),
-                 ("2", "UV Layer 3", "Third UV layer"),
-                 ("3", "UV Layer 4", "Fourth UV layer?"),
-                 ("4", "Unknown (value 4)", "Unknown"),
-                 ("5", "Unknown (value 5)", "Unknown"),
+                 ("2", "Ref Cubic Env", "For Env. Layer: Reflective Cubic Environment"),
+                 ("3", "Ref Spherical Env", "For Env. Layer: Reflective Spherical Environemnt"),
+                 ("4", "Planar Local z", "Planar Local z"),
+                 ("5", "Planar World z", "Planar World z"),
                  ("6", "Animated Particle UV", "The texture gets divided as specified by the particle system to create multiple small image frames which play then as an animation"),
-                 ("7", "Unknown (value 7)", "Unknown"),
-                 ("8", "Unknown (value 8)", "Unknown"),
-                 ("9", "Unknown (value 9)", "Unknown"),
-                 ("10", "Unknown (value 10)", "Unknown"),
-                 ("11", "Unknown (value 11)", "Unknown"),
-                 ("12", "Unknown (value 12)", "Unknown"),
-                 ("13", "Unknown (value 13)", "Unknown"),
-                 ("14", "Unknown (value 13)", "Unknown"),
-                 ("15", "Unknown (value 13)", "Unknown")
+                 ("7", "Cubic Environment", "For Env. Layer: Cubic Environment"),
+                 ("8", "Spherical Environment", "For Env. Layer: Spherical Environment"),
+                 ("9", "UV Layer 3", "UV Layer 3"),
+                 ("10", "UV Layer 4", "UV Layer 4"),
+                 ("11", "Planar Local X", "Planar Local X"),
+                 ("12", "Planar Local Y", "Planar Local Y"),
+                 ("13", "Planar World X", "Planar World X"),
+                 ("14", "Planar World Y", "Planar World Y"),
+                 ("15", "Screen space", "Screen space"),
+                 ("16", "Tri Planar World", "Tri Planar World"),
+                 ("17", "Tri Planar World Local", "Tri Planar Local"),
+                 ("18", "Tri Planar World Local Z", "Tri Planar World Local Z
+")
                  ] 
 
 particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a configureable direction with a configurable spread"), 
