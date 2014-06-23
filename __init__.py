@@ -1066,8 +1066,7 @@ uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole imag
                  ("15", "Screen space", "Screen space"),
                  ("16", "Tri Planar World", "Tri Planar World"),
                  ("17", "Tri Planar World Local", "Tri Planar Local"),
-                 ("18", "Tri Planar World Local Z", "Tri Planar World Local Z
-")
+                 ("18", "Tri Planar World Local Z", "Tri Planar World Local Z")
                  ] 
 
 particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a configureable direction with a configurable spread"), 
