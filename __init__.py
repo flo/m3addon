@@ -1300,8 +1300,8 @@ class M3StandardMaterial(bpy.types.PropertyGroup):
     
     depthBlendFalloff = bpy.props.FloatProperty(name="depth blend falloff", options=set(), update=handleDepthBlendFalloffChanged, default=0.0)
     useDepthBlendFalloff = bpy.props.BoolProperty(options=set(), update=handleUseDepthBlendFalloffChanged, description="Should be true for particle system materials", default=False)
-    unknownFlag0x4 = bpy.props.BoolProperty(options=set(), description="Makes mesh materials turn black but should be set for particle systems", default=False)
-    unknownFlag0x8 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=False)
+    useVertexColor = bpy.props.BoolProperty(options=set(), description="The vertex color layer named color will be used to tint the model", default=False)
+    useVertexAlpha = bpy.props.BoolProperty(options=set(), description="The vertex color layer named alpha, will be used to determine the alpha of the model", default=False)
     unknownFlag0x200 = bpy.props.BoolProperty(options=set())
 
 class M3DisplacementMaterial(bpy.types.PropertyGroup):
@@ -1949,8 +1949,8 @@ def displayMaterialPropertiesUI(scene, layout, materialReference):
             row.active = material.useDepthBlendFalloff
             row.prop(material, 'depthBlendFalloff', text="")
             
-            layout.prop(material, 'unknownFlag0x4', text="unknownFlag0x4")
-            layout.prop(material, 'unknownFlag0x8', text="unknownFlag0x8")
+            layout.prop(material, 'useVertexColor', text="Use Vertex Color")
+            layout.prop(material, 'useVertexAlpha', text="Use Vertex Alpha")
             layout.prop(material, 'unknownFlag0x200', text="unknownFlag0x200")
             layout.prop(material, 'unfogged', text="Unfogged")
             layout.prop(material, 'twoSided', text="Two Sided")

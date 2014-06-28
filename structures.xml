@@ -391,7 +391,7 @@
         </fields>
     </structure>
     <structure name="VertexFormat0x182027d">
-        <description>Vertex with one UV coordinate and an unknown field</description>
+        <description>Vertex with one UV coordinate and vertex color</description>
         <versions>
             <version number="0" size="36" />
         </versions>
@@ -407,7 +407,7 @@
             <field name="boneLookupIndex3" type="uint8" default-value="0" />
             <field name="normal" type="Vector3As3Fixed8V0" />
             <field name="sign" type="fixed8" />
-            <field name="unknown" type="uint32" default-value="0xffffffff"/>
+            <field name="color" type="COLV0" />
             <field name="uv0" type="Vector2As2int16V0" />
             <field name="tangent" type="Vector3As3Fixed8V0" />
             <field name="unused" type="fixed8" default-value="1.0" /> <!-- Can be -1.0 in old 3ds max exporter files -->
@@ -459,7 +459,7 @@
         </fields>
     </structure>
     <structure name="VertexFormat0x186027d" >
-        <description>Vertex with two UV coordinates and one unknown</description>
+        <description>Vertex with two UV coordinates and vertex color</description>
         <versions>
             <version number="0" size="40" />
         </versions>
@@ -475,7 +475,7 @@
             <field name="boneLookupIndex3" type="uint8" default-value="0" />
             <field name="normal" type="Vector3As3Fixed8V0" />
             <field name="sign" type="fixed8" />
-            <field name="unknown" type="uint32" expected-value="0xffffffff"/>
+            <field name="color" type="COLV0" />
             <field name="uv0" type="Vector2As2int16V0" />
             <field name="uv1" type="Vector2As2int16V0" />
             <field name="tangent" type="Vector3As3Fixed8V0" />
@@ -1087,13 +1087,23 @@
             <field name="additionalFlags" type="uint32" default-value="0">
                 <bits>
                     <bit mask="0x1" name="useDepthBlendFalloff" /> <!-- always set if depthBlendFalloff is != 0.0 -->
-                    <bit mask="0x4" name="unknownFlag0x4" />
-                    <bit mask="0x8" name="unknownFlag0x8" />
+                    <bit mask="0x4" name="makesUseOfVertexColor" /> <!-- calculated value: based on the flag useVertexColor. It is always set if the material is used by a particle system. -->
+                    <bit mask="0x8" name="makesUseOfVertexAlpha" /> <!-- Calculated value: based on the flag useVertexColor and the particle flag makesUseOfVertexAlpha -->
                     <bit mask="0x200" name="unknownFlag0x200" />
                 </bits>
             </field>     
             <field name="flags" type="uint32" default-value="0" >
                 <bits>
+                    <!-- if useVertexColor is set, the following flags need also to be set:
+                      * makesUseOfVertexColor of the additionaFlags field
+                      * hasVertexColors of the vFlags field of the model
+                    -->
+                    <bit mask="0x1" name="useVertexColor" /> 
+                    <!-- if useVertexAlpha is set, the following flags need also to be set:
+                      * makesUseOfVertexAlpha of the additionaFlags field
+                      * hasVertexColors of the vFlags field of the model
+                    -->
+                    <bit mask="0x2" name="useVertexAlpha" />
                     <bit mask="0x4" name="unfogged" />
                     <bit mask="0x8" name="twoSided" />
                     <bit mask="0x10" name="unshaded" />
@@ -2144,6 +2154,7 @@
             <field name="numberOfBonesToCheckForSkin" type="uint32" />
             <field name="vFlags" type="uint32" default-value="0x180007d" >
                 <bits>
+                    <bit mask="0x200" name="hasVertexColors" />
                     <bit mask="0x20000" name="hasVertices" />
                     <bit mask="0x40000" name="useUVChannel1" />
                     <bit mask="0x80000" name="useUVChannel2" />

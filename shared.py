@@ -1153,6 +1153,8 @@ def transferPhysicsShape(transferer):
     transferer.transferFloat("size2")
 
 def transferStandardMaterial(transferer):
+    transferer.transferBit("flags", "useVertexColor")
+    transferer.transferBit("flags", "useVertexAlpha")
     transferer.transferBit("flags", "unfogged")
     transferer.transferBit("flags", "twoSided")
     transferer.transferBit("flags", "unshaded")
@@ -1172,8 +1174,6 @@ def transferStandardMaterial(transferer):
     # the depthBlendFalloff to 0.2 and thus fixes the combination
     transferer.transferFloat("depthBlendFalloff")
     transferer.transferBit("additionalFlags", "useDepthBlendFalloff")
-    transferer.transferBit("additionalFlags", "unknownFlag0x4")
-    transferer.transferBit("additionalFlags", "unknownFlag0x8")
     transferer.transferBit("additionalFlags", "unknownFlag0x200")
     transferer.transferEnum("blendMode")
     transferer.transferInt("priority")
