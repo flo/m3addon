@@ -1084,7 +1084,7 @@
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR" />
-            <field name="unknownFlags" type="uint32" default-value="0">
+            <field name="additionalFlags" type="uint32" default-value="0">
                 <bits>
                     <bit mask="0x1" name="unknownFlag0x1" />
                     <bit mask="0x4" name="unknownFlag0x4" />
