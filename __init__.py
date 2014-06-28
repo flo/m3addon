@@ -300,6 +300,26 @@ def handleCameraNameChange(self, context):
             bone.name = self.name
     self.oldName = self.name
 
+def handleDepthBlendFalloffChanged(self, context):
+    material = self
+    if material.depthBlendFalloff <= 0.0:
+        if material.useDepthBlendFalloff:
+            material.useDepthBlendFalloff = False
+    else:
+        if not material.useDepthBlendFalloff:
+            material.useDepthBlendFalloff = True
+    
+def handleUseDepthBlendFalloffChanged(self, context):
+    material = self
+    if material.useDepthBlendFalloff:
+        if material.depthBlendFalloff <= 0.0:
+            material.depthBlendFalloff = shared.defaultDepthBlendFalloff
+    else:
+        if material.depthBlendFalloff != 0.0:
+            material.depthBlendFalloff = 0.0
+    
+
+
 def handleMaterialNameChange(self, context):
     scene = context.scene
     materialName = self.name
@@ -937,7 +957,8 @@ def createMaterial(scene, materialName, defaultSetting):
             material.noHitTest = True
             material.noShadowsReceived = True
             material.forParticles = True
-            material.unknownFlag0x1 = True
+            material.useDepthBlendFalloff = True
+            material.depthBlendFalloff = shared.defaultDepthBlendFalloff
             material.unknownFlag0x2 = True
             material.unknownFlag0x8 = True
     elif defaultSetting == defaultSettingDisplacement:
@@ -1276,7 +1297,9 @@ class M3StandardMaterial(bpy.types.PropertyGroup):
     softBlending = bpy.props.BoolProperty(options=set(), default=False)
     forParticles = bpy.props.BoolProperty(options=set(), default=False)
     darkNormalMapping = bpy.props.BoolProperty(options=set(), default=False)
-    unknownFlag0x1 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=False)
+    
+    depthBlendFalloff = bpy.props.FloatProperty(name="depth blend falloff", options=set(), update=handleDepthBlendFalloffChanged, default=0.0)
+    useDepthBlendFalloff = bpy.props.BoolProperty(options=set(), update=handleUseDepthBlendFalloffChanged, description="Should be true for particle system materials", default=False)
     unknownFlag0x4 = bpy.props.BoolProperty(options=set(), description="Makes mesh materials turn black but should be set for particle systems", default=False)
     unknownFlag0x8 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=False)
     unknownFlag0x200 = bpy.props.BoolProperty(options=set())
@@ -1919,7 +1942,13 @@ def displayMaterialPropertiesUI(scene, layout, materialReference):
             layout.prop(material, 'layerBlendType', text="Layer Blend Type")
             layout.prop(material, 'emisBlendType', text="Emis. Blend Type")
             layout.prop(material, 'specType', text="Spec. Type")
-            layout.prop(material, 'unknownFlag0x1', text="unknownFlag0x1")
+           
+            split = layout.split(percentage=0.7)
+            split.prop(material, 'useDepthBlendFalloff', text="Depth Blend Falloff:")
+            row = split.row()
+            row.active = material.useDepthBlendFalloff
+            row.prop(material, 'depthBlendFalloff', text="")
+            
             layout.prop(material, 'unknownFlag0x4', text="unknownFlag0x4")
             layout.prop(material, 'unknownFlag0x8', text="unknownFlag0x8")
             layout.prop(material, 'unknownFlag0x200', text="unknownFlag0x200")

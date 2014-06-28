@@ -1086,7 +1086,7 @@
             <field name="name" type="Reference" refTo="CHAR" />
             <field name="additionalFlags" type="uint32" default-value="0">
                 <bits>
-                    <bit mask="0x1" name="unknownFlag0x1" />
+                    <bit mask="0x1" name="useDepthBlendFalloff" /> <!-- always set if depthBlendFalloff is != 0.0 -->
                     <bit mask="0x4" name="unknownFlag0x4" />
                     <bit mask="0x8" name="unknownFlag0x8" />
                     <bit mask="0x200" name="unknownFlag0x200" />
@@ -1123,7 +1123,7 @@
                </bits>
             </field>
             <field name="specularity" type="float" />
-            <field name="unknown2" type="float" default-value="0.0" />
+            <field name="depthBlendFalloff" type="float" default-value="0.0" /> <!-- Only used if the bit useDepthBlendFalloff of additionalFlags is set, typically set for particle systems -->
             <field name="cutoutThresh" type="uint8" default-value="0" />
             <field name="unknownAt41" size="3" expected-value="0x000000" />
             <field name="specMult" type="float" default-value="1.0" />

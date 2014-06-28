@@ -54,6 +54,8 @@ lightTypePoint = "1"
 lightTypeSpot = "2"
 
 
+defaultDepthBlendFalloff = 0.2 # default if it is enabled
+
 tightHitTestBoneName = "HitTestTight"
 
 rotFixMatrix = mathutils.Matrix((( 0, 1, 0, 0,),
@@ -1163,7 +1165,13 @@ def transferStandardMaterial(transferer):
     transferer.transferBit("flags", "softBlending")
     transferer.transferBit("flags", "forParticles")
     transferer.transferBit("flags", "darkNormalMapping")
-    transferer.transferBit("additionalFlags", "unknownFlag0x1")
+    # depthBlendFalloff needs to be transfered before useDepthBlendFalloff:
+    # That way a corrupted model with useDepthBlendFalloff=true 
+    # but depthBlendFalloff==0.0 will be fixed: 
+    # When the flag gets set in the blender material it sets
+    # the depthBlendFalloff to 0.2 and thus fixes the combination
+    transferer.transferFloat("depthBlendFalloff")
+    transferer.transferBit("additionalFlags", "useDepthBlendFalloff")
     transferer.transferBit("additionalFlags", "unknownFlag0x4")
     transferer.transferBit("additionalFlags", "unknownFlag0x8")
     transferer.transferBit("additionalFlags", "unknownFlag0x200")
