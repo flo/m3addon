@@ -1296,7 +1296,18 @@ class M3StandardMaterial(bpy.types.PropertyGroup):
     splatUVfix = bpy.props.BoolProperty(options=set(), default=False)
     softBlending = bpy.props.BoolProperty(options=set(), default=False)
     forParticles = bpy.props.BoolProperty(options=set(), default=False)
+    transparency = bpy.props.BoolProperty(options=set(), default=False)
+    disableSoft = bpy.props.BoolProperty(options=set(), default=False)
     darkNormalMapping = bpy.props.BoolProperty(options=set(), default=False)
+    decalRequiredOnLowEnd = bpy.props.BoolProperty(options=set(), default=False)
+    acceptSplats = bpy.props.BoolProperty(options=set(), default=False)
+    acceptSplatsOnly = bpy.props.BoolProperty(options=set(), default=False)
+    emissiveRequiredOnLowEnd = bpy.props.BoolProperty(options=set(), default=False)
+    backgroundObject = bpy.props.BoolProperty(options=set(), default=False)
+    zpFillRequiredOnLowEnd = bpy.props.BoolProperty(options=set(), default=False)
+    excludeFromHighlighting = bpy.props.BoolProperty(options=set(), default=False)
+    clampOutput = bpy.props.BoolProperty(options=set(), default=False)
+    geometryVisible = bpy.props.BoolProperty(options=set(), default=True)
     
     depthBlendFalloff = bpy.props.FloatProperty(name="depth blend falloff", options=set(), update=handleDepthBlendFalloffChanged, default=0.0)
     useDepthBlendFalloff = bpy.props.BoolProperty(options=set(), update=handleUseDepthBlendFalloffChanged, description="Should be true for particle system materials", default=False)
@@ -1963,7 +1974,29 @@ def displayMaterialPropertiesUI(scene, layout, materialReference):
             layout.prop(material, 'splatUVfix', text="Splat UV Fix")
             layout.prop(material, 'softBlending', text="Soft Blending")
             layout.prop(material, 'forParticles', text="For Particles (?)")
+            layout.prop(material, 'transparency', text="Transparency")
+            layout.prop(material, 'disableSoft', text="Disable Soft")
             layout.prop(material, 'darkNormalMapping', text="Dark Normal Mapping")
+            split = layout.split(percentage=0.6)
+            split.prop(material, 'acceptSplats', text="Accept Splats:")
+            row = split.row()
+            row.active = material.acceptSplats
+            row.prop(material, 'acceptSplatsOnly', text="Only")
+            layout.prop(material, 'backgroundObject', text="Background Object")
+            layout.prop(material, 'excludeFromHighlighting', text="No Highlighting")
+            layout.prop(material, 'clampOutput', text="Clamp Output")
+            layout.prop(material, 'geometryVisible', text="Geometry Visible")
+
+
+            split = layout.split(align=True)
+            split.label("Required On Low End:")
+
+            box = layout.box()
+            col = box.column_flow()
+            col.prop(material, 'decalRequiredOnLowEnd', text="Decal")
+            col.prop(material, 'emissiveRequiredOnLowEnd', text="Emissive")
+            col.prop(material, 'zpFillRequiredOnLowEnd', text="ZP Fill")
+            
         elif materialType == shared.displacementMaterialTypeIndex:
             material = scene.m3_displacement_materials[materialIndex]
             layout.prop(material, 'name', text="Name")
