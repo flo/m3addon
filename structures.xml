@@ -1041,9 +1041,9 @@
             <field name="unknowna56066e9" size="8" expected-value="0x0000000000000000" />
             <field name="unknownbc0c14e5" type="UInt32AnimationReference" />
             <field name="unknowne740df12" type="FloatAnimationReference" />
-            <field name="unknowne343f1b0" type="uint32" default-value="0" />
-            <field name="unknown99d81c2c" type="uint32" default-value="0" />
-            <field name="unknown39ade219" type="UInt16AnimationReference" />
+            <field name="flipBookRows" type="uint32" default-value="0" />
+            <field name="flipBookColumns" type="uint32" default-value="0" />
+            <field name="flipBookFrame" type="UInt16AnimationReference" />
             <field name="uvOffset" type="Vector2AnimationReferenceV0" />
             <field name="uvAngle" type="Vector3AnimationReferenceV0" />
             <field name="uvTiling" type="Vector2AnimationReferenceV0" />

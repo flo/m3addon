@@ -274,6 +274,9 @@ class M3ToBlenderDataTransferer:
     def transferAnimatableInt16(self, fieldName):
         self.transferAnimatableInteger(fieldName)
 
+    def transferAnimatableUInt16(self, fieldName):
+        self.transferAnimatableInteger(fieldName)
+
     def transferAnimatableUInt32(self, fieldName):
         self.transferAnimatableInteger(fieldName)
 

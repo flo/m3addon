@@ -102,6 +102,7 @@ class Exporter:
         self.structureVersionMap["SD4Q"] = 0
         self.structureVersionMap["SD3V"] = 0
         self.structureVersionMap["SDEV"] = 0
+        self.structureVersionMap["SDU6"] = 0
         self.structureVersionMap["VertexFormat0x182027d"] = 0
         self.structureVersionMap["VertexFormat0x182007d"] = 0
         self.structureVersionMap["VertexFormat0x186007d"] = 0
@@ -1367,6 +1368,10 @@ class Exporter:
             sds6Index = len(m3SequenceTransformationCollection.sds6)
             m3SequenceTransformationCollection.sds6.append(animData)
             animRef = 0x70000 + sds6Index
+        elif animDataType == "SDU6":
+            sdu6Index = len(m3SequenceTransformationCollection.sdu6)
+            m3SequenceTransformationCollection.sdu6.append(animData)
+            animRef = 0x80000 + sdu6Index
         elif animDataType == "SDMB":
             sdmbIndex = len(m3SequenceTransformationCollection.sdmb)
             m3SequenceTransformationCollection.sdmb.append(animData)
@@ -2390,8 +2395,15 @@ class BlenderToM3DataTransferer:
 
     def transferAnimatableInt16(self, fieldName):
         def toInt16Value(value):
-            return min((1<<16)-1,  max(0, round(value)))
+            return min((1<<15)-1,  max(-(1<<15), round(value)))
         self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="Int16AnimationReference", animRefFlags=0, animDataClass="SDS6", convertMethod=toInt16Value)
+
+
+    def transferAnimatableUInt16(self, fieldName):
+        def toUInt16Value(value):
+            return min((1<<16)-1,  max(0, round(value)))
+        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="UInt16AnimationReference", animRefFlags=0, animDataClass="SDU6", convertMethod=toUInt16Value)
+
 
     def transferAnimatableUInt32(self, fieldName):
         #TODO Test this method once the purpose of an animated int32 field is known
