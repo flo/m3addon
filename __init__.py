@@ -3520,7 +3520,7 @@ class M3_ANIMATIONS_OT_STC_assign(bpy.types.Operator):
                 #Remove selected properties from the other STCs:
                 longAnimIds = set()
                 for animatedProperty in stc.animatedProperties:
-                    longAnimIds.add(longAnimIds.longAnimId)
+                    longAnimIds.add(animatedProperty.longAnimId)
                 longAnimIds = longAnimIds - selectedLongAnimIds
                 stc.animatedProperties.clear()
                 for longAnimId in longAnimIds:
