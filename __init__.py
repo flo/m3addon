@@ -2101,18 +2101,28 @@ def displayMaterialLayersUI(scene, layout, materialReference):
         if layerIndex >= 0 and layerIndex < len(material.layers):
             layer = material.layers[layerIndex]
             layout.prop(layer, 'imagePath', text="Image Path")
-            layout.prop(layer, 'uvSource', text="UV Source")
             layout.prop(layer, 'unknownbd3f7b5d', text="Unknown (id: bd3f7b5d)")
-            layout.prop(layer, 'textureWrapX', text="Tex. Wrap X")
-            layout.prop(layer, 'textureWrapY', text="Tex. Wrap Y")
-            layout.prop(layer, 'invertColor', text="Invert Color")
-            layout.prop(layer, 'clampColor', text="Clamp Color")
+            
+            layout.prop(layer, 'uvSource', text="UV Source")
+            isTriPlanarUVSource = layer.uvSource in ["16","17","18"]
+
+            row = layout.row(align=True)
+            row.active = not isTriPlanarUVSource
+            row.prop(layer, 'textureWrapX', text="Tex. Wrap X")
+            row.prop(layer, 'textureWrapY', text="Tex. Wrap Y")
+            
+            row = layout.row(align=True)
+            row.prop(layer, 'invertColor', text="Invert Color")
+            row.prop(layer, 'clampColor', text="Clamp Color")
+            
             layout.prop(layer, 'colorChannelSetting', text="Color Channels")
-            layout.prop(layer, 'useTint', text="Use Tint")
-            layout.prop(layer, 'tintAlpha', text="Tint Alpha")
-            layout.prop(layer, 'tintStrength', text="Tint Strength")
-            layout.prop(layer, 'tintStart', text="Tint Start")
-            layout.prop(layer, 'tintCutout', text="Tint Cutout")
+            row = layout.row(align=True)
+            row.prop(layer, 'useTint', text="Use Tint")
+            row.prop(layer, 'tintAlpha', text="Tint Alpha")
+            col = layout.column(align=True)
+            col.prop(layer, 'tintStrength', text="Tint Strength")
+            col.prop(layer, 'tintStart', text="Tint Start")
+            col.prop(layer, 'tintCutout', text="Tint Cutout")
             split = layout.split()
             row = split.row()
             row.prop(layer, 'colorEnabled', text="Color:")
@@ -2120,38 +2130,31 @@ def displayMaterialLayersUI(scene, layout, materialReference):
             sub.active = layer.colorEnabled
             sub.prop(layer, 'color', text="")
             
-                                
-            split = layout.split()
-            col = split.column()
+            
+            col = layout.column_flow(columns=2)
             sub = col.column(align=True)
+            sub.active = not isTriPlanarUVSource
             sub.label(text="UV Offset:")
             sub.prop(layer, "uvOffset", text="X", index=0)
             sub.prop(layer, "uvOffset", text="Y", index=1)
 
-            split = layout.split()
-            col = split.column()
+
             sub = col.column(align=True)
+            sub.active = not isTriPlanarUVSource
+            sub.label(text="UV Tiling:")
+            sub.prop(layer, "uvTiling", text="X", index=0)
+            sub.prop(layer, "uvTiling", text="Y", index=1)
+           
+
+            sub = col.column(align=True)
+            sub.active = not isTriPlanarUVSource
             sub.label(text="UV Angle:")
             sub.prop(layer, "uvAngle", text="X", index=0)
             sub.prop(layer, "uvAngle", text="Y", index=1)
             sub.prop(layer, "uvAngle", text="Z", index=2)
 
-            split = layout.split()
-            col = split.column()
-            sub = col.column(align=True)
-            sub.label(text="UV Tiling:")
-            sub.prop(layer, "uvTiling", text="X", index=0)
-            sub.prop(layer, "uvTiling", text="Y", index=1)
-            
-            split = layout.split()
-            col = split.column()
-            sub = col.column(align=True)
-            sub.label(text="Flipbook:")
-            sub.prop(layer, "flipBookRows", text="Rows")
-            sub.prop(layer, "flipBookColumns", text="Columns")
-            sub.prop(layer, "flipBookFrame", text="Frame")
-            
             row = layout.row()
+            row.active = isTriPlanarUVSource
             sub = row.column(align=True)
             sub.label(text="Tri Planar Offset:")
             sub.prop(layer, "triPlanarOffset", index=0, text="X")
@@ -2162,6 +2165,14 @@ def displayMaterialLayersUI(scene, layout, materialReference):
             sub.prop(layer, "triPlanarScale", index=0, text="X")
             sub.prop(layer, "triPlanarScale", index=1, text="Y")
             sub.prop(layer, "triPlanarScale", index=2, text="Z")
+            
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Flipbook:")
+            sub.prop(layer, "flipBookRows", text="Rows")
+            sub.prop(layer, "flipBookColumns", text="Columns")
+            sub.prop(layer, "flipBookFrame", text="Frame")
             
             split = layout.split()
             col = split.column()
