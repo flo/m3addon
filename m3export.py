@@ -2411,7 +2411,9 @@ class BlenderToM3DataTransferer:
             return min((1<<32)-1,  max(0, round(value)))
         self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="UInt32AnimationReference", animRefFlags=0, animDataClass="FLAG", convertMethod=toUInt32Value)
 
-    def transferAnimatableVector3(self, fieldName):
+    def transferAnimatableVector3(self, fieldName, sinceVersion=None):
+        if (sinceVersion != None) and (self.m3Version < sinceVersion):
+            return
         animPath = self.animPathPrefix + fieldName
         animId = self.exporter.getAnimIdFor(self.objectIdForAnimId, animPath)
         animRef = self.exporter.createInstanceOf("Vector3AnimationReference")

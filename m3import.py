@@ -327,7 +327,9 @@ class M3ToBlenderDataTransferer:
             mask = 1 << bitIndex 
             vector[bitIndex] = (mask & integerValue) > 0   
     
-    def transferAnimatableVector3(self, fieldName):
+    def transferAnimatableVector3(self, fieldName, sinceVersion=None):
+        if (sinceVersion != None) and (self.m3Version < sinceVersion):
+            return
         animationReference = getattr(self.m3Object, fieldName)
         setattr(self.blenderObject, fieldName, toBlenderVector3(animationReference.initValue))
         animationHeader = animationReference.header

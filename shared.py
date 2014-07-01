@@ -1245,6 +1245,9 @@ def transferMaterialLayer(transferer):
     transferer.transferAnimatableVector2("uvOffset")
     transferer.transferAnimatableVector3("uvAngle")
     transferer.transferAnimatableVector2("uvTiling")
+    transferer.transferAnimatableVector3("triPlanarOffset", sinceVersion=24)
+    transferer.transferAnimatableVector3("triPlanarScale", sinceVersion=24)
+
     transferer.transferInt("flipBookRows")
     transferer.transferInt("flipBookColumns")
     transferer.transferAnimatableUInt16("flipBookFrame")

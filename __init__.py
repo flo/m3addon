@@ -1257,11 +1257,11 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     uvOffset = bpy.props.FloatVectorProperty(name="uv offset", default=(0.0, 0.0), size=2, subtype="XYZ", options={"ANIMATABLE"})
     uvAngle = bpy.props.FloatVectorProperty(name="uv offset", default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
     uvTiling = bpy.props.FloatVectorProperty(name="uv tiling", default=(1.0, 1.0), size=2, subtype="XYZ", options={"ANIMATABLE"})
-    
+    triPlanarOffset = bpy.props.FloatVectorProperty(name="tri planer offset", default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
+    triPlanarScale = bpy.props.FloatVectorProperty(name="tri planer scale", default=(1.0, 1.0, 1.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
     flipBookRows = bpy.props.IntProperty(name="flipBookRows", default=0, options=set())
     flipBookColumns = bpy.props.IntProperty(name="flipBookColumns", default=0, options=set())
     flipBookFrame = bpy.props.IntProperty(name="flipBookFrame", default=0, options={"ANIMATABLE"})
-
     midtoneOffset = bpy.props.FloatProperty(name="midtone offset", options={"ANIMATABLE"}, description="Can be used to make dark areas even darker so that only the bright regions remain")
     brightness = bpy.props.FloatProperty(name="brightness", options={"ANIMATABLE"}, default=1.0)
     rttChannel = bpy.props.EnumProperty(items=rttChannelList, options=set(), default="-1")
@@ -2150,6 +2150,18 @@ def displayMaterialLayersUI(scene, layout, materialReference):
             sub.prop(layer, "flipBookRows", text="Rows")
             sub.prop(layer, "flipBookColumns", text="Columns")
             sub.prop(layer, "flipBookFrame", text="Frame")
+            
+            row = layout.row()
+            sub = row.column(align=True)
+            sub.label(text="Tri Planar Offset:")
+            sub.prop(layer, "triPlanarOffset", index=0, text="X")
+            sub.prop(layer, "triPlanarOffset", index=1, text="Y")
+            sub.prop(layer, "triPlanarOffset", index=2, text="Z")
+            sub = row.column(align=True)
+            sub.label(text="Tri Planar Scale:")
+            sub.prop(layer, "triPlanarScale", index=0, text="X")
+            sub.prop(layer, "triPlanarScale", index=1, text="Y")
+            sub.prop(layer, "triPlanarScale", index=2, text="Z")
             
             split = layout.split()
             col = split.column()

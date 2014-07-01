@@ -1051,11 +1051,8 @@
             <field name="unknowna4ec0796" type="UInt32AnimationReference" />
             <field name="unknowna44bf452" type="FloatAnimationReference" />
             <field name="brightness" type="FloatAnimationReference" />            
-            <field name="unknown3c5929ac" type="AnimationReferenceHeader" since-version="24"/>
-            <field name="initOfUnknown3c5929ac" size="12" expected-value="0x000000000000000000000000" since-version="24" />
-            <field name="nullOfUnknown3c5929ac" size="12" expected-value="0x000000000000000000000000" since-version="24"/>
-            <field name="endOfUnknown3c5929ac" size="4" expected-value="0xffffffff" since-version="24"/>
-            <field name="unknownb52a8e82" type="Vector3AnimationReferenceV0" since-version="24"/> <!-- default (1.0, 1.0, 1.0)-->
+            <field name="triPlanarOffset" type="Vector3AnimationReferenceV0" since-version="24"/>
+            <field name="triPlanarScale" type="Vector3AnimationReferenceV0" since-version="24"/> <!-- default (1.0, 1.0, 1.0)-->
             <field name="unknownbd3f7b5d" type="int32" default-value="-1" />
             <field name="tintFlags" type="uint32" default-value="0">
                 <bits>
