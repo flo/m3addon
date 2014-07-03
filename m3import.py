@@ -1440,7 +1440,7 @@ class Importer:
                     modifier.use_edge_angle = False
 
                 if self.scene.m3_import_options.generateBlenderMaterials:
-                    shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject)
+                    shared.createBlenderMaterialForMeshObject(self.scene, meshObject)
 
     def setOriginToCenter(self, meshObject):
         bpy.ops.object.mode_set(mode='OBJECT')

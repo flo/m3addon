@@ -349,30 +349,48 @@ def findMeshObjects(scene):
     for currentObject in scene.objects:
         if currentObject.type == 'MESH':
             yield currentObject
+    
             
-            
+def convertM3UVSourceValueToUVLayerName(mesh, uvSource):
+    """ Can return None"""
+    if uvSource == "0":
+        uvLayerIndex = 0
+    elif uvSource == "1":
+        uvLayerIndex = 1
+    elif uvSource == "9":
+        uvLayerIndex = 2
+    elif uvSource == "10":
+        uvLayerIndex = 3
+    else:
+        return None
+    
+    if uvLayerIndex < len(mesh.uv_layers): 
+        return mesh.uv_layers[uvLayerIndex].name
+    else:
+        return None
 
-def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3Material, layerFieldName , directoryList):
-    blenderM3Layer = blenderM3Material.layers[getLayerNameFromFieldName(layerFieldName)]
-
+def createImageObjetForM3MaterialLayer(blenderM3Layer, directoryList):
     if blenderM3Layer == None:
-        return
+        return None
     
     if (blenderM3Layer.imagePath == "") or (blenderM3Layer.imagePath == None):
-        return
+        print ("no image path")
+        return None
     
     searchedImagePaths = []
     for directoryPath in directoryList:
         absoluteImagePath = path.join(directoryPath, blenderM3Layer.imagePath)
         searchedImagePaths.append(absoluteImagePath)
-        image = image_utils.load_image(absoluteImagePath)
-        if image != None:
-            break
-    if not image:
-        print("Failed to load a texture. The following paths have been searched: %s" % searchedImagePaths)
-        return
+        return image_utils.load_image(absoluteImagePath)
 
-    textureSlot = classicBlenderMaterial.texture_slots.add()
+    print("Failed to load a texture. The following paths have been searched: %s" % searchedImagePaths)
+    return None
+
+def createTextureObjectForM3MaterialLayer(blenderM3Layer, directoryList):
+    image = createImageObjetForM3MaterialLayer(blenderM3Layer, directoryList)
+    if not image:
+        return None
+
     texture = bpy.data.textures.new(blenderM3Layer.name, type='IMAGE')
     # Clamp options seem not to work
     # might be related to the following bug:
@@ -384,6 +402,14 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
         texture.extension = 'REPEAT'
     else:
         texture.extension = 'CLIP'
+    return texture
+
+def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3Material, layerFieldName , directoryList):
+    blenderM3Layer = blenderM3Material.layers[getLayerNameFromFieldName(layerFieldName)]
+
+    texture = createTextureObjectForM3MaterialLayer(blenderM3Layer, directoryList)
+    
+    textureSlot = classicBlenderMaterial.texture_slots.add()
     textureSlot.texture = texture
     textureSlot.texture_coords = 'UV'
     # There is no known scale field, but there might be one:
@@ -391,10 +417,9 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
     textureSlot.offset = (blenderM3Layer.uvOffset[0], blenderM3Layer.uvOffset[1], 0.0)
     textureSlot.use_map_color_diffuse = False
 
-    if blenderM3Layer.uvSource in ["0","1","2", "3"]:
-        uvIndex = int(blenderM3Layer.uvSource)
-        if uvIndex < len(mesh.uv_layers): 
-            textureSlot.uv_layer = mesh.uv_layers[uvIndex].name
+    uvLayerName = convertM3UVSourceValueToUVLayerName(mesh, blenderM3Layer.uvSource)
+    if uvLayerName != None: 
+        textureSlot.uv_layer = convertM3UVSourceValueToUVLayerName(mesh, blenderM3Layer.uvSource)
 
     if layerFieldName == "diffuseLayer":
         textureSlot.use_map_color_diffuse = True
@@ -410,27 +435,260 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
     elif layerFieldName in ["emissiveLayer", "emissive2Layer"]:
         textureSlot.use_map_emit = True
 
-def createClassicBlenderMaterialForMeshObject(scene, meshObject):
-    mesh = meshObject.data
-        
+def getStandardMaterialOrNull(scene, mesh):  
+    if mesh.m3_material_name == "":
+        return None
     materialReference = scene.m3_material_references[mesh.m3_material_name]
     materialType = materialReference.materialType
     materialIndex = materialReference.materialIndex 
     if not materialType in [standardMaterialTypeIndex, compositeMaterialTypeIndex]:
-        return
-    realMaterial = bpy.data.materials.new('Material')
-
+        print ("Material generation is only supported for starard materials" % materialType)
+        return None
     if materialType == compositeMaterialTypeIndex:
         compositing_material = scene.m3_composite_materials[materialIndex]
         for key in compositing_material.sections.keys():
             ref = scene.m3_material_references[key]
             if ref.materialType == standardMaterialTypeIndex:
-                standardMaterial = scene.m3_standard_materials[ref.materialIndex]
-                break
-        if not standardMaterial:
-            return
+                return scene.m3_standard_materials[ref.materialIndex]
+            return None
     else:
-        standardMaterial = scene.m3_standard_materials[materialIndex]
+        return scene.m3_standard_materials[materialIndex]
+
+def createUVNodesFromM3LayerAndReturnSocket(mesh, tree, blenderM3Layer):
+    """ Returns a socket that provies UVs or None"""
+    uvLayerName = convertM3UVSourceValueToUVLayerName(mesh, blenderM3Layer.uvSource)
+    if uvLayerName == None: 
+        return None
+    uvAttributeNode = tree.nodes.new("ShaderNodeAttribute")
+    uvAttributeNode.attribute_name = uvLayerName
+    
+    outputNode = uvAttributeNode.outputs["Vector"]
+    
+    if (not blenderM3Layer.textureWrapX) and (not blenderM3Layer.textureWrapY):
+        mappingNode = tree.nodes.new("ShaderNodeMapping")
+        mappingNode.use_min = True
+        mappingNode.use_max = True
+        mappingNode.vector_type = "POINT"
+        tree.links.new(outputNode, mappingNode.inputs["Vector"])
+        outputNode = mappingNode.outputs["Vector"]
+    else:
+        if (not blenderM3Layer.textureWrapX) or (not blenderM3Layer.textureWrapY):
+            print("Note: Generated cycles material won't have correct texture clamp. One sided texture wrap is not implemented yet")
+    return outputNode
+
+
+def createTextureNodeForM3MaterialLayer(mesh, tree, blenderM3Layer, directoryList):
+    image = createImageObjetForM3MaterialLayer(blenderM3Layer, directoryList)
+    if image == None:
+        return None
+    
+    textureNode = tree.nodes.new("ShaderNodeTexImage")
+    textureNode.color_space = "COLOR"
+    textureNode.projection = "FLAT"
+    textureNode.image = image
+
+    uvSocket = createUVNodesFromM3LayerAndReturnSocket(mesh, tree, blenderM3Layer)
+    if uvSocket != None:
+        tree.links.new(uvSocket, textureNode.inputs["Vector"])
+    
+    return textureNode
+
+def determineTextureDirectoryList(scene):
+    textureDirectories = []
+    textureDirectories.append(scene.m3_import_options.rootDirectory)
+    
+    if path.isfile(scene.m3_import_options.path):
+        modelDirectory = path.dirname(scene.m3_import_options.path)
+        textureDirectories.append(modelDirectory)
+    return textureDirectories
+
+
+def createCyclesMaterialForMeshObject(scene, meshObject):
+    mesh = meshObject.data
+    standardMaterial = getStandardMaterialOrNull(scene, mesh)
+    if standardMaterial == None:
+        return
+             
+    realMaterial = bpy.data.materials.new('Material')
+    directoryList = determineTextureDirectoryList(scene)
+    
+    diffuseLayer = standardMaterial.layers[getLayerNameFromFieldName("diffuseLayer")]
+    decalLayer = standardMaterial.layers[getLayerNameFromFieldName("decalLayer")]
+    specularLayer = standardMaterial.layers[getLayerNameFromFieldName("specularLayer")]
+    normalLayer = standardMaterial.layers[getLayerNameFromFieldName("normalLayer")]
+
+
+    realMaterial.use_nodes = True
+    tree = realMaterial.node_tree
+    tree.links.clear()
+    tree.nodes.clear()
+    
+    diffuseTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, diffuseLayer, directoryList)    
+    diffuseTeamColorMixNode = tree.nodes.new("ShaderNodeMixRGB")
+    diffuseTeamColorMixNode. blend_type = "MIX"
+    teamColor = scene.m3_import_options.teamColor
+    diffuseTeamColorMixNode.inputs["Color1"].default_value = (teamColor[0], teamColor[1], teamColor[2], 1.0)
+    if diffuseTextureNode != None:
+        tree.links.new(diffuseTextureNode.outputs["Alpha"], diffuseTeamColorMixNode.inputs["Fac"])
+        tree.links.new(diffuseTextureNode.outputs["Color"], diffuseTeamColorMixNode.inputs["Color2"])
+
+
+    decalTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, decalLayer, directoryList)   
+    
+    decalAddingNode = tree.nodes.new("ShaderNodeMixRGB") 
+    decalAddingNode. blend_type = "SCREEN"
+    tree.links.new(decalTextureNode.outputs["Alpha"], decalAddingNode.inputs["Fac"])
+    tree.links.new(decalTextureNode.outputs["Color"], decalAddingNode.inputs["Color2"])
+    tree.links.new(diffuseTeamColorMixNode.outputs["Color"], decalAddingNode.inputs["Color1"])
+    
+    
+    normalTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, normalLayer, directoryList)   
+
+    normalTextureSeparateRGBNode = tree.nodes.new("ShaderNodeSeparateRGB")
+    tree.links.new(normalTextureNode.outputs["Color"], normalTextureSeparateRGBNode.inputs["Image"])
+
+    # Invert Green of normal texture
+    normalTextureGreenInvertNode = tree.nodes.new("ShaderNodeMath")
+    normalTextureGreenInvertNode.operation = "SUBTRACT"
+    normalTextureGreenInvertNode.inputs[0].default_value = 1.0
+    tree.links.new(normalTextureSeparateRGBNode.outputs["G"], normalTextureGreenInvertNode.inputs[1])
+
+    # Bring green of normal texture to range [-0.5,0.5]
+    normalTextureGreenSubZeroDotFiveNode = tree.nodes.new("ShaderNodeMath")
+    normalTextureGreenSubZeroDotFiveNode.operation = "SUBTRACT"
+    normalTextureGreenSubZeroDotFiveNode.inputs[1].default_value = 0.5
+    tree.links.new(normalTextureGreenInvertNode.outputs["Value"], normalTextureGreenSubZeroDotFiveNode.inputs[0])
+
+    # Bring green of normal texture to range [-1,1]
+    normalTextureGreenMul2Node = tree.nodes.new("ShaderNodeMath")
+    normalTextureGreenMul2Node.operation = "ADD"
+    tree.links.new(normalTextureGreenSubZeroDotFiveNode.outputs["Value"], normalTextureGreenMul2Node.inputs[0])
+    tree.links.new(normalTextureGreenSubZeroDotFiveNode.outputs["Value"], normalTextureGreenMul2Node.inputs[1])
+
+
+    # Calculate (normal green in range [-1,1]) ^ 2
+    normalTextureGreenPower2Node = tree.nodes.new("ShaderNodeMath")
+    normalTextureGreenPower2Node.operation = "MULTIPLY"
+    tree.links.new(normalTextureGreenMul2Node.outputs["Value"], normalTextureGreenPower2Node.inputs[0])
+    tree.links.new(normalTextureGreenMul2Node.outputs["Value"], normalTextureGreenPower2Node.inputs[1])
+
+    
+    # Bring alpha of normal texture to range [-0.5,0.5]
+    normalTextureAlphaSubZeroDotFiveNode = tree.nodes.new("ShaderNodeMath")
+    normalTextureAlphaSubZeroDotFiveNode.operation = "SUBTRACT"
+    normalTextureAlphaSubZeroDotFiveNode.inputs[1].default_value = 0.5
+    tree.links.new(normalTextureNode.outputs["Alpha"], normalTextureAlphaSubZeroDotFiveNode.inputs[0])
+
+    # Bring alpha of normal texture to range [-1,1]
+    normalTextureAlphaMul2Node = tree.nodes.new("ShaderNodeMath")
+    normalTextureAlphaMul2Node.operation = "MULTIPLY"
+    tree.links.new(normalTextureAlphaSubZeroDotFiveNode.outputs["Value"], normalTextureAlphaMul2Node.inputs[0])
+    tree.links.new(normalTextureAlphaSubZeroDotFiveNode.outputs["Value"], normalTextureAlphaMul2Node.inputs[1])
+
+    # Calculate (normal alpha in range [-1,1]) ^ 2
+    normalTextureAlphaPower2Node = tree.nodes.new("ShaderNodeMath")
+    normalTextureAlphaPower2Node.operation = "MULTIPLY"
+    tree.links.new(normalTextureAlphaMul2Node.outputs["Value"], normalTextureAlphaPower2Node.inputs[0])
+    tree.links.new(normalTextureAlphaMul2Node.outputs["Value"], normalTextureAlphaPower2Node.inputs[1])
+
+    # Calculate (green in range [-1,1])^2 + (alpha in range [-1,1]) ^ 2
+    normalTextureAddGreenAndAlphaNode = tree.nodes.new("ShaderNodeMath")
+    normalTextureAddGreenAndAlphaNode.operation = "ADD"
+    tree.links.new(normalTextureGreenPower2Node.outputs["Value"], normalTextureAddGreenAndAlphaNode.inputs[0])
+    tree.links.new(normalTextureAlphaPower2Node.outputs["Value"], normalTextureAddGreenAndAlphaNode.inputs[1])
+
+    # Calculate (new blue)^2 == 1 - (new red)^2 + (new green)^2 
+    # == 1- ((green in range [-1,1])^2 to (alpha in range [-1,1])^2)
+    normalTextureNewBluePower2Node = tree.nodes.new("ShaderNodeMath")
+    normalTextureNewBluePower2Node.operation = "SUBTRACT"
+    normalTextureNewBluePower2Node.inputs[0].default_value = 1.0
+    tree.links.new(normalTextureAddGreenAndAlphaNode.outputs["Value"], normalTextureNewBluePower2Node.inputs[1])
+
+    # Calculate new blue in range [0,1] via = sqrt (1- ((green in range [-1,1])^2 to (alpha in range [-1,1])^2))
+    # Based on the assumtion that sqrt(r^2+ g^2 + b^2) == 1
+    normalTextureNewBlueNode = tree.nodes.new("ShaderNodeMath")
+    normalTextureNewBlueNode.operation = "POWER"
+    normalTextureNewBlueNode.inputs[1].default_value = 0.5
+    tree.links.new(normalTextureNewBluePower2Node.outputs["Value"], normalTextureNewBlueNode.inputs[0])
+    
+    normalTextureConvertedNode = tree.nodes.new("ShaderNodeCombineRGB")
+    tree.links.new(normalTextureNode.outputs["Alpha"], normalTextureConvertedNode.inputs["R"])
+    tree.links.new(normalTextureGreenInvertNode.outputs["Value"], normalTextureConvertedNode.inputs["G"])
+    tree.links.new(normalTextureNewBlueNode.outputs["Value"], normalTextureConvertedNode.inputs["B"])
+
+    normalMapNode = tree.nodes.new('ShaderNodeNormalMap')
+    normalMapNode.space = "TANGENT"
+    normalMapNode.inputs["Strength"].default_value = 0.5
+    normalMapNode.uv_map = convertM3UVSourceValueToUVLayerName(mesh, normalLayer.uvSource)
+    tree.links.new(normalTextureConvertedNode.outputs["Image"], normalMapNode.inputs["Color"])
+    
+    diffuseShaderNode = tree.nodes.new("ShaderNodeBsdfDiffuse")
+    tree.links.new(normalMapNode.outputs["Normal"], diffuseShaderNode.inputs["Normal"])
+    tree.links.new(decalAddingNode.outputs["Color"], diffuseShaderNode.inputs["Color"])
+
+    glossyShaderNode = tree.nodes.new("ShaderNodeBsdfGlossy")
+    glossyShaderNode.distribution = "BECKMANN"
+    glossyShaderNode.inputs["Roughness"].default_value = 0.2
+    tree.links.new(normalMapNode.outputs["Normal"], glossyShaderNode.inputs["Normal"])
+    tree.links.new(decalAddingNode.outputs["Color"], glossyShaderNode.inputs["Color"])
+
+    specularTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, specularLayer, directoryList)   
+
+
+    mixShaderNode =  tree.nodes.new("ShaderNodeMixShader")
+    tree.links.new(specularTextureNode.outputs["Color"], mixShaderNode.inputs["Fac"])
+    tree.links.new(diffuseShaderNode.outputs["BSDF"], mixShaderNode.inputs[1])
+    tree.links.new(glossyShaderNode.outputs["BSDF"], mixShaderNode.inputs[2])
+
+    outputNode =  tree.nodes.new("ShaderNodeOutputMaterial")
+    outputNode.location = (500.0, 000.0)
+    tree.links.new(mixShaderNode.outputs["Shader"], outputNode.inputs["Surface"])
+
+    layoutInputNodesOf(tree)
+
+    # Remove old materials:
+    while len(mesh.materials) > 0:
+        mesh.materials.pop(0, update_data=True)
+        
+    mesh.materials.append(realMaterial)
+
+def createNodeNameToInputNodesMap(tree):
+    nodeNameToInputNodesMap = {}
+    for link in tree.links:
+        inputNodes = nodeNameToInputNodesMap.get(link.to_node.name)
+        if inputNodes == None:
+            inputNodes = set()
+            nodeNameToInputNodesMap[link.to_node.name] = inputNodes
+        inputNodes.add(link.from_node)
+    return nodeNameToInputNodesMap
+
+def layoutInputNodesOf(tree):
+    
+    nodeNameToInputNodesMap = createNodeNameToInputNodesMap(tree)
+
+    horizontalDistanceBetweenNodes = 200
+
+    namesOfNodesToCheck = set(n.name for n in tree.nodes)
+    
+    
+    while len(namesOfNodesToCheck) > 0:
+        nodeName = namesOfNodesToCheck.pop()
+        node = tree.nodes[nodeName]
+        inputNodes = nodeNameToInputNodesMap.get(nodeName)
+        if inputNodes != None:
+            for inputNode in inputNodes:
+                xBasedOnNode = node.location[0] -inputNode.width -horizontalDistanceBetweenNodes
+                inputNode.location[0] = min(inputNode.location[0], xBasedOnNode)
+                namesOfNodesToCheck.add(inputNode.name)
+    
+    
+
+def createClassicBlenderMaterialForMeshObject(scene, meshObject):
+    mesh = meshObject.data
+    standardMaterial = getStandardMaterialOrNull(scene, mesh)
+    if standardMaterial == None:
+        return
+    realMaterial = bpy.data.materials.new('Material')
 
     diffuseLayer = standardMaterial.layers[getLayerNameFromFieldName("diffuseLayer")]
     specularLayer = standardMaterial.layers[getLayerNameFromFieldName("specularLayer")]
@@ -459,12 +717,7 @@ def createClassicBlenderMaterialForMeshObject(scene, meshObject):
     #realMaterial.alpha = 1 # 0.0 - 1.0
     #realMaterial.ambient = 1
     
-    textureDirectories = []
-    textureDirectories.append(scene.m3_import_options.rootDirectory)
-    
-    if path.isfile(scene.m3_import_options.path):
-        modelDirectory = path.dirname(scene.m3_import_options.path)
-        textureDirectories.append(modelDirectory)
+    textureDirectories = determineTextureDirectoryList(scene)
     
     for layerFieldName in ["diffuseLayer", "decalLayer", "specularLayer", "normalLayer","emissiveLayer", "emissive2Layer"]:
         addTextureSlotBasedOnM3MaterialLayer(mesh, realMaterial, standardMaterial, layerFieldName,  textureDirectories)
@@ -476,10 +729,17 @@ def createClassicBlenderMaterialForMeshObject(scene, meshObject):
         
     mesh.materials.append(realMaterial)
 
-
-def createClassicBlenderMaterialsFromM3Materials(scene):
-    for meshObject in findMeshObjects(scene):
+def createBlenderMaterialForMeshObject(scene, meshObject):
+    renderEngine = scene.render.engine
+    if renderEngine == 'CYCLES':
+        createCyclesMaterialForMeshObject(scene, meshObject)
+    else:
         createClassicBlenderMaterialForMeshObject(scene, meshObject)
+
+
+def createBlenderMaterialsFromM3Materials(scene):
+    for meshObject in findMeshObjects(scene):
+        createBlenderMaterialForMeshObject(scene, meshObject)
             
 def composeMatrix(location, rotation, scale):
     locMatrix= mathutils.Matrix.Translation(location)
@@ -586,7 +846,6 @@ def updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone):
             subFacesFixed = [[fe + len(untransformedPositions) for fe in f] for f in subFaces]
             untransformedPositions.extend(subPositionsAtLoc)
             faces.extend(subFacesFixed)
-        print(faces)
 
     else:
         untransformedPositions, faces = createMeshDataForSphere(0.02)

@@ -1770,7 +1770,7 @@ class ImportPanel(bpy.types.Panel):
         layout.operator("m3.quick_import", text="Import M3")
         layout.prop(scene.m3_import_options, "rootDirectory", text="Root Directory")
         layout.prop(scene.m3_import_options, "generateBlenderMaterials", text="Generate Blender Materials At Import")
-        layout.operator("m3.generate_classic_materials", text="Generate Blender Materials")
+        layout.operator("m3.generate_blender_materials", text="Generate Blender Materials")
         layout.prop(scene.m3_import_options, "applySmoothShading", text="Apply Smooth Shading")
         layout.prop(scene.m3_import_options, "markSharpEdges", text="Mark sharp edges")
         layout.prop(scene.m3_import_options, "teamColor", text="Team Color")
@@ -4438,15 +4438,15 @@ class M3_OT_quickImport(bpy.types.Operator):
         m3import.importM3BasedOnM3ImportOptions(scene)
         return{'FINISHED'}
         
-class M3_OT_generateClassicMaterails(bpy.types.Operator):
-    bl_idname      = 'm3.generate_classic_materials'
+class M3_OT_generateBlenderMaterails(bpy.types.Operator):
+    bl_idname      = 'm3.generate_blender_materials'
     bl_label       = "M3 -> blender materials"
-    bl_description = "Generates classic blender materials based on the specified m3 materials and imports textures as necessary from the specified path"
+    bl_description = "Generates blender materials based on the specified m3 materials and imports textures as necessary from the specified path"
     
     def invoke(self, context, event):
         scene = context.scene
         
-        shared.createClassicBlenderMaterialsFromM3Materials(scene)
+        shared.createBlenderMaterialsFromM3Materials(scene)
         return{'FINISHED'}
 
 class M3_OT_export(bpy.types.Operator, ExportHelper):
