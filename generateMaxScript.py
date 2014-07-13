@@ -181,6 +181,26 @@ fn ParseSections file sections =
     fClose stream
 )
 
+fn ResolveSections sections =
+(
+    for i=1 to (length sections) do
+    (
+        section = sections[i]
+        ResolveSection section sections
+    )
+)
+
+fn LoadModelTree file modelTree =
+(
+    sections = ParseSections file
+    
+    ResolveSections sections
+
+    headerSection = section[0]
+    header = headerSection[0]
+    
+    modelTree = header.model
+)
 
 """
 
@@ -195,6 +215,12 @@ def getMaxParseFunctionName(structureDescription):
     maxStructName = getMaxStructureName(structureDescription)
     maxFunctionName = "Parse" + maxStructName
     return maxFunctionName
+
+def getMaxResolveFunctionName(structureDescription):
+    maxStructName = getMaxStructureName(structureDescription)
+    maxFunctionName = "Resolve" + maxStructName
+    return maxFunctionName
+
 
 def writeStructureDefinition(out, structureDescription):
     structureName = structureDescription.structureName
@@ -269,6 +295,55 @@ def writeParseStructureFunction(out, structureDescription):
     out.write(lineEnding)
     out.write(lineEnding)
 
+"""
+Return a list of all field paths that need to be resolved
+"""
+def findPropertiesToResolve(structureDescription):
+    for field in structureDescription.fields:
+        if isinstance(field, m3.ReferenceField):
+            yield field.name
+
+        if isinstance(field, m3.EmbeddedStructureField):
+            fieldPathPrefix = field.name + "."
+            for subProp in findPropertiesToResolve(field.structureDescription):
+                yield fieldPathPrefix + subProp
+
+def writeResolveSectionFunction(out, structureDescriptionList):
+    
+    out.write("fn ResolveSection section sections =")
+    out.write(lineEnding)
+    out.write("(")
+    out.write(lineEnding)
+    firstIf = True
+    for structureDescription in structureDescriptionList:
+        propPathList = list(findPropertiesToResolve(structureDescription))
+        if len(propPathList) > 0:
+            out.write('    ')
+            if not firstIf:
+                out.write('else ')
+            out.write('if (tag == "%s" and version == %s) then' % (structureDescription.structureName, structureDescription.structureVersion))
+            out.write(lineEnding)
+            out.write("    (")
+            out.write(lineEnding)
+            out.write("        for i=1 to (length section) do")
+            out.write(lineEnding)
+            out.write("        (")
+            out.write(lineEnding)
+            out.write("            obj = section[i]")
+            out.write(lineEnding)
+            for propPath in propPathList:
+                out.write("            obj.%(propPath)s = sections[obj.%(propPath)s.index]" %{"propPath":propPath})
+                out.write(lineEnding)
+            out.write("        )")
+            out.write(lineEnding)
+            out.write("    )")
+            out.write(lineEnding)
+            firstIf = False
+  
+    out.write(")")
+    out.write(lineEnding)
+    out.write(lineEnding)
+
 
 def iterateStructureDescriptions():
     for structureName, structureHistory in  m3.structures.items():
@@ -304,6 +379,7 @@ def generateMaxScript(out):
     
     generateParseSectionFunction(out, structureDescriptionList)
     
+    writeResolveSectionFunction(out, structureDescriptionList)
     
     out.write(footer)
 
