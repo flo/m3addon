@@ -122,6 +122,11 @@ class M3StructureHistory:
         
         def __str__():
             return self.name
+        
+    def getAllVersions(self):
+        versionNumbers = list(self.versionToSizeMap.keys())
+        versionNumbers.sort()
+        return list(self.getVersion(v) for v in versionNumbers)
 
 class M3StructureDescription:
 
