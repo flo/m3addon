@@ -153,19 +153,6 @@ parseSectionFunctionLastPart="""\
 """
 
 
-parseSectionFunctionElIfPart="""\
-    else if (tag=="%(structureName)s" and version == %(structureVersion)s) then
-    {
-            value = %(functionName)s stream
-            append value
-    }
-"""
-parseSectionFunctionLastPart="""\
-)
-"""
-
-
-
 footer ="""
 
 fn ParseSections file sections =
