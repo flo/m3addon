@@ -295,33 +295,35 @@ def writeParseStructureFunction(out, structureDescription):
     out.write(lineEnding)
     out.write(lineEnding)
 
-"""
-Return a list of all field paths that need to be resolved
-"""
-def findPropertiesToResolve(structureDescription):
-    for field in structureDescription.fields:
+
+def findFieldPathTuplesToResolve(structureHistory):
+    """
+    Return a list (fild path, field) tuples for all fields that need to be resolved
+    """
+    for field in structureHistory.allFields:
         if isinstance(field, m3.ReferenceField):
-            yield field.name
+            yield (field.name, field)
 
         if isinstance(field, m3.EmbeddedStructureField):
-            fieldPathPrefix = field.name + "."
-            for subProp in findPropertiesToResolve(field.structureDescription):
-                yield fieldPathPrefix + subProp
+            for subPropField in field.structureDescription.fields:
+                if isinstance(field, m3.ReferenceField):
+                    raise Exception("Reference fields at embedded structures can't be resolved yet")
 
-def writeResolveSectionFunction(out, structureDescriptionList):
+def writeResolveSectionFunction(out):
     
     out.write("fn ResolveSection section sections =")
     out.write(lineEnding)
     out.write("(")
     out.write(lineEnding)
     firstIf = True
-    for structureDescription in structureDescriptionList:
-        propPathList = list(findPropertiesToResolve(structureDescription))
-        if len(propPathList) > 0:
+    
+    for structureName, structureHistory in  m3.structures.items():
+        fieldPathTuples = list(findFieldPathTuplesToResolve(structureHistory))
+        if len(fieldPathTuples) > 0:
             out.write('    ')
             if not firstIf:
                 out.write('else ')
-            out.write('if (tag == "%s" and version == %s) then' % (structureDescription.structureName, structureDescription.structureVersion))
+            out.write('if (tag == "%s") then' % (structureHistory.name))
             out.write(lineEnding)
             out.write("    (")
             out.write(lineEnding)
@@ -331,9 +333,26 @@ def writeResolveSectionFunction(out, structureDescriptionList):
             out.write(lineEnding)
             out.write("            obj = section[i]")
             out.write(lineEnding)
-            for propPath in propPathList:
-                out.write("            obj.%(propPath)s = sections[obj.%(propPath)s.index]" %{"propPath":propPath})
-                out.write(lineEnding)
+            for propPath, propField in fieldPathTuples:
+                if propField.sinceVersion == None and propField.tillVersion == None:
+                   out.write("            obj.%(propPath)s = sections[obj.%(propPath)s.index]" %{"propPath":propPath})
+                   out.write(lineEnding)
+
+                else:
+                    
+                    if propField.sinceVersion != None and propField.tillVersion == None:
+                        out.write("            if version >= %s then" % propField.sinceVersion)
+                    elif propField.sinceVersion == None and propField.tillVersion != None:
+                        out.write("            if version <= %s then" % propField.tillVersion)
+                    else: # both != None
+                        out.write("            if version >= %(sinceVersion)s and version <= %(tillVersion)s then" % {"sinceVersion": propField.sinceVersion, "tillVersion":propField.tillVersion})
+                    out.write(lineEnding)
+                    out.write("            (")
+                    out.write(lineEnding)
+                    out.write("                obj.%(propPath)s = sections[obj.%(propPath)s.index]" %{"propPath":propPath})
+                    out.write(lineEnding)
+                    out.write("            )")
+                    out.write(lineEnding)
             out.write("        )")
             out.write(lineEnding)
             out.write("    )")
@@ -379,7 +398,7 @@ def generateMaxScript(out):
     
     generateParseSectionFunction(out, structureDescriptionList)
     
-    writeResolveSectionFunction(out, structureDescriptionList)
+    writeResolveSectionFunction(out)
     
     out.write(footer)
 
