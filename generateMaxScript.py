@@ -23,7 +23,7 @@ import argparse
 import m3
 import sys
 
-lineEnding = '\r\n'
+lineEnding = '\n'
 header="""\
 /*
  * This script has been generated via the generateMaxSCript.py file of the m3addon.
@@ -32,11 +32,13 @@ header="""\
  *
  * Please do not modify this file. Instead improve the m3addon mentioned above and generate it again.
  */
-
-"""
+ 
+ struct SectionData ( content, tag, version )
+ 
+ """
 
 additionalFunctions = """\
-fn ReadTag stream tag =
+fn ReadTag stream =
 (
     tag = ""
 
@@ -66,8 +68,9 @@ parseSectionFunctionFirstPart="""
  * Parses the section described by indexEntry and
  * returns the freshly loaded section
  */
-fn ParseSection stream indexEntry sectionContent =
+fn ParseSection stream indexEntry =
 (
+    
     fSeek stream indexEntry.offset #seek_set
     tag = indexEntry.tag
     repetitions = indexEntry.repetitions
@@ -135,13 +138,13 @@ fn ParseSection stream indexEntry sectionContent =
 """
 parseSectionFunctionElIfPart="""\
     else if (tag=="%(structureName)s" and version == %(structureVersion)s) then
-    {
+    (
         for i=1 to repetitions do
         (
             value = %(functionName)s stream
-            append value
+            append sectionContent value
         )
-    }
+    )
 """
 parseSectionFunctionLastPart="""\
     else
@@ -149,13 +152,19 @@ parseSectionFunctionLastPart="""\
         echo "Unsupported section " + tag + "V" + version
         throw "Unsupported section " + tag + "V" + version
     )
+    t = SectionData()
+    t.version = version
+    t.tag = tag
+    t.content = sectionContent
+    
+    return t
 )
 """
 
 
 footer ="""
 
-fn ParseSections file sections =
+fn ParseSections file =
 (
     stream = fOpen file "rb"
     
@@ -177,29 +186,31 @@ fn ParseSections file sections =
         section = ParseSection stream indexEntry
         append sections section
 
-    }
+    )
     fClose stream
+
+	return sections
 )
 
 fn ResolveSections sections =
 (
-    for i=1 to (length sections) do
+    for i=1 to sections.count do
     (
         section = sections[i]
         ResolveSection section sections
     )
 )
 
-fn LoadModelTree file modelTree =
+fn LoadModelTree file =
 (
     sections = ParseSections file
     
     ResolveSections sections
 
-    headerSection = section[0]
-    header = headerSection[0]
+    headerSection = sections[1]
+    header = headerSection[1]
     
-    modelTree = header.model
+    return header.model
 )
 
 """
@@ -249,7 +260,7 @@ def writeParseStructureFunction(out, structureDescription):
     
     maxFunctionName = getMaxParseFunctionName(structureDescription)
     maxStructName = getMaxStructureName(structureDescription)
-    out.write("fn %s stream result =  " % maxFunctionName)
+    out.write("fn %s stream =  " % maxFunctionName)
     out.write(lineEnding)
     out.write("(")
     out.write(lineEnding)
@@ -290,8 +301,8 @@ def writeParseStructureFunction(out, structureDescription):
         else:
             raise Exception("Unsupported field type: %s" % type())
         out.write(lineEnding)
-
-    out.write(" )")
+    out.write("    return result")
+    out.write(")")
     out.write(lineEnding)
     out.write(lineEnding)
 
@@ -315,6 +326,10 @@ def writeResolveSectionFunction(out):
     out.write(lineEnding)
     out.write("(")
     out.write(lineEnding)
+    out.write("tag = section.tag")
+    out.write(lineEnding)
+    out.write("version = section.version")
+    out.write(lineEnding)
     firstIf = True
     
     for structureName, structureHistory in  m3.structures.items():
@@ -327,15 +342,15 @@ def writeResolveSectionFunction(out):
             out.write(lineEnding)
             out.write("    (")
             out.write(lineEnding)
-            out.write("        for i=1 to (length section) do")
+            out.write("        for i=1 to section.content.count do")
             out.write(lineEnding)
             out.write("        (")
             out.write(lineEnding)
-            out.write("            obj = section[i]")
+            out.write("            obj = section.content[i]")
             out.write(lineEnding)
             for propPath, propField in fieldPathTuples:
                 if propField.sinceVersion == None and propField.tillVersion == None:
-                   out.write("            obj.%(propPath)s = sections[obj.%(propPath)s.index]" %{"propPath":propPath})
+                   out.write("            obj.%(propPath)s = sections[obj.%(propPath)s.index + 1].content" %{"propPath":propPath})
                    out.write(lineEnding)
 
                 else:
@@ -358,7 +373,7 @@ def writeResolveSectionFunction(out):
             out.write("    )")
             out.write(lineEnding)
             firstIf = False
-  
+    out.write("    return result")
     out.write(")")
     out.write(lineEnding)
     out.write(lineEnding)
