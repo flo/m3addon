@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-
+import argparse
 import m3
 import sys
 
@@ -380,7 +380,7 @@ def generateParseSectionFunction(out, structureDescriptionList):
     out.write(parseSectionFunctionLastPart)
     
 
-def generateMaxScript(out):
+def writeMaxScriptTo(out):
     
     out.write(header)
     
@@ -402,7 +402,15 @@ def generateMaxScript(out):
     
     out.write(footer)
 
+def generateMaxScriptToFile(fileName):
+    outputFile = open(fileName, "w")
+    writeMaxScriptTo(outputFile)
+    outputFile.close()
 
 
 if __name__ == "__main__":
-   generateMaxScript(sys.stdout)
+    parser = argparse.ArgumentParser(description='Generate Max Script for importing M3 Models')
+    parser.add_argument('path', help="Location of the Max File.")
+    args = parser.parse_args()
+    outputFilePath = args.path
+    generateMaxScriptToFile(outputFilePath)
