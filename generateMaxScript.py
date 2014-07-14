@@ -374,6 +374,7 @@ def writeResolveSectionFunction(out):
             out.write(lineEnding)
             firstIf = False
     out.write("    return result")
+    out.write(lineEnding)
     out.write(")")
     out.write(lineEnding)
     out.write(lineEnding)
