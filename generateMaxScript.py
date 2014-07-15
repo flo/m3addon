@@ -332,7 +332,7 @@ def writeResolveSectionFunction(out):
     out.write(lineEnding)
     firstIf = True
     
-    for structureName, structureHistory in  m3.structures.items():
+    for structureHistory in  m3.structureHistoriesInDefinedOrder:
         fieldPathTuples = list(findFieldPathTuplesToResolve(structureHistory))
         if len(fieldPathTuples) > 0:
             out.write('    ')
@@ -381,7 +381,7 @@ def writeResolveSectionFunction(out):
 
 
 def iterateStructureDescriptions():
-    for structureName, structureHistory in  m3.structures.items():
+    for structureHistory in  m3.structureHistoriesInDefinedOrder:
         for structureDescription in structureHistory.getAllVersions():
             yield structureDescription
 
