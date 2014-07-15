@@ -408,7 +408,8 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
     blenderM3Layer = blenderM3Material.layers[getLayerNameFromFieldName(layerFieldName)]
 
     texture = createTextureObjectForM3MaterialLayer(blenderM3Layer, directoryList)
-    
+    if texture == None:
+        return
     textureSlot = classicBlenderMaterial.texture_slots.add()
     textureSlot.texture = texture
     textureSlot.texture_coords = 'UV'
@@ -442,7 +443,7 @@ def getStandardMaterialOrNull(scene, mesh):
     materialType = materialReference.materialType
     materialIndex = materialReference.materialIndex 
     if not materialType in [standardMaterialTypeIndex, compositeMaterialTypeIndex]:
-        print ("Material generation is only supported for starard materials" % materialType)
+        print ("Material generation is only supported for starard materials, but not for material %s" % m3MaterialFieldNames[materialType])
         return None
     if materialType == compositeMaterialTypeIndex:
         compositing_material = scene.m3_composite_materials[materialIndex]
