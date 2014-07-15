@@ -1512,11 +1512,10 @@ def transferMaterialLayer(transferer):
     transferer.transferAnimatableUInt16("flipBookFrame")
     transferer.transferAnimatableFloat("brightness")
     transferer.transferEnum("rttChannel")
-    transferer.transferBit("tintFlags", "useTint")
-    transferer.transferBit("tintFlags", "tintAlpha")
-    transferer.transferFloat("tintStrength")
-    transferer.transferFloat("tintStart")
-    transferer.transferFloat("tintCutout")
+    transferer.transferBit("fresnesFlags", "useFresnel")
+    transferer.transferBit("fresnesFlags", "invertedFresnel")
+    transferer.transferFloat("fresnelExponent")
+    transferer.transferFloat("fresnelMin")
 
 def transferAnimation(transferer):
     transferer.transferFloat("movementSpeed")

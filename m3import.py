@@ -709,6 +709,8 @@ class Importer:
             animPathPrefix = "%slayers[%s]." % (materialAnimPathPrefix, layerIndex)
             layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=m3Layer)
             shared.transferMaterialLayer(layerTransferer)
+            materialLayer.fresnelMax = m3Layer.fresnelMin + m3Layer.fresnelMaxOffset
+
 
     def createMaterials(self):
         print("Loading materials")

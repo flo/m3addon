@@ -1266,11 +1266,11 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     brightness = bpy.props.FloatProperty(name="brightness", options={"ANIMATABLE"}, default=1.0)
     rttChannel = bpy.props.EnumProperty(items=rttChannelList, options=set(), default="-1")
     colorChannelSetting = bpy.props.EnumProperty(items=colorChannelSettingList, options=set(), default="0")
-    useTint = bpy.props.BoolProperty(options=set())
-    tintAlpha = bpy.props.BoolProperty(options=set())
-    tintStrength = bpy.props.FloatProperty(options=set())
-    tintStart = bpy.props.FloatProperty(options=set())
-    tintCutout = bpy.props.FloatProperty(options=set())
+    useFresnel = bpy.props.BoolProperty(options=set())
+    invertedFresnel = bpy.props.BoolProperty(options=set())
+    fresnelExponent = bpy.props.FloatProperty(options=set())
+    fresnelMin = bpy.props.FloatProperty(options=set())
+    fresnelMax = bpy.props.FloatProperty(options=set())
 
 class M3Material(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Material", options=set())
@@ -2116,13 +2116,15 @@ def displayMaterialLayersUI(scene, layout, materialReference):
             row.prop(layer, 'clampColor', text="Clamp Color")
             
             layout.prop(layer, 'colorChannelSetting', text="Color Channels")
+
             row = layout.row(align=True)
-            row.prop(layer, 'useTint', text="Use Tint")
-            row.prop(layer, 'tintAlpha', text="Tint Alpha")
+            row.prop(layer, 'useFresnel', text="Use Fresnel:")
+            row.prop(layer, 'invertedFresnel', text="Inverted")
             col = layout.column(align=True)
-            col.prop(layer, 'tintStrength', text="Tint Strength")
-            col.prop(layer, 'tintStart', text="Tint Start")
-            col.prop(layer, 'tintCutout', text="Tint Cutout")
+            col.prop(layer, 'fresnelExponent', text="Exponent")
+            col.prop(layer, 'fresnelMin', text="Min")
+            col.prop(layer, 'fresnelMax', text="Max")
+            
             split = layout.split()
             row = split.row()
             row.prop(layer, 'colorEnabled', text="Color:")
