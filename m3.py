@@ -945,6 +945,7 @@ class FieldListCreator(Visitor):
 class StructureHistoryListCreator(Visitor):
     def visitStart(self, generalDataMap):
         generalDataMap["structures"] = {}
+        generalDataMap["structuresInDefinedOrder"] = []
         pass
     
     def visitClassEnd(self, generalDataMap, classDataMap):
@@ -952,9 +953,12 @@ class StructureHistoryListCreator(Visitor):
         structureName = classDataMap["structureName"]
         versionToSizeMap = classDataMap["versionToSizeMap"]
         structures = generalDataMap["structures"]
+        structuresInDefinedOrder = generalDataMap["structuresInDefinedOrder"]
         
         structureHistory = M3StructureHistory(structureName, versionToSizeMap, fields)
         structures[structureName] = structureHistory
+        structuresInDefinedOrder.append(structureHistory)
+        
     def visitEnd(self, generalDataMap):
         pass
 
@@ -1019,7 +1023,7 @@ def visitStructresDomWith(structuresDom, visitors, generalDataMap):
     for visitor in visitors:
         visitor.visitEnd(generalDataMap)
 
-def readStructureDefinitions(structuresXmlFile):
+def readStructureHistoriesFrom(structuresXmlFile):
     doc = xml.dom.minidom.parse(structuresXmlFile)
     generalDataMap = {}
 
@@ -1067,7 +1071,7 @@ def readStructureDefinitions(structuresXmlFile):
         
     visitStructresDomWith(doc, secondRunVisitors, generalDataMap)
 
-    return generalDataMap["structures"]
+    return generalDataMap["structuresInDefinedOrder"]
 
 
 
@@ -1271,11 +1275,14 @@ def saveAndInvalidateModel(model, filename):
     sections = modelToSections(model)
     saveSections(sections, filename)
 
-def readStructures():
+def readStructureHistoriesFromDefaultLocation():
+    """ Returns a list of all M3StructureHistorys in the defined order"""
     from os import path
     directory = path.dirname(__file__)
     structuresXmlPath = path.join(directory, "structures.xml")
-    return readStructureDefinitions(structuresXmlPath)
+    return readStructureHistoriesFrom(structuresXmlPath)
 
-structures = readStructures()
+structureHistoriesInDefinedOrder = readStructureHistoriesFromDefaultLocation()
+
+structures = dict((s.name,s) for s in structureHistoriesInDefinedOrder)
     
