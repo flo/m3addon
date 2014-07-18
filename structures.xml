@@ -541,16 +541,15 @@
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR" />
-            <field name="unknown0" type="int32" expected-value="-1" />
-            <field name="unknown1" type="int16" default-value="-1" />
-            <field name="unknown2" type="uint16" expected-value="0" />
+            <field name="unknown76ff2940" type="int32" expected-value="-1" />
+            <field name="unknown97b2ea12" type="int16" default-value="-1" />
+            <field name="unknown294cc515" type="uint16" expected-value="0" />
             <field name="matrix" type="Matrix44" />
-            <field name="unknown3" type="uint32" default-value="4" />
-            <field name="unknown4" type="uint32" expected-value="0" />
-            <field name="unknown5" type="uint32" expected-value="0" />
-            <field name="unknown6" type="uint32" expected-value="0" since-version="1"/>
-            <field name="unknown7" type="uint32" expected-value="0" since-version="1"/>
-            <field name="unknown8" type="uint32" expected-value="0" since-version="2"/>
+            <field name="unknown7275bfa0" type="uint32" default-value="4" />
+            <field name="unknown2a403b40" type="Reference" refTo="CHAR" since-version="1"/>
+            <field name="unknowna20de85" type="uint32" till-version="0" expected-value="0" />
+            <field name="unknown76cf1db0" type="uint32" expected-value="0" />
+            <field name="unknowne5f1b2a7" type="uint32" expected-value="0" since-version="2"/>
         </fields>
     </structure>
     
