@@ -664,6 +664,19 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
         tree.links.new(glossyShaderNode.outputs["BSDF"], mixShaderNode.inputs[2])
         finalShaderOutputSocket = mixShaderNode.outputs["Shader"]
 
+    emissiveLayer = standardMaterial.layers[getLayerNameFromFieldName("emissiveLayer")]
+    emissiveTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, emissiveLayer, directoryList) 
+    if emissiveTextureNode != None:
+        emissiveShaderNode = tree.nodes.new("ShaderNodeEmission")
+        emissiveShaderNode.inputs[1].default_value = 10.0 #Strength
+        tree.links.new(emissiveTextureNode.outputs["Color"], emissiveShaderNode.inputs["Color"])
+        print("Adding emissive to %s" % standardMaterial.name)
+        mixShaderNode =  tree.nodes.new("ShaderNodeMixShader")
+        tree.links.new(emissiveTextureNode.outputs["Color"], mixShaderNode.inputs["Fac"])
+        tree.links.new(finalShaderOutputSocket, mixShaderNode.inputs[1])
+        tree.links.new(emissiveShaderNode.outputs["Emission"], mixShaderNode.inputs[2])
+        finalShaderOutputSocket = mixShaderNode.outputs["Shader"]
+
     alphaLayer = standardMaterial.layers[getLayerNameFromFieldName("alphaMaskLayer")]
     alphaTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, alphaLayer, directoryList)   
     if alphaTextureNode != None and alphaLayer.colorChannelSetting in [colorChannelSettingA, colorChannelSettingR, colorChannelSettingG, colorChannelSettingB]:
@@ -721,7 +734,7 @@ def createNodeNameToOutputNodesMap(tree):
     return nodeNameToOutputNodesMap
 
 
-nodeTypeToHeightMap = {'NORMAL_MAP': 148, 'MATH': 145, 'ATTRIBUTE': 116, 'SEPRGB': 112, 'COMBRGB': 115, 'MIX_RGB': 164, 'TEX_IMAGE': 226, 'OUTPUT_MATERIAL': 87, 'BSDF_DIFFUSE': 112, 'BSDF_GLOSSY': 144, 'MIX_SHADER': 112, 'MAPPING': 270, 'BSDF_TRANSPARENT':69, 'RGB':177}
+nodeTypeToHeightMap = {'NORMAL_MAP': 148, 'MATH': 145, 'ATTRIBUTE': 116, 'SEPRGB': 112, 'COMBRGB': 115, 'MIX_RGB': 164, 'TEX_IMAGE': 226, 'OUTPUT_MATERIAL': 87, 'BSDF_DIFFUSE': 112, 'BSDF_GLOSSY': 144, 'MIX_SHADER': 112, 'MAPPING': 270, 'BSDF_TRANSPARENT':69, 'RGB':177, 'EMISSION':93}
 
 def getHeightOfNewNode(node):
     # due to a blender 2.71 bug the dimensions are 0 for newly created nodes
