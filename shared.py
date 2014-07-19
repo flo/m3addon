@@ -663,15 +663,34 @@ def createNodeNameToInputNodesMap(tree):
         inputNodes.add(link.from_node)
     return nodeNameToInputNodesMap
 
+def createNodeNameToOutputNodesMap(tree):
+    nodeNameToOutputNodesMap = {}
+    for link in tree.links:
+        outputNodes = nodeNameToOutputNodesMap.get(link.from_node.name)
+        if outputNodes == None:
+            outputNodes = set()
+            nodeNameToOutputNodesMap[link.from_node.name] = outputNodes
+        outputNodes.add(link.to_node)
+    return nodeNameToOutputNodesMap
+
+
+nodeTypeToHeightMap = {'NORMAL_MAP': 148, 'MATH': 145, 'ATTRIBUTE': 116, 'SEPRGB': 112, 'COMBRGB': 115, 'MIX_RGB': 164, 'TEX_IMAGE': 226, 'OUTPUT_MATERIAL': 87, 'BSDF_DIFFUSE': 112, 'BSDF_GLOSSY': 144, 'MIX_SHADER': 112, 'MAPPING': 270}
+
+def getHeightOfNewNode(node):
+    # due to a blender 2.71 bug the dimensions are 0 for newly created nodes
+    # due to a blender 2.71 bug the height is always 100.0
+   return nodeTypeToHeightMap.get(node.type, node.height)
+
+
 def layoutInputNodesOf(tree):
-    
-    nodeNameToInputNodesMap = createNodeNameToInputNodesMap(tree)
-
     horizontalDistanceBetweenNodes = 200
+    verticalDistanceBetweenNodes = 50
 
+    nodeNameToInputNodesMap = createNodeNameToInputNodesMap(tree)
+    nodeNameToOutputNodesMap = createNodeNameToOutputNodesMap(tree)
+
+    # Fix x positions of nodes:
     namesOfNodesToCheck = set(n.name for n in tree.nodes)
-    
-    
     while len(namesOfNodesToCheck) > 0:
         nodeName = namesOfNodesToCheck.pop()
         node = tree.nodes[nodeName]
@@ -682,6 +701,68 @@ def layoutInputNodesOf(tree):
                 inputNode.location[0] = min(inputNode.location[0], xBasedOnNode)
                 namesOfNodesToCheck.add(inputNode.name)
     
+    xLinkCountNameTuples = list()
+    for node in tree.nodes:
+        linkCount = 0
+        inputNodes = nodeNameToInputNodesMap.get(node.name)
+        if inputNodes != None:
+            linkCount += len(inputNodes)
+        outputNodes = nodeNameToOutputNodesMap.get(node.name)
+        if outputNodes != None:
+            linkCount += len(outputNodes)
+            
+        
+        xLinkCountNameTuples.append((node.location[0], linkCount, node.name))
+    xLinkCountNameTuples.sort(reverse=True)
+    
+    nodesWithFinalPosition = []
+    for x, linkCount, name in xLinkCountNameTuples:
+        node = tree.nodes[name]
+        outputNodes = nodeNameToOutputNodesMap.get(name)
+        if outputNodes != None and len(outputNodes) > 0:
+            ySum = 0
+            for outputNode in outputNodes:
+                ySum += outputNode.location[1]
+            perfectY = ySum / len(outputNodes)
+        else:
+            perfectY = node.location[1]
+        
+        width = node.width
+        height = getHeightOfNewNode(node)
+        xCollisionNodes = []
+        for otherNode in nodesWithFinalPosition:
+            oX = otherNode.location[0]
+            oWidth = node.width
+            oIsRight = (oX >= x + width)
+            oIsLeft =  (oX <= x - oWidth) 
+            xCollision = not (oIsRight or oIsLeft)
+            if xCollision:
+                xCollisionNodes.append(otherNode)
+        
+        yLowerThanWished = perfectY
+        yHigherThanWished = perfectY
+        goodYPicked = False
+        while not goodYPicked:
+            if abs(yLowerThanWished - perfectY) < abs(yHigherThanWished - perfectY):
+                yPicked = yLowerThanWished
+            else:
+                yPicked = yHigherThanWished
+            goodYPicked = True
+            for otherNode in xCollisionNodes:  
+                oY = otherNode.location[1]
+                oHeight = getHeightOfNewNode(otherNode)
+                oIsHigher = oY >= yPicked + oHeight + verticalDistanceBetweenNodes
+                oIsLower = yPicked >= oY + height + verticalDistanceBetweenNodes
+                collision = not (oIsLower or oIsHigher)
+                if collision:
+                    goodYPicked = False
+                    if yPicked == yLowerThanWished:
+                        yLowerThanWished = oY - oHeight - verticalDistanceBetweenNodes
+                    if yPicked == yHigherThanWished:
+                        yHigherThanWished = oY + height + verticalDistanceBetweenNodes
+                    break
+        node.location[1] = yPicked
+        nodesWithFinalPosition.append(node)   
     
 
 def createClassicBlenderMaterialForMeshObject(scene, meshObject):
