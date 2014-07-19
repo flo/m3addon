@@ -507,7 +507,8 @@ def createNormalMapNode(mesh, tree, standardMaterial, directoryList):
     
     normalLayer = standardMaterial.layers[getLayerNameFromFieldName("normalLayer")]
     normalTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, normalLayer, directoryList)   
-
+    if normalTextureNode == None:
+        return None
     normalTextureSeparateRGBNode = tree.nodes.new("ShaderNodeSeparateRGB")
     tree.links.new(normalTextureNode.outputs["Color"], normalTextureSeparateRGBNode.inputs["Image"])
 
@@ -628,9 +629,9 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
     
 
     normalMapNode = createNormalMapNode(mesh, tree, standardMaterial, directoryList)
-    
     diffuseShaderNode = tree.nodes.new("ShaderNodeBsdfDiffuse")
-    tree.links.new(normalMapNode.outputs["Normal"], diffuseShaderNode.inputs["Normal"])
+    if normalMapNode != None:
+        tree.links.new(normalMapNode.outputs["Normal"], diffuseShaderNode.inputs["Normal"])
     tree.links.new(finalDiffuseColorNode.outputs["Color"], diffuseShaderNode.inputs["Color"])
 
 
@@ -640,7 +641,8 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
     glossyShaderNode = tree.nodes.new("ShaderNodeBsdfGlossy")
     glossyShaderNode.distribution = "BECKMANN"
     glossyShaderNode.inputs["Roughness"].default_value = 0.2
-    tree.links.new(normalMapNode.outputs["Normal"], glossyShaderNode.inputs["Normal"])
+    if normalMapNode != None:
+        tree.links.new(normalMapNode.outputs["Normal"], glossyShaderNode.inputs["Normal"])
     tree.links.new(specularTextureNode.outputs["Color"], glossyShaderNode.inputs["Color"])
 
     mixShaderNode =  tree.nodes.new("ShaderNodeMixShader")
