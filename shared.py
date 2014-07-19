@@ -598,7 +598,6 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
     directoryList = determineTextureDirectoryList(scene)
     
     diffuseLayer = standardMaterial.layers[getLayerNameFromFieldName("diffuseLayer")]
-    decalLayer = standardMaterial.layers[getLayerNameFromFieldName("decalLayer")]
     specularLayer = standardMaterial.layers[getLayerNameFromFieldName("specularLayer")]
 
 
@@ -615,36 +614,40 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
     if diffuseTextureNode != None:
         tree.links.new(diffuseTextureNode.outputs["Alpha"], diffuseTeamColorMixNode.inputs["Fac"])
         tree.links.new(diffuseTextureNode.outputs["Color"], diffuseTeamColorMixNode.inputs["Color2"])
+    finalDiffuseColorNode = diffuseTeamColorMixNode
 
-
+    decalLayer = standardMaterial.layers[getLayerNameFromFieldName("decalLayer")]
     decalTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, decalLayer, directoryList)   
+    if decalTextureNode != None:
+        decalAddingNode = tree.nodes.new("ShaderNodeMixRGB") 
+        decalAddingNode. blend_type = "SCREEN"
+        tree.links.new(decalTextureNode.outputs["Alpha"], decalAddingNode.inputs["Fac"])
+        tree.links.new(decalTextureNode.outputs["Color"], decalAddingNode.inputs["Color2"])
+        tree.links.new(finalDiffuseColorNode.outputs["Color"], decalAddingNode.inputs["Color1"])
+        finalDiffuseColorNode = decalAddingNode
     
-    decalAddingNode = tree.nodes.new("ShaderNodeMixRGB") 
-    decalAddingNode. blend_type = "SCREEN"
-    tree.links.new(decalTextureNode.outputs["Alpha"], decalAddingNode.inputs["Fac"])
-    tree.links.new(decalTextureNode.outputs["Color"], decalAddingNode.inputs["Color2"])
-    tree.links.new(diffuseTeamColorMixNode.outputs["Color"], decalAddingNode.inputs["Color1"])
-    
+
     normalMapNode = createNormalMapNode(mesh, tree, standardMaterial, directoryList)
     
     diffuseShaderNode = tree.nodes.new("ShaderNodeBsdfDiffuse")
     tree.links.new(normalMapNode.outputs["Normal"], diffuseShaderNode.inputs["Normal"])
-    tree.links.new(decalAddingNode.outputs["Color"], diffuseShaderNode.inputs["Color"])
+    tree.links.new(finalDiffuseColorNode.outputs["Color"], diffuseShaderNode.inputs["Color"])
+
+
+    specularTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, specularLayer, directoryList)   
+
 
     glossyShaderNode = tree.nodes.new("ShaderNodeBsdfGlossy")
     glossyShaderNode.distribution = "BECKMANN"
     glossyShaderNode.inputs["Roughness"].default_value = 0.2
     tree.links.new(normalMapNode.outputs["Normal"], glossyShaderNode.inputs["Normal"])
-    tree.links.new(decalAddingNode.outputs["Color"], glossyShaderNode.inputs["Color"])
-
-    specularTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, specularLayer, directoryList)   
-
+    tree.links.new(finalDiffuseColorNode.outputs["Color"], glossyShaderNode.inputs["Color"])
 
     mixShaderNode =  tree.nodes.new("ShaderNodeMixShader")
     tree.links.new(specularTextureNode.outputs["Color"], mixShaderNode.inputs["Fac"])
     tree.links.new(diffuseShaderNode.outputs["BSDF"], mixShaderNode.inputs[1])
     tree.links.new(glossyShaderNode.outputs["BSDF"], mixShaderNode.inputs[2])
-
+    
     outputNode =  tree.nodes.new("ShaderNodeOutputMaterial")
     outputNode.location = (500.0, 000.0)
     tree.links.new(mixShaderNode.outputs["Shader"], outputNode.inputs["Surface"])
