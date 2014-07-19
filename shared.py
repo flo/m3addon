@@ -614,15 +614,22 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
     tree.nodes.clear()
     
     diffuseTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, diffuseLayer, directoryList)    
-    diffuseTeamColorMixNode = tree.nodes.new("ShaderNodeMixRGB")
-    diffuseTeamColorMixNode. blend_type = "MIX"
-    teamColor = scene.m3_import_options.teamColor
-    diffuseTeamColorMixNode.inputs["Color1"].default_value = (teamColor[0], teamColor[1], teamColor[2], 1.0)
     if diffuseTextureNode != None:
-        tree.links.new(diffuseTextureNode.outputs["Alpha"], diffuseTeamColorMixNode.inputs["Fac"])
-        tree.links.new(diffuseTextureNode.outputs["Color"], diffuseTeamColorMixNode.inputs["Color2"])
-    finalDiffuseColorNode = diffuseTeamColorMixNode
-
+        if diffuseLayer.colorChannelSetting == colorChannelSettingRGBA:
+            diffuseTeamColorMixNode = tree.nodes.new("ShaderNodeMixRGB")
+            diffuseTeamColorMixNode. blend_type = "MIX"
+            teamColor = scene.m3_import_options.teamColor
+            diffuseTeamColorMixNode.inputs["Color1"].default_value = (teamColor[0], teamColor[1], teamColor[2], 1.0)
+            tree.links.new(diffuseTextureNode.outputs["Alpha"], diffuseTeamColorMixNode.inputs["Fac"])
+            tree.links.new(diffuseTextureNode.outputs["Color"], diffuseTeamColorMixNode.inputs["Color2"])
+            finalDiffuseColorOutputSocket = diffuseTeamColorMixNode.outputs["Color"]
+        else:
+            finalDiffuseColorOutputSocket = diffuseTextureNode.outputs["Color"]
+    else:
+        rgbNode = tree.nodes.new("ShaderNodeRGB")
+        rgbNode.outputs[0].default_value = (0,0,0,1)
+        finalDiffuseColorOutputSocket = rgbNode.outputs[0]
+        
     decalLayer = standardMaterial.layers[getLayerNameFromFieldName("decalLayer")]
     decalTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, decalLayer, directoryList)   
     if decalTextureNode != None:
@@ -630,15 +637,15 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
         decalAddingNode. blend_type = "SCREEN"
         tree.links.new(decalTextureNode.outputs["Alpha"], decalAddingNode.inputs["Fac"])
         tree.links.new(decalTextureNode.outputs["Color"], decalAddingNode.inputs["Color2"])
-        tree.links.new(finalDiffuseColorNode.outputs["Color"], decalAddingNode.inputs["Color1"])
-        finalDiffuseColorNode = decalAddingNode
+        tree.links.new(finalDiffuseColorOutputSocket, decalAddingNode.inputs["Color1"])
+        finalDiffuseColorOutputSocket = decalAddingNode.outputs["Color"]
     
 
     normalMapNode = createNormalMapNode(mesh, tree, standardMaterial, directoryList)
     diffuseShaderNode = tree.nodes.new("ShaderNodeBsdfDiffuse")
     if normalMapNode != None:
         tree.links.new(normalMapNode.outputs["Normal"], diffuseShaderNode.inputs["Normal"])
-    tree.links.new(finalDiffuseColorNode.outputs["Color"], diffuseShaderNode.inputs["Color"])
+    tree.links.new(finalDiffuseColorOutputSocket, diffuseShaderNode.inputs["Color"])
     finalShaderOutputSocket = diffuseShaderNode.outputs["BSDF"]
 
     specularTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, specularLayer, directoryList)   
@@ -714,7 +721,7 @@ def createNodeNameToOutputNodesMap(tree):
     return nodeNameToOutputNodesMap
 
 
-nodeTypeToHeightMap = {'NORMAL_MAP': 148, 'MATH': 145, 'ATTRIBUTE': 116, 'SEPRGB': 112, 'COMBRGB': 115, 'MIX_RGB': 164, 'TEX_IMAGE': 226, 'OUTPUT_MATERIAL': 87, 'BSDF_DIFFUSE': 112, 'BSDF_GLOSSY': 144, 'MIX_SHADER': 112, 'MAPPING': 270, 'BSDF_TRANSPARENT':69}
+nodeTypeToHeightMap = {'NORMAL_MAP': 148, 'MATH': 145, 'ATTRIBUTE': 116, 'SEPRGB': 112, 'COMBRGB': 115, 'MIX_RGB': 164, 'TEX_IMAGE': 226, 'OUTPUT_MATERIAL': 87, 'BSDF_DIFFUSE': 112, 'BSDF_GLOSSY': 144, 'MIX_SHADER': 112, 'MAPPING': 270, 'BSDF_TRANSPARENT':69, 'RGB':177}
 
 def getHeightOfNewNode(node):
     # due to a blender 2.71 bug the dimensions are 0 for newly created nodes
