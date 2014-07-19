@@ -641,7 +641,7 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
     glossyShaderNode.distribution = "BECKMANN"
     glossyShaderNode.inputs["Roughness"].default_value = 0.2
     tree.links.new(normalMapNode.outputs["Normal"], glossyShaderNode.inputs["Normal"])
-    tree.links.new(finalDiffuseColorNode.outputs["Color"], glossyShaderNode.inputs["Color"])
+    tree.links.new(specularTextureNode.outputs["Color"], glossyShaderNode.inputs["Color"])
 
     mixShaderNode =  tree.nodes.new("ShaderNodeMixShader")
     tree.links.new(specularTextureNode.outputs["Color"], mixShaderNode.inputs["Fac"])
