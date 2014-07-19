@@ -503,46 +503,9 @@ def determineTextureDirectoryList(scene):
         textureDirectories.append(modelDirectory)
     return textureDirectories
 
-
-def createCyclesMaterialForMeshObject(scene, meshObject):
-    mesh = meshObject.data
-    standardMaterial = getStandardMaterialOrNull(scene, mesh)
-    if standardMaterial == None:
-        return
-             
-    realMaterial = bpy.data.materials.new('Material')
-    directoryList = determineTextureDirectoryList(scene)
+def createNormalMapNode(mesh, tree, standardMaterial, directoryList):
     
-    diffuseLayer = standardMaterial.layers[getLayerNameFromFieldName("diffuseLayer")]
-    decalLayer = standardMaterial.layers[getLayerNameFromFieldName("decalLayer")]
-    specularLayer = standardMaterial.layers[getLayerNameFromFieldName("specularLayer")]
     normalLayer = standardMaterial.layers[getLayerNameFromFieldName("normalLayer")]
-
-
-    realMaterial.use_nodes = True
-    tree = realMaterial.node_tree
-    tree.links.clear()
-    tree.nodes.clear()
-    
-    diffuseTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, diffuseLayer, directoryList)    
-    diffuseTeamColorMixNode = tree.nodes.new("ShaderNodeMixRGB")
-    diffuseTeamColorMixNode. blend_type = "MIX"
-    teamColor = scene.m3_import_options.teamColor
-    diffuseTeamColorMixNode.inputs["Color1"].default_value = (teamColor[0], teamColor[1], teamColor[2], 1.0)
-    if diffuseTextureNode != None:
-        tree.links.new(diffuseTextureNode.outputs["Alpha"], diffuseTeamColorMixNode.inputs["Fac"])
-        tree.links.new(diffuseTextureNode.outputs["Color"], diffuseTeamColorMixNode.inputs["Color2"])
-
-
-    decalTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, decalLayer, directoryList)   
-    
-    decalAddingNode = tree.nodes.new("ShaderNodeMixRGB") 
-    decalAddingNode. blend_type = "SCREEN"
-    tree.links.new(decalTextureNode.outputs["Alpha"], decalAddingNode.inputs["Fac"])
-    tree.links.new(decalTextureNode.outputs["Color"], decalAddingNode.inputs["Color2"])
-    tree.links.new(diffuseTeamColorMixNode.outputs["Color"], decalAddingNode.inputs["Color1"])
-    
-    
     normalTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, normalLayer, directoryList)   
 
     normalTextureSeparateRGBNode = tree.nodes.new("ShaderNodeSeparateRGB")
@@ -622,6 +585,47 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
     normalMapNode.inputs["Strength"].default_value = 0.5
     normalMapNode.uv_map = convertM3UVSourceValueToUVLayerName(mesh, normalLayer.uvSource)
     tree.links.new(normalTextureConvertedNode.outputs["Image"], normalMapNode.inputs["Color"])
+
+    return normalMapNode
+
+def createCyclesMaterialForMeshObject(scene, meshObject):
+    mesh = meshObject.data
+    standardMaterial = getStandardMaterialOrNull(scene, mesh)
+    if standardMaterial == None:
+        return
+             
+    realMaterial = bpy.data.materials.new('Material')
+    directoryList = determineTextureDirectoryList(scene)
+    
+    diffuseLayer = standardMaterial.layers[getLayerNameFromFieldName("diffuseLayer")]
+    decalLayer = standardMaterial.layers[getLayerNameFromFieldName("decalLayer")]
+    specularLayer = standardMaterial.layers[getLayerNameFromFieldName("specularLayer")]
+
+
+    realMaterial.use_nodes = True
+    tree = realMaterial.node_tree
+    tree.links.clear()
+    tree.nodes.clear()
+    
+    diffuseTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, diffuseLayer, directoryList)    
+    diffuseTeamColorMixNode = tree.nodes.new("ShaderNodeMixRGB")
+    diffuseTeamColorMixNode. blend_type = "MIX"
+    teamColor = scene.m3_import_options.teamColor
+    diffuseTeamColorMixNode.inputs["Color1"].default_value = (teamColor[0], teamColor[1], teamColor[2], 1.0)
+    if diffuseTextureNode != None:
+        tree.links.new(diffuseTextureNode.outputs["Alpha"], diffuseTeamColorMixNode.inputs["Fac"])
+        tree.links.new(diffuseTextureNode.outputs["Color"], diffuseTeamColorMixNode.inputs["Color2"])
+
+
+    decalTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, decalLayer, directoryList)   
+    
+    decalAddingNode = tree.nodes.new("ShaderNodeMixRGB") 
+    decalAddingNode. blend_type = "SCREEN"
+    tree.links.new(decalTextureNode.outputs["Alpha"], decalAddingNode.inputs["Fac"])
+    tree.links.new(decalTextureNode.outputs["Color"], decalAddingNode.inputs["Color2"])
+    tree.links.new(diffuseTeamColorMixNode.outputs["Color"], decalAddingNode.inputs["Color1"])
+    
+    normalMapNode = createNormalMapNode(mesh, tree, standardMaterial, directoryList)
     
     diffuseShaderNode = tree.nodes.new("ShaderNodeBsdfDiffuse")
     tree.links.new(normalMapNode.outputs["Normal"], diffuseShaderNode.inputs["Normal"])
