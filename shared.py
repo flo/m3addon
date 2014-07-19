@@ -53,6 +53,12 @@ attachmentVolumeCapsule = "2"
 lightTypePoint = "1"
 lightTypeSpot = "2"
 
+colorChannelSettingRGB="0"
+colorChannelSettingRGBA="1"
+colorChannelSettingA="2"
+colorChannelSettingR="3"
+colorChannelSettingG="4"
+colorChannelSettingB="5"
 
 defaultDepthBlendFalloff = 0.2 # default if it is enabled
 
@@ -650,7 +656,31 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
         tree.links.new(finalShaderOutputSocket, mixShaderNode.inputs[1])
         tree.links.new(glossyShaderNode.outputs["BSDF"], mixShaderNode.inputs[2])
         finalShaderOutputSocket = mixShaderNode.outputs["Shader"]
-    
+
+    alphaLayer = standardMaterial.layers[getLayerNameFromFieldName("alphaMaskLayer")]
+    alphaTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, alphaLayer, directoryList)   
+    if alphaTextureNode != None and alphaLayer.colorChannelSetting in [colorChannelSettingA, colorChannelSettingR, colorChannelSettingG, colorChannelSettingB]:
+        transparencyShaderNode = tree.nodes.new("ShaderNodeBsdfTransparent")
+
+        mixShaderNode =  tree.nodes.new("ShaderNodeMixShader")
+        tree.links.new(transparencyShaderNode.outputs["BSDF"], mixShaderNode.inputs[1])
+        tree.links.new(finalShaderOutputSocket, mixShaderNode.inputs[2])
+        if alphaLayer.colorChannelSetting == colorChannelSettingA:
+            tree.links.new(alphaTextureNode.outputs["Alpha"], mixShaderNode.inputs["Fac"])
+        else:
+            separateRGBNode = tree.nodes.new("ShaderNodeSeparateRGB")
+            tree.links.new(alphaTextureNode.outputs["Color"], separateRGBNode.inputs["Image"])
+            
+            if alphaLayer.colorChannelSetting == colorChannelSettingR:
+               tree.links.new(separateRGBNode.outputs["R"], mixShaderNode.inputs["Fac"])
+            elif alphaLayer.colorChannelSetting == colorChannelSettingG:
+               tree.links.new(separateRGBNode.outputs["G"], mixShaderNode.inputs["Fac"])
+            elif alphaLayer.colorChannelSetting == colorChannelSettingB:
+               tree.links.new(separateRGBNode.outputs["B"], mixShaderNode.inputs["Fac"])
+            else:
+                raise Exception("alpha texture setting not handled properly earilier")
+        finalShaderOutputSocket = mixShaderNode.outputs["Shader"] 
+
     outputNode =  tree.nodes.new("ShaderNodeOutputMaterial")
     outputNode.location = (500.0, 000.0)
     tree.links.new(finalShaderOutputSocket, outputNode.inputs["Surface"])
@@ -684,7 +714,7 @@ def createNodeNameToOutputNodesMap(tree):
     return nodeNameToOutputNodesMap
 
 
-nodeTypeToHeightMap = {'NORMAL_MAP': 148, 'MATH': 145, 'ATTRIBUTE': 116, 'SEPRGB': 112, 'COMBRGB': 115, 'MIX_RGB': 164, 'TEX_IMAGE': 226, 'OUTPUT_MATERIAL': 87, 'BSDF_DIFFUSE': 112, 'BSDF_GLOSSY': 144, 'MIX_SHADER': 112, 'MAPPING': 270}
+nodeTypeToHeightMap = {'NORMAL_MAP': 148, 'MATH': 145, 'ATTRIBUTE': 116, 'SEPRGB': 112, 'COMBRGB': 115, 'MIX_RGB': 164, 'TEX_IMAGE': 226, 'OUTPUT_MATERIAL': 87, 'BSDF_DIFFUSE': 112, 'BSDF_GLOSSY': 144, 'MIX_SHADER': 112, 'MAPPING': 270, 'BSDF_TRANSPARENT':69}
 
 def getHeightOfNewNode(node):
     # due to a blender 2.71 bug the dimensions are 0 for newly created nodes

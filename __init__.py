@@ -946,7 +946,7 @@ def createMaterial(scene, materialName, defaultSetting):
             layer.name = layerName
             if layerName == "Diffuse":
                 if defaultSetting != defaultSettingParticle:
-                    layer.colorChannelSetting = "1" # RGB + alpha
+                    layer.colorChannelSetting = shared.colorChannelSettingRGBA
         
         if defaultSetting == defaultSettingParticle:
             material.unfogged = True
@@ -1167,12 +1167,12 @@ matLayerAndEmisBlendModeList = [("0", "Mod", "no description yet"),
                         ]
 
 colorChannelSettingList = [
-    ("0", "RGB", "Use red, green and blue color channel"),
-    ("1", "RGBA", "Use red, green, blue and alpha channel"),
-    ("2", "Alpha Only", "Use alpha channel only"),
-    ("3", "Red Only", "Use red color channel only"),
-    ("4", "Green Only", "Use green color channel only"),
-    ("5", "Blue Only", "Use blue color channel only")
+    (shared.colorChannelSettingRGB, "RGB", "Use red, green and blue color channel"),
+    (shared.colorChannelSettingRGBA, "RGBA", "Use red, green, blue and alpha channel"),
+    (shared.colorChannelSettingA, "Alpha Only", "Use alpha channel only"),
+    (shared.colorChannelSettingR, "Red Only", "Use red color channel only"),
+    (shared.colorChannelSettingG, "Green Only", "Use green color channel only"),
+    (shared.colorChannelSettingB, "Blue Only", "Use blue color channel only")
     ]
 
 
@@ -1265,7 +1265,7 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     midtoneOffset = bpy.props.FloatProperty(name="midtone offset", options={"ANIMATABLE"}, description="Can be used to make dark areas even darker so that only the bright regions remain")
     brightness = bpy.props.FloatProperty(name="brightness", options={"ANIMATABLE"}, default=1.0)
     rttChannel = bpy.props.EnumProperty(items=rttChannelList, options=set(), default="-1")
-    colorChannelSetting = bpy.props.EnumProperty(items=colorChannelSettingList, options=set(), default="0")
+    colorChannelSetting = bpy.props.EnumProperty(items=colorChannelSettingList, options=set(), default=shared.colorChannelSettingRGB)
     useFresnel = bpy.props.BoolProperty(options=set())
     invertedFresnel = bpy.props.BoolProperty(options=set())
     fresnelExponent = bpy.props.FloatProperty(options=set())
