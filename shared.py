@@ -602,7 +602,6 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
     diffuseLayer = standardMaterial.layers[getLayerNameFromFieldName("diffuseLayer")]
     specularLayer = standardMaterial.layers[getLayerNameFromFieldName("specularLayer")]
 
-
     realMaterial.use_nodes = True
     tree = realMaterial.node_tree
     tree.links.clear()
@@ -634,26 +633,27 @@ def createCyclesMaterialForMeshObject(scene, meshObject):
     if normalMapNode != None:
         tree.links.new(normalMapNode.outputs["Normal"], diffuseShaderNode.inputs["Normal"])
     tree.links.new(finalDiffuseColorNode.outputs["Color"], diffuseShaderNode.inputs["Color"])
-
+    finalShaderOutputSocket = diffuseShaderNode.outputs["BSDF"]
 
     specularTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, specularLayer, directoryList)   
 
+    if specularTextureNode != None:
+        glossyShaderNode = tree.nodes.new("ShaderNodeBsdfGlossy")
+        glossyShaderNode.distribution = "BECKMANN"
+        glossyShaderNode.inputs["Roughness"].default_value = 0.2
+        if normalMapNode != None:
+            tree.links.new(normalMapNode.outputs["Normal"], glossyShaderNode.inputs["Normal"])
+        tree.links.new(specularTextureNode.outputs["Color"], glossyShaderNode.inputs["Color"])
 
-    glossyShaderNode = tree.nodes.new("ShaderNodeBsdfGlossy")
-    glossyShaderNode.distribution = "BECKMANN"
-    glossyShaderNode.inputs["Roughness"].default_value = 0.2
-    if normalMapNode != None:
-        tree.links.new(normalMapNode.outputs["Normal"], glossyShaderNode.inputs["Normal"])
-    tree.links.new(specularTextureNode.outputs["Color"], glossyShaderNode.inputs["Color"])
-
-    mixShaderNode =  tree.nodes.new("ShaderNodeMixShader")
-    tree.links.new(specularTextureNode.outputs["Color"], mixShaderNode.inputs["Fac"])
-    tree.links.new(diffuseShaderNode.outputs["BSDF"], mixShaderNode.inputs[1])
-    tree.links.new(glossyShaderNode.outputs["BSDF"], mixShaderNode.inputs[2])
+        mixShaderNode =  tree.nodes.new("ShaderNodeMixShader")
+        tree.links.new(specularTextureNode.outputs["Color"], mixShaderNode.inputs["Fac"])
+        tree.links.new(finalShaderOutputSocket, mixShaderNode.inputs[1])
+        tree.links.new(glossyShaderNode.outputs["BSDF"], mixShaderNode.inputs[2])
+        finalShaderOutputSocket = mixShaderNode.outputs["Shader"]
     
     outputNode =  tree.nodes.new("ShaderNodeOutputMaterial")
     outputNode.location = (500.0, 000.0)
-    tree.links.new(mixShaderNode.outputs["Shader"], outputNode.inputs["Surface"])
+    tree.links.new(finalShaderOutputSocket, outputNode.inputs["Surface"])
 
     layoutInputNodesOf(tree)
 
