@@ -376,12 +376,13 @@ def createImageObjetForM3MaterialLayer(blenderM3Layer, directoryList):
     if (blenderM3Layer.imagePath == "") or (blenderM3Layer.imagePath == None):
         print ("no image path")
         return None
-    
     searchedImagePaths = []
     for directoryPath in directoryList:
         absoluteImagePath = path.join(directoryPath, blenderM3Layer.imagePath)
         searchedImagePaths.append(absoluteImagePath)
-        return image_utils.load_image(absoluteImagePath)
+        image = image_utils.load_image(absoluteImagePath)
+        if image != None:
+            return image
 
     print("Failed to load a texture. The following paths have been searched: %s" % searchedImagePaths)
     return None
