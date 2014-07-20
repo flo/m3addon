@@ -1075,7 +1075,7 @@ uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole imag
                  ("3", "Ref Spherical Env", "For Env. Layer: Reflective Spherical Environemnt"),
                  ("4", "Planar Local z", "Planar Local z"),
                  ("5", "Planar World z", "Planar World z"),
-                 ("6", "Animated Particle UV", "The texture gets divided as specified by the particle system to create multiple small image frames which play then as an animation"),
+                 ("6", "Animated Particle UV", "The flip book of the particle system is used to determine the UVs"),
                  ("7", "Cubic Environment", "For Env. Layer: Cubic Environment"),
                  ("8", "Spherical Environment", "For Env. Layer: Spherical Environment"),
                  ("9", "UV Layer 3", "UV Layer 3"),

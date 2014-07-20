@@ -1850,6 +1850,7 @@ class Exporter:
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, rootObject=self.scene)
         shared.transferMaterialLayer(transferer)
         m3Layer.fresnelMaxOffset = layer.fresnelMax - layer.fresnelMin
+        m3Layer.setNamedBit("flags","useParticleFlipBook", layer.uvSource == "6")
         m3Layer.unknownbc0c14e5 = self.createNullUInt32AnimationReference(0)
         m3Layer.unknowne740df12 = self.createNullFloatAnimationReference(0.0, interpolationType=1)
         m3Layer.unknown39ade219 = self.createNullUInt16AnimationReference(0)
