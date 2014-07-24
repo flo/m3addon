@@ -546,6 +546,7 @@ def prepareDefaultValuesForNewAction(objectWithAnimationData, newAction):
         if propertyExists:
             shared.setDefaultValue(defaultAction,prop[0],prop[1], value)
         else:
+            print ("Can't find prop %s" % prop[0], prop[1])
             removedProperties.add(prop)
     propertiesBecomingUnanimated = oldAnimatedProperties.difference(newAnimatedProperties)
     
@@ -576,7 +577,7 @@ def prepareDefaultValuesForNewAction(objectWithAnimationData, newAction):
             except:
                 propertyExists = False
             if propertyExists:
-                if type(resolvedObject) in [float, int]:
+                if type(resolvedObject) in [float, int, bool]:
                     dotIndex = curvePath.rfind(".")
                     attributeName = curvePath[dotIndex+1:]
                     resolvedObject = objectWithAnimationData.path_resolve(curvePath[:dotIndex])
@@ -595,7 +596,7 @@ def prepareDefaultValuesForNewAction(objectWithAnimationData, newAction):
 def getAttribute(obj, curvePath, curveIndex):
     """Gets the value of an attribute via animation path and index"""
     obj = obj.path_resolve(curvePath)
-    if type(obj) in [float, int]:
+    if type(obj) in [float, int, bool]:
         return obj
     else:
         return obj[curveIndex]
@@ -1191,6 +1192,10 @@ rttChannelList = [("-1", "None", "None"),
 ]
 
 
+videoModeList = [("0", "Loop", "Loop"),
+                 ("1", "Hold", "Hold")
+                ]
+
 contentToImportList = [("EVERYTHING", "Everything", "Import everything included in the m3 file"),
                        ("MESH_WITH_MATERIALS_ONLY", "Mesh with materials only", "Import the mesh with its m3 materials only")
                        ]
@@ -1271,6 +1276,13 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     fresnelExponent = bpy.props.FloatProperty(options=set())
     fresnelMin = bpy.props.FloatProperty(options=set())
     fresnelMax = bpy.props.FloatProperty(options=set())
+    videoFrameRate = bpy.props.IntProperty(default=0, options=set(), default=24)
+    videoStartFrame = bpy.props.IntProperty(default=0, options=set(), default=0)
+    videoEndFrame = bpy.props.IntProperty(default=0, options=set(), default=-1)
+    videoMode = bpy.props.EnumProperty(items=videoModeList, options=set(), default="0")
+    videoSyncTiming = bpy.props.BoolProperty(options=set())
+    videoPlay = bpy.props.BoolProperty(name="videoPlay", options={"ANIMATABLE"}, default=True)
+    videoRestart = bpy.props.BoolProperty(name="videoRestart", options={"ANIMATABLE"}, default=True)
 
 class M3Material(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Material", options=set())
@@ -2185,6 +2197,19 @@ def displayMaterialLayersUI(scene, layout, materialReference):
             sub.prop(layer, "midtoneOffset", text="Midtone Offset")
             
             layout.prop(layer, "rttChannel", text="RTT Channel")
+            
+            col = layout.column(align=True)
+            col.label(text="Video:")
+            col.active = shared.isVideoFilePath(layer.imagePath)
+            box = col.box()
+            sub = box.column()
+            sub.prop(layer, "videoFrameRate", text="Frame Rate")
+            sub.prop(layer, "videoStartFrame", text="Start Frame")
+            sub.prop(layer, "videoEndFrame", text="End Frame")
+            sub.prop(layer, "videoMode", text="Mode")
+            sub.prop(layer, "videoSyncTiming", text="Sync Timing")
+            sub.prop(layer, "videoPlay", text="Play")
+            sub.prop(layer, "videoRestart", text="Restart")
 
 class MatrialLayersPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_layers"

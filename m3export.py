@@ -161,6 +161,8 @@ class Exporter:
         self.structureVersionMap["WRP_"] = 1
         self.structureVersionMap["SRIB"] = 0
         self.structureVersionMap["STBM"] = 0
+        self.structureVersionMap["SDFG"] = 0
+        self.structureVersionMap["SDU3"] = 0
 
 
     def getVersionOf(self, structureName):
@@ -1372,6 +1374,14 @@ class Exporter:
             sdu6Index = len(m3SequenceTransformationCollection.sdu6)
             m3SequenceTransformationCollection.sdu6.append(animData)
             animRef = 0x80000 + sdu6Index
+        elif animDataType == "SDU3":
+            sdu3Index = len(m3SequenceTransformationCollection.sdu3)
+            m3SequenceTransformationCollection.sdu3.append(animData)
+            animRef = 0xa0000 + sdu3Index
+        elif animDataType == "SDFG":
+            sdfgIndex = len(m3SequenceTransformationCollection.sdfg)
+            m3SequenceTransformationCollection.sdfg.append(animData)
+            animRef = 0xb0000 + sdfgIndex
         elif animDataType == "SDMB":
             sdmbIndex = len(m3SequenceTransformationCollection.sdmb)
             m3SequenceTransformationCollection.sdmb.append(animData)
@@ -1851,6 +1861,13 @@ class Exporter:
         shared.transferMaterialLayer(transferer)
         m3Layer.fresnelMaxOffset = layer.fresnelMax - layer.fresnelMin
         m3Layer.setNamedBit("flags","useParticleFlipBook", layer.uvSource == "6")
+        isVideo = shared.isVideoFilePath(layer.imagePath)
+        m3Layer.setNamedBit("flags", "isVideo", isVideo)
+        if not isVideo:
+            m3Layer.vidoeFrameRat e= 0
+            m3Layer.videoStartFrame = 0
+            m3Layer.videoEndFrame = 0
+            m3Layer.videoMode = 0
         m3Layer.unknownbc0c14e5 = self.createNullUInt32AnimationReference(0)
         m3Layer.unknowne740df12 = self.createNullFloatAnimationReference(0.0, interpolationType=1)
         m3Layer.unknown39ade219 = self.createNullUInt16AnimationReference(0)
@@ -2406,12 +2423,23 @@ class BlenderToM3DataTransferer:
             return min((1<<16)-1,  max(0, round(value)))
         self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="UInt16AnimationReference", animRefFlags=0, animDataClass="SDU6", convertMethod=toUInt16Value)
 
+    def transferAnimatableBooleanBasedOnSDFG(self, fieldName):
+        def convertTo1Or0(value):
+            if not isinstance(value, bool):
+                booleanValue = value
+            else:
+                booleanValue = (value >= 0.5)
+            return 1 if booleanValue else 0
+        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="UInt32AnimationReference", animRefFlags=0, animDataClass="SDFG", convertMethod=convertTo1Or0)
 
-    def transferAnimatableUInt32(self, fieldName):
-        #TODO Test this method once the purpose of an animated int32 field is known
-        def toUInt32Value(value):
-            return min((1<<32)-1,  max(0, round(value)))
-        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="UInt32AnimationReference", animRefFlags=0, animDataClass="FLAG", convertMethod=toUInt32Value)
+    def transferAnimatableBooleanBasedOnSDU3(self, fieldName):
+        def convertTo1Or0(value):
+            if not isinstance(value, bool):
+                booleanValue = value
+            else:
+                booleanValue = (value >= 0.5)
+            return 1 if booleanValue else 0
+        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="UInt32AnimationReference", animRefFlags=0, animDataClass="SDU3", convertMethod=convertTo1Or0)
 
     def transferAnimatableVector3(self, fieldName, sinceVersion=None):
         if (sinceVersion != None) and (self.m3Version < sinceVersion):

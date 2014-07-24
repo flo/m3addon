@@ -74,7 +74,7 @@ primitiveFieldTypeSizes = {"uint32":4,"int32":4,"uint16":2,"int16":2, "uint8":1,
 primitiveFieldTypeFormats = {"uint32":"I","int32":"i","uint16":"H","int16":"h", "uint8":"B", "int8":"b" , "float":"f", "tag":"4s", "fixed8": "B"}
 intTypes = {"uint32","int32","uint16","int16", "uint8", "int8"}
 
-structureNamesOfPrimitiveTypes = set(["CHAR", "U8__", "REAL", "I16_", "U16_", "I32_", "U32_"])
+structureNamesOfPrimitiveTypes = set(["CHAR", "U8__", "REAL", "I16_", "U16_", "I32_", "U32_", "FLAG"])
 
 class M3StructureHistory:
     "Describes the history of a structure with a specific name"
@@ -190,7 +190,11 @@ class M3StructureDescription:
     
     def validateInstance(self, instance, instanceName):
         for field in self.fields:
-            field.validateContent(getattr(instance, field.name), instanceName + "." + field.name)
+            try:
+                fieldContent = getattr(instance, field.name)
+            except AttributeError:
+                raise Exception("%s does not have a field called %s%n" % (instanceName, field.name))
+                raise
 
     def hasField(self, fieldName):
         return fieldName in self.nameToFieldMap
@@ -335,7 +339,7 @@ class ReferenceField(Field):
 
     def introduceIndexReferences(self, owner, indexMaker):
         referencedObjects = getattr(owner, self.name)
-        structureDescription = self.getListContentStructureDefinition(referencedObjects)
+        structureDescription = self.getListContentStructureDefinition(referencedObjects, "while adding index ref")
         
         indexReference = indexMaker.getIndexReferenceTo(referencedObjects, self.referenceStructureDescription, structureDescription)
         isPrimitive = self.historyOfReferencedStructures != None and self.historyOfReferencedStructures.isPrimitive 
@@ -375,7 +379,7 @@ class ReferenceField(Field):
         setattr(owner, self.name, referencedObjects)
     
 
-    def getListContentStructureDefinition(self, l):
+    def getListContentStructureDefinition(self, l, contextString):
 
         if self.historyOfReferencedStructures == None:
             if len(l) == 0:
@@ -383,19 +387,19 @@ class ReferenceField(Field):
             else:
                 ownerName = owner.structureDescription.structureName
                 variable = "%(fieldName)s" % {"fieldName":self.name}
-                raise Exception("%s must be an empty list but wasn't" % variable)
+                raise Exception("%s: %s must be an empty list but wasn't" % (contextString,variable))
         if self.historyOfReferencedStructures.isPrimitive:
             return self.historyOfReferencedStructures.getVersion(0)
         
         if type(l) != list:
-            raise Exception("Expected a list, but was a %s" % type(l))
+            raise Exception("%s: Expected a list, but was a %s" % (contextString,type(l)))
         if len(l) == 0:
             return None
         
         firstElement = l[0]
         contentClass = type(firstElement)
         if contentClass != M3Structure:
-            raise Exception("Expected a list to contain an M3Structure object and not a %s" % (contentClass))
+            raise Exception("%s: Expected a list to contain an M3Structure object and not a %s" % (contextString, contentClass))
         # Optional: Enable check:
         #if not contentClass.tagName == tagName:
         #    raise Exception("Expected a list to contain a object of a class with tagName %s, but it contained a object of class %s with tagName %s" % (tagName, contentClass, contentClass.tagName))
@@ -456,7 +460,7 @@ class RealReferenceField(ReferenceField):
     
 class IntReferenceField(ReferenceField):
     intRefToMinValue = {"I16_":(-(1<<15)), "U16_":0, "I32_":(-(1<<31)), "U32_":0}
-    intRefToMaxValue = {"I16_":((1<<15)-1), "U16_":((1<<16)-1), "I32_":((1<<31)-1), "U32_":((1<<32)-1)}
+    intRefToMaxValue = {"I16_":((1<<15)-1), "U16_":((1<<16)-1), "I32_":((1<<31)-1), "U32_":((1<<32)-1), "FLAG":1}
 
     def __init__(self, name, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion):
         ReferenceField.__init__(self, name, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
@@ -483,7 +487,7 @@ class StructureReferenceField(ReferenceField):
         if (type(fieldContent) != list):
             raise Exception("%s is not a list, but a %s" % (fieldPath, type(fieldContent)))
         if len(fieldContent) > 0:
-            structureDescription = self.getListContentStructureDefinition(fieldContent)
+            structureDescription = self.getListContentStructureDefinition(fieldContent, fieldPath)
             if structureDescription.history != self.historyOfReferencedStructures:
                 raise Exception("Expected that %s is a list of %s and not %s" % (fieldPath, self.historyOfReferencedStructures.name, structureDescription.history.name))
             for itemIndex, item in enumerate(fieldContent):

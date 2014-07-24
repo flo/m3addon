@@ -645,6 +645,20 @@
         </fields>
     </structure>
     
+    
+    <structure name="SDU3">
+        <description>Animation block with unknown refrenence</description>
+        <versions>
+            <version number="0" size="32" />
+        </versions>
+        <fields>
+            <field name="frames" type="Reference" refTo="I32_"/>
+            <field name="flags" type="uint32" />
+            <field name="fend" type="uint32" />
+            <field name="keys" type="Reference" refTo="U32_"/>
+        </fields>
+    </structure>
+    
     <structure name="SD4Q">
         <description>Animation block with reference to QUAT</description>
         <versions>
@@ -752,7 +766,7 @@
             <field name="sds6" type="Reference" refTo="SDS6" />
             <field name="sdu6" type="Reference" refTo="SDU6" />
             <field name="unknownRef11" type="Reference" />
-            <field name="unknownRef12" type="Reference" />
+            <field name="sdu3" type="Reference" refTo="SDU3" />
             <field name="sdfg" type="Reference" refTo="SDFG" />
             <field name="sdmb" type="Reference" refTo="SDMB" />
         </fields>
@@ -1017,6 +1031,7 @@
                     <bit mask="0x10" name="invertColor" />
                     <bit mask="0x20" name="clampColor" />
                     <bit mask="0x100" name="useParticleFlipBook" />
+                    <bit mask="0x200" name="isVideo" /> <!-- if texture is ogg video -->
                     <bit mask="0x400" name="colorEnabled" />
                 </bits>
             </field>
@@ -1038,11 +1053,13 @@
             <field name="noiseAmp" type="float" default-value="0.8" since-version="24" />
             <field name="noiseFreq" type="float" default-value="0.5" since-version="24" />
             <field name="rttChannel" type="int32" default-value="-1" />
-            <field name="unknownfd48875c" size="8" expected-value="0x0000000000000000" />
-            <field name="unknown63b7f7f2" type="int32" expected-value="0" />
-            <field name="unknowna56066e9" size="8" expected-value="0x0000000000000000" />
-            <field name="unknownbc0c14e5" type="UInt32AnimationReference" />
-            <field name="unknowne740df12" type="FloatAnimationReference" />
+            <field name="videoFrameRate" type="uint32" default="0" /> <!-- if video is enabled default should be 24 -->
+            <field name="videoStartFrame" type="uint32" default="0" />
+            <field name="videoEndFrame" type="int32" default-value="0" /> <!-- -1 means till the end-->
+            <field name="videoMode" type="uint32" default-value="0" /><!-- 0 is loop, 1 is hold-->
+            <field name="videoSyncTiming" type="uint32" default-value="0" /><!-- boolean -->
+            <field name="videoPlay" type="UInt32AnimationReference" />  <!-- SDU3 is used for aniamtion-->
+            <field name="videoRestart" type="UInt32AnimationReference" /> <!-- SDFG is used for aniamtion-->
             <field name="flipBookRows" type="uint32" default-value="0" />
             <field name="flipBookColumns" type="uint32" default-value="0" />
             <field name="flipBookFrame" type="UInt16AnimationReference" />

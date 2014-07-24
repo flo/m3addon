@@ -261,6 +261,7 @@ class M3ToBlenderDataTransferer:
         defaultValue = animationReference.initValue
         self.importer.animateFloat(self.objectWithAnimationData, animPath, animId, defaultValue)
         
+
     def transferAnimatableInteger(self, fieldName):
         """ Helper method"""
         animationReference = getattr(self.m3Object, fieldName)
@@ -280,7 +281,12 @@ class M3ToBlenderDataTransferer:
     def transferAnimatableUInt32(self, fieldName):
         self.transferAnimatableInteger(fieldName)
 
-    
+    def transferAnimatableBooleanBasedOnSDU3(self, fieldName):
+        self.transferAnimatableInteger(fieldName)
+        
+    def transferAnimatableBooleanBasedOnSDFG(self, fieldName):
+        self.transferAnimatableInteger(fieldName)
+
     def transferFloat(self, fieldName, sinceVersion=None, tillVersion=None):
         if (tillVersion != None) and (self.m3Version > tillVersion):
             return
@@ -1557,7 +1563,7 @@ class Importer:
         return editBones
 
     def createAnimIdToKeyFramesMapFor(self, stc):
-        keyFramesLists = [stc.sdev, stc.sd2v, stc.sd3v, stc.sd4q, stc.sdcc, stc.sdr3, stc.unknownRef8, stc.sds6, stc.sdu6, stc.unknownRef11, stc.unknownRef12, stc.sdfg, stc.sdmb]
+        keyFramesLists = [stc.sdev, stc.sd2v, stc.sd3v, stc.sd4q, stc.sdcc, stc.sdr3, stc.unknownRef8, stc.sds6, stc.sdu6, stc.unknownRef11, stc.sdu3, stc.sdfg, stc.sdmb]
         animIdToTimeValueMap = {}
         for i in range(len(stc.animIds)):
             animId = stc.animIds[i]

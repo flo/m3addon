@@ -256,6 +256,8 @@ class UniqueNameFinder:
             name = name[:-1]
         return name
 
+def isVideoFilePath(filePath):
+    return filePath.endswith(".ogv") or filePath.endswith(".ogg")
 
 def setAnimationWithIndexToCurrentData(scene, animationIndex):
     if (animationIndex < 0) or (animationIndex >= len(scene.m3_animations)):
@@ -1658,6 +1660,15 @@ def transferMaterialLayer(transferer):
     transferer.transferBit("fresnesFlags", "invertedFresnel")
     transferer.transferFloat("fresnelExponent")
     transferer.transferFloat("fresnelMin")
+
+    transferer.transferInt("videoFrameRate")
+    transferer.transferInt("videoStartFrame")
+    transferer.transferInt("videoEndFrame")
+    transferer.transferEnum("videoMode")
+    transferer.transferBoolean("videoSyncTiming")
+    transferer.transferAnimatableBooleanBasedOnSDU3("videoPlay")
+    transferer.transferAnimatableBooleanBasedOnSDFG("videoRestart")
+
 
 def transferAnimation(transferer):
     transferer.transferFloat("movementSpeed")
