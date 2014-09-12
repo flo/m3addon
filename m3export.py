@@ -1864,7 +1864,7 @@ class Exporter:
         isVideo = shared.isVideoFilePath(layer.imagePath)
         m3Layer.setNamedBit("flags", "isVideo", isVideo)
         if not isVideo:
-            m3Layer.vidoeFrameRat e= 0
+            m3Layer.vidoeFrameRate= 0
             m3Layer.videoStartFrame = 0
             m3Layer.videoEndFrame = 0
             m3Layer.videoMode = 0
