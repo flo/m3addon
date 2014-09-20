@@ -1072,12 +1072,7 @@
             <field name="triPlanarOffset" type="Vector3AnimationReferenceV0" since-version="24"/>
             <field name="triPlanarScale" type="Vector3AnimationReferenceV0" since-version="24"/> <!-- default (1.0, 1.0, 1.0)-->
             <field name="unknownbd3f7b5d" type="int32" default-value="-1" />
-            <field name="fresnesFlags" type="uint32" default-value="0">
-                <bits>
-                    <bit mask="0x1" name="useFresnel" />
-                    <bit mask="0x2" name="invertedFresnel" />
-                </bits>
-            </field>                 
+            <field name="fresnelType" type="uint32" default-value="0" />               
             <field name="fresnelExponent" type="float" default-value="4.0" />
             <field name="fresnelMin" type="float" default-value="0.0" />
             <field name="fresnelMaxOffset" type="float" default-value="1.0" /><!-- fresnelMin + fresnelMaxOffset = fresnelMax-->

@@ -1656,8 +1656,7 @@ def transferMaterialLayer(transferer):
     transferer.transferAnimatableUInt16("flipBookFrame")
     transferer.transferAnimatableFloat("brightness")
     transferer.transferEnum("rttChannel")
-    transferer.transferBit("fresnesFlags", "useFresnel")
-    transferer.transferBit("fresnesFlags", "invertedFresnel")
+    transferer.transferEnum("fresnelType")
     transferer.transferFloat("fresnelExponent")
     transferer.transferFloat("fresnelMin")
 

@@ -1191,6 +1191,10 @@ rttChannelList = [("-1", "None", "None"),
                   ("6", "Layer 7", "Render To Texture Layer 7"),
 ]
 
+fresnelTypeList = [("0", "Disabled", "Fresnel is disabled"),
+                  ("1", "Enabled", "Strength of layer is based on fresnel formula"),
+                  ("2", "Enabled; Inverted", "Strenth of layer is based on inverted fresnel formula")
+]
 
 videoModeList = [("0", "Loop", "Loop"),
                  ("1", "Hold", "Hold")
@@ -1271,7 +1275,7 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     brightness = bpy.props.FloatProperty(name="brightness", options={"ANIMATABLE"}, default=1.0)
     rttChannel = bpy.props.EnumProperty(items=rttChannelList, options=set(), default="-1")
     colorChannelSetting = bpy.props.EnumProperty(items=colorChannelSettingList, options=set(), default=shared.colorChannelSettingRGB)
-    useFresnel = bpy.props.BoolProperty(options=set())
+    fresnelType =  bpy.props.EnumProperty(items=fresnelTypeList, options=set(), default="0")
     invertedFresnel = bpy.props.BoolProperty(options=set())
     fresnelExponent = bpy.props.FloatProperty(options=set())
     fresnelMin = bpy.props.FloatProperty(options=set())
@@ -2130,9 +2134,9 @@ def displayMaterialLayersUI(scene, layout, materialReference):
             layout.prop(layer, 'colorChannelSetting', text="Color Channels")
 
             row = layout.row(align=True)
-            row.prop(layer, 'useFresnel', text="Use Fresnel:")
-            row.prop(layer, 'invertedFresnel', text="Inverted")
+            row.prop(layer, 'fresnelType', text="Fresnel")
             col = layout.column(align=True)
+            col.active = (layer.fresnelType != "0")
             col.prop(layer, 'fresnelExponent', text="Exponent")
             col.prop(layer, 'fresnelMin', text="Min")
             col.prop(layer, 'fresnelMax', text="Max")
