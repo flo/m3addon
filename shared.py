@@ -1659,6 +1659,10 @@ def transferMaterialLayer(transferer):
     transferer.transferEnum("fresnelType")
     transferer.transferFloat("fresnelExponent")
     transferer.transferFloat("fresnelMin")
+    transferer.transferFloat("fresnelRotationYaw", sinceVersion=25)
+    transferer.transferFloat("fresnelRotationPitch", sinceVersion=25)
+    transferer.transferBit("flags", "fresnelLocalTransform", sinceVersion=25)
+    transferer.transferBit("flags", "fresnelDoNotMirror", sinceVersion=25)
 
     transferer.transferInt("videoFrameRate")
     transferer.transferInt("videoStartFrame")

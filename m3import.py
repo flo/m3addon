@@ -716,6 +716,11 @@ class Importer:
             layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=m3Layer)
             shared.transferMaterialLayer(layerTransferer)
             materialLayer.fresnelMax = m3Layer.fresnelMin + m3Layer.fresnelMaxOffset
+            if m3Layer.structureDescription.structureVersion >= 25:
+                materialLayer.fresnelMaskX = 1.0 - m3Layer.fresnelInvertedMaskX
+                materialLayer.fresnelMaskY = 1.0 - m3Layer.fresnelInvertedMaskY
+                materialLayer.fresnelMaskZ = 1.0 - m3Layer.fresnelInvertedMaskZ
+
 
 
     def createMaterials(self):

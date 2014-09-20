@@ -1860,6 +1860,10 @@ class Exporter:
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, rootObject=self.scene)
         shared.transferMaterialLayer(transferer)
         m3Layer.fresnelMaxOffset = layer.fresnelMax - layer.fresnelMin
+        if m3Layer.structureDescription.structureVersion >= 25:
+            m3Layer.fresnelInvertedMaskX = 1.0 - layer.fresnelMaskX
+            m3Layer.fresnelInvertedMaskY = 1.0 - layer.fresnelMaskY
+            m3Layer.fresnelInvertedMaskZ = 1.0 - layer.fresnelMaskZ
         m3Layer.setNamedBit("flags","useParticleFlipBook", layer.uvSource == "6")
         isVideo = shared.isVideoFilePath(layer.imagePath)
         m3Layer.setNamedBit("flags", "isVideo", isVideo)

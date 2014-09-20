@@ -1033,6 +1033,10 @@
                     <bit mask="0x100" name="useParticleFlipBook" />
                     <bit mask="0x200" name="isVideo" /> <!-- if texture is ogg video -->
                     <bit mask="0x400" name="colorEnabled" />
+                    <bit mask="0x4000" name="ignoredFresnelFlag1" />
+                    <bit mask="0x8000" name="ignoredFresnelFlag2" />
+                    <bit mask="0x10000" name="fresnelLocalTransform" />
+                    <bit mask="0x20000" name="fresnelDoNotMirror" />
                 </bits>
             </field>
             <field name="uvSource" type="uint32" />
@@ -1078,10 +1082,12 @@
             <field name="fresnelMaxOffset" type="float" default-value="1.0" /><!-- fresnelMin + fresnelMaxOffset = fresnelMax-->
             <field name="unknown15" type="float" default-value="1.0" />
             <field name="unknown763da0ad" size="8" expected-value="0x0000000000000000" since-version="25" />
-            <field name="unknowncb2ee9e9" type="float" default-value="1.0" since-version="25" />
-            <field name="unknown84f66a3e" type="float" expected-value="1.0" since-version="25" />
-            <field name="unknownf3e2933a" type="float" expected-value="1.0" since-version="25" />
-            <field name="unknowned0e748d" size="12" expected-value="0x000000000000000000000000" since-version="25" />
+            <field name="fresnelInvertedMaskX" type="float" default-value="1.0" since-version="25" /> <!-- default=(1.0, 1.0, 1.0)-->
+            <field name="fresnelInvertedMaskY" type="float" default-value="1.0" since-version="25" />
+            <field name="fresnelInvertedMaskZ" type="float" default-value="1.0" since-version="25" />
+            <field name="fresnelRotationYaw" type="float" default-value="0.0" since-version="25" />
+            <field name="fresnelRotationPitch" type="float" default-value="0.0" since-version="25" />
+            <field name="unknowned0e748d" size="4" expected-value="0x00000000" since-version="25" />
         </fields>
     </structure>
   
