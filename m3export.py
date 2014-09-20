@@ -712,7 +712,6 @@ class Exporter:
                         roundedWeightSum = newRoundedWeithSum
                         roundedWeightLookupIndexPairs.append((roundedWeight, lookupIndex))
                     
-                    
                     weightIndex = 0
                     for roundedWeight, lookupIndex in roundedWeightLookupIndexPairs:
                         setattr(m3Vertex, "boneWeight%d" % weightIndex, roundedWeight)
@@ -725,13 +724,16 @@ class Exporter:
                         staticMeshBoneIndex = self.boneNameToBoneIndexMap.get(staticMeshBoneName)
                         if staticMeshBoneIndex == None:
                             staticMeshBoneIndex = self.addBoneWithRestPosAndReturnIndex(model, staticMeshBoneName,  realBone=True)
-                            model.bones[staticMeshBoneIndex].setNamedBit("flags", "skinned", True)
                             self.createBoneMatricesForStaticMeshBone(staticMeshBoneIndex)
                         if staticMeshBoneLookupIndex == None:
-                            self.boneNameToBoneIndexMap[staticMeshBoneName] = staticMeshBoneIndex
-                            staticMeshBoneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
-                            model.boneLookup.append(staticMeshBoneIndex)
-                            boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshBoneLookupIndex
+                            staticMeshBoneLookupIndex = boneNameToBoneLookupIndexMap.get(staticMeshBoneName)
+                            if staticMeshBoneLookupIndex == None:
+                                self.boneNameToBoneIndexMap[staticMeshBoneName] = staticMeshBoneIndex
+                                staticMeshBoneLookupIndex = len(model.boneLookup) - firstBoneLookupIndex
+                                model.boneLookup.append(staticMeshBoneIndex)
+                                boneNameToBoneLookupIndexMap[staticMeshBoneName] = staticMeshBoneLookupIndex
+                        bone = model.bones[staticMeshBoneIndex]
+                        bone.setNamedBit("flags", "skinned", True)
                         roundedWeightLookupIndexPairs.append((255, staticMeshBoneLookupIndex))
                     
                     usedBoneWeightSlots = len(roundedWeightLookupIndexPairs)
