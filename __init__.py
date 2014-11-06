@@ -300,6 +300,26 @@ def handleCameraNameChange(self, context):
             bone.name = self.name
     self.oldName = self.name
 
+def handleDepthBlendFalloffChanged(self, context):
+    material = self
+    if material.depthBlendFalloff <= 0.0:
+        if material.useDepthBlendFalloff:
+            material.useDepthBlendFalloff = False
+    else:
+        if not material.useDepthBlendFalloff:
+            material.useDepthBlendFalloff = True
+    
+def handleUseDepthBlendFalloffChanged(self, context):
+    material = self
+    if material.useDepthBlendFalloff:
+        if material.depthBlendFalloff <= 0.0:
+            material.depthBlendFalloff = shared.defaultDepthBlendFalloff
+    else:
+        if material.depthBlendFalloff != 0.0:
+            material.depthBlendFalloff = 0.0
+    
+
+
 def handleMaterialNameChange(self, context):
     scene = context.scene
     materialName = self.name
@@ -526,6 +546,7 @@ def prepareDefaultValuesForNewAction(objectWithAnimationData, newAction):
         if propertyExists:
             shared.setDefaultValue(defaultAction,prop[0],prop[1], value)
         else:
+            print ("Can't find prop %s" % prop[0], prop[1])
             removedProperties.add(prop)
     propertiesBecomingUnanimated = oldAnimatedProperties.difference(newAnimatedProperties)
     
@@ -556,7 +577,7 @@ def prepareDefaultValuesForNewAction(objectWithAnimationData, newAction):
             except:
                 propertyExists = False
             if propertyExists:
-                if type(resolvedObject) in [float, int]:
+                if type(resolvedObject) in [float, int, bool]:
                     dotIndex = curvePath.rfind(".")
                     attributeName = curvePath[dotIndex+1:]
                     resolvedObject = objectWithAnimationData.path_resolve(curvePath[:dotIndex])
@@ -575,7 +596,7 @@ def prepareDefaultValuesForNewAction(objectWithAnimationData, newAction):
 def getAttribute(obj, curvePath, curveIndex):
     """Gets the value of an attribute via animation path and index"""
     obj = obj.path_resolve(curvePath)
-    if type(obj) in [float, int]:
+    if type(obj) in [float, int, bool]:
         return obj
     else:
         return obj[curveIndex]
@@ -926,7 +947,7 @@ def createMaterial(scene, materialName, defaultSetting):
             layer.name = layerName
             if layerName == "Diffuse":
                 if defaultSetting != defaultSettingParticle:
-                    layer.colorChannelSetting = "1" # RGB + alpha
+                    layer.colorChannelSetting = shared.colorChannelSettingRGBA
         
         if defaultSetting == defaultSettingParticle:
             material.unfogged = True
@@ -937,7 +958,8 @@ def createMaterial(scene, materialName, defaultSetting):
             material.noHitTest = True
             material.noShadowsReceived = True
             material.forParticles = True
-            material.unknownFlag0x1 = True
+            material.useDepthBlendFalloff = True
+            material.depthBlendFalloff = shared.defaultDepthBlendFalloff
             material.unknownFlag0x2 = True
             material.unknownFlag0x8 = True
     elif defaultSetting == defaultSettingDisplacement:
@@ -1054,7 +1076,7 @@ uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole imag
                  ("3", "Ref Spherical Env", "For Env. Layer: Reflective Spherical Environemnt"),
                  ("4", "Planar Local z", "Planar Local z"),
                  ("5", "Planar World z", "Planar World z"),
-                 ("6", "Animated Particle UV", "The texture gets divided as specified by the particle system to create multiple small image frames which play then as an animation"),
+                 ("6", "Animated Particle UV", "The flip book of the particle system is used to determine the UVs"),
                  ("7", "Cubic Environment", "For Env. Layer: Cubic Environment"),
                  ("8", "Spherical Environment", "For Env. Layer: Spherical Environment"),
                  ("9", "UV Layer 3", "UV Layer 3"),
@@ -1146,12 +1168,12 @@ matLayerAndEmisBlendModeList = [("0", "Mod", "no description yet"),
                         ]
 
 colorChannelSettingList = [
-    ("0", "RGB", "Use red, green and blue color channel"),
-    ("1", "RGBA", "Use red, green, blue and alpha channel"),
-    ("2", "Alpha Only", "Use alpha channel only"),
-    ("3", "Red Only", "Use red color channel only"),
-    ("4", "Green Only", "Use green color channel only"),
-    ("5", "Blue Only", "Use blue color channel only")
+    (shared.colorChannelSettingRGB, "RGB", "Use red, green and blue color channel"),
+    (shared.colorChannelSettingRGBA, "RGBA", "Use red, green, blue and alpha channel"),
+    (shared.colorChannelSettingA, "Alpha Only", "Use alpha channel only"),
+    (shared.colorChannelSettingR, "Red Only", "Use red color channel only"),
+    (shared.colorChannelSettingG, "Green Only", "Use green color channel only"),
+    (shared.colorChannelSettingB, "Blue Only", "Use blue color channel only")
     ]
 
 
@@ -1169,6 +1191,14 @@ rttChannelList = [("-1", "None", "None"),
                   ("6", "Layer 7", "Render To Texture Layer 7"),
 ]
 
+fresnelTypeList = [("0", "Disabled", "Fresnel is disabled"),
+                  ("1", "Enabled", "Strength of layer is based on fresnel formula"),
+                  ("2", "Enabled; Inverted", "Strenth of layer is based on inverted fresnel formula")
+]
+
+videoModeList = [("0", "Loop", "Loop"),
+                 ("1", "Hold", "Hold")
+                ]
 
 contentToImportList = [("EVERYTHING", "Everything", "Import everything included in the m3 file"),
                        ("MESH_WITH_MATERIALS_ONLY", "Mesh with materials only", "Import the mesh with its m3 materials only")
@@ -1229,21 +1259,41 @@ class M3MaterialLayer(bpy.types.PropertyGroup):
     textureWrapX = bpy.props.BoolProperty(options=set(), default=True)
     textureWrapY = bpy.props.BoolProperty(options=set(), default=True)
     invertColor = bpy.props.BoolProperty(options=set(), default=False)
+    clampColor = bpy.props.BoolProperty(options=set(), default=False)
     colorEnabled = bpy.props.BoolProperty(options=set(), default=False)
     uvSource = bpy.props.EnumProperty(items=uvSourceList, options=set(), default="0")
     brightMult = bpy.props.FloatProperty(name="bright. mult.",options={"ANIMATABLE"}, default=1.0)
     uvOffset = bpy.props.FloatVectorProperty(name="uv offset", default=(0.0, 0.0), size=2, subtype="XYZ", options={"ANIMATABLE"})
     uvAngle = bpy.props.FloatVectorProperty(name="uv offset", default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
     uvTiling = bpy.props.FloatVectorProperty(name="uv tiling", default=(1.0, 1.0), size=2, subtype="XYZ", options={"ANIMATABLE"})
+    triPlanarOffset = bpy.props.FloatVectorProperty(name="tri planer offset", default=(0.0, 0.0, 0.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
+    triPlanarScale = bpy.props.FloatVectorProperty(name="tri planer scale", default=(1.0, 1.0, 1.0), size=3, subtype="XYZ", options={"ANIMATABLE"})
+    flipBookRows = bpy.props.IntProperty(name="flipBookRows", default=0, options=set())
+    flipBookColumns = bpy.props.IntProperty(name="flipBookColumns", default=0, options=set())
+    flipBookFrame = bpy.props.IntProperty(name="flipBookFrame", default=0, options={"ANIMATABLE"})
     midtoneOffset = bpy.props.FloatProperty(name="midtone offset", options={"ANIMATABLE"}, description="Can be used to make dark areas even darker so that only the bright regions remain")
     brightness = bpy.props.FloatProperty(name="brightness", options={"ANIMATABLE"}, default=1.0)
     rttChannel = bpy.props.EnumProperty(items=rttChannelList, options=set(), default="-1")
-    colorChannelSetting = bpy.props.EnumProperty(items=colorChannelSettingList, options=set(), default="0")
-    useTint = bpy.props.BoolProperty(options=set())
-    tintAlpha = bpy.props.BoolProperty(options=set())
-    tintStrength = bpy.props.FloatProperty(options=set())
-    tintStart = bpy.props.FloatProperty(options=set())
-    tintCutout = bpy.props.FloatProperty(options=set())
+    colorChannelSetting = bpy.props.EnumProperty(items=colorChannelSettingList, options=set(), default=shared.colorChannelSettingRGB)
+    fresnelType =  bpy.props.EnumProperty(items=fresnelTypeList, options=set(), default="0")
+    invertedFresnel = bpy.props.BoolProperty(options=set())
+    fresnelExponent = bpy.props.FloatProperty(default=4.0, options=set())
+    fresnelMin = bpy.props.FloatProperty(default=0.0, options=set())
+    fresnelMax = bpy.props.FloatProperty(default=1.0, options=set())
+    fresnelMaskX = bpy.props.FloatProperty(options=set(), min=0.0, max=1.0)
+    fresnelMaskY = bpy.props.FloatProperty(options=set(), min=0.0, max=1.0)
+    fresnelMaskZ = bpy.props.FloatProperty(options=set(), min=0.0, max=1.0)
+    fresnelRotationYaw = bpy.props.FloatProperty(subtype="ANGLE", options=set())
+    fresnelRotationPitch = bpy.props.FloatProperty(subtype="ANGLE", options=set())
+    fresnelLocalTransform = bpy.props.BoolProperty(options=set(), default=False)
+    fresnelDoNotMirror = bpy.props.BoolProperty(options=set(), default=False)
+    videoFrameRate = bpy.props.IntProperty(options=set(), default=24)
+    videoStartFrame = bpy.props.IntProperty(options=set(), default=0)
+    videoEndFrame = bpy.props.IntProperty(options=set(), default=-1)
+    videoMode = bpy.props.EnumProperty(items=videoModeList, options=set(), default="0")
+    videoSyncTiming = bpy.props.BoolProperty(options=set())
+    videoPlay = bpy.props.BoolProperty(name="videoPlay", options={"ANIMATABLE"}, default=True)
+    videoRestart = bpy.props.BoolProperty(name="videoRestart", options={"ANIMATABLE"}, default=True)
 
 class M3Material(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(name="name", default="Material", options=set())
@@ -1275,10 +1325,23 @@ class M3StandardMaterial(bpy.types.PropertyGroup):
     splatUVfix = bpy.props.BoolProperty(options=set(), default=False)
     softBlending = bpy.props.BoolProperty(options=set(), default=False)
     forParticles = bpy.props.BoolProperty(options=set(), default=False)
+    transparency = bpy.props.BoolProperty(options=set(), default=False)
+    disableSoft = bpy.props.BoolProperty(options=set(), default=False)
     darkNormalMapping = bpy.props.BoolProperty(options=set(), default=False)
-    unknownFlag0x1 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=False)
-    unknownFlag0x4 = bpy.props.BoolProperty(options=set(), description="Makes mesh materials turn black but should be set for particle systems", default=False)
-    unknownFlag0x8 = bpy.props.BoolProperty(options=set(), description="Should be true for particle system materials", default=False)
+    decalRequiredOnLowEnd = bpy.props.BoolProperty(options=set(), default=False)
+    acceptSplats = bpy.props.BoolProperty(options=set(), default=False)
+    acceptSplatsOnly = bpy.props.BoolProperty(options=set(), default=False)
+    emissiveRequiredOnLowEnd = bpy.props.BoolProperty(options=set(), default=False)
+    backgroundObject = bpy.props.BoolProperty(options=set(), default=False)
+    zpFillRequiredOnLowEnd = bpy.props.BoolProperty(options=set(), default=False)
+    excludeFromHighlighting = bpy.props.BoolProperty(options=set(), default=False)
+    clampOutput = bpy.props.BoolProperty(options=set(), default=False)
+    geometryVisible = bpy.props.BoolProperty(options=set(), default=True)
+    
+    depthBlendFalloff = bpy.props.FloatProperty(name="depth blend falloff", options=set(), update=handleDepthBlendFalloffChanged, default=0.0)
+    useDepthBlendFalloff = bpy.props.BoolProperty(options=set(), update=handleUseDepthBlendFalloffChanged, description="Should be true for particle system materials", default=False)
+    useVertexColor = bpy.props.BoolProperty(options=set(), description="The vertex color layer named color will be used to tint the model", default=False)
+    useVertexAlpha = bpy.props.BoolProperty(options=set(), description="The vertex color layer named alpha, will be used to determine the alpha of the model", default=False)
     unknownFlag0x200 = bpy.props.BoolProperty(options=set())
 
 class M3DisplacementMaterial(bpy.types.PropertyGroup):
@@ -1730,7 +1793,7 @@ class ImportPanel(bpy.types.Panel):
         layout.operator("m3.quick_import", text="Import M3")
         layout.prop(scene.m3_import_options, "rootDirectory", text="Root Directory")
         layout.prop(scene.m3_import_options, "generateBlenderMaterials", text="Generate Blender Materials At Import")
-        layout.operator("m3.generate_classic_materials", text="Generate Blender Materials")
+        layout.operator("m3.generate_blender_materials", text="Generate Blender Materials")
         layout.prop(scene.m3_import_options, "applySmoothShading", text="Apply Smooth Shading")
         layout.prop(scene.m3_import_options, "markSharpEdges", text="Mark sharp edges")
         layout.prop(scene.m3_import_options, "teamColor", text="Team Color")
@@ -1919,9 +1982,15 @@ def displayMaterialPropertiesUI(scene, layout, materialReference):
             layout.prop(material, 'layerBlendType', text="Layer Blend Type")
             layout.prop(material, 'emisBlendType', text="Emis. Blend Type")
             layout.prop(material, 'specType', text="Spec. Type")
-            layout.prop(material, 'unknownFlag0x1', text="unknownFlag0x1")
-            layout.prop(material, 'unknownFlag0x4', text="unknownFlag0x4")
-            layout.prop(material, 'unknownFlag0x8', text="unknownFlag0x8")
+           
+            split = layout.split(percentage=0.7)
+            split.prop(material, 'useDepthBlendFalloff', text="Depth Blend Falloff:")
+            row = split.row()
+            row.active = material.useDepthBlendFalloff
+            row.prop(material, 'depthBlendFalloff', text="")
+            
+            layout.prop(material, 'useVertexColor', text="Use Vertex Color")
+            layout.prop(material, 'useVertexAlpha', text="Use Vertex Alpha")
             layout.prop(material, 'unknownFlag0x200', text="unknownFlag0x200")
             layout.prop(material, 'unfogged', text="Unfogged")
             layout.prop(material, 'twoSided', text="Two Sided")
@@ -1934,7 +2003,29 @@ def displayMaterialPropertiesUI(scene, layout, materialReference):
             layout.prop(material, 'splatUVfix', text="Splat UV Fix")
             layout.prop(material, 'softBlending', text="Soft Blending")
             layout.prop(material, 'forParticles', text="For Particles (?)")
+            layout.prop(material, 'transparency', text="Transparency")
+            layout.prop(material, 'disableSoft', text="Disable Soft")
             layout.prop(material, 'darkNormalMapping', text="Dark Normal Mapping")
+            split = layout.split(percentage=0.6)
+            split.prop(material, 'acceptSplats', text="Accept Splats:")
+            row = split.row()
+            row.active = material.acceptSplats
+            row.prop(material, 'acceptSplatsOnly', text="Only")
+            layout.prop(material, 'backgroundObject', text="Background Object")
+            layout.prop(material, 'excludeFromHighlighting', text="No Highlighting")
+            layout.prop(material, 'clampOutput', text="Clamp Output")
+            layout.prop(material, 'geometryVisible', text="Geometry Visible")
+
+
+            split = layout.split(align=True)
+            split.label("Required On Low End:")
+
+            box = layout.box()
+            col = box.column_flow()
+            col.prop(material, 'decalRequiredOnLowEnd', text="Decal")
+            col.prop(material, 'emissiveRequiredOnLowEnd', text="Emissive")
+            col.prop(material, 'zpFillRequiredOnLowEnd', text="ZP Fill")
+            
         elif materialType == shared.displacementMaterialTypeIndex:
             material = scene.m3_displacement_materials[materialIndex]
             layout.prop(material, 'name', text="Name")
@@ -2033,17 +2124,22 @@ def displayMaterialLayersUI(scene, layout, materialReference):
         if layerIndex >= 0 and layerIndex < len(material.layers):
             layer = material.layers[layerIndex]
             layout.prop(layer, 'imagePath', text="Image Path")
-            layout.prop(layer, 'uvSource', text="UV Source")
             layout.prop(layer, 'unknownbd3f7b5d', text="Unknown (id: bd3f7b5d)")
-            layout.prop(layer, 'textureWrapX', text="Tex. Wrap X")
-            layout.prop(layer, 'textureWrapY', text="Tex. Wrap Y")
-            layout.prop(layer, 'invertColor', text="Invert Color")
+            
+            layout.prop(layer, 'uvSource', text="UV Source")
+            isTriPlanarUVSource = layer.uvSource in ["16","17","18"]
+
+            row = layout.row(align=True)
+            row.active = not isTriPlanarUVSource
+            row.prop(layer, 'textureWrapX', text="Tex. Wrap X")
+            row.prop(layer, 'textureWrapY', text="Tex. Wrap Y")
+            
+            row = layout.row(align=True)
+            row.prop(layer, 'invertColor', text="Invert Color")
+            row.prop(layer, 'clampColor', text="Clamp Color")
+            
             layout.prop(layer, 'colorChannelSetting', text="Color Channels")
-            layout.prop(layer, 'useTint', text="Use Tint")
-            layout.prop(layer, 'tintAlpha', text="Tint Alpha")
-            layout.prop(layer, 'tintStrength', text="Tint Strength")
-            layout.prop(layer, 'tintStart', text="Tint Start")
-            layout.prop(layer, 'tintCutout', text="Tint Cutout")
+
             split = layout.split()
             row = split.row()
             row.prop(layer, 'colorEnabled', text="Color:")
@@ -2051,28 +2147,49 @@ def displayMaterialLayersUI(scene, layout, materialReference):
             sub.active = layer.colorEnabled
             sub.prop(layer, 'color', text="")
             
-                                
-            split = layout.split()
-            col = split.column()
+            
+            col = layout.column_flow(columns=2)
             sub = col.column(align=True)
+            sub.active = not isTriPlanarUVSource
             sub.label(text="UV Offset:")
             sub.prop(layer, "uvOffset", text="X", index=0)
             sub.prop(layer, "uvOffset", text="Y", index=1)
 
-            split = layout.split()
-            col = split.column()
+
             sub = col.column(align=True)
+            sub.active = not isTriPlanarUVSource
+            sub.label(text="UV Tiling:")
+            sub.prop(layer, "uvTiling", text="X", index=0)
+            sub.prop(layer, "uvTiling", text="Y", index=1)
+           
+
+            sub = col.column(align=True)
+            sub.active = not isTriPlanarUVSource
             sub.label(text="UV Angle:")
             sub.prop(layer, "uvAngle", text="X", index=0)
             sub.prop(layer, "uvAngle", text="Y", index=1)
             sub.prop(layer, "uvAngle", text="Z", index=2)
 
+            row = layout.row()
+            row.active = isTriPlanarUVSource
+            sub = row.column(align=True)
+            sub.label(text="Tri Planar Offset:")
+            sub.prop(layer, "triPlanarOffset", index=0, text="X")
+            sub.prop(layer, "triPlanarOffset", index=1, text="Y")
+            sub.prop(layer, "triPlanarOffset", index=2, text="Z")
+            sub = row.column(align=True)
+            sub.label(text="Tri Planar Scale:")
+            sub.prop(layer, "triPlanarScale", index=0, text="X")
+            sub.prop(layer, "triPlanarScale", index=1, text="Y")
+            sub.prop(layer, "triPlanarScale", index=2, text="Z")
+            
             split = layout.split()
             col = split.column()
             sub = col.column(align=True)
-            sub.label(text="UV Tiling:")
-            sub.prop(layer, "uvTiling", text="X", index=0)
-            sub.prop(layer, "uvTiling", text="Y", index=1)
+            sub.label(text="Flipbook:")
+            sub.prop(layer, "flipBookRows", text="Rows")
+            sub.prop(layer, "flipBookColumns", text="Columns")
+            sub.prop(layer, "flipBookFrame", text="Frame")
             
             split = layout.split()
             col = split.column()
@@ -2082,7 +2199,42 @@ def displayMaterialLayersUI(scene, layout, materialReference):
             sub.prop(layer, "brightMult", text="Multiplier")
             sub.prop(layer, "midtoneOffset", text="Midtone Offset")
             
+            col = layout.column(align=True)
+            col.prop(layer, 'fresnelType', text="Fresnel")
+            box = col.box()
+            box.active = (layer.fresnelType != "0")
+            sub = box.column()
+            sub = box.column(align=True)
+            sub.prop(layer, 'fresnelExponent', text="Exponent")
+            sub.prop(layer, 'fresnelMin', text="Min")
+            sub.prop(layer, 'fresnelMax', text="Max")
+            sub = box.column(align=True)
+            sub.label("Mask")
+            sub.prop(layer, 'fresnelMaskX', text="X", slider=True)
+            sub.prop(layer, 'fresnelMaskY', text="Y", slider=True)
+            sub.prop(layer, 'fresnelMaskZ', text="Z", slider=True)
+            sub = box.column(align=True)
+            sub.label("Rotation")
+            sub.prop(layer, 'fresnelRotationYaw', text="Yaw")
+            sub.prop(layer, 'fresnelRotationPitch', text="Pitch")
+            sub = box.column(align=True)
+            sub.prop(layer, 'fresnelLocalTransform', text="Local Transform")
+            sub.prop(layer, 'fresnelDoNotMirror', text="Do Not Mirror")
+            
             layout.prop(layer, "rttChannel", text="RTT Channel")
+            
+            col = layout.column(align=True)
+            col.label(text="Video:")
+            col.active = shared.isVideoFilePath(layer.imagePath)
+            box = col.box()
+            sub = box.column()
+            sub.prop(layer, "videoFrameRate", text="Frame Rate")
+            sub.prop(layer, "videoStartFrame", text="Start Frame")
+            sub.prop(layer, "videoEndFrame", text="End Frame")
+            sub.prop(layer, "videoMode", text="Mode")
+            sub.prop(layer, "videoSyncTiming", text="Sync Timing")
+            sub.prop(layer, "videoPlay", text="Play")
+            sub.prop(layer, "videoRestart", text="Restart")
 
 class MatrialLayersPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_material_layers"
@@ -4338,15 +4490,15 @@ class M3_OT_quickImport(bpy.types.Operator):
         m3import.importM3BasedOnM3ImportOptions(scene)
         return{'FINISHED'}
         
-class M3_OT_generateClassicMaterails(bpy.types.Operator):
-    bl_idname      = 'm3.generate_classic_materials'
+class M3_OT_generateBlenderMaterails(bpy.types.Operator):
+    bl_idname      = 'm3.generate_blender_materials'
     bl_label       = "M3 -> blender materials"
-    bl_description = "Generates classic blender materials based on the specified m3 materials and imports textures as necessary from the specified path"
+    bl_description = "Generates blender materials based on the specified m3 materials and imports textures as necessary from the specified path"
     
     def invoke(self, context, event):
         scene = context.scene
         
-        shared.createClassicBlenderMaterialsFromM3Materials(scene)
+        shared.createBlenderMaterialsFromM3Materials(scene)
         return{'FINISHED'}
 
 class M3_OT_export(bpy.types.Operator, ExportHelper):

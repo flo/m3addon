@@ -102,6 +102,7 @@ class Exporter:
         self.structureVersionMap["SD4Q"] = 0
         self.structureVersionMap["SD3V"] = 0
         self.structureVersionMap["SDEV"] = 0
+        self.structureVersionMap["SDU6"] = 0
         self.structureVersionMap["VertexFormat0x182027d"] = 0
         self.structureVersionMap["VertexFormat0x182007d"] = 0
         self.structureVersionMap["VertexFormat0x186007d"] = 0
@@ -160,6 +161,8 @@ class Exporter:
         self.structureVersionMap["WRP_"] = 1
         self.structureVersionMap["SRIB"] = 0
         self.structureVersionMap["STBM"] = 0
+        self.structureVersionMap["SDFG"] = 0
+        self.structureVersionMap["SDU3"] = 0
 
 
     def getVersionOf(self, structureName):
@@ -592,16 +595,39 @@ class Exporter:
             model.divisions = [self.createEmptyDivision()]
             return
         
-        if uvCoordinatesPerVertex == 1:
-            model.vFlags = 0x182007d  
-        elif uvCoordinatesPerVertex == 2:
-            model.vFlags = 0x186007d
-        elif uvCoordinatesPerVertex == 3:
-            model.vFlags = 0x18e007d
-        elif uvCoordinatesPerVertex == 4:
-            model.vFlags = 0x19e007d
-        else:
+        if uvCoordinatesPerVertex not in [1, 2, 3, 4]:
             raise Exception("The m3 format seems to supports only 1-4 UV layers per mesh, not %d" % uvCoordinatesPerVertex)
+
+        
+        model.vFlags = 0x182007d 
+        
+        if uvCoordinatesPerVertex >= 2:
+            model.setNamedBit("vFlags","useUVChannel1", True)
+
+        if uvCoordinatesPerVertex >= 3:
+            model.setNamedBit("vFlags","useUVChannel2", True)
+
+        if uvCoordinatesPerVertex >= 4:
+            model.setNamedBit("vFlags","useUVChannel3", True)
+        
+        rgbColorChannelName = "color"
+        alphaColorChannelName = "alpha"
+        
+        exportVertexRGBA = False
+        for meshObjectToCheck in  nonEmptyMeshObjects:
+            meshToCheck = meshObjectToCheck.data
+            
+            for vertexColorLayer in meshToCheck.tessface_vertex_colors:
+                vertexColorLayerName = vertexColorLayer.name
+                if vertexColorLayerName == rgbColorChannelName:
+                    exportVertexRGBA = True
+                elif vertexColorLayerName == alphaColorChannelName:
+                    exportVertexRGBA = True
+                else:
+                    raise Exception("The mesh %s has has a color layer called %s. Only color layers with the names 'color' and 'alpha' can be exported" % (meshObjectToCheck.name, vertexColorLayerName))
+
+        model.setNamedBit("vFlags", "hasVertexColors", exportVertexRGBA);
+            
         m3VertexStructureDefinition= m3.structures["VertexFormat" + hex(model.vFlags)].getVersion(0)
 
         division = self.createInstanceOf("DIV_")
@@ -622,6 +648,10 @@ class Exporter:
             mesh = meshObjectCopy.data
             meshObject = meshObjectCopy
             mesh.update(calc_tessface=True)
+            
+            materialReferenceIndex = self.materialNameToNewReferenceIndexMap.get(mesh.m3_material_name)
+            if materialReferenceIndex == None:
+                raise Exception("The mesh %s uses '%s' as material, but no m3 material with that name exist!" % (mesh.name, mesh.m3_material_name))
 
             firstBoneLookupIndex = len(model.boneLookup)
             staticMeshBoneName = "StaticMesh"
@@ -640,6 +670,17 @@ class Exporter:
                 raise Exception("The mesh %s has invalid modifiers: Mesh must have no modifiers except single one for the armature and one for edge split." % meshObject.name)
             objectToWorldMatrix = meshObject.matrix_world
 
+            vertexColor = mesh.tessface_vertex_colors.get(rgbColorChannelName)
+            if vertexColor != None:
+                vertexColorData = vertexColor.data
+            else:
+                vertexColorData = None
+            vertexAlpha = mesh.tessface_vertex_colors.get(alphaColorChannelName)
+            if vertexAlpha != None:
+                vertexAlphaData = vertexAlpha.data
+            else:
+                vertexAlphaData = None
+                
             firstFaceVertexIndexIndex = len(division.faces)
             firstVertexIndexIndex = len(m3Vertices)
             regionFaceVertexIndices = []
@@ -754,12 +795,33 @@ class Exporter:
                     m3Vertex.normal = self.blenderVector3ToVector3As3Fixed8(blenderVertex.normal)
                     m3Vertex.sign = 1.0
                     m3Vertex.tangent = self.createVector3As3Fixed8(0.0, 0.0, 0.0)
+                    
+                    red = 1.0
+                    green = 1.0
+                    blue = 1.0
+                    alpha = 1.0
+                    if exportVertexRGBA:
+                        if vertexColorData != None:
+                            blenderAttributeName = "color%d" % (faceRelativeVertexIndex + 1)
+                            blenderColor = getattr(vertexColorData[blenderFace.index],blenderAttributeName)
+                            
+                            red = blenderColor.r
+                            green = blenderColor.g
+                            blue = blenderColor.b
+                        if vertexAlphaData != None:
+                            blenderAttributeName = "color%d" % (faceRelativeVertexIndex + 1)
+                            blenderColor = getattr(vertexAlphaData[blenderFace.index],blenderAttributeName)
+                            alpha = (blenderColor.r + blenderColor.g + blenderColor.b) / 3.0
+                        m3Vertex.color = self.createColor(red, green, blue, alpha)
+                        
                     v = m3Vertex
                     vertexIdList = []
                     vertexIdList.extend((v.position.x, v.position.y, v.position.z))
                     vertexIdList.extend((v.boneWeight0, v.boneWeight1, v.boneWeight2, v.boneWeight3))
                     vertexIdList.extend((v.boneLookupIndex0, v.boneLookupIndex1, v.boneLookupIndex2, v.boneLookupIndex3))
                     vertexIdList.extend((v.normal.x, v.normal.y, v.normal.z))
+                    if exportVertexRGBA:
+                        vertexIdList.extend((red, green, blue, alpha))
                     for i in range(uvCoordinatesPerVertex):
                         uvAttribute = "uv" + str(i)
                         uvVector = getattr(v, uvAttribute)
@@ -1310,6 +1372,18 @@ class Exporter:
             sds6Index = len(m3SequenceTransformationCollection.sds6)
             m3SequenceTransformationCollection.sds6.append(animData)
             animRef = 0x70000 + sds6Index
+        elif animDataType == "SDU6":
+            sdu6Index = len(m3SequenceTransformationCollection.sdu6)
+            m3SequenceTransformationCollection.sdu6.append(animData)
+            animRef = 0x80000 + sdu6Index
+        elif animDataType == "SDU3":
+            sdu3Index = len(m3SequenceTransformationCollection.sdu3)
+            m3SequenceTransformationCollection.sdu3.append(animData)
+            animRef = 0xa0000 + sdu3Index
+        elif animDataType == "SDFG":
+            sdfgIndex = len(m3SequenceTransformationCollection.sdfg)
+            m3SequenceTransformationCollection.sdfg.append(animData)
+            animRef = 0xb0000 + sdfgIndex
         elif animDataType == "SDMB":
             sdmbIndex = len(m3SequenceTransformationCollection.sdmb)
             m3SequenceTransformationCollection.sdmb.append(animData)
@@ -1786,7 +1860,20 @@ class Exporter:
     def createMaterialLayer(self, layer, animPathPrefix):
         m3Layer =  self.createInstanceOf("LAYR")
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, rootObject=self.scene)
-        shared.transferMaterialLayer(transferer)            
+        shared.transferMaterialLayer(transferer)
+        m3Layer.fresnelMaxOffset = layer.fresnelMax - layer.fresnelMin
+        if m3Layer.structureDescription.structureVersion >= 25:
+            m3Layer.fresnelInvertedMaskX = 1.0 - layer.fresnelMaskX
+            m3Layer.fresnelInvertedMaskY = 1.0 - layer.fresnelMaskY
+            m3Layer.fresnelInvertedMaskZ = 1.0 - layer.fresnelMaskZ
+        m3Layer.setNamedBit("flags","useParticleFlipBook", layer.uvSource == "6")
+        isVideo = shared.isVideoFilePath(layer.imagePath)
+        m3Layer.setNamedBit("flags", "isVideo", isVideo)
+        if not isVideo:
+            m3Layer.vidoeFrameRate= 0
+            m3Layer.videoStartFrame = 0
+            m3Layer.videoEndFrame = 0
+            m3Layer.videoMode = 0
         m3Layer.unknownbc0c14e5 = self.createNullUInt32AnimationReference(0)
         m3Layer.unknowne740df12 = self.createNullFloatAnimationReference(0.0, interpolationType=1)
         m3Layer.unknown39ade219 = self.createNullUInt16AnimationReference(0)
@@ -1842,7 +1929,6 @@ class Exporter:
             
     def createStandardMaterial(self, materialIndex, material):
         m3Material = self.createInstanceOf("MAT_")
-        m3Material.setNamedBit("flags", "visible", True)
         materialAnimPathPrefix = "m3_standard_materials[%s]." % materialIndex
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Material, blenderObject=material, animPathPrefix=materialAnimPathPrefix, rootObject=self.scene)
         shared.transferStandardMaterial(transferer)
@@ -1853,6 +1939,28 @@ class Exporter:
             if blenderMaterialLayer.rttChannel != "-1":
                 nameOfFlagToSet = "channel" + blenderMaterialLayer.rttChannel
                 m3Material.setNamedBit("usedRTTChannels", nameOfFlagToSet, True)
+        
+        useDepthBlendFalloff = m3Material.getNamedBit("additionalFlags", "useDepthBlendFalloff")
+        if not useDepthBlendFalloff:
+            m3Material.depthBlendFalloff = 0.0
+
+        useVertexColor = m3Material.getNamedBit("flags", "useVertexColor")
+        useVertexAlpha = m3Material.getNamedBit("flags", "useVertexAlpha")        
+
+        usedByParticleSystem = False
+        particleSystemUsesAlpha = False
+        for particleSystem in self.scene.m3_particle_systems:
+            if particleSystem.materialName == material.name:
+                usedByParticleSystem = True
+                if particleSystem.useVertexAlpha:
+                    particleSystemUsesAlpha = True
+            
+
+        makesUseOfVertexColor = useVertexColor or usedByParticleSystem
+        makesUseOfVertexAlpha = useVertexAlpha or particleSystemUsesAlpha
+
+        m3Material.setNamedBit("additionalFlags", "makesUseOfVertexColor", makesUseOfVertexColor)
+        m3Material.setNamedBit("additionalFlags", "makesUseOfVertexAlpha", makesUseOfVertexAlpha)
 
         m3Material.unknownAnimationRef1 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
         m3Material.unknownAnimationRef2 = self.createNullUInt32AnimationReference(0)
@@ -2312,16 +2420,36 @@ class BlenderToM3DataTransferer:
 
     def transferAnimatableInt16(self, fieldName):
         def toInt16Value(value):
-            return min((1<<16)-1,  max(0, round(value)))
+            return min((1<<15)-1,  max(-(1<<15), round(value)))
         self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="Int16AnimationReference", animRefFlags=0, animDataClass="SDS6", convertMethod=toInt16Value)
 
-    def transferAnimatableUInt32(self, fieldName):
-        #TODO Test this method once the purpose of an animated int32 field is known
-        def toUInt32Value(value):
-            return min((1<<32)-1,  max(0, round(value)))
-        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="UInt32AnimationReference", animRefFlags=0, animDataClass="FLAG", convertMethod=toUInt32Value)
 
-    def transferAnimatableVector3(self, fieldName):
+    def transferAnimatableUInt16(self, fieldName):
+        def toUInt16Value(value):
+            return min((1<<16)-1,  max(0, round(value)))
+        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="UInt16AnimationReference", animRefFlags=0, animDataClass="SDU6", convertMethod=toUInt16Value)
+
+    def transferAnimatableBooleanBasedOnSDFG(self, fieldName):
+        def convertTo1Or0(value):
+            if not isinstance(value, bool):
+                booleanValue = value
+            else:
+                booleanValue = (value >= 0.5)
+            return 1 if booleanValue else 0
+        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="UInt32AnimationReference", animRefFlags=0, animDataClass="SDFG", convertMethod=convertTo1Or0)
+
+    def transferAnimatableBooleanBasedOnSDU3(self, fieldName):
+        def convertTo1Or0(value):
+            if not isinstance(value, bool):
+                booleanValue = value
+            else:
+                booleanValue = (value >= 0.5)
+            return 1 if booleanValue else 0
+        self.transferAnimatableSingleFloatOrInt(fieldName, animRefClass="UInt32AnimationReference", animRefFlags=0, animDataClass="SDU3", convertMethod=convertTo1Or0)
+
+    def transferAnimatableVector3(self, fieldName, sinceVersion=None):
+        if (sinceVersion != None) and (self.m3Version < sinceVersion):
+            return
         animPath = self.animPathPrefix + fieldName
         animId = self.exporter.getAnimIdFor(self.objectIdForAnimId, animPath)
         animRef = self.exporter.createInstanceOf("Vector3AnimationReference")

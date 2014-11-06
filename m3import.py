@@ -261,6 +261,7 @@ class M3ToBlenderDataTransferer:
         defaultValue = animationReference.initValue
         self.importer.animateFloat(self.objectWithAnimationData, animPath, animId, defaultValue)
         
+
     def transferAnimatableInteger(self, fieldName):
         """ Helper method"""
         animationReference = getattr(self.m3Object, fieldName)
@@ -274,10 +275,18 @@ class M3ToBlenderDataTransferer:
     def transferAnimatableInt16(self, fieldName):
         self.transferAnimatableInteger(fieldName)
 
+    def transferAnimatableUInt16(self, fieldName):
+        self.transferAnimatableInteger(fieldName)
+
     def transferAnimatableUInt32(self, fieldName):
         self.transferAnimatableInteger(fieldName)
 
-    
+    def transferAnimatableBooleanBasedOnSDU3(self, fieldName):
+        self.transferAnimatableInteger(fieldName)
+        
+    def transferAnimatableBooleanBasedOnSDFG(self, fieldName):
+        self.transferAnimatableInteger(fieldName)
+
     def transferFloat(self, fieldName, sinceVersion=None, tillVersion=None):
         if (tillVersion != None) and (self.m3Version > tillVersion):
             return
@@ -324,7 +333,9 @@ class M3ToBlenderDataTransferer:
             mask = 1 << bitIndex 
             vector[bitIndex] = (mask & integerValue) > 0   
     
-    def transferAnimatableVector3(self, fieldName):
+    def transferAnimatableVector3(self, fieldName, sinceVersion=None):
+        if (sinceVersion != None) and (self.m3Version < sinceVersion):
+            return
         animationReference = getattr(self.m3Object, fieldName)
         setattr(self.blenderObject, fieldName, toBlenderVector3(animationReference.initValue))
         animationHeader = animationReference.header
@@ -704,6 +715,13 @@ class Importer:
             animPathPrefix = "%slayers[%s]." % (materialAnimPathPrefix, layerIndex)
             layerTransferer = M3ToBlenderDataTransferer(self, scene, animPathPrefix, blenderObject=materialLayer, m3Object=m3Layer)
             shared.transferMaterialLayer(layerTransferer)
+            materialLayer.fresnelMax = m3Layer.fresnelMin + m3Layer.fresnelMaxOffset
+            if m3Layer.structureDescription.structureVersion >= 25:
+                materialLayer.fresnelMaskX = 1.0 - m3Layer.fresnelInvertedMaskX
+                materialLayer.fresnelMaskY = 1.0 - m3Layer.fresnelInvertedMaskY
+                materialLayer.fresnelMaskZ = 1.0 - m3Layer.fresnelInvertedMaskZ
+
+
 
     def createMaterials(self):
         print("Loading materials")
@@ -1435,7 +1453,7 @@ class Importer:
                     modifier.use_edge_angle = False
 
                 if self.scene.m3_import_options.generateBlenderMaterials:
-                    shared.createClassicBlenderMaterialForMeshObject(self.scene, meshObject)
+                    shared.createBlenderMaterialForMeshObject(self.scene, meshObject)
 
     def setOriginToCenter(self, meshObject):
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -1550,7 +1568,7 @@ class Importer:
         return editBones
 
     def createAnimIdToKeyFramesMapFor(self, stc):
-        keyFramesLists = [stc.sdev, stc.sd2v, stc.sd3v, stc.sd4q, stc.sdcc, stc.sdr3, stc.unknownRef8, stc.sds6, stc.sdu6, stc.unknownRef11, stc.unknownRef12, stc.sdfg, stc.sdmb]
+        keyFramesLists = [stc.sdev, stc.sd2v, stc.sd3v, stc.sd4q, stc.sdcc, stc.sdr3, stc.unknownRef8, stc.sds6, stc.sdu6, stc.unknownRef11, stc.sdu3, stc.sdfg, stc.sdmb]
         animIdToTimeValueMap = {}
         for i in range(len(stc.animIds)):
             animId = stc.animIds[i]

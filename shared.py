@@ -53,6 +53,14 @@ attachmentVolumeCapsule = "2"
 lightTypePoint = "1"
 lightTypeSpot = "2"
 
+colorChannelSettingRGB="0"
+colorChannelSettingRGBA="1"
+colorChannelSettingA="2"
+colorChannelSettingR="3"
+colorChannelSettingG="4"
+colorChannelSettingB="5"
+
+defaultDepthBlendFalloff = 0.2 # default if it is enabled
 
 tightHitTestBoneName = "HitTestTight"
 
@@ -248,6 +256,8 @@ class UniqueNameFinder:
             name = name[:-1]
         return name
 
+def isVideoFilePath(filePath):
+    return filePath.endswith(".ogv") or filePath.endswith(".ogg")
 
 def setAnimationWithIndexToCurrentData(scene, animationIndex):
     if (animationIndex < 0) or (animationIndex >= len(scene.m3_animations)):
@@ -347,30 +357,49 @@ def findMeshObjects(scene):
     for currentObject in scene.objects:
         if currentObject.type == 'MESH':
             yield currentObject
+    
             
-            
+def convertM3UVSourceValueToUVLayerName(mesh, uvSource):
+    """ Can return None"""
+    if uvSource == "0":
+        uvLayerIndex = 0
+    elif uvSource == "1":
+        uvLayerIndex = 1
+    elif uvSource == "9":
+        uvLayerIndex = 2
+    elif uvSource == "10":
+        uvLayerIndex = 3
+    else:
+        return None
+    
+    if uvLayerIndex < len(mesh.uv_layers): 
+        return mesh.uv_layers[uvLayerIndex].name
+    else:
+        return None
 
-def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3Material, layerFieldName , directoryList):
-    blenderM3Layer = blenderM3Material.layers[getLayerNameFromFieldName(layerFieldName)]
-
+def createImageObjetForM3MaterialLayer(blenderM3Layer, directoryList):
     if blenderM3Layer == None:
-        return
+        return None
     
     if (blenderM3Layer.imagePath == "") or (blenderM3Layer.imagePath == None):
-        return
-    
+        print ("no image path")
+        return None
     searchedImagePaths = []
     for directoryPath in directoryList:
         absoluteImagePath = path.join(directoryPath, blenderM3Layer.imagePath)
         searchedImagePaths.append(absoluteImagePath)
         image = image_utils.load_image(absoluteImagePath)
         if image != None:
-            break
-    if not image:
-        print("Failed to load a texture. The following paths have been searched: %s" % searchedImagePaths)
-        return
+            return image
 
-    textureSlot = classicBlenderMaterial.texture_slots.add()
+    print("Failed to load a texture. The following paths have been searched: %s" % searchedImagePaths)
+    return None
+
+def createTextureObjectForM3MaterialLayer(blenderM3Layer, directoryList):
+    image = createImageObjetForM3MaterialLayer(blenderM3Layer, directoryList)
+    if not image:
+        return None
+
     texture = bpy.data.textures.new(blenderM3Layer.name, type='IMAGE')
     # Clamp options seem not to work
     # might be related to the following bug:
@@ -382,6 +411,15 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
         texture.extension = 'REPEAT'
     else:
         texture.extension = 'CLIP'
+    return texture
+
+def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3Material, layerFieldName , directoryList):
+    blenderM3Layer = blenderM3Material.layers[getLayerNameFromFieldName(layerFieldName)]
+
+    texture = createTextureObjectForM3MaterialLayer(blenderM3Layer, directoryList)
+    if texture == None:
+        return
+    textureSlot = classicBlenderMaterial.texture_slots.add()
     textureSlot.texture = texture
     textureSlot.texture_coords = 'UV'
     # There is no known scale field, but there might be one:
@@ -389,10 +427,9 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
     textureSlot.offset = (blenderM3Layer.uvOffset[0], blenderM3Layer.uvOffset[1], 0.0)
     textureSlot.use_map_color_diffuse = False
 
-    if blenderM3Layer.uvSource in ["0","1","2", "3"]:
-        uvIndex = int(blenderM3Layer.uvSource)
-        if uvIndex < len(mesh.uv_layers): 
-            textureSlot.uv_layer = mesh.uv_layers[uvIndex].name
+    uvLayerName = convertM3UVSourceValueToUVLayerName(mesh, blenderM3Layer.uvSource)
+    if uvLayerName != None: 
+        textureSlot.uv_layer = convertM3UVSourceValueToUVLayerName(mesh, blenderM3Layer.uvSource)
 
     if layerFieldName == "diffuseLayer":
         textureSlot.use_map_color_diffuse = True
@@ -408,27 +445,394 @@ def addTextureSlotBasedOnM3MaterialLayer(mesh, classicBlenderMaterial, blenderM3
     elif layerFieldName in ["emissiveLayer", "emissive2Layer"]:
         textureSlot.use_map_emit = True
 
-def createClassicBlenderMaterialForMeshObject(scene, meshObject):
-    mesh = meshObject.data
-        
+def getStandardMaterialOrNull(scene, mesh):  
+    if mesh.m3_material_name == "":
+        return None
     materialReference = scene.m3_material_references[mesh.m3_material_name]
     materialType = materialReference.materialType
     materialIndex = materialReference.materialIndex 
     if not materialType in [standardMaterialTypeIndex, compositeMaterialTypeIndex]:
-        return
-    realMaterial = bpy.data.materials.new('Material')
-
+        print ("Material generation is only supported for starard materials, but not for material %s" % m3MaterialFieldNames[materialType])
+        return None
     if materialType == compositeMaterialTypeIndex:
         compositing_material = scene.m3_composite_materials[materialIndex]
         for key in compositing_material.sections.keys():
             ref = scene.m3_material_references[key]
             if ref.materialType == standardMaterialTypeIndex:
-                standardMaterial = scene.m3_standard_materials[ref.materialIndex]
-                break
-        if not standardMaterial:
-            return
+                return scene.m3_standard_materials[ref.materialIndex]
+            return None
     else:
-        standardMaterial = scene.m3_standard_materials[materialIndex]
+        return scene.m3_standard_materials[materialIndex]
+
+def createUVNodesFromM3LayerAndReturnSocket(mesh, tree, blenderM3Layer):
+    """ Returns a socket that provies UVs or None"""
+    uvLayerName = convertM3UVSourceValueToUVLayerName(mesh, blenderM3Layer.uvSource)
+    if uvLayerName == None: 
+        return None
+    uvAttributeNode = tree.nodes.new("ShaderNodeAttribute")
+    uvAttributeNode.attribute_name = uvLayerName
+    
+    outputNode = uvAttributeNode.outputs["Vector"]
+    
+    if (not blenderM3Layer.textureWrapX) and (not blenderM3Layer.textureWrapY):
+        mappingNode = tree.nodes.new("ShaderNodeMapping")
+        mappingNode.use_min = True
+        mappingNode.use_max = True
+        mappingNode.vector_type = "POINT"
+        tree.links.new(outputNode, mappingNode.inputs["Vector"])
+        outputNode = mappingNode.outputs["Vector"]
+    else:
+        if (not blenderM3Layer.textureWrapX) or (not blenderM3Layer.textureWrapY):
+            print("Note: Generated cycles material won't have correct texture clamp. One sided texture wrap is not implemented yet")
+    return outputNode
+
+
+def createTextureNodeForM3MaterialLayer(mesh, tree, blenderM3Layer, directoryList):
+    image = createImageObjetForM3MaterialLayer(blenderM3Layer, directoryList)
+    if image == None:
+        return None
+    
+    textureNode = tree.nodes.new("ShaderNodeTexImage")
+    textureNode.color_space = "COLOR"
+    textureNode.projection = "FLAT"
+    textureNode.image = image
+
+    uvSocket = createUVNodesFromM3LayerAndReturnSocket(mesh, tree, blenderM3Layer)
+    if uvSocket != None:
+        tree.links.new(uvSocket, textureNode.inputs["Vector"])
+    
+    return textureNode
+
+def determineTextureDirectoryList(scene):
+    textureDirectories = []
+    textureDirectories.append(scene.m3_import_options.rootDirectory)
+    
+    if path.isfile(scene.m3_import_options.path):
+        modelDirectory = path.dirname(scene.m3_import_options.path)
+        textureDirectories.append(modelDirectory)
+    return textureDirectories
+
+def createNormalMapNode(mesh, tree, standardMaterial, directoryList):
+    
+    normalLayer = standardMaterial.layers[getLayerNameFromFieldName("normalLayer")]
+    normalTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, normalLayer, directoryList)   
+    if normalTextureNode == None:
+        return None
+    normalTextureSeparateRGBNode = tree.nodes.new("ShaderNodeSeparateRGB")
+    tree.links.new(normalTextureNode.outputs["Color"], normalTextureSeparateRGBNode.inputs["Image"])
+
+    # Invert Green of normal texture
+    normalTextureGreenInvertNode = tree.nodes.new("ShaderNodeMath")
+    normalTextureGreenInvertNode.operation = "SUBTRACT"
+    normalTextureGreenInvertNode.inputs[0].default_value = 1.0
+    tree.links.new(normalTextureSeparateRGBNode.outputs["G"], normalTextureGreenInvertNode.inputs[1])
+
+    # Bring green of normal texture to range [-0.5,0.5]
+    normalTextureGreenSubZeroDotFiveNode = tree.nodes.new("ShaderNodeMath")
+    normalTextureGreenSubZeroDotFiveNode.operation = "SUBTRACT"
+    normalTextureGreenSubZeroDotFiveNode.inputs[1].default_value = 0.5
+    tree.links.new(normalTextureGreenInvertNode.outputs["Value"], normalTextureGreenSubZeroDotFiveNode.inputs[0])
+
+    # Bring green of normal texture to range [-1,1]
+    normalTextureGreenMul2Node = tree.nodes.new("ShaderNodeMath")
+    normalTextureGreenMul2Node.operation = "ADD"
+    tree.links.new(normalTextureGreenSubZeroDotFiveNode.outputs["Value"], normalTextureGreenMul2Node.inputs[0])
+    tree.links.new(normalTextureGreenSubZeroDotFiveNode.outputs["Value"], normalTextureGreenMul2Node.inputs[1])
+
+
+    # Calculate (normal green in range [-1,1]) ^ 2
+    normalTextureGreenPower2Node = tree.nodes.new("ShaderNodeMath")
+    normalTextureGreenPower2Node.operation = "MULTIPLY"
+    tree.links.new(normalTextureGreenMul2Node.outputs["Value"], normalTextureGreenPower2Node.inputs[0])
+    tree.links.new(normalTextureGreenMul2Node.outputs["Value"], normalTextureGreenPower2Node.inputs[1])
+
+    
+    # Bring alpha of normal texture to range [-0.5,0.5]
+    normalTextureAlphaSubZeroDotFiveNode = tree.nodes.new("ShaderNodeMath")
+    normalTextureAlphaSubZeroDotFiveNode.operation = "SUBTRACT"
+    normalTextureAlphaSubZeroDotFiveNode.inputs[1].default_value = 0.5
+    tree.links.new(normalTextureNode.outputs["Alpha"], normalTextureAlphaSubZeroDotFiveNode.inputs[0])
+
+    # Bring alpha of normal texture to range [-1,1]
+    normalTextureAlphaMul2Node = tree.nodes.new("ShaderNodeMath")
+    normalTextureAlphaMul2Node.operation = "MULTIPLY"
+    tree.links.new(normalTextureAlphaSubZeroDotFiveNode.outputs["Value"], normalTextureAlphaMul2Node.inputs[0])
+    tree.links.new(normalTextureAlphaSubZeroDotFiveNode.outputs["Value"], normalTextureAlphaMul2Node.inputs[1])
+
+    # Calculate (normal alpha in range [-1,1]) ^ 2
+    normalTextureAlphaPower2Node = tree.nodes.new("ShaderNodeMath")
+    normalTextureAlphaPower2Node.operation = "MULTIPLY"
+    tree.links.new(normalTextureAlphaMul2Node.outputs["Value"], normalTextureAlphaPower2Node.inputs[0])
+    tree.links.new(normalTextureAlphaMul2Node.outputs["Value"], normalTextureAlphaPower2Node.inputs[1])
+
+    # Calculate (green in range [-1,1])^2 + (alpha in range [-1,1]) ^ 2
+    normalTextureAddGreenAndAlphaNode = tree.nodes.new("ShaderNodeMath")
+    normalTextureAddGreenAndAlphaNode.operation = "ADD"
+    tree.links.new(normalTextureGreenPower2Node.outputs["Value"], normalTextureAddGreenAndAlphaNode.inputs[0])
+    tree.links.new(normalTextureAlphaPower2Node.outputs["Value"], normalTextureAddGreenAndAlphaNode.inputs[1])
+
+    # Calculate (new blue)^2 == 1 - (new red)^2 + (new green)^2 
+    # == 1- ((green in range [-1,1])^2 to (alpha in range [-1,1])^2)
+    normalTextureNewBluePower2Node = tree.nodes.new("ShaderNodeMath")
+    normalTextureNewBluePower2Node.operation = "SUBTRACT"
+    normalTextureNewBluePower2Node.inputs[0].default_value = 1.0
+    tree.links.new(normalTextureAddGreenAndAlphaNode.outputs["Value"], normalTextureNewBluePower2Node.inputs[1])
+
+    # Calculate new blue in range [0,1] via = sqrt (1- ((green in range [-1,1])^2 to (alpha in range [-1,1])^2))
+    # Based on the assumtion that sqrt(r^2+ g^2 + b^2) == 1
+    normalTextureNewBlueNode = tree.nodes.new("ShaderNodeMath")
+    normalTextureNewBlueNode.operation = "POWER"
+    normalTextureNewBlueNode.inputs[1].default_value = 0.5
+    tree.links.new(normalTextureNewBluePower2Node.outputs["Value"], normalTextureNewBlueNode.inputs[0])
+    
+    normalTextureConvertedNode = tree.nodes.new("ShaderNodeCombineRGB")
+    tree.links.new(normalTextureNode.outputs["Alpha"], normalTextureConvertedNode.inputs["R"])
+    tree.links.new(normalTextureGreenInvertNode.outputs["Value"], normalTextureConvertedNode.inputs["G"])
+    tree.links.new(normalTextureNewBlueNode.outputs["Value"], normalTextureConvertedNode.inputs["B"])
+
+    normalMapNode = tree.nodes.new('ShaderNodeNormalMap')
+    normalMapNode.space = "TANGENT"
+    normalMapNode.inputs["Strength"].default_value = 0.5
+    normalMapNode.uv_map = convertM3UVSourceValueToUVLayerName(mesh, normalLayer.uvSource)
+    tree.links.new(normalTextureConvertedNode.outputs["Image"], normalMapNode.inputs["Color"])
+
+    return normalMapNode
+
+def createCyclesMaterialForMeshObject(scene, meshObject):
+    mesh = meshObject.data
+    standardMaterial = getStandardMaterialOrNull(scene, mesh)
+    if standardMaterial == None:
+        return
+             
+    realMaterial = bpy.data.materials.new('Material')
+    directoryList = determineTextureDirectoryList(scene)
+    
+    diffuseLayer = standardMaterial.layers[getLayerNameFromFieldName("diffuseLayer")]
+    specularLayer = standardMaterial.layers[getLayerNameFromFieldName("specularLayer")]
+
+    realMaterial.use_nodes = True
+    tree = realMaterial.node_tree
+    tree.links.clear()
+    tree.nodes.clear()
+    
+    diffuseTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, diffuseLayer, directoryList)    
+    if diffuseTextureNode != None:
+        if diffuseLayer.colorChannelSetting == colorChannelSettingRGBA:
+            diffuseTeamColorMixNode = tree.nodes.new("ShaderNodeMixRGB")
+            diffuseTeamColorMixNode. blend_type = "MIX"
+            teamColor = scene.m3_import_options.teamColor
+            diffuseTeamColorMixNode.inputs["Color1"].default_value = (teamColor[0], teamColor[1], teamColor[2], 1.0)
+            tree.links.new(diffuseTextureNode.outputs["Alpha"], diffuseTeamColorMixNode.inputs["Fac"])
+            tree.links.new(diffuseTextureNode.outputs["Color"], diffuseTeamColorMixNode.inputs["Color2"])
+            finalDiffuseColorOutputSocket = diffuseTeamColorMixNode.outputs["Color"]
+        else:
+            finalDiffuseColorOutputSocket = diffuseTextureNode.outputs["Color"]
+    else:
+        rgbNode = tree.nodes.new("ShaderNodeRGB")
+        rgbNode.outputs[0].default_value = (0,0,0,1)
+        finalDiffuseColorOutputSocket = rgbNode.outputs[0]
+        
+    decalLayer = standardMaterial.layers[getLayerNameFromFieldName("decalLayer")]
+    decalTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, decalLayer, directoryList)   
+    if decalTextureNode != None:
+        decalAddingNode = tree.nodes.new("ShaderNodeMixRGB") 
+        decalAddingNode. blend_type = "SCREEN"
+        tree.links.new(decalTextureNode.outputs["Alpha"], decalAddingNode.inputs["Fac"])
+        tree.links.new(decalTextureNode.outputs["Color"], decalAddingNode.inputs["Color2"])
+        tree.links.new(finalDiffuseColorOutputSocket, decalAddingNode.inputs["Color1"])
+        finalDiffuseColorOutputSocket = decalAddingNode.outputs["Color"]
+    
+
+    normalMapNode = createNormalMapNode(mesh, tree, standardMaterial, directoryList)
+    diffuseShaderNode = tree.nodes.new("ShaderNodeBsdfDiffuse")
+    if normalMapNode != None:
+        tree.links.new(normalMapNode.outputs["Normal"], diffuseShaderNode.inputs["Normal"])
+    tree.links.new(finalDiffuseColorOutputSocket, diffuseShaderNode.inputs["Color"])
+    finalShaderOutputSocket = diffuseShaderNode.outputs["BSDF"]
+
+    specularTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, specularLayer, directoryList)   
+
+    if specularTextureNode != None:
+        glossyShaderNode = tree.nodes.new("ShaderNodeBsdfGlossy")
+        glossyShaderNode.distribution = "BECKMANN"
+        glossyShaderNode.inputs["Roughness"].default_value = 0.2
+        if normalMapNode != None:
+            tree.links.new(normalMapNode.outputs["Normal"], glossyShaderNode.inputs["Normal"])
+        tree.links.new(specularTextureNode.outputs["Color"], glossyShaderNode.inputs["Color"])
+
+        mixShaderNode =  tree.nodes.new("ShaderNodeMixShader")
+        tree.links.new(specularTextureNode.outputs["Color"], mixShaderNode.inputs["Fac"])
+        tree.links.new(finalShaderOutputSocket, mixShaderNode.inputs[1])
+        tree.links.new(glossyShaderNode.outputs["BSDF"], mixShaderNode.inputs[2])
+        finalShaderOutputSocket = mixShaderNode.outputs["Shader"]
+
+    emissiveLayer = standardMaterial.layers[getLayerNameFromFieldName("emissiveLayer")]
+    emissiveTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, emissiveLayer, directoryList) 
+    if emissiveTextureNode != None:
+        emissiveShaderNode = tree.nodes.new("ShaderNodeEmission")
+        emissiveShaderNode.inputs[1].default_value = 10.0 #Strength
+        tree.links.new(emissiveTextureNode.outputs["Color"], emissiveShaderNode.inputs["Color"])
+        print("Adding emissive to %s" % standardMaterial.name)
+        mixShaderNode =  tree.nodes.new("ShaderNodeMixShader")
+        tree.links.new(emissiveTextureNode.outputs["Color"], mixShaderNode.inputs["Fac"])
+        tree.links.new(finalShaderOutputSocket, mixShaderNode.inputs[1])
+        tree.links.new(emissiveShaderNode.outputs["Emission"], mixShaderNode.inputs[2])
+        finalShaderOutputSocket = mixShaderNode.outputs["Shader"]
+
+    alphaLayer = standardMaterial.layers[getLayerNameFromFieldName("alphaMaskLayer")]
+    alphaTextureNode = createTextureNodeForM3MaterialLayer(mesh, tree, alphaLayer, directoryList)   
+    if alphaTextureNode != None and alphaLayer.colorChannelSetting in [colorChannelSettingA, colorChannelSettingR, colorChannelSettingG, colorChannelSettingB]:
+        transparencyShaderNode = tree.nodes.new("ShaderNodeBsdfTransparent")
+
+        mixShaderNode =  tree.nodes.new("ShaderNodeMixShader")
+        tree.links.new(transparencyShaderNode.outputs["BSDF"], mixShaderNode.inputs[1])
+        tree.links.new(finalShaderOutputSocket, mixShaderNode.inputs[2])
+        if alphaLayer.colorChannelSetting == colorChannelSettingA:
+            tree.links.new(alphaTextureNode.outputs["Alpha"], mixShaderNode.inputs["Fac"])
+        else:
+            separateRGBNode = tree.nodes.new("ShaderNodeSeparateRGB")
+            tree.links.new(alphaTextureNode.outputs["Color"], separateRGBNode.inputs["Image"])
+            
+            if alphaLayer.colorChannelSetting == colorChannelSettingR:
+               tree.links.new(separateRGBNode.outputs["R"], mixShaderNode.inputs["Fac"])
+            elif alphaLayer.colorChannelSetting == colorChannelSettingG:
+               tree.links.new(separateRGBNode.outputs["G"], mixShaderNode.inputs["Fac"])
+            elif alphaLayer.colorChannelSetting == colorChannelSettingB:
+               tree.links.new(separateRGBNode.outputs["B"], mixShaderNode.inputs["Fac"])
+            else:
+                raise Exception("alpha texture setting not handled properly earilier")
+        finalShaderOutputSocket = mixShaderNode.outputs["Shader"] 
+
+    outputNode =  tree.nodes.new("ShaderNodeOutputMaterial")
+    outputNode.location = (500.0, 000.0)
+    tree.links.new(finalShaderOutputSocket, outputNode.inputs["Surface"])
+
+    layoutInputNodesOf(tree)
+
+    # Remove old materials:
+    while len(mesh.materials) > 0:
+        mesh.materials.pop(0, update_data=True)
+        
+    mesh.materials.append(realMaterial)
+
+def createNodeNameToInputNodesMap(tree):
+    nodeNameToInputNodesMap = {}
+    for link in tree.links:
+        inputNodes = nodeNameToInputNodesMap.get(link.to_node.name)
+        if inputNodes == None:
+            inputNodes = set()
+            nodeNameToInputNodesMap[link.to_node.name] = inputNodes
+        inputNodes.add(link.from_node)
+    return nodeNameToInputNodesMap
+
+def createNodeNameToOutputNodesMap(tree):
+    nodeNameToOutputNodesMap = {}
+    for link in tree.links:
+        outputNodes = nodeNameToOutputNodesMap.get(link.from_node.name)
+        if outputNodes == None:
+            outputNodes = set()
+            nodeNameToOutputNodesMap[link.from_node.name] = outputNodes
+        outputNodes.add(link.to_node)
+    return nodeNameToOutputNodesMap
+
+
+nodeTypeToHeightMap = {'NORMAL_MAP': 148, 'MATH': 145, 'ATTRIBUTE': 116, 'SEPRGB': 112, 'COMBRGB': 115, 'MIX_RGB': 164, 'TEX_IMAGE': 226, 'OUTPUT_MATERIAL': 87, 'BSDF_DIFFUSE': 112, 'BSDF_GLOSSY': 144, 'MIX_SHADER': 112, 'MAPPING': 270, 'BSDF_TRANSPARENT':69, 'RGB':177, 'EMISSION':93}
+
+def getHeightOfNewNode(node):
+    # due to a blender 2.71 bug the dimensions are 0 for newly created nodes
+    # due to a blender 2.71 bug the height is always 100.0
+   return nodeTypeToHeightMap.get(node.type, node.height)
+
+
+def layoutInputNodesOf(tree):
+    horizontalDistanceBetweenNodes = 200
+    verticalDistanceBetweenNodes = 50
+
+    nodeNameToInputNodesMap = createNodeNameToInputNodesMap(tree)
+    nodeNameToOutputNodesMap = createNodeNameToOutputNodesMap(tree)
+
+    # Fix x positions of nodes:
+    namesOfNodesToCheck = set(n.name for n in tree.nodes)
+    while len(namesOfNodesToCheck) > 0:
+        nodeName = namesOfNodesToCheck.pop()
+        node = tree.nodes[nodeName]
+        inputNodes = nodeNameToInputNodesMap.get(nodeName)
+        if inputNodes != None:
+            for inputNode in inputNodes:
+                xBasedOnNode = node.location[0] -inputNode.width -horizontalDistanceBetweenNodes
+                inputNode.location[0] = min(inputNode.location[0], xBasedOnNode)
+                namesOfNodesToCheck.add(inputNode.name)
+    
+    xLinkCountNameTuples = list()
+    for node in tree.nodes:
+        linkCount = 0
+        inputNodes = nodeNameToInputNodesMap.get(node.name)
+        if inputNodes != None:
+            linkCount += len(inputNodes)
+        outputNodes = nodeNameToOutputNodesMap.get(node.name)
+        if outputNodes != None:
+            linkCount += len(outputNodes)
+            
+        
+        xLinkCountNameTuples.append((node.location[0], linkCount, node.name))
+    xLinkCountNameTuples.sort(reverse=True)
+    
+    nodesWithFinalPosition = []
+    for x, linkCount, name in xLinkCountNameTuples:
+        node = tree.nodes[name]
+        outputNodes = nodeNameToOutputNodesMap.get(name)
+        if outputNodes != None and len(outputNodes) > 0:
+            ySum = 0
+            for outputNode in outputNodes:
+                ySum += outputNode.location[1]
+            perfectY = ySum / len(outputNodes)
+        else:
+            perfectY = node.location[1]
+        
+        width = node.width
+        height = getHeightOfNewNode(node)
+        xCollisionNodes = []
+        for otherNode in nodesWithFinalPosition:
+            oX = otherNode.location[0]
+            oWidth = node.width
+            oIsRight = (oX >= x + width)
+            oIsLeft =  (oX <= x - oWidth) 
+            xCollision = not (oIsRight or oIsLeft)
+            if xCollision:
+                xCollisionNodes.append(otherNode)
+        
+        yLowerThanWished = perfectY
+        yHigherThanWished = perfectY
+        goodYPicked = False
+        while not goodYPicked:
+            if abs(yLowerThanWished - perfectY) < abs(yHigherThanWished - perfectY):
+                yPicked = yLowerThanWished
+            else:
+                yPicked = yHigherThanWished
+            goodYPicked = True
+            for otherNode in xCollisionNodes:  
+                oY = otherNode.location[1]
+                oHeight = getHeightOfNewNode(otherNode)
+                oIsHigher = oY >= yPicked + oHeight + verticalDistanceBetweenNodes
+                oIsLower = yPicked >= oY + height + verticalDistanceBetweenNodes
+                collision = not (oIsLower or oIsHigher)
+                if collision:
+                    goodYPicked = False
+                    if yPicked == yLowerThanWished:
+                        yLowerThanWished = oY - oHeight - verticalDistanceBetweenNodes
+                    if yPicked == yHigherThanWished:
+                        yHigherThanWished = oY + height + verticalDistanceBetweenNodes
+                    break
+        node.location[1] = yPicked
+        nodesWithFinalPosition.append(node)   
+    
+
+def createClassicBlenderMaterialForMeshObject(scene, meshObject):
+    mesh = meshObject.data
+    standardMaterial = getStandardMaterialOrNull(scene, mesh)
+    if standardMaterial == None:
+        return
+    realMaterial = bpy.data.materials.new('Material')
 
     diffuseLayer = standardMaterial.layers[getLayerNameFromFieldName("diffuseLayer")]
     specularLayer = standardMaterial.layers[getLayerNameFromFieldName("specularLayer")]
@@ -457,12 +861,7 @@ def createClassicBlenderMaterialForMeshObject(scene, meshObject):
     #realMaterial.alpha = 1 # 0.0 - 1.0
     #realMaterial.ambient = 1
     
-    textureDirectories = []
-    textureDirectories.append(scene.m3_import_options.rootDirectory)
-    
-    if path.isfile(scene.m3_import_options.path):
-        modelDirectory = path.dirname(scene.m3_import_options.path)
-        textureDirectories.append(modelDirectory)
+    textureDirectories = determineTextureDirectoryList(scene)
     
     for layerFieldName in ["diffuseLayer", "decalLayer", "specularLayer", "normalLayer","emissiveLayer", "emissive2Layer"]:
         addTextureSlotBasedOnM3MaterialLayer(mesh, realMaterial, standardMaterial, layerFieldName,  textureDirectories)
@@ -474,10 +873,17 @@ def createClassicBlenderMaterialForMeshObject(scene, meshObject):
         
     mesh.materials.append(realMaterial)
 
-
-def createClassicBlenderMaterialsFromM3Materials(scene):
-    for meshObject in findMeshObjects(scene):
+def createBlenderMaterialForMeshObject(scene, meshObject):
+    renderEngine = scene.render.engine
+    if renderEngine == 'CYCLES':
+        createCyclesMaterialForMeshObject(scene, meshObject)
+    else:
         createClassicBlenderMaterialForMeshObject(scene, meshObject)
+
+
+def createBlenderMaterialsFromM3Materials(scene):
+    for meshObject in findMeshObjects(scene):
+        createBlenderMaterialForMeshObject(scene, meshObject)
             
 def composeMatrix(location, rotation, scale):
     locMatrix= mathutils.Matrix.Translation(location)
@@ -584,7 +990,6 @@ def updateBoneShapeOfParticleSystem(particleSystem, bone, poseBone):
             subFacesFixed = [[fe + len(untransformedPositions) for fe in f] for f in subFaces]
             untransformedPositions.extend(subPositionsAtLoc)
             faces.extend(subFacesFixed)
-        print(faces)
 
     else:
         untransformedPositions, faces = createMeshDataForSphere(0.02)
@@ -1151,6 +1556,8 @@ def transferPhysicsShape(transferer):
     transferer.transferFloat("size2")
 
 def transferStandardMaterial(transferer):
+    transferer.transferBit("flags", "useVertexColor")
+    transferer.transferBit("flags", "useVertexAlpha")
     transferer.transferBit("flags", "unfogged")
     transferer.transferBit("flags", "twoSided")
     transferer.transferBit("flags", "unshaded")
@@ -1162,11 +1569,26 @@ def transferStandardMaterial(transferer):
     transferer.transferBit("flags", "splatUVfix")
     transferer.transferBit("flags", "softBlending")
     transferer.transferBit("flags", "forParticles")
+    transferer.transferBit("flags", "transparency")
+    transferer.transferBit("flags", "disableSoft")
     transferer.transferBit("flags", "darkNormalMapping")
-    transferer.transferBit("unknownFlags", "unknownFlag0x1")
-    transferer.transferBit("unknownFlags", "unknownFlag0x4")
-    transferer.transferBit("unknownFlags", "unknownFlag0x8")
-    transferer.transferBit("unknownFlags", "unknownFlag0x200")
+    transferer.transferBit("flags", "decalRequiredOnLowEnd")
+    transferer.transferBit("flags", "acceptSplatsOnly")
+    transferer.transferBit("flags", "emissiveRequiredOnLowEnd")
+    transferer.transferBit("flags", "acceptSplats")
+    transferer.transferBit("flags", "backgroundObject")
+    transferer.transferBit("flags", "zpFillRequiredOnLowEnd")
+    transferer.transferBit("flags", "excludeFromHighlighting")
+    transferer.transferBit("flags", "clampOutput")
+    transferer.transferBit("flags", "geometryVisible", sinceVersion=18)
+    # depthBlendFalloff needs to be transfered before useDepthBlendFalloff:
+    # That way a corrupted model with useDepthBlendFalloff=true 
+    # but depthBlendFalloff==0.0 will be fixed: 
+    # When the flag gets set in the blender material it sets
+    # the depthBlendFalloff to 0.2 and thus fixes the combination
+    transferer.transferFloat("depthBlendFalloff")
+    transferer.transferBit("additionalFlags", "useDepthBlendFalloff")
+    transferer.transferBit("additionalFlags", "unknownFlag0x200")
     transferer.transferEnum("blendMode")
     transferer.transferInt("priority")
     transferer.transferFloat("specularity")
@@ -1217,6 +1639,7 @@ def transferMaterialLayer(transferer):
     transferer.transferBit("flags", "textureWrapX")
     transferer.transferBit("flags", "textureWrapY")
     transferer.transferBit("flags", "invertColor")
+    transferer.transferBit("flags", "clampColor")
     transferer.transferBit("flags", "colorEnabled")
     transferer.transferEnum("uvSource")
     transferer.transferEnum("colorChannelSetting")
@@ -1225,13 +1648,30 @@ def transferMaterialLayer(transferer):
     transferer.transferAnimatableVector2("uvOffset")
     transferer.transferAnimatableVector3("uvAngle")
     transferer.transferAnimatableVector2("uvTiling")
+    transferer.transferAnimatableVector3("triPlanarOffset", sinceVersion=24)
+    transferer.transferAnimatableVector3("triPlanarScale", sinceVersion=24)
+
+    transferer.transferInt("flipBookRows")
+    transferer.transferInt("flipBookColumns")
+    transferer.transferAnimatableUInt16("flipBookFrame")
     transferer.transferAnimatableFloat("brightness")
     transferer.transferEnum("rttChannel")
-    transferer.transferBit("tintFlags", "useTint")
-    transferer.transferBit("tintFlags", "tintAlpha")
-    transferer.transferFloat("tintStrength")
-    transferer.transferFloat("tintStart")
-    transferer.transferFloat("tintCutout")
+    transferer.transferEnum("fresnelType")
+    transferer.transferFloat("fresnelExponent")
+    transferer.transferFloat("fresnelMin")
+    transferer.transferFloat("fresnelRotationYaw", sinceVersion=25)
+    transferer.transferFloat("fresnelRotationPitch", sinceVersion=25)
+    transferer.transferBit("flags", "fresnelLocalTransform", sinceVersion=25)
+    transferer.transferBit("flags", "fresnelDoNotMirror", sinceVersion=25)
+
+    transferer.transferInt("videoFrameRate")
+    transferer.transferInt("videoStartFrame")
+    transferer.transferInt("videoEndFrame")
+    transferer.transferEnum("videoMode")
+    transferer.transferBoolean("videoSyncTiming")
+    transferer.transferAnimatableBooleanBasedOnSDU3("videoPlay")
+    transferer.transferAnimatableBooleanBasedOnSDFG("videoRestart")
+
 
 def transferAnimation(transferer):
     transferer.transferFloat("movementSpeed")
