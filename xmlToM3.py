@@ -109,7 +109,7 @@ def stringContentOf(xmlNode):
     return content
 
 def createListElement(xmlNode, structureDescription):
-    if structureDescription.structureName in ["I32_","I16_", "I8__", "U32_", "U16_", "U8__"]:
+    if structureDescription.structureName in ["I32_","I16_", "I8__", "U32_", "U16_", "U8__", "FLAG"]:
         return int(stringContentOf(xmlNode), 0)
     elif structureDescription.structureName in ["REAL"]:
         return float(stringContentOf(xmlNode))
@@ -130,7 +130,7 @@ def childElementsOf(parentName, xmlNode):
 
 def createElementList(xmlNode, parentName, historyOfReferencedStructure):
     xmlElements = list(childElementsOf(parentName, xmlNode))
-    if historyOfReferencedStructure.name in ["CHAR", "I32_","I16_", "I8__", "U32_", "U16_", "U8__", "REAL"]:
+    if historyOfReferencedStructure.name in ["CHAR", "I32_","I16_", "I8__", "U32_", "U16_", "U8__", "REAL", "FLAG"]:
         structVersion = 0
     else:
         if len(xmlElements) == 0:
