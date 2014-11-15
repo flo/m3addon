@@ -1053,6 +1053,10 @@ ribbonTypeList = [("0", "Planar Billboarded", "Planar Billboarded"),
                   ("2", "Cylinder", "Cylinder"),
                   ("3", "Star Shaped", "Star Shaped")
                  ]
+                 
+projectionTypeList = [("1", "Orthonormal", "makes the Projector behave like a box. It will be the same width no matter how close the projector is to the target surface."), 
+                  ("2", "Perspective", "makes the Projector behave like a camera. The closer the projector is to the surface, the smaller the effect will be.")
+                 ]
 
 
 forceTypeList = [("0", "Directional", "The particles get accelerated into one direction"), 
@@ -1726,13 +1730,15 @@ class M3Projection(bpy.types.PropertyGroup):
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleProjectionTypeOrBoneSuffixChange, default="Particle System")
     boneName = bpy.props.StringProperty(options=set())
     materialName = bpy.props.StringProperty(options=set())
-
-    unknown59478ee7 = bpy.props.FloatProperty(default=-5.0, name="unknown59478ee7", options={"ANIMATABLE"})
-    unknowne0b23113 = bpy.props.FloatProperty(default=5.0, name="unknowne0b23113", options={"ANIMATABLE"})
-    unknown8d892963 = bpy.props.FloatProperty(default=-5.0, name="unknown8d892963", options={"ANIMATABLE"})
-    unknown85cba5dc = bpy.props.FloatProperty(default=5.0, name="unknown85cba5dc", options={"ANIMATABLE"})
-    unknown34a38463 = bpy.props.FloatProperty(default=-5.0, name="unknown34a38463", options={"ANIMATABLE"})
-    unknownf7351664 = bpy.props.FloatProperty(default=5.0, name="unknownf7351664", options={"ANIMATABLE"})
+    type = bpy.props.EnumProperty(default="0", items=projectionTypeList, options=set())
+    fieldOfView = bpy.props.FloatProperty(default=45.0, name="FOV", options={"ANIMATABLE"}, description="represents the angle (in degrees) that defines the vertical bounds of the projector")
+    aspectRatio = bpy.props.FloatProperty(default=1.0, name="Aspect Ratio", options={"ANIMATABLE"})
+    near = bpy.props.FloatProperty(default=0.5, name="Near", options={"ANIMATABLE"})
+    far = bpy.props.FloatProperty(default=10.0, name="Far", options={"ANIMATABLE"})
+    depth = bpy.props.FloatProperty(default=-5.0, name="Depth", options={"ANIMATABLE"})
+    width = bpy.props.FloatProperty(default=5.0, name="Width", options={"ANIMATABLE"})
+    height = bpy.props.FloatProperty(default=5.0, name="Height", options={"ANIMATABLE"})
+    alphaOverTime = bpy.props.FloatVectorProperty(default=(0.0, 1.0, 0.0), name="Alpha Over time", size=3, subtype="XYZ", options=set() )
     unknowna01217c1 = bpy.props.FloatProperty(default=1.0, name="unknowna01217c1", options=set())
     unknowne6644c96 = bpy.props.FloatProperty(default=1.0, name="unknowne6644c96", options=set())
     unknown1a597211 = bpy.props.FloatProperty(default=0.8, name="unknown1a597211", options=set())

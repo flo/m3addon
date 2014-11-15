@@ -1874,21 +1874,21 @@
             <field name="negHeight" type="FloatAnimationReference" />
             <field name="height" type="FloatAnimationReference" />
             <field name="unknown5" type="uint32" />
-            <field name="startAlpha" type="float" />
-            <field name="midAlpha" type="float" />
-            <field name="endAlpha" type="float" />
-            <field name="splatLifeTimeAttack" type="float" />
-            <field name="splatLifeTimeAttackRange" type="float" />
+            <field name="alphaOverTime" type="VEC3V0" />
+            <field name="splatLifeTimeAttack" type="VEC2V0" />
             <field name="splatLifeTimeHold" type="float" />
             <field name="splatLifeTimeHoldRange" type="float" />
             <field name="splatLifeTimeDecay" type="float" />
-            <field name="splatLifeTimeDecayRange =type="float" />
-            <field name="attenuationPlaneDistance= type="float" />
+            <field name="splatLifeTimeDecayRange" type="float" />
+            <field name="attenuationPlaneDistance" type="float" />
             <field name="active" type="UInt8AnimationReference" />
             <field name="unknown6" type="uint32" />
-            <field name="splatLayer" type="uint32" />
-            <field name="LODReduce" type="uint32" />
-            <field name="LODCut" type="uint32" />
+            <field name="splatLayer" type="uint16" />
+            <field name="unknown7" type="uint16" default-value="0xFFFF" />
+            <field name="LODReduce" type="uint16" />
+            <field name="unknown8" type="uint16" default-value="0" />
+            <field name="LODCut" type="uint16" />
+            <field name="unknown9" type="uint16" default-value="0" />
         </fields>
     </structure>
     
