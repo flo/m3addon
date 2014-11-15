@@ -1730,7 +1730,7 @@ class M3Projection(bpy.types.PropertyGroup):
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleProjectionTypeOrBoneSuffixChange, default="Particle System")
     boneName = bpy.props.StringProperty(options=set())
     materialName = bpy.props.StringProperty(options=set())
-    type = bpy.props.EnumProperty(default="0", items=projectionTypeList, options=set())
+    type = bpy.props.EnumProperty(default="1", items=projectionTypeList, options=set())
     fieldOfView = bpy.props.FloatProperty(default=45.0, name="FOV", options={"ANIMATABLE"}, description="represents the angle (in degrees) that defines the vertical bounds of the projector")
     aspectRatio = bpy.props.FloatProperty(default=1.0, name="Aspect Ratio", options={"ANIMATABLE"})
     near = bpy.props.FloatProperty(default=0.5, name="Near", options={"ANIMATABLE"})
@@ -1739,13 +1739,7 @@ class M3Projection(bpy.types.PropertyGroup):
     width = bpy.props.FloatProperty(default=5.0, name="Width", options={"ANIMATABLE"})
     height = bpy.props.FloatProperty(default=5.0, name="Height", options={"ANIMATABLE"})
     alphaOverTime = bpy.props.FloatVectorProperty(default=(0.0, 1.0, 0.0), name="Alpha Over time", size=3, subtype="XYZ", options=set() )
-    unknowna01217c1 = bpy.props.FloatProperty(default=1.0, name="unknowna01217c1", options=set())
-    unknowne6644c96 = bpy.props.FloatProperty(default=1.0, name="unknowne6644c96", options=set())
-    unknown1a597211 = bpy.props.FloatProperty(default=0.8, name="unknown1a597211", options=set())
-    unknown7d90d255 = bpy.props.FloatProperty(default=0.8, name="unknown7d90d255", options=set())
-    unknownbf38195c = bpy.props.FloatProperty(default=10.0, name="unknownbf38195c", options=set())
-    unknown1c58f255 = bpy.props.FloatProperty(default=5.0, name="unknown1c58f255", options=set())
-    unknown15aa6267 = bpy.props.FloatProperty(default=5.0, name="unknown15aa6267", options=set())
+    splatLifeTimeAttack = bpy.props.FloatVectorProperty(default=(0.0, 1.0), name="", size=2, subtype="XYZ", options=set() )
 
 
 class M3Warp(bpy.types.PropertyGroup):
@@ -3022,9 +3016,41 @@ class ProjectionPanel(bpy.types.Panel):
             projection = scene.m3_projections[currentIndex]
             layout.separator()
             layout.prop(projection, 'boneSuffix', text="Name")
+            layout.prop(projection, "type", text="Type")
             layout.prop_search(projection, 'materialName', scene, 'm3_material_references', text="Material", icon='NONE')
             split = layout.split()
             col = split.column()
+            col.label("Orthonormal")
+            col.prop(projection, 'depth', text="Depth")
+            col.prop(projection, 'width', text="Width")
+            col.prop(projection, 'height', text="Height")
+            split = layout.split()
+            col = split.column()
+            col.label("Perspective")
+            col.prop(projection, 'fieldOfView', text="FOV")
+            col.prop(projection, 'aspectRatio', text="Aspect Ratio")
+            col.prop(projection, 'near', text="Near")
+            col.prop(projection, 'far', text="Far")
+            split = layout.split()
+            col = split.column()
+            col.label(text="Alpha Over Time:")
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Start:")
+            sub.prop(projection, 'alphaOverTime', index=0, text="Start")
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Middle:")
+            sub.prop(projection, 'alphaOverTime', index=1, text="Middle")
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="End:")
+            sub.prop(projection, 'alphaOverTime', index=2, text="End")
+            split = layout.split()
+            col = split.column()
+            
+            '''
             col.label("Unknown Range 1")
             col.prop(projection, 'unknown59478ee7', text="Unk. 59478ee7")
             col.prop(projection, 'unknowne0b23113', text="Unk. e0b23113")
@@ -3046,6 +3072,7 @@ class ProjectionPanel(bpy.types.Panel):
             layout.prop(projection, 'unknownbf38195c', text="Unk. bf38195c")
             layout.prop(projection, 'unknown1c58f255', text="Unk. 1c58f255")
             layout.prop(projection, 'unknown15aa6267', text="Unk. 15aa6267")
+            '''
     
     
 
