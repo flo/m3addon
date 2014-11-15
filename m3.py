@@ -352,8 +352,6 @@ class ReferenceField(Field):
         ref = getattr(owner, self.name)
         ownerName = owner.structureDescription.structureName
         variable = "%(ownerName)s.%(fieldName)s" % {"ownerName":ownerName, "fieldName":self.name}
-        
-         
         if ref.entries == 0:
             if self.historyOfReferencedStructures == None:
                 referencedObjects = []

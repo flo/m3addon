@@ -1072,7 +1072,7 @@ def updateBoneShapeOfWarp(warp, bone, poseBone):
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
 def updateBoneShapeOfForce(force, bone, poseBone):
-    untransformedPositions, faces = createMeshDataForSphere(force.forceRange)
+    untransformedPositions, faces = createMeshDataForSphere(force.width)
     boneName = force.boneName
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
@@ -1518,12 +1518,16 @@ def transferWarp(transferer):
     transferer.transferAnimatableFloat("unknownca6025a2")
 
 def transferForce(transferer):
-    transferer.transferEnum("forceType")
-    transferer.transfer32Bits("forceChannels")
-    transferer.transferAnimatableFloat("forceStrength")
-    transferer.transferAnimatableFloat("forceRange")
-    transferer.transferAnimatableFloat("unknownAt64")
-    transferer.transferAnimatableFloat("unknownAt84")
+    transferer.transferEnum("type")
+    transferer.transferEnum("shape")
+    transferer.transfer32Bits("channels")
+    transferer.transferAnimatableFloat("strength")
+    transferer.transferAnimatableFloat("width")
+    transferer.transferAnimatableFloat("height")
+    transferer.transferAnimatableFloat("length")
+    transferer.transferBit("flags", "useFalloff")
+    transferer.transferBit("flags", "useHeightGradient")
+    transferer.transferBit("flags", "unbounded")
 
 def transferRigidBody(transferer):
     transferer.transferFloat("unknownAt0", tillVersion=3)
