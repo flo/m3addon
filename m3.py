@@ -154,7 +154,7 @@ class M3StructureDescription:
             if self.structureName == "CHAR":
                 return buffer[:count-1].decode("ASCII")
             elif self.structureName == "U8__":
-                return bytearray(buffer)
+                return bytearray(buffer[:count])
             else:
                 structFormat = self.fields[0].structFormat
                 list = []
