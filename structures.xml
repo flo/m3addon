@@ -1178,8 +1178,8 @@
             <field name="alphaMask2Layer" type="Reference" refTo="LAYR" />
             <field name="normalLayer" type="Reference" refTo="LAYR" />
             <field name="heightLayer" type="Reference" refTo="LAYR" />
-            <field name="unknownLayer1" type="Reference" refTo="LAYR" />
-            <field name="unknownLayer2" type="Reference" refTo="LAYR" />
+            <field name="lightMapLayer" type="Reference" refTo="LAYR" />
+            <field name="ambientOcclussionLayer" type="Reference" refTo="LAYR" />
             <field name="unknown3" type="uint32" default-value="0"/>
             <field name="layerBlendType" type="uint32" />
             <field name="emisBlendType" type="uint32" />
