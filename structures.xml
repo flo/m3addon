@@ -270,7 +270,7 @@
     <structure name="UInt8AnimationReference">
         <description>Animatable uint8</description>
         <versions>
-            <version number="0" size="12" />
+            <version number="0" size="14" />
         </versions>
         <fields>
             <field name="header" type="AnimationReferenceHeader" />
@@ -1853,7 +1853,7 @@
         <description>Projections</description>
         <versions>
             <version number="4" size="388" />
-            <version number="5" size="388" />
+            <version number="5" size="382" />
         </versions>
         <fields>
             <field name="type" type="uint32" />
