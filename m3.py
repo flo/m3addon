@@ -149,7 +149,7 @@ class M3StructureDescription:
     def createInstance(self, buffer=None, offset=0, checkExpectedValue=True):
         return M3Structure(self, buffer, offset, checkExpectedValue)
 
-    def createInstances(self, buffer, count, offset=0, checkExpectedValue=True):
+    def createInstances(self, buffer, count, checkExpectedValue=True):
         if self.isPrimitive:
             if self.structureName == "CHAR":
                 return buffer[:count-1].decode("ASCII")
