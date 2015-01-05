@@ -1358,7 +1358,8 @@
             <field name="lifespan1" type="FloatAnimationReference" />
             <field name="lifespan2" type="FloatAnimationReference" />
             <field till-version="12" name="randomizeWithLifespan2" type="uint32" />
-            <field name="unknownf21cc980" size="12" expected-value="0x000000000000000000000000" />
+            <field name="unknowndeb2bc5d" type="float" default-value="0.0" />
+            <field name="unknownf21cc980" size="8" expected-value="0x0000000000000000" />
             <field name="zAcceleration" type="float" />
             <field name="sizeAnimationMiddle" type="float" default-value="0.5" />
             <field name="colorAnimationMiddle" type="float" default-value="0.5" />
