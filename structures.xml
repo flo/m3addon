@@ -1456,15 +1456,9 @@
             <field name="initOfUnknown34b6f141" size="4" expected-value="0x00000000" />
             <field name="nullOfUnknown34b6f141" size="4" expected-value="0x00000000" />
             <field name="endOfUnknown34b6f141" size="4" default-value="0xffffffff" />  
-            <field name="unknownb69653a4" size="4" expected-value="0x00000000" />
-            <field name="unknown89cdf966" type="AnimationReferenceHeader" />
-            <field name="initOfUnknown89cdf966" size="4" expected-value="0x00000000" />
-            <field name="nullOfUnknown89cdf966" size="4" expected-value="0x00000000" />
-            <field name="endOfUnknown89cdf966" size="4" default-value="0xffffffff" />
-            <field name="unknown4eefdfc1" type="AnimationReferenceHeader" />
-            <field name="initOfUnknown4eefdfc1" size="4" expected-value="0x00000000" />
-            <field name="nullOfUnknown4eefdfc1" size="4" expected-value="0x00000000" />
-            <field name="endOfUnknown4eefdfc1" size="4" default-value="0xffffffff" />
+            <field name="unknownb69653a4" type="uint32" default-value="0" />
+            <field name="unknown89cdf966" type="FloatAnimationReference" />
+            <field name="unknown4eefdfc1" type="FloatAnimationReference" />
             <field name="unknownb47e5f82" size="4" default-value="0x00000000" />
             <field name="unknownab37a1d5" type="AnimationReferenceHeader" />
             <field name="initOfUnknownab37a1d5" size="4" expected-value="0x00000000" />
