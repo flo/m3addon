@@ -1861,6 +1861,9 @@ class Exporter:
         m3Layer =  self.createInstanceOf("LAYR")
         transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Layer, blenderObject=layer, animPathPrefix=animPathPrefix, rootObject=self.scene)
         shared.transferMaterialLayer(transferer)
+        m3Layer.brightness.nullValue = 1.0
+        m3Layer.brightMult.nullValue = 1.0
+        m3Layer.unknowna44bf452.nullValue = 1.0
         m3Layer.fresnelMaxOffset = layer.fresnelMax - layer.fresnelMin
         if m3Layer.structureDescription.structureVersion >= 25:
             m3Layer.fresnelInvertedMaskX = 1.0 - layer.fresnelMaskX
