@@ -1787,7 +1787,7 @@
             <field name="unknown6b3b9f9" size="4" expected-value="0x00000000" />
             <field name="unknown9cb3dd18" type="FloatAnimationReference" />
             <field name="unknown2e01be90" type="FloatAnimationReference" />
-            <field name="unknowneff4c5be" size="4" expected-value="0x00000000"  />
+            <field name="unknowneff4c5be" type="uint32" default-value="0" />
             <field name="unknownf6193fc0" type="FloatAnimationReference" />
             <field name="unknowna5e2260a" type="FloatAnimationReference" />
             <field name="unknown9aa3bbb9" size="4" expected-value="0x00000000" />
