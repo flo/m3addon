@@ -1261,7 +1261,7 @@
             <field name="unknownea9c2019" type="float" default-value="0.0" />
             <field name="unknownc40c57a4" type="float" default-value="0.0" />
             <field name="unknown698c931b" type="float" default-value="0.0" />
-            <field name="unknown175074c7" type="uint32" expected-value="2" />
+            <field name="unknown175074c7" type="uint32" default-value="2" />
             <field name="unknownd3d84176" type="float" default-value="0.0" />
             <field name="unknown466cb20b" type="float" default-value="0.0" />
             <field name="unknowna9a5325e" type="float" default-value="0.0" />
