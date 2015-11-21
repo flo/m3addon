@@ -104,6 +104,8 @@ layerFieldNameToNameMap = {
     "colorDefiningLayer": "Color Defining Layer",
     "unknownLayer1": "Unknown Layer 1",
     "unknownLayer2": "Unknown Layer 2",
+    "unknownLayer3": "Unknown Layer 3",
+    "unknownLayer4": "Unknown Layer 4",
     "lightMapLayer": "Light Map",
     "ambientOcclussionLayer": "Ambient Occlussion",
     "strengthLayer": "Strength",

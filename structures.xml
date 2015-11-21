@@ -1114,6 +1114,7 @@
         <versions>
             <version number="3" size="36" />
             <version number="4" size="40" />
+            <version number="5" size="48" />
         </versions>
         <fields>
             <field name="unknown0" type="uint32" expected-value="0" />
@@ -1130,6 +1131,7 @@
             <field name="unknown4" type="uint8" default-value="1" />
             <field name="rootBoneIndex" type="uint16" />
             <field name="unknown5" type="uint32" since-version="4" />
+            <field name="unknown4d066bda" size="8" since-version="5" />
         </fields>
     </structure>
     
@@ -1369,6 +1371,7 @@
             <version number="16" size="280" />
             <version number="17" size="280" />
             <version number="18" size="280" />
+            <version number="19" size="340" />
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR" />
@@ -1452,6 +1455,10 @@
             <field name="heightLayer" type="Reference" refTo="LAYR" />
             <field name="lightMapLayer" type="Reference" refTo="LAYR" />
             <field name="ambientOcclussionLayer" type="Reference" refTo="LAYR" />
+            <field name="unknownLayer1" type="Reference" refTo="LAYR" since-version="19" />
+            <field name="unknownLayer2" type="Reference" refTo="LAYR" since-version="19" />
+            <field name="unknownLayer3" type="Reference" refTo="LAYR" since-version="19" />
+            <field name="unknownLayer4" type="Reference" refTo="LAYR" since-version="19" />
             <field name="unknown3" type="uint32" default-value="0"/>
             <field name="layerBlendType" type="uint32" />
             <field name="emisBlendType" type="uint32" />
@@ -1459,6 +1466,7 @@
             <field name="specType" type="uint32" />
             <field name="unknownAnimationRef1" type="FloatAnimationReference" />
             <field name="unknownAnimationRef2" type="UInt32AnimationReference" />
+            <field name="unknown2410d9f0" size="12" since-version="19" expected-value="0x000000000000000000000000" />
         </fields>
     </structure>
     
@@ -1661,9 +1669,9 @@
             <field name="noiseFrequency" type="float" default-value="0.0" />
             <field name="noiseCohesion" type="float" default-value="0.0" />
             <field name="noiseEdge" type="float" default-value="0.0" />
+            <field name="unknownc851d80" type="float" default-value="0.1" since-version="24" />
             <field name="indexPlusHighestIndex" type="uint32" />
             <field name="maxParticles" type="uint32" />
-            <field name="unknown24" type="float" since-version="24" />
             <field name="emissionRate" type="FloatAnimationReference" />
             <field name="emissionAreaType" type="uint32" />
             <field name="emissionAreaSize" type="Vector3AnimationReferenceV0" />
@@ -1756,7 +1764,7 @@
             <field name="unknown8f507b52" type="AnimationReferenceHeader" since-version="22" />
             <field name="initOfUnknown8f507b52" size="4" expected-value="0x00000000" since-version="22" />
             <field name="nullOfUnknown8f507b52" size="4" expected-value="0x00000000" since-version="22" />
-            <field name="endOfUnknown8f507b52" size="4" expected-value="0xffffffff" since-version="22" />  
+            <field name="endOfUnknown8f507b52" size="4" default-value="0xffffffff" since-version="22" />
             <field name="flags" type="uint32" default-value="0" >
                 <bits>
                     <bit mask="0x1" name="sort" />
@@ -2166,8 +2174,8 @@
             <field name="uknownAt6" type="uint16" expected-value="0" />
             <field name="matrix" type="Matrix44" />
             <field name="uknownAt72" type="uint32" expected-value="0" />
-            <field name="uknownAt76" type="uint32" expected-value="0" />
-            <field name="uknownAt80" type="uint32" expected-value="0" />
+            <field name="uknownAt76" type="uint32" default-value="0" />
+            <field name="uknownAt80" type="uint32" default-value="0" />
             <field name="uknownAt84" type="uint32" expected-value="0" />
             <field name="uknownAt88" type="uint32" expected-value="0" />
             <field name="uknownAt92" type="uint32" expected-value="0" />
@@ -2323,12 +2331,12 @@
             <field name="noEndPoints" type="uint32" default-value="1"/>
             <field till-version="6" name="unknown20683e1b" type="uint32" default-value="0"/> <!--overseer2-->
             <field till-version="6" name="unknowndf1a587b" type="uint32" default-value="0"/> <!--overseer2-->
+            <field name="unknownfb168d8c" size="4" default-value="0x00000000" since-version="9"/>
             <field name="surfaceNoiseAmplitude" type="float" />
             <field name="surfaceNoiseNumberOfWaves" type="float" />
             <field name="surfaceNoiseFrequency" type="float" />
             <field name="surfaceNoiseScale" type="float" />
             <field name="unknownafa854b0" type="uint32" /> <!--corruptor3, corruption battlecruiser5-->
-            <field name="unknown14" type="float" since-version="9"/>
             <field name="ribbonType" type="uint32" />
             <field name="unknownbf0eb4d1" type="uint32" default-value="1"/>
             <field name="ribbonDivisions" type="float" />
@@ -2469,6 +2477,7 @@
             <version number="25" size="808" />
             <version number="26" size="820" />
             <version number="28" size="844" />
+            <version number="29" size="856" />
         </versions>
         <fields>
             <field name="modelName" type="Reference" refTo="CHAR"/>
@@ -2534,6 +2543,7 @@
             <field name="volumeNoiseMaterials" type="Reference" refTo="VON_" since-version="25" />
             <field name="splatTerrainBakeMaterials" type="Reference" refTo="STBM" since-version="26" />
             <field name="unknownMaybeRef1" type="Reference" since-version="28" />
+            <field name="unknown99d28cc0" size="12" since-version="29" />
             <field name="particles" type="Reference" refTo="PAR_" />
             <field name="particleCopies" type="Reference" refTo="PARC" />
             <field name="ribbons" type="Reference" refTo="RIB_" />
