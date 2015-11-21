@@ -1158,7 +1158,7 @@ def checkThatAllSectionsGotReferenced(sections):
                 positionInSection = sectionToCheck.rawBytes.find(bytesToSearch)
                 if positionInSection != -1:
                     possibleReferences += 1
-                    stderr.write("  -> Found a reference at offset %d in a section of type %sV%s\n" % (positionInSection, sectionToCheck.indexEntry.tag,sectionToCheck.indexEntry.version)) 
+                    stderr.write("  -> Found a reference at offset %d in a section of type %sV%s\n" % (positionInSection % sectionToCheck.structureDescription.size, sectionToCheck.indexEntry.tag,sectionToCheck.indexEntry.version)) 
                     sectionToCheck.structureDescription.dumpOffsets()
 
             if possibleReferences == 0:
