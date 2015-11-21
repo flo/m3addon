@@ -191,7 +191,7 @@ def handleForceTypeOrBoneSuffixChange(self, context):
     force = self
     typeName = "Unknown"
     for typeId, name, description in forceTypeList:
-        if typeId == force.forceType:
+        if typeId == force.type:
             typeName = name
     
     boneSuffix = force.boneSuffix
@@ -1021,7 +1021,7 @@ def createMaterial(scene, materialName, defaultSetting):
 
     scene.m3_material_reference_index = len(scene.m3_material_references)-1
 
-    
+
 emissionAreaTypesWithRadius = [shared.emissionAreaTypeSphere, shared.emissionAreaTypeCylinder]
 emissionAreaTypesWithWidth = [shared.emissionAreaTypePlane, shared.emissionAreaTypeCuboid]
 emissionAreaTypesWithLength = [shared.emissionAreaTypePlane, shared.emissionAreaTypeCuboid]
@@ -1032,9 +1032,8 @@ emissionAreaTypeList =  [(shared.emissionAreaTypePoint, "Point", "Particles spaw
                         (shared.emissionAreaTypeCuboid, 'Cuboid', 'Particles spawn in a cuboid'),
                         (shared.emissionAreaTypeCylinder, 'Cylinder', 'Particles spawn in a cylinder'),
                         (shared.emissionAreaTypeDisc, 'Disc', 'Particles spawn in a cylinder of height 0'),
-                        (shared.emissionAreaTypeMesh, 'Mesh', 'Spawn location are the vertices of a mesh'),
-                        ("7", 'Unknown', 'Unknown')
-                        
+                        (shared.emissionAreaTypeMesh, 'Spline', 'Spawn location are the vertices of a mesh'),
+                        ("7", 'Mesh', 'If Vertex Color is applied and exported by the material on the mesh, then the Red channel of vertex color regulates the probability that a face will be used for particle emission')
                         ]
 
 particleTypeList = [("0", "Square Billbords", "Quads always rotated towards camera (id 0)"), 
@@ -1054,14 +1053,25 @@ ribbonTypeList = [("0", "Planar Billboarded", "Planar Billboarded"),
                   ("2", "Cylinder", "Cylinder"),
                   ("3", "Star Shaped", "Star Shaped")
                  ]
+                 
+projectionTypeList = [("1", "Orthonormal", "makes the Projector behave like a box. It will be the same width no matter how close the projector is to the target surface."), 
+                  ("2", "Perspective", "makes the Projector behave like a camera. The closer the projector is to the surface, the smaller the effect will be.")
+                 ]
 
 
 forceTypeList = [("0", "Directional", "The particles get accelerated into one direction"), 
                     ("1", "Radial", "Particles get accelerated ayway from the force source"),
-                    ("2", "Unknown", "Unknown"),
-                    ("3", "Rotary", "The particles rotate in a circle around a center")
+                    ("2", "Dampening", "This is a drag operation that resists the movement of particles"),
+                    ("3", "Vortex", "This is a special rotation field that brings particles into a orbit. Does not work with Box Shape applied.")
                    ]
 
+forceShapeList = [("0", "Sphere", "The particles get accelerated into one direction"), 
+                    ("1", "Cylinder", "A cylinder with Radius and Height"),
+                    ("2", "Box", "A box shape with Width, Height, and Length."),
+                    ("3", "Hemisphere", "Half sphere shape defined with Radius."),
+                    ("4", "ConeDome", "Special cone shape with length defined as Radius and cone width defined as Angle.")
+                   ]
+                   
 physicsShapeTypeList = [("0", "Box", "Box shape with the given width, length and height"),
                         ("1", "Sphere", "Sphere shape with the given radius"),
                         ("2", "Capsule", "Capsule shape with the given radius and length"),
@@ -1091,10 +1101,11 @@ uvSourceList = [("0", "Default", "First UV layer of mesh or generated whole imag
                  ("18", "Tri Planar World Local Z", "Tri Planar World Local Z")
                  ] 
 
-particleEmissionTypeList = [("0", "Directed", "Emitted particles fly towards a configureable direction with a configurable spread"), 
+particleEmissionTypeList = [("0", "Constant", "Emitted particles fly towards a configureable direction with a configurable spread"), 
                         ("1", 'Radial', "Particles move into all kinds of directions"), 
-                        ("2", 'Unknown', 'Particles spawn in a sphere'),
-                        ("3", 'Unknown', 'Unknown')]
+                        ("2", 'Z Axis', 'Picks randomly to move in the direction of the positive or negative local Z-Axis for the emitter.e'),
+                        ("3", 'Random', 'Picks an entirely arbitrary orientation.'),
+                        ("4", 'Mesh Normal', 'when using a Mesh Emitter Shape, uses the normal of the face being emitted from as the direction vector.')]
 
 
 particleAnimationSmoothTypeList = [
@@ -1609,12 +1620,16 @@ class M3Force(bpy.types.PropertyGroup):
     updateBlenderBoneShape = bpy.props.BoolProperty(default=True, options=set())
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleForceTypeOrBoneSuffixChange, default="Particle System")
     boneName = bpy.props.StringProperty(options=set())
-    forceType = bpy.props.EnumProperty(default="0", items=forceTypeList, update=handleForceTypeOrBoneSuffixChange, options=set())
-    forceChannels = bpy.props.BoolVectorProperty(default=tuple(32*[False]), size=32, subtype="LAYER", options=set(), description="If a force shares a force channel with a particle system then it affects it")
-    forceStrength = bpy.props.FloatProperty(default=1.0, name="forceStrength", options={"ANIMATABLE"})
-    forceRange = bpy.props.FloatProperty(default=1.0, name="forceRange", update=handleForceRangeUpdate, options={"ANIMATABLE"})
-    unknownAt64 = bpy.props.FloatProperty(default=0.05, name="unknownAt64", options={"ANIMATABLE"})
-    unknownAt84 = bpy.props.FloatProperty(default=0.05, name="unknownAt84", options={"ANIMATABLE"})
+    type = bpy.props.EnumProperty(default="0", items=forceTypeList, update=handleForceTypeOrBoneSuffixChange, options=set())
+    shape = bpy.props.EnumProperty(default="0", items=forceShapeList, update=handleForceTypeOrBoneSuffixChange, options=set())
+    channels = bpy.props.BoolVectorProperty(default=tuple(32*[False]), size=32, subtype="LAYER", options=set(), description="If a force shares a force channel with a particle system then it affects it")
+    strength = bpy.props.FloatProperty(default=1.0, name="Strength", options={"ANIMATABLE"})
+    width = bpy.props.FloatProperty(default=1.0, name="Radius/Width", update=handleForceRangeUpdate, options={"ANIMATABLE"})
+    height = bpy.props.FloatProperty(default=0.05, name="Height/Angle", options={"ANIMATABLE"})
+    length = bpy.props.FloatProperty(default=0.05, name="Length", options={"ANIMATABLE"})
+    useFalloff = bpy.props.BoolProperty(options=set())
+    useHeightGradient = bpy.props.BoolProperty(options=set())
+    unbounded = bpy.props.BoolProperty(options=set())
 
 class M3PhysicsShape(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(options=set())
@@ -1715,20 +1730,16 @@ class M3Projection(bpy.types.PropertyGroup):
     boneSuffix = bpy.props.StringProperty(options=set(), update=handleProjectionTypeOrBoneSuffixChange, default="Particle System")
     boneName = bpy.props.StringProperty(options=set())
     materialName = bpy.props.StringProperty(options=set())
-
-    unknown59478ee7 = bpy.props.FloatProperty(default=-5.0, name="unknown59478ee7", options={"ANIMATABLE"})
-    unknowne0b23113 = bpy.props.FloatProperty(default=5.0, name="unknowne0b23113", options={"ANIMATABLE"})
-    unknown8d892963 = bpy.props.FloatProperty(default=-5.0, name="unknown8d892963", options={"ANIMATABLE"})
-    unknown85cba5dc = bpy.props.FloatProperty(default=5.0, name="unknown85cba5dc", options={"ANIMATABLE"})
-    unknown34a38463 = bpy.props.FloatProperty(default=-5.0, name="unknown34a38463", options={"ANIMATABLE"})
-    unknownf7351664 = bpy.props.FloatProperty(default=5.0, name="unknownf7351664", options={"ANIMATABLE"})
-    unknowna01217c1 = bpy.props.FloatProperty(default=1.0, name="unknowna01217c1", options=set())
-    unknowne6644c96 = bpy.props.FloatProperty(default=1.0, name="unknowne6644c96", options=set())
-    unknown1a597211 = bpy.props.FloatProperty(default=0.8, name="unknown1a597211", options=set())
-    unknown7d90d255 = bpy.props.FloatProperty(default=0.8, name="unknown7d90d255", options=set())
-    unknownbf38195c = bpy.props.FloatProperty(default=10.0, name="unknownbf38195c", options=set())
-    unknown1c58f255 = bpy.props.FloatProperty(default=5.0, name="unknown1c58f255", options=set())
-    unknown15aa6267 = bpy.props.FloatProperty(default=5.0, name="unknown15aa6267", options=set())
+    type = bpy.props.EnumProperty(default="1", items=projectionTypeList, options=set())
+    fieldOfView = bpy.props.FloatProperty(default=45.0, name="FOV", options={"ANIMATABLE"}, description="represents the angle (in degrees) that defines the vertical bounds of the projector")
+    aspectRatio = bpy.props.FloatProperty(default=1.0, name="Aspect Ratio", options={"ANIMATABLE"})
+    near = bpy.props.FloatProperty(default=0.5, name="Near", options={"ANIMATABLE"})
+    far = bpy.props.FloatProperty(default=10.0, name="Far", options={"ANIMATABLE"})
+    depth = bpy.props.FloatProperty(default=-5.0, name="Depth", options={"ANIMATABLE"})
+    width = bpy.props.FloatProperty(default=5.0, name="Width", options={"ANIMATABLE"})
+    height = bpy.props.FloatProperty(default=5.0, name="Height", options={"ANIMATABLE"})
+    alphaOverTime = bpy.props.FloatVectorProperty(default=(0.0, 1.0, 0.0), name="Alpha Over time", size=3, subtype="XYZ", options=set() )
+    splatLifeTimeAttack = bpy.props.FloatVectorProperty(default=(0.0, 1.0), name="", size=2, subtype="XYZ", options=set() )
 
 
 class M3Warp(bpy.types.PropertyGroup):
@@ -2756,12 +2767,16 @@ class ForcePanel(bpy.types.Panel):
             force = scene.m3_forces[currentIndex]
             layout.separator()
             layout.prop(force, 'boneSuffix', text="Name")
-            layout.prop(force, "forceType", text="Type")
-            layout.prop(force, "forceChannels", text="Channels")
-            layout.prop(force, "forceStrength", text="Strength")
-            layout.prop(force, "forceRange", text="Range")
-            layout.prop(force, "unknownAt64", text="Unknown 1")
-            layout.prop(force, "unknownAt84", text="Unknown 2")
+            layout.prop(force, "type", text="Type")
+            layout.prop(force, "shape", text="Shape")
+            layout.prop(force, "channels", text="Channels")
+            layout.prop(force, "strength", text="Strength")
+            layout.prop(force, "width", text="Width/Radius")
+            layout.prop(force, "height", text="Height/Angle")
+            layout.prop(force, "length", text="Length")
+            layout.prop(force, "useFalloff", text="Use Fall Off")
+            layout.prop(force, "useHeightGradient", text="Use Height Gradient")
+            layout.prop(force, "unbounded", text="Unbounded")
 
 class RigidBodyPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_M3_rigid_bodies"
@@ -3001,9 +3016,41 @@ class ProjectionPanel(bpy.types.Panel):
             projection = scene.m3_projections[currentIndex]
             layout.separator()
             layout.prop(projection, 'boneSuffix', text="Name")
+            layout.prop(projection, "type", text="Type")
             layout.prop_search(projection, 'materialName', scene, 'm3_material_references', text="Material", icon='NONE')
             split = layout.split()
             col = split.column()
+            col.label("Orthonormal")
+            col.prop(projection, 'depth', text="Depth")
+            col.prop(projection, 'width', text="Width")
+            col.prop(projection, 'height', text="Height")
+            split = layout.split()
+            col = split.column()
+            col.label("Perspective")
+            col.prop(projection, 'fieldOfView', text="FOV")
+            col.prop(projection, 'aspectRatio', text="Aspect Ratio")
+            col.prop(projection, 'near', text="Near")
+            col.prop(projection, 'far', text="Far")
+            split = layout.split()
+            col = split.column()
+            col.label(text="Alpha Over Time:")
+            split = layout.split()
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Start:")
+            sub.prop(projection, 'alphaOverTime', index=0, text="Start")
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="Middle:")
+            sub.prop(projection, 'alphaOverTime', index=1, text="Middle")
+            col = split.column()
+            sub = col.column(align=True)
+            sub.label(text="End:")
+            sub.prop(projection, 'alphaOverTime', index=2, text="End")
+            split = layout.split()
+            col = split.column()
+            
+            '''
             col.label("Unknown Range 1")
             col.prop(projection, 'unknown59478ee7', text="Unk. 59478ee7")
             col.prop(projection, 'unknowne0b23113', text="Unk. e0b23113")
@@ -3025,6 +3072,7 @@ class ProjectionPanel(bpy.types.Panel):
             layout.prop(projection, 'unknownbf38195c', text="Unk. bf38195c")
             layout.prop(projection, 'unknown1c58f255', text="Unk. 1c58f255")
             layout.prop(projection, 'unknown15aa6267', text="Unk. 15aa6267")
+            '''
     
     
 

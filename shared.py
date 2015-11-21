@@ -1074,7 +1074,7 @@ def updateBoneShapeOfWarp(warp, bone, poseBone):
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
 def updateBoneShapeOfForce(force, bone, poseBone):
-    untransformedPositions, faces = createMeshDataForSphere(force.forceRange)
+    untransformedPositions, faces = createMeshDataForSphere(force.width)
     boneName = force.boneName
     meshName = boneName + 'Mesh'
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
@@ -1496,19 +1496,25 @@ def transferRibbon(transferer):
     transferer.transferBit("flags", "useLengthAndTime")
 
 def transferProjection(transferer):
-    transferer.transferAnimatableFloat("unknown59478ee7")
-    transferer.transferAnimatableFloat("unknowne0b23113")
-    transferer.transferAnimatableFloat("unknown8d892963")
-    transferer.transferAnimatableFloat("unknown85cba5dc")
-    transferer.transferAnimatableFloat("unknown34a38463")
-    transferer.transferAnimatableFloat("unknownf7351664")
-    transferer.transferFloat("unknowna01217c1")
-    transferer.transferFloat("unknowne6644c96")
-    transferer.transferFloat("unknown1a597211")
-    transferer.transferFloat("unknown7d90d255")
-    transferer.transferFloat("unknownbf38195c")
-    transferer.transferFloat("unknown1c58f255")
-    transferer.transferFloat("unknown15aa6267")
+    transferer.transferInt("type")
+    transferer.transferAnimatableFloat("fieldOfView")
+    transferer.transferAnimatableFloat("aspectRatio")
+    transferer.transferAnimatableFloat("near")
+    transferer.transferAnimatableFloat("far")
+    transferer.transferAnimatableFloat("depth")
+    transferer.transferAnimatableFloat("width")
+    transferer.transferAnimatableFloat("height")
+    transferer.transferFloat("alphaOverTime")
+    transferer.transferFloat("splatLifeTimeAttack")
+    transferer.transferFloat("splatLifeTimeAttackRange")
+    transferer.transferFloat("splatLifeTimeHold")
+    transferer.transferFloat("splatLifeTimeDecay")
+    transferer.transferFloat("splatLifeTimeDecayRange")
+    transferer.transferFloat("attenuationPlaneDistance")
+    transferer.transferAnimatableUInt8("active")
+    transferer.transferInt("splatLayer")
+    transferer.transferInt("LODReduce")
+    transferer.transferInt("LODCut")
 
 
 def transferWarp(transferer):
@@ -1520,12 +1526,16 @@ def transferWarp(transferer):
     transferer.transferAnimatableFloat("unknownca6025a2")
 
 def transferForce(transferer):
-    transferer.transferEnum("forceType")
-    transferer.transfer32Bits("forceChannels")
-    transferer.transferAnimatableFloat("forceStrength")
-    transferer.transferAnimatableFloat("forceRange")
-    transferer.transferAnimatableFloat("unknownAt64")
-    transferer.transferAnimatableFloat("unknownAt84")
+    transferer.transferEnum("type")
+    transferer.transferEnum("shape")
+    transferer.transfer32Bits("channels")
+    transferer.transferAnimatableFloat("strength")
+    transferer.transferAnimatableFloat("width")
+    transferer.transferAnimatableFloat("height")
+    transferer.transferAnimatableFloat("length")
+    transferer.transferBit("flags", "useFalloff")
+    transferer.transferBit("flags", "useHeightGradient")
+    transferer.transferBit("flags", "unbounded")
 
 def transferRigidBody(transferer):
     transferer.transferFloat("unknownAt0", tillVersion=3)
