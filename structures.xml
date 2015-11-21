@@ -2305,7 +2305,7 @@
             <version number="0" size="272" />
         </versions>
         <fields>
-            <field name="unknown1" type="uint32" expected-value="0" />
+            <field name="unknown1" type="uint32" default-value="0" />
             <field name="unknown2" size="16" expected-value="0x00000000000000000000000000000000" />
             <field name="tangent1" type="float"/>
             <field name="speed" type="FloatAnimationReference"/>
