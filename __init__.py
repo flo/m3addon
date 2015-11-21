@@ -4247,13 +4247,11 @@ class M3_BILLBOARD_BEHAVIORS_OT_add(bpy.types.Operator):
 
     def invoke(self, context, event):
         scene = context.scene
-        print(dir(context))
         behavior = scene.m3_billboard_behaviors.add()
         
         selectedBoneName = None
         if context.active_bone != None:
             selectedBoneName = context.active_bone.name
-        print("Selected bone %s" % selectedBoneName)
         if selectedBoneName == None or selectedBoneName in scene.m3_billboard_behaviors:
             unusedName = self.findUnusedName(scene)
             behavior.name = unusedName        
@@ -4444,7 +4442,6 @@ class M3_TIGHT_HIT_TESTS_OT_hittestremove(bpy.types.Operator):
     def invoke(self, context, event):
         scene = context.scene
         tightHitTest = scene.m3_tight_hit_test
-        print("x")
         if bpy.ops.object.mode_set.poll():
             bpy.ops.object.mode_set(mode='EDIT')
         removeBone(scene, tightHitTest.boneName)
