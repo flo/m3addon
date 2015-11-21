@@ -1856,6 +1856,9 @@ class Exporter:
         for materialIndex, material in enumerate(scene.m3_stb_materials):
             model.splatTerrainBakeMaterials.append(self.createSTBMaterial(materialIndex, material))
     
+        if (len(scene.m3_lens_flare_materials) > 0) and self.structureVersionMap["MODL"] < 29:
+            model.creepMaterials.append(self.createLensFlareMaterial(materialIndex, material))
+
     
     def createMaterialLayer(self, layer, animPathPrefix):
         m3Layer =  self.createInstanceOf("LAYR")
@@ -2042,6 +2045,9 @@ class Exporter:
         m3Material.name = material.name
         self.createMaterialLayers(material, m3Material, materialAnimPathPrefix)
         return m3Material
+
+    def createLensFlareMaterial(self, materialIndex, material):
+        raise Exception("Export of lens flare materials has not been implemented yet")
     
     def createNullVector2AnimationReference(self, x, y, interpolationType=1):
         animRef = self.createInstanceOf("Vector2AnimationReference")

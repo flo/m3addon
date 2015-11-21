@@ -36,6 +36,7 @@ volumeMaterialTypeIndex = 5
 creepMaterialTypeIndex = 7
 volumeNoiseMaterialTypeIndex = 8
 stbMaterialTypeIndex=9
+lensFlareMaterialTypeIndex=11
 
 emissionAreaTypePoint = "0"
 emissionAreaTypePlane = "1"
@@ -1646,6 +1647,9 @@ def transferCreepMaterial(transferer):
 def transfersplatTerrainBakeMaterial(transferer):
     pass
 
+def transferLensFlareMaterial(transferer):
+    pass
+
 def transferMaterialLayer(transferer):
     transferer.transferString("imagePath")
     transferer.transferInt("unknownbd3f7b5d")
@@ -1743,7 +1747,8 @@ blenderMaterialsFieldNames = {
     volumeMaterialTypeIndex: "m3_volume_materials",  
     creepMaterialTypeIndex: "m3_creep_materials",
     volumeNoiseMaterialTypeIndex: "m3_volume_noise_materials",
-    stbMaterialTypeIndex: "m3_stb_materials"
+    stbMaterialTypeIndex: "m3_stb_materials",
+    lensFlareMaterialTypeIndex: "m3_lens_flare_materials"
     }
 m3MaterialFieldNames = { 
     standardMaterialTypeIndex: "standardMaterials", 
@@ -1753,7 +1758,8 @@ m3MaterialFieldNames = {
     volumeMaterialTypeIndex: "volumeMaterials",  
     creepMaterialTypeIndex: "creepMaterials",
     volumeNoiseMaterialTypeIndex: "volumeNoiseMaterials",
-    stbMaterialTypeIndex: "splatTerrainBakeMaterials"
+    stbMaterialTypeIndex: "splatTerrainBakeMaterials",
+    lensFlareMaterialTypeIndex: "lensFlareMaterial"
     }
 materialTransferMethods = {
         standardMaterialTypeIndex: transferStandardMaterial, 
@@ -1763,5 +1769,6 @@ materialTransferMethods = {
         volumeMaterialTypeIndex: transferVolumeMaterial,  
         creepMaterialTypeIndex: transferCreepMaterial,
         volumeNoiseMaterialTypeIndex: transferVolumeNoiseMaterial,
-        stbMaterialTypeIndex: transfersplatTerrainBakeMaterial
+        stbMaterialTypeIndex: transfersplatTerrainBakeMaterial,
+        lensFlareMaterialTypeIndex: transferLensFlareMaterial
     }
