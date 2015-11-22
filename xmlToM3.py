@@ -65,6 +65,8 @@ def createFieldContent(xmlNode, field):
         else:
             referencedStructureName = field.historyOfReferencedStructures.name
             if referencedStructureName == "CHAR":
+                if len(xmlNode.childNodes) == 0:
+                    return None
                 return stringContentOf(xmlNode)
             elif referencedStructureName == "U8__":
                 return bytearray(hexToBytes(stringContentOf(xmlNode), xmlNode))

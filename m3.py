@@ -346,7 +346,7 @@ class ReferenceField(Field):
         
         indexReference = indexMaker.getIndexReferenceTo(referencedObjects, self.referenceStructureDescription, structureDescription)
         isPrimitive = self.historyOfReferencedStructures != None and self.historyOfReferencedStructures.isPrimitive 
-        if not isPrimitive and len(referencedObjects) > 0:
+        if not isPrimitive:
             for referencedObject in referencedObjects:
                 referencedObject.introduceIndexReferences(indexMaker)
         setattr(owner, self.name, indexReference)
