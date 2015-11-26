@@ -143,6 +143,8 @@ class M3StructureDescription:
 
         nameToFieldMap = {}
         for field in fields:
+            if field.name in nameToFieldMap:
+                raise Exception("%s contains in version %s multiple fields with the name %s" % (structureName, structureVersion, field.name))
             nameToFieldMap[field.name] = field
         self.nameToFieldMap = nameToFieldMap
 
