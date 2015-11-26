@@ -197,6 +197,7 @@ class M3StructureDescription:
             except AttributeError:
                 raise Exception("%s does not have a field called %s%n" % (instanceName, field.name))
                 raise
+            field.validateContent(fieldContent, instanceName + "." + field.name);
 
     def hasField(self, fieldName):
         return fieldName in self.nameToFieldMap
