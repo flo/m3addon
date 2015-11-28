@@ -291,6 +291,18 @@
             <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
+    <structure name="Unknown4ByteAnimationReference">
+        <description>Animatable of unknown type with 4 bytes (e.g. could be a float or color animation reference)</description>
+        <versions>
+            <version number="0" size="20" />
+        </versions>
+        <fields>
+            <field name="header" type="AnimationReferenceHeader" />
+            <field name="initValue" size="4" default-value="0x00000000" />
+            <field name="nullValue" size="4" default-value="0x00000000" />
+            <field name="unknown" type="int32" default-value="-1"  />
+        </fields>
+    </structure>
     <structure name="ColorAnimationReference">
         <description>Animatable color</description>
         <versions>
@@ -2495,12 +2507,14 @@
         </description>
         <versions>
             <version number="3" size="180" />
+            <version number="5" size="264" />
         </versions>
         <fields>
             <field name="boneIndex" type="uint32" />
             <field name="name" type="Reference" refTo="CHAR" />
             <field name="fieldOfView" type="FloatAnimationReference" />
-            <field name="unknown" type="uint32" default-value="1"/>
+            <field name="unknowne35db92d" type="uint32" default-value="1"/>
+            <field name="unknown920dc1c4" size="4" default-value="0x00000000" since-version="5" />
             <field name="farClip" type="FloatAnimationReference" />
             <field name="nearClip" type="FloatAnimationReference" />
             <field name="clip2" type="FloatAnimationReference" />
@@ -2508,6 +2522,12 @@
             <field name="falloffStart" type="FloatAnimationReference" />
             <field name="falloffEnd" type="FloatAnimationReference" />
             <field name="depthOfField" type="FloatAnimationReference" />
+            <!-- Position of version 5 fields may not be correct...-->
+            <field name="unknown587dc7fb" type="Unknown4ByteAnimationReference" default-value="0x00000000" since-version="5" />
+            <!-- not 100% sure if unknownfff8cb33 is an animation reference: -->
+            <field name="unknownfff8cb33" type="FloatAnimationReference" since-version="5" />
+            <field name="unknownf726f834" type="FloatAnimationReference" since-version="5" />
+            <field name="unknownd506807d" type="FloatAnimationReference" since-version="5" />
         </fields>
     </structure>
     
