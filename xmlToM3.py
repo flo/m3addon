@@ -26,6 +26,7 @@ import xml.dom.minidom
 from xml.dom.minidom import Node
 import argparse
 import os
+import time
 
 def forElementsIn(xmlNode):
     for child in xmlNode.childNodes:
@@ -168,10 +169,13 @@ def convertFile(inputFilePath, outputDirectory):
     model = createSingleStructureElement(modelElement, modelDescription)
     m3.saveAndInvalidateModel(model, outputFilePath)
 
+ 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('path', nargs='+', help="Either a *.m3.xml file or a directory with *.m3.xml files generated with m3ToXml.py")
     parser.add_argument('--output-directory', '-o', help='Directory in which m3 files will be placed')
+    parser.add_argument('--watch', action='store_const', const=True, default=False)
     args = parser.parse_args()
     outputDirectory = args.output_directory
     if outputDirectory != None and not os.path.isdir(outputDirectory):
@@ -181,18 +185,37 @@ if __name__ == "__main__":
         if not (filePath.endswith(".m3.xml") or os.path.isdir(filePath)):
             sys.stderr.write("%s neither a directory nor does it end with '.m3.xml'\n" % filePath)
             sys.exit(2)
-    counter = 0
-    for filePath in args.path:
-        if os.path.isdir(filePath):
-            for fileName in os.listdir(filePath):
-                inputFilePath = os.path.join(filePath, fileName)
-                if fileName.endswith(".m3.xml"):
-                     convertFile(inputFilePath, outputDirectory)
-                     counter += 1
-        else:
-            convertFile(filePath, outputDirectory)
-            counter += 1
-    if counter == 1:
-        print("Converted %d file from .m3.xml to .m3" % counter)
+            
+            
+    if args.watch:
+        if ((len(args.path) == 0) or os.path.isdir(filePath)):
+            sys.stderr.write("Watch option is only supported for a single file")
+            sys.exit(2)
+        
+        previousModelModiticationTime = os.path.getmtime(filePath)
+        convertFile(filePath, outputDirectory)
+        print("Converted %s to an m3 file. Will convert it again if it changes" % filePath)
+        while True:
+            currentModelModificationTime = os.path.getmtime(filePath)
+            if currentModelModificationTime > previousModelModiticationTime:
+                print("File modified at %s, converting again" % time.ctime(currentModelModificationTime))
+                convertFile(filePath, outputDirectory)
+                print("converted file")
+                previousModelModiticationTime = currentModelModificationTime
+            time.sleep(0.1)
     else:
-        print("Converted %d files from .m3.xml to .m3" % counter)
+        counter = 0
+        for filePath in args.path:
+            if os.path.isdir(filePath):
+                for fileName in os.listdir(filePath):
+                    inputFilePath = os.path.join(filePath, fileName)
+                    if fileName.endswith(".m3.xml"):
+                        convertFile(inputFilePath, outputDirectory)
+                        counter += 1
+            else:
+                convertFile(filePath, outputDirectory)
+                counter += 1
+        if counter == 1:
+            print("Converted %d file from .m3.xml to .m3" % counter)
+        else:
+            print("Converted %d files from .m3.xml to .m3" % counter)
