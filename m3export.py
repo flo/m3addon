@@ -1589,21 +1589,20 @@ class Exporter:
             animPathPrefix = "m3_projections[%s]." % projectionIndex
             transferer = BlenderToM3DataTransferer(exporter=self, m3Object=m3Projection, blenderObject=projection, animPathPrefix=animPathPrefix, rootObject=self.scene)
             shared.transferProjection(transferer)
-            m3Projection.indexPlusHighestIndex = len(scene.m3_projections) -1 + projectionIndex
             
+            m3Projection.boxBottomZOffset = self.createNullFloatAnimationReference(initValue=(- projection.depth / 2.0), nullValue=0.0)
+            m3Projection.boxTopZOffset = self.createNullFloatAnimationReference(initValue=(projection.depth / 2.0), nullValue=0.0)
+            m3Projection.boxLeftXOffset = self.createNullFloatAnimationReference(initValue=(- projection.width / 2.0), nullValue=0.0)
+            m3Projection.boxRightXOffset = self.createNullFloatAnimationReference(initValue=(projection.width / 2.0), nullValue=0.0)
+            m3Projection.boxFrontYOffset = self.createNullFloatAnimationReference(initValue=(- projection.height / 2.0), nullValue=0.0)
+            m3Projection.boxBackYOffset = self.createNullFloatAnimationReference(initValue=(projection.height / 2.0), nullValue=0.0)
 
-            m3Projection.unknownbbe33f90 = self.createNullAnimHeader(interpolationType=0)
-            m3Projection.unknown9d264f5b = self.createNullAnimHeader(interpolationType=0)
-            m3Projection.unknown66ebe1e2 = self.createNullAnimHeader(interpolationType=0)
-            m3Projection.unknowndf06caf9 = self.createNullAnimHeader(interpolationType=0)
-            m3Projection.unknown7efe2497 = self.createNullAnimHeader(interpolationType=0)
-            m3Projection.unknown8d88a239 = self.createNullAnimHeader(interpolationType=0)
-            m3Projection.unknowne82404f6 = self.createNullAnimHeader(interpolationType=0)
-            m3Projection.unknown13e470c5 = self.createNullAnimHeader(interpolationType=0)
-            m3Projection.unknown44efb863 = self.createInstanceOf("FlagAnimationReference")
-            m3Projection.unknown44efb863.header = self.createNullAnimHeader(interpolationType=0)
-            m3Projection.unknown44efb863.initValue.value = 1 
-            m3Projection.unknown44efb863.nullValue.value = 0 
+
+            m3Projection.unknownf1f7110b = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3Projection.unknown2035f500 = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3Projection.unknown80d8189b = self.createNullFloatAnimationReference(initValue=0.0, nullValue=0.0)
+            m3Projection.unknown58ae2b94 = self.createNullVector3AnimationReference(x=0.0, y=0.0, z=0.0, initIsNullValue=False, interpolationType=1)
+            m3Projection.active = self.createNullFlagAnimationReference(1)
 
             
             materialReferenceIndex = self.materialNameToNewReferenceIndexMap.get(projection.materialName)
@@ -2079,6 +2078,14 @@ class Exporter:
         animRef.initValue = value
         animRef.nullValue = 0
         return animRef
+    
+    def createNullFlagAnimationReference(self, value):
+        animRef = self.createInstanceOf("FlagAnimationReference")
+        animRef.header = self.createNullAnimHeader(interpolationType=1)
+        animRef.initValue = value
+        animRef.nullValue = 0
+        return animRef
+    
     
     def createNullUInt16AnimationReference(self, value):
         animRef = self.createInstanceOf("UInt16AnimationReference")

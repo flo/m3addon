@@ -54,6 +54,9 @@ attachmentVolumeCapsule = "2"
 lightTypePoint = "1"
 lightTypeSpot = "2"
 
+projectionTypeOrthonormal = "1"
+projectionTypePerspective = "2"
+
 colorChannelSettingRGB="0"
 colorChannelSettingRGBA="1"
 colorChannelSettingA="2"
@@ -1060,9 +1063,13 @@ def updateBoneShapeOfLight(light, bone, poseBone):
     updateBoneShape(bone, poseBone, meshName, untransformedPositions, faces)
 
 def updateBoneShapeOfProjection(projection, bone, poseBone):
-    # TODO create correct mesh for visualization
-    radius = 1.0
-    untransformedPositions, faces = createMeshDataForSphere(radius)
+    projectionType = projection.projectionType
+    
+    if projectionType == projectionTypeOrthonormal:
+        untransformedPositions, faces = createMeshDataForCuboid(projection.width, projection.height, projection.depth)
+    else:
+        # TODO create correct mesh for perspective projection
+        untransformedPositions, faces = createMeshDataForSphere(1.0)
 
     boneName = boneNameForProjection(projection)
     meshName = boneName + 'Mesh'
@@ -1499,25 +1506,14 @@ def transferRibbon(transferer):
     transferer.transferBit("flags", "useLengthAndTime")
 
 def transferProjection(transferer):
-    transferer.transferInt("type")
+    transferer.transferEnum("projectionType")
     transferer.transferAnimatableFloat("fieldOfView")
     transferer.transferAnimatableFloat("aspectRatio")
     transferer.transferAnimatableFloat("near")
     transferer.transferAnimatableFloat("far")
-    transferer.transferAnimatableFloat("depth")
-    transferer.transferAnimatableFloat("width")
-    transferer.transferAnimatableFloat("height")
-    transferer.transferFloat("alphaOverTime")
-    transferer.transferFloat("splatLifeTimeAttack")
-    transferer.transferFloat("splatLifeTimeAttackRange")
-    transferer.transferFloat("splatLifeTimeHold")
-    transferer.transferFloat("splatLifeTimeDecay")
-    transferer.transferFloat("splatLifeTimeDecayRange")
-    transferer.transferFloat("attenuationPlaneDistance")
-    transferer.transferAnimatableUInt8("active")
-    transferer.transferInt("splatLayer")
-    transferer.transferInt("LODReduce")
-    transferer.transferInt("LODCut")
+    transferer.transferFloat("alphaOverTimeStart")
+    transferer.transferFloat("alphaOverTimeMid")
+    transferer.transferFloat("alphaOverTimeEnd")
 
 
 def transferWarp(transferer):

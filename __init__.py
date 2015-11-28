@@ -241,6 +241,13 @@ def handleLightTypeOrBoneSuffixChange(self, context):
                 light.boneName = calculatedBoneName
         selectOrCreateBoneForLight(scene, light)
 
+
+def handleProjectionSizeChange(self, context):
+    projection = self
+    scene = context.scene
+    if projection.updateBlenderBone:
+        selectOrCreateBoneForProjection(scene, projection)
+
 def handleLightSizeChange(self, context):
     scene = context.scene
     light = self
@@ -699,7 +706,7 @@ def handleWarpIndexChanged(self, context):
     if scene.m3_warp_index == -1:
         return
     warp = scene.m3_warps[scene.m3_warp_index]
-    selectOrCreateBoneForProjection(scene, warp)
+    selectOrCreateBoneForWarp(scene, warp)
    
 def handleAttachmentPointIndexChanged(self, context):
     scene = context.scene
@@ -1061,8 +1068,8 @@ ribbonTypeList = [("0", "Planar Billboarded", "Planar Billboarded"),
                   ("3", "Star Shaped", "Star Shaped")
                  ]
                  
-projectionTypeList = [("1", "Orthonormal", "makes the Projector behave like a box. It will be the same width no matter how close the projector is to the target surface."), 
-                  ("2", "Perspective", "makes the Projector behave like a camera. The closer the projector is to the surface, the smaller the effect will be.")
+projectionTypeList = [(shared.projectionTypeOrthonormal, "Orthonormal", "makes the Projector behave like a box. It will be the same width no matter how close the projector is to the target surface."), 
+                  (shared.projectionTypePerspective, "Perspective", "makes the Projector behave like a camera. The closer the projector is to the surface, the smaller the effect will be.")
                  ]
 
 
@@ -1741,19 +1748,21 @@ class M3Projection(bpy.types.PropertyGroup):
     # The name gets calculated like this: name = boneSuffix (type)
     name = bpy.props.StringProperty(options=set())
     updateBlenderBone = bpy.props.BoolProperty(default=True, options=set())
-    boneSuffix = bpy.props.StringProperty(options=set(), update=handleProjectionTypeOrBoneSuffixChange, default="Particle System")
+    boneSuffix = bpy.props.StringProperty(options=set(), update=handleProjectionTypeOrBoneSuffixChange, default="Projection")
     boneName = bpy.props.StringProperty(options=set())
     materialName = bpy.props.StringProperty(options=set())
-    type = bpy.props.EnumProperty(default="1", items=projectionTypeList, options=set())
+    projectionType = bpy.props.EnumProperty(default=shared.projectionTypeOrthonormal, items=projectionTypeList, options=set(), update=handleProjectionTypeOrBoneSuffixChange)
     fieldOfView = bpy.props.FloatProperty(default=45.0, name="FOV", options={"ANIMATABLE"}, description="represents the angle (in degrees) that defines the vertical bounds of the projector")
     aspectRatio = bpy.props.FloatProperty(default=1.0, name="Aspect Ratio", options={"ANIMATABLE"})
     near = bpy.props.FloatProperty(default=0.5, name="Near", options={"ANIMATABLE"})
     far = bpy.props.FloatProperty(default=10.0, name="Far", options={"ANIMATABLE"})
-    depth = bpy.props.FloatProperty(default=-5.0, name="Depth", options={"ANIMATABLE"})
-    width = bpy.props.FloatProperty(default=5.0, name="Width", options={"ANIMATABLE"})
-    height = bpy.props.FloatProperty(default=5.0, name="Height", options={"ANIMATABLE"})
-    alphaOverTime = bpy.props.FloatVectorProperty(default=(0.0, 1.0, 0.0), name="Alpha Over time", size=3, subtype="XYZ", options=set() )
-    splatLifeTimeAttack = bpy.props.FloatVectorProperty(default=(0.0, 1.0), name="", size=2, subtype="XYZ", options=set() )
+    depth = bpy.props.FloatProperty(default=10.0, name="Depth", options=set(), update=handleProjectionSizeChange)
+    width = bpy.props.FloatProperty(default=10.0, name="Width", options=set(), update=handleProjectionSizeChange)
+    height = bpy.props.FloatProperty(default=10.0, name="Height", options=set(), update=handleProjectionSizeChange)
+    alphaOverTimeStart = bpy.props.FloatProperty(default=0.0, name="Alpha over time start", options=set() )
+    alphaOverTimeMid = bpy.props.FloatProperty(default=1.0, name="Alpha over time mid", options=set() )
+    alphaOverTimeEnd = bpy.props.FloatProperty(default=0.0, name="Alpha over time end", options=set() )
+    
 
 
 class M3Warp(bpy.types.PropertyGroup):
@@ -3033,7 +3042,7 @@ class ProjectionPanel(bpy.types.Panel):
             projection = scene.m3_projections[currentIndex]
             layout.separator()
             layout.prop(projection, 'boneSuffix', text="Name")
-            layout.prop(projection, "type", text="Type")
+            layout.prop(projection, "projectionType", text="Type")
             layout.prop_search(projection, 'materialName', scene, 'm3_material_references', text="Material", icon='NONE')
             split = layout.split()
             col = split.column()
@@ -3041,6 +3050,7 @@ class ProjectionPanel(bpy.types.Panel):
             col.prop(projection, 'depth', text="Depth")
             col.prop(projection, 'width', text="Width")
             col.prop(projection, 'height', text="Height")
+            col.active = (projection.projectionType == shared.projectionTypeOrthonormal)
             split = layout.split()
             col = split.column()
             col.label("Perspective")
@@ -3048,6 +3058,7 @@ class ProjectionPanel(bpy.types.Panel):
             col.prop(projection, 'aspectRatio', text="Aspect Ratio")
             col.prop(projection, 'near', text="Near")
             col.prop(projection, 'far', text="Far")
+            col.active = (projection.projectionType == shared.projectionTypePerspective)
             split = layout.split()
             col = split.column()
             col.label(text="Alpha Over Time:")
@@ -3055,42 +3066,17 @@ class ProjectionPanel(bpy.types.Panel):
             col = split.column()
             sub = col.column(align=True)
             sub.label(text="Start:")
-            sub.prop(projection, 'alphaOverTime', index=0, text="Start")
+            sub.prop(projection, 'alphaOverTimeStart', text="Start")
             col = split.column()
             sub = col.column(align=True)
             sub.label(text="Middle:")
-            sub.prop(projection, 'alphaOverTime', index=1, text="Middle")
+            sub.prop(projection, 'alphaOverTimeMid', text="Middle")
             col = split.column()
             sub = col.column(align=True)
             sub.label(text="End:")
-            sub.prop(projection, 'alphaOverTime', index=2, text="End")
+            sub.prop(projection, 'alphaOverTimeEnd', text="End")
             split = layout.split()
             col = split.column()
-            
-            '''
-            col.label("Unknown Range 1")
-            col.prop(projection, 'unknown59478ee7', text="Unk. 59478ee7")
-            col.prop(projection, 'unknowne0b23113', text="Unk. e0b23113")
-            split = layout.split()
-            col = split.column()
-            col.label("Unknown Range 2")
-            col.prop(projection, 'unknown8d892963', text="Unk. 8d892963")
-            col.prop(projection, 'unknown85cba5dc', text="Unk. 85cba5dc")
-            split = layout.split()
-            col = split.column()
-            col.label("Unknown Range 3")
-            col.prop(projection, 'unknown34a38463', text="Unk. 34a38463")
-            col.prop(projection, 'unknownf7351664', text="Unk. f7351664")
-            layout.label("Other values:")
-            layout.prop(projection, 'unknowna01217c1', text="Unk. a01217c1")
-            layout.prop(projection, 'unknowne6644c96', text="Unk. e6644c96")
-            layout.prop(projection, 'unknown1a597211', text="Unk. 1a597211")
-            layout.prop(projection, 'unknown7d90d255', text="Unk. 7d90d255")
-            layout.prop(projection, 'unknownbf38195c', text="Unk. bf38195c")
-            layout.prop(projection, 'unknown1c58f255', text="Unk. 1c58f255")
-            layout.prop(projection, 'unknown15aa6267', text="Unk. 15aa6267")
-            '''
-    
     
 
 class WarpPanel(bpy.types.Panel):

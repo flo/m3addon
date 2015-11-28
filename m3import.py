@@ -1011,6 +1011,9 @@ class Importer:
             animPathPrefix = "m3_projections[%s]." % blenderProjectionIndex
             transferer = M3ToBlenderDataTransferer(self, scene,  animPathPrefix, blenderObject=projection, m3Object=m3Projection)
             shared.transferProjection(transferer)
+            projection.depth = m3Projection.boxTopZOffset.initValue - m3Projection.boxBottomZOffset.initValue
+            projection.width = m3Projection.boxRightXOffset.initValue - m3Projection.boxLeftXOffset.initValue
+            projection.height = m3Projection.boxBackYOffset.initValue - m3Projection.boxFrontYOffset.initValue
             boneEntry = self.model.bones[m3Projection.boneIndex]
             blenderBoneName = self.boneNames[m3Projection.boneIndex]
             if blenderBoneName.startswith(shared.projectionPrefix):

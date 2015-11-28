@@ -310,8 +310,8 @@
         </versions>
         <fields>
             <field name="header" type="AnimationReferenceHeader" />
-            <field name="initValue" type="FLAGV0" />
-            <field name="nullValue" type="FLAGV0" />
+            <field name="initValue" type="uint32" />
+            <field name="nullValue" type="uint32" />
             <field name="unknown" type="int32" default-value="-1"  />
         </fields>
     </structure>
@@ -1919,39 +1919,43 @@
             <version number="5" size="382" />
         </versions>
         <fields>
-            <field name="type" type="uint32" />
+            <field name="projectionType" type="uint32" />
             <field name="boneIndex" type="uint32" />
             <field name="materialReferenceIndex" type="uint32" />
-            <field name="unknown1" type="Vector3AnimationReferenceV0" />
-            <field name="unknown2" type="FloatAnimationReference" />
-            <field name="unknown3" type="FloatAnimationReference" />
-            <field name="unknown4" type="FloatAnimationReference" />
+            <field name="unknown58ae2b94" type="Vector3AnimationReferenceV0" />
+            <field name="unknownf1f7110b" type="FloatAnimationReference" />
+            <field name="unknown2035f500" type="FloatAnimationReference" />
+            <field name="unknown80d8189b" type="FloatAnimationReference" />
             <field name="fieldOfView" type="FloatAnimationReference" />
             <field name="aspectRatio" type="FloatAnimationReference" />
             <field name="near" type="FloatAnimationReference" />
             <field name="far" type="FloatAnimationReference" />
-            <field name="negDepth" type="FloatAnimationReference" />
-            <field name="depth" type="FloatAnimationReference" />
-            <field name="negWidth" type="FloatAnimationReference" />
-            <field name="width" type="FloatAnimationReference" />
-            <field name="negHeight" type="FloatAnimationReference" />
-            <field name="height" type="FloatAnimationReference" />
-            <field name="unknown5" type="uint32" />
-            <field name="alphaOverTime" type="VEC3V0" />
-            <field name="splatLifeTimeAttack" type="VEC2V0" />
+            <field name="boxBottomZOffset" type="FloatAnimationReference" />
+            <field name="boxTopZOffset" type="FloatAnimationReference" />
+            <field name="boxLeftXOffset" type="FloatAnimationReference" />
+            <field name="boxRightXOffset" type="FloatAnimationReference" />
+            <field name="boxFrontYOffset" type="FloatAnimationReference" />
+            <field name="boxBackYOffset" type="FloatAnimationReference" />
+            <field name="unknownca4e8e36" type="uint32" />
+            <field name="alphaOverTimeStart" type="float" />
+            <field name="alphaOverTimeMid" type="float" />
+            <field name="alphaOverTimeEnd" type="float" />
+            <field name="splatLifeTimeAttack" type="float" />
+            <field name="splatLifeTimeAttack2" type="float" />
             <field name="splatLifeTimeHold" type="float" />
-            <field name="splatLifeTimeHoldRange" type="float" />
+            <field name="splatLifeTimeHold2" type="float" />
             <field name="splatLifeTimeDecay" type="float" />
-            <field name="splatLifeTimeDecayRange" type="float" />
+            <field name="splatLifeTimeDecay2" type="float" />
             <field name="attenuationPlaneDistance" type="float" />
             <field name="active" type="UInt8AnimationReference" />
-            <field name="unknown6" type="uint32" />
-            <field name="splatLayer" type="uint16" />
-            <field name="unknown7" type="uint16" default-value="0xFFFF" />
-            <field name="LODReduce" type="uint16" />
-            <field name="unknown8" type="uint16" default-value="0" />
-            <field name="LODCut" type="uint16" />
-            <field name="unknown9" type="uint16" default-value="0" />
+            <field name="unknown7c53fb7b" type="uint32" />
+            <field name="splatLayer" type="uint16" since-version="5" />
+            <field name="unknowncbb79159" type="uint16" default-value="0xFFFF" since-version="5" />
+            <field name="lodReduce" type="uint16" since-version="5" />
+            <field name="unknownf0dfd391" type="uint16" default-value="0" since-version="5" />
+            <field name="lodCut" type="uint16" since-version="5" />
+            <field name="unknowndf285471" type="uint16" default-value="0" since-version="5" />
+            <field name="unknowna0283820" size="18" till-version="4" />
         </fields>
     </structure>
     
