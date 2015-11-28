@@ -1110,11 +1110,16 @@ class Importer:
                 physics_shape.scale = scale
                 
                 if physics_shape.shape in ["4", "5"]: # convex hull or mesh
-                    vertices = [(v.x, v.y, v.z) for v in m3PhysicsShape.vertices]
                     
-                    indices = range(0, len(m3PhysicsShape.faces), 3)
-                    faces = [m3PhysicsShape.faces[i : i+3] for i in indices]
+                    if m3PhysicsShape.structureDescription.structureVersion <= 1:
+                        vertices = [(v.x, v.y, v.z) for v in m3PhysicsShape.vertices]
 
+                        indices = range(0, len(m3PhysicsShape.faces), 3)
+                        faces = [m3PhysicsShape.faces[i : i+3] for i in indices]
+                    else:
+                        print("Warning: Physical shape data has not been imported as it is to new")
+                        faces = []
+                        vertices = []
                     # Prevent Blender from crashing for real when the vertex data is invalid:
                     for f in faces:
                         if f[0] >= len(vertices) or f[1] >= len(vertices) or f[2] >= len(vertices):

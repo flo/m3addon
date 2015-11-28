@@ -2171,7 +2171,7 @@
             <field name="unknown8de065e8" type="AnimationReferenceHeader" since-version="4" />
             <field name="unknown568ae4f7" type="uint32" since-version="4"/>
             <field name="unknown82406bbb" size="4" expected-value="0x00000000" since-version="4" />
-            <field name="unknownac1544c0" size="4" expected-value="0xffffffff" since-version="4" />
+            <field name="unknownac1544c0" size="4" default-value="0xffffffff" since-version="4" />
             <field name="unknown57796a4d" type="float" default-value="1.0" since-version="4"/>
             <field name="physicsShapes" type="Reference" refTo="PHSH" />
             <field name="flags" type="uint32" default-value="0x1">
