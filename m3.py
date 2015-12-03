@@ -461,7 +461,7 @@ class RealReferenceField(ReferenceField):
     
 class IntReferenceField(ReferenceField):
     intRefToMinValue = {"I16_":(-(1<<15)), "U16_":0, "I32_":(-(1<<31)), "U32_":0, "FLAG":0}
-    intRefToMaxValue = {"I16_":((1<<15)-1), "U16_":((1<<16)-1), "I32_":((1<<31)-1), "U32_":((1<<32)-1), "FLAG":1}
+    intRefToMaxValue = {"I16_":((1<<15)-1), "U16_":((1<<16)-1), "I32_":((1<<31)-1), "U32_":((1<<32)-1), "FLAG":((1<<32)-1)}
 
     def __init__(self, name, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion):
         ReferenceField.__init__(self, name, referenceStructureDescription, historyOfReferencedStructures, sinceVersion, tillVersion)
