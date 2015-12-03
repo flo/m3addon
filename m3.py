@@ -85,6 +85,9 @@ class M3StructureHistory:
         self.allFields = allFields
         self.versionToStructureDescriptionMap = {}
         self.isPrimitive = self.name in structureNamesOfPrimitiveTypes
+        # Create all to check sizes:
+        for version in versionToSizeMap:
+            self.getVersion(version)
 
     def getVersion(self, version):
         structure = self.versionToStructureDescriptionMap.get(version)
