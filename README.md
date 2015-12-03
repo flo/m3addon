@@ -1,5 +1,5 @@
-Features
---------
+# Readme
+## Features
 
 The Python scripts can be used as a Blender addon.
 
@@ -35,8 +35,7 @@ back into a m3 file.
 The file structures.xml gets used by the m3.py library to parse the m3 files.
 Modifying this XML file will have impact of the above scripts and the blender addon.
 
-Installation
-------------
+## Installation
 1. Clone the git repository of this addon
 2. Move the created directory into addons folder of your blender settings:
    * Example for Linux and Blender 2.69: 
@@ -49,8 +48,7 @@ Installation
 
 See also: http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Add-Ons
 
-Usage
------
+## Usage
 
 The blender addon adds panels to the scene tab of the properties editor.
 
@@ -68,15 +66,13 @@ To create a particle system and preview it in the Starcraft 2 editor you can per
 8. Open the previewer in the Starcraft 2 editor by using the menu "Window/Previewer"
 9. Use the previewer menu "File/Add File" to preview the exported model in the SC2 Editor
 
-Some Blender Tipps:
------------
+## Some Blender Tipps:
 * You can right click on UI elements to view the source code which displays that element. 
 * File/Save User Settings can be used to determine the default state of blender.
   * You can save your export path this way!
   * You can make yourself a default view which shows SC2 properties panels where you want them
 
-About the Implementation
-------------------------
+## About the Implementation
 
 * The m3.py file is a python library for reading and writing m3 files. It uses the structures.xml file to do so.
 * The file structures.xml specifies how the script should parse and export a M3 file
@@ -87,9 +83,74 @@ About the Implementation
   1. The data structures of blender gets used to create m3.py data structures that represent a m3 file.
   2. The method saveAndInvalidateModel of the m3.py file gets used to convert the latter data structure into a m3 file.
 
+### About the m3 file format and the structure.xml file
+The m3 file format is basically a list of sections. Each section contains an array of a certain structure in a certaion version.
 
-Common Errors and how to fix them
----------------------------------
+The first section of an m3 file contains always a single structure of type MD34 in version 11. It is defined at the bottom of the structure.xml file:
+```
+    <structure name="MD34" version="11" size="24">
+        <description>Header of a M3 file: Can be found at the start of the file.</description>
+        <versions>
+            <version number="11" size="24" />
+        </versions>
+        <fields>
+            <field name="tag" type="tag" />
+            <field name="indexOffset" type="uint32"/>
+            <field name="indexSize" type="uint32" />
+            <field name="model" type="Reference" refTo="MODL" />
+        </fields>
+    </structure>
+```
+Structures may reference other sections via a data structure called Reference (or SmallReference in some exceptions).
+
+The MD34 structure for example has a field called model, that is referencing a `MODL` structure within another section. To which structure type a reference is pointing is indicated by the refTo field.
+
+References typically do not however reference a single structure, but the whole section and thus an array of structures. Thus theoretically a MD34 structure could reference multiple `MODL` structures but that has never been observed in a valid m3 file.
+
+The m3.py file requries all structures to be first defined in the structure.xml file before they get used/referenced by another structure. For this reason the structure MD34 is defiend at the bottom.
+
+An m3 file contains also an index/overviewabout those sections it cotnains, which can be found at the location specified by indexOffset and indexSize. If you want to get a list of the sections in an m3 file programmatic wise you can use the m3.py method `loadSections(filename)`.
+
+However usually however it is easier to just work with a tree like represenation of the `MODL` structure in which all references to structure arrays have been replaced by a a list of the section that got referenced. This is possible via the m3.py python function `loadModel(filename)`.
+
+### Definition of structure elements in the structure.xml file
+A structure definition defines a strcture for all versions that exist of it:
+
+For the creep materail for example (structure name CREP) 2 versions exist that have differnt sizes. In the structure.xml file there is however just a single structure definition:
+```
+    <structure name="CREP">
+        <description>Creep Material</description>
+        <versions>
+            <version number="0" size="24" />
+            <version number="1" size="28" />
+        </versions>
+        <fields>
+            <field name="name" type="Reference" refTo="CHAR" />
+            <field name="creepLayer" type="Reference" refTo="LAYR" />
+            <field name="unknownda1b4eb3" size="4" expected-value="0x00000000" since-version="1" />
+        </fields>
+    </structure>
+```
+The `<versions>` block contains a `<verson>` element for all known versions of that structure. For each structure the
+size needs to be known and defined in the `<version>` element. When a m3 file contains a version of a strcuture that is not yet known, an exception will be thrown and information about the structure will be logged that contains also a guess on the size of the structure.
+
+A newer version of a structure might have additional fields. The attribute `since-version` can be used to indicate that a field exists since a certain version. The attribute `till-version` can be used to indicate that a field exists only till a certain version of the structure.
+
+The m3.py file checkes that the defined fields have indeed the sizes specified in the `<version>` elements. So when you add a new version you propably also need to find out what new fields got added and which fields stayed the same.
+
+A field needs either to have a size or type attribute. The type attribute can be one of the following primitive types:
+* uint32: a 32 bit unsigned integer
+* int32: a 32 bit signed integer
+* int16: a 16 bit signed integer
+* uint8: a 8 bit unsigned  integer
+* uint8: a 8 bit signed integer
+* float: a classical floating point type that fits in 32 bit
+* tag: Up to 4 character that are used to store structure names
+* fixed8: a fixed point value that gets stored in 8 bits
+
+In addition to that all structures that got defined above the structure in the structure.xml file can be also be used as type. However a Version suffix with V + version number needs to be added to the structure name. e.g. VEC3V0 to get version 0 of the structure VEC3.
+
+### Common Errors and how to fix them
 * Error message "Exception: XYZ_V4.unknown0 has value 42 instead of the expected value int(0)":
     * In the structure.xml file it's configured what structures exists, what fields those structures have,
       and what their default or expected value is. The exceptions means, that the field "unknown0" of the structure "XYZ_" has
@@ -103,13 +164,8 @@ Common Errors and how to fix them
          * "ERROR: Unknown section at offset 436124 with tag=XYZ_ version=1 repetitions=2 sectionLengthInBytes=32 guessedUnusedSectionBytes=4 guessedBytesPerEntry=14.0"
       The error message means that it found a section in the m3 file that contains two (repetitions=2) entries of type XYZ_.
       The script guesses that 4 bytes are unused and knowns that the section is 32 bytes long. So it calculates 2*X-4=32 where X is the number of guessed bytes per entry.
-      The result of this calculation is printed at the end "guessedBytesPerEntry=14.0". So the script guesses that the structure XYZ_ is 14 bytes long.
-      To fix the upper example error message we would add the following xml element to the structure.xml file:
-      ``<structure name="XYZ_" version="1" size="14">``
-          ``<description>Unknown</description>``
-          ``<field name="unknown" size="14" />``
-       ``</structure>``
-      Note that name, version and size attributes of need to be adjusted to what got reported in the error message.
+      The result of this calculation is printed at the end "guessedBytesPerEntry=14.0". So the script guesses that version 1 of the  structure XYZ_ is 14 bytes long.
+      To fix this error you would have to define the structure XYZ_ in version 1 in the structure.xml file. See the section about the structure.xml file to learn about how to do that.
 * Error message "Field ABCDV7.xyz can be marked as a reference pointing to XYZ_V1":
     * To fix this example error message, we would search in the structure.xml file for a structure called "ABCD" with the attribute version="7".
       It will contain a xml element field with the attribute name="xyz". To this field we would add an attribute refTo="XYZ_V1".
@@ -121,16 +177,9 @@ Common Errors and how to fix them
       If you are lucky, then there will be exactly 1 line below the former warning which looks like this:
       "-> Found a reference at offset 56 in a section of type ABCDV7". To fix the error message we need to change the structure
       definition of ABCD in version 7 to contain a field definition like this:
-      `<field offset="56" name="xyzData" type="Reference" refTo="XYZ_V1" />`
-      The name of the field can be freely choosen. It can be that the section in which the refernce got found contains
-      multiple structures. In that case it can be that the structure with the reference (ABCD in the example) is smaller
-      then the found offset. In this case the found reference is not in the first element of the section, but in a later one.
-      Assume the size of ABCD in version 7 would be 40. Then the offset 56 would mean that the second element of type ABCD has at
-      the relative offset 16 a reference to XYZ_V1. In that case the added field xml element would have the value 16 as offset.
+      `<field name="xyzData" type="Reference" refTo="XYZ_V1" />`
 
-
-License (GPL 2.0 or later)
---------------------------
+## License (GPL 2.0 or later)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
