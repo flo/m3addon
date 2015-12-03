@@ -369,7 +369,7 @@ class ReferenceField(Field):
             indexEntry = referencedSection.indexEntry
             
             if indexEntry.repetitions < ref.entries:
-                raise Exception("%s references more elements then there actually are" % variable)
+                raise Exception("%s tries to reference %s elements in a %s section that contains just %s element(s)" % (variable, ref.entries, indexEntry.tag, indexEntry.repetitions))
 
             referencedObjects = referencedSection.content
             if self.historyOfReferencedStructures != None:
