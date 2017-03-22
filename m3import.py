@@ -958,7 +958,7 @@ class Importer:
                 if blenderBoneName.startswith(shared.star2ParticlePrefix):
                     wantedName = blenderBoneName[len(shared.star2ParticlePrefix):]
                 else:
-                    print("Warning: A particle system copy was bound to bone %s which does not start with %s" %(fullBoneName, shared.star2ParticlePrefix))
+                    print("Warning: A particle system copy was bound to bone %s which does not start with %s" %(blenderBoneName, shared.star2ParticlePrefix))
                     wantedName = blenderBoneName
                 copy.name = uniqueNameFinder.findNameAndMarkAsUsedLike(wantedName)
 
