@@ -1385,6 +1385,7 @@
             <version number="17" size="280" />
             <version number="18" size="280" />
             <version number="19" size="340" />
+            <version number="20" size="352" />
         </versions>
         <fields>
             <field name="name" type="Reference" refTo="CHAR" />
@@ -1454,6 +1455,7 @@
             <field name="unknownAt41" size="3" expected-value="0x000000" />
             <field name="specMult" type="float" default-value="1.0" />
             <field name="emisMult" type="float" default-value="1.0" />
+            <field name="unknown15e494" size="12" since-version="20" default-value="0xCDCC4C3ECDCC4C3F" />
             <field name="diffuseLayer" type="Reference" refTo="LAYR" />
             <field name="decalLayer" type="Reference" refTo="LAYR" />
             <field name="specularLayer" type="Reference" refTo="LAYR" />
