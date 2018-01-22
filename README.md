@@ -1,4 +1,9 @@
 # Readme
+
+## Notice
+
+This addon no longer gets activitly developed. At least not in the original repository https://github.com/flo/m3addon/
+
 ## Features
 
 The Python scripts can be used as a Blender addon.
